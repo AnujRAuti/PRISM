@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     # Use PostgreSQL in development by default (do not use SQLite).
     database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/pofa_dev"
     redis_url: str = "redis://localhost:6379/0"
+    analysis_queue_name: str = "pofa:analysis:jobs"
+    analysis_max_attempts: int = 3
 
     # S3 / MinIO
     s3_endpoint: str = "http://localhost:9000"

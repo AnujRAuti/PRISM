@@ -1,0 +1,56 @@
+from typing import Any
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from backend.db.session import get_db
+from backend.schemas.analysis import AnalysisJobCreate, AnalysisJobResponse
+from backend.services.analysis_jobs import (
+    create_analysis_job,
+    get_analysis_job,
+    get_analysis_result,
+)
+
+
+router = APIRouter(prefix="/analysis")
+
+
+@router.post("/jobs", response_model=AnalysisJobResponse, status_code=status.HTTP_202_ACCEPTED)
+def create_job(request: AnalysisJobCreate, db: Session = Depends(get_db)) -> AnalysisJobResponse:
+    try:
+        UUID(request.evidence_id)
+        job = create_analysis_job(request.evidence_id, db)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail="Invalid evidence ID") from error
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    return _response(job, db)
+
+
+@router.get("/jobs/{job_id}", response_model=AnalysisJobResponse)
+def get_job(job_id: str, db: Session = Depends(get_db)) -> AnalysisJobResponse:
+    try:
+        UUID(job_id)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail="Invalid job ID") from error
+    job = get_analysis_job(job_id, db)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Analysis job not found")
+    return _response(job, db)
+
+
+def _response(job, db: Session) -> AnalysisJobResponse:
+    result: Any = get_analysis_result(job.id, db)
+    return AnalysisJobResponse(
+        job_id=job.id,
+        evidence_id=job.evidence_id,
+        status=job.status,
+        attempt_count=job.attempt_count,
+        error=job.error,
+        started_at=job.started_at,
+        completed_at=job.completed_at,
+        result=result.result if result else None,
+    )

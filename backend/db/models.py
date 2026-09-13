@@ -113,6 +113,10 @@ class AnalysisJob(Base):
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=False)
     status = Column(String(50), nullable=False, index=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    attempt_count = Column(Integer, nullable=False, default=0)
+    error = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     evidence = relationship("Evidence")

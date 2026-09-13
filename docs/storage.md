@@ -65,3 +65,15 @@ BE-004 processes the original quarantine object bytes and persists three indepen
 - `EvidenceMetadata.metadata` stores extracted EXIF values and an explicit EXIF status. Images without EXIF use `no_metadata`; they are not treated as invalid.
 
 Fingerprinting does not alter the original object, make duplicate or fraud decisions, validate GPS or timestamps, or start background jobs.
+
+## Asynchronous analysis jobs
+
+BE-005 adds Redis-backed asynchronous execution for the existing BE-004 fingerprinting operation. Start the local infrastructure with `docker compose up -d`, then run the worker with:
+
+```text
+python -m backend.workers.analysis_worker
+```
+
+Create a job with `POST /api/v1/analysis/jobs` and a JSON body containing `evidence_id`. Retrieve its PostgreSQL-backed state with `GET /api/v1/analysis/jobs/{job_id}`. Jobs move through `queued`, `running`, `completed`, or `failed`; processing retries up to `ANALYSIS_MAX_ATTEMPTS` (3 by default). Redis carries only the job ID, while PostgreSQL remains authoritative for state and results.
+
+The worker invokes the existing BE-004 fingerprinting service and persists the real SHA-256, pHash, and EXIF status in `AnalysisResult`. It does not perform duplicate, fraud, risk, or other later-milestone analysis.
