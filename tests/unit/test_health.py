@@ -15,3 +15,13 @@ def test_ready():
     r = client.get("/api/v1/ready")
     # SQLite default should be available in dev
     assert r.status_code in (200, 503)
+
+
+def test_openapi_and_docs():
+    client = TestClient(app)
+    r = client.get("/openapi.json")
+    assert r.status_code == 200
+    assert "openapi" in r.json()
+
+    r2 = client.get("/docs")
+    assert r2.status_code == 200

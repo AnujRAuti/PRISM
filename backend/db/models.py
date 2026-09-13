@@ -24,6 +24,6 @@ class Evidence(Base):
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     filename = Column(String(512))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    metadata = Column(Text)
+    metadata_json = Column("metadata", Text)
 
     project = relationship("Project")

@@ -320,6 +320,9 @@ Implement:
 - [ ] CORS configuration.
 - [ ] Environment-based configuration.
 
+- [DONE] CORS configuration.
+- [DONE] Environment-based configuration.
+
 Example:
 
 ```text
@@ -337,11 +340,11 @@ Expected:
 
 ## Definition of done
 
-- [ ] API starts locally.
+- [DONE] API starts locally (verified via tests using TestClient).
 - [ ] API starts through Docker.
-- [ ] Swagger/OpenAPI works.
-- [ ] Health endpoint works.
-- [ ] Database readiness can be checked.
+- [DONE] Swagger/OpenAPI works (`/openapi.json` and `/docs` verified).
+- [DONE] Health endpoint works.
+- [DONE] Database readiness can be checked (`/api/v1/ready` verified against SQLite dev DB).
 
 ---
 
@@ -387,6 +390,8 @@ EXTERNAL_DETECTOR_URL=
 - [DONE] Implemented configuration using `backend/core/config.py` and `.env` support; `.env.example` present.
 - [DONE] Added SQLAlchemy SQLite dev engine and basic models in `backend/db/models.py`.
 
+- [DONE] Request ID generation implemented and integrated with logging and middleware.
+
 ---
 
 # 8. DATABASE FOUNDATION
@@ -400,6 +405,11 @@ Alembic
 PostGIS
 pgvector
 ```
+
+Progress:
+
+- [DONE] SQLAlchemy models (`User`, `Project`, `Evidence`) implemented in `backend/db/models.py`.
+- [DONE] Local dev DB initialized (SQLite) via `backend/db/init_db.py`.
 
 ## 8.1 Create database models
 

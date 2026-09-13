@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.api.v1.endpoints.health import router as health_router
 from backend.core.logging import setup_logging
+from backend.core.middleware import RequestIDMiddleware
 
 
 setup_logging()
@@ -19,6 +20,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request ID middleware
+app.add_middleware(RequestIDMiddleware)
 
 
 @app.exception_handler(Exception)
