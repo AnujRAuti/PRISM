@@ -10,6 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 from geoalchemy2 import Geometry
+from sqlalchemy.dialects.postgresql import UUID
 
 
 # revision identifiers, used by Alembic.
@@ -26,7 +27,7 @@ def upgrade() -> None:
 
     op.create_table(
         'users',
-        sa.Column('id', sa.String(length=36), primary_key=True),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
         sa.Column('username', sa.String(length=128), nullable=False),
         sa.Column('email', sa.String(length=256), nullable=False),
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default=sa.text('true')),
@@ -35,17 +36,17 @@ def upgrade() -> None:
 
     op.create_table(
         'projects',
-        sa.Column('id', sa.String(length=36), primary_key=True),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
         sa.Column('name', sa.String(length=256), nullable=False),
-        sa.Column('owner_id', sa.String(length=36), sa.ForeignKey('users.id'), nullable=False),
+        sa.Column('owner_id', UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 
     op.create_table(
         'activities',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('project_id', sa.String(length=36), sa.ForeignKey('projects.id'), nullable=False),
-        sa.Column('actor_id', sa.String(length=36), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('project_id', UUID(as_uuid=False), sa.ForeignKey('projects.id'), nullable=False),
+        sa.Column('actor_id', UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('verb', sa.String(length=128), nullable=False),
         sa.Column('details', sa.JSON),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
@@ -53,9 +54,9 @@ def upgrade() -> None:
 
     op.create_table(
         'claims',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('project_id', sa.String(length=36), sa.ForeignKey('projects.id'), nullable=False),
-        sa.Column('claimant_id', sa.String(length=36), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('project_id', UUID(as_uuid=False), sa.ForeignKey('projects.id'), nullable=False),
+        sa.Column('claimant_id', UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('title', sa.String(length=512), nullable=False),
         sa.Column('description', sa.Text),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
@@ -63,9 +64,9 @@ def upgrade() -> None:
 
     op.create_table(
         'evidence',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('project_id', sa.String(length=36), sa.ForeignKey('projects.id'), nullable=False),
-        sa.Column('claim_id', sa.String(length=36), sa.ForeignKey('claims.id'), nullable=True),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('project_id', UUID(as_uuid=False), sa.ForeignKey('projects.id'), nullable=False),
+        sa.Column('claim_id', UUID(as_uuid=False), sa.ForeignKey('claims.id'), nullable=True),
         sa.Column('filename', sa.String(length=512), nullable=False),
         sa.Column('content_type', sa.String(length=128)),
         sa.Column('location', Geometry(geometry_type='POINT', srid=4326)),
@@ -74,24 +75,24 @@ def upgrade() -> None:
 
     op.create_table(
         'evidence_metadata',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('evidence_id', sa.String(length=36), sa.ForeignKey('evidence.id'), nullable=False),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('evidence_id', UUID(as_uuid=False), sa.ForeignKey('evidence.id'), nullable=False),
         sa.Column('metadata', sa.JSON),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 
     op.create_table(
         'analysis_jobs',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('evidence_id', sa.String(length=36), sa.ForeignKey('evidence.id'), nullable=False),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('evidence_id', UUID(as_uuid=False), sa.ForeignKey('evidence.id'), nullable=False),
         sa.Column('status', sa.String(length=50), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 
     op.create_table(
         'analysis_results',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('job_id', sa.String(length=36), sa.ForeignKey('analysis_jobs.id'), nullable=False),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('job_id', UUID(as_uuid=False), sa.ForeignKey('analysis_jobs.id'), nullable=False),
         sa.Column('result', sa.JSON),
         sa.Column('embedding', sa.ARRAY(sa.Float)),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
@@ -99,8 +100,8 @@ def upgrade() -> None:
 
     op.create_table(
         'anomalies',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('evidence_id', sa.String(length=36), sa.ForeignKey('evidence.id'), nullable=False),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('evidence_id', UUID(as_uuid=False), sa.ForeignKey('evidence.id'), nullable=False),
         sa.Column('score', sa.Integer),
         sa.Column('details', sa.JSON),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
@@ -108,18 +109,18 @@ def upgrade() -> None:
 
     op.create_table(
         'duplicate_matches',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('evidence_id', sa.String(length=36), sa.ForeignKey('evidence.id'), nullable=False),
-        sa.Column('matched_evidence_id', sa.String(length=36), sa.ForeignKey('evidence.id'), nullable=False),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('evidence_id', UUID(as_uuid=False), sa.ForeignKey('evidence.id'), nullable=False),
+        sa.Column('matched_evidence_id', UUID(as_uuid=False), sa.ForeignKey('evidence.id'), nullable=False),
         sa.Column('similarity', sa.Integer),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 
     op.create_table(
         'review_decisions',
-        sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('evidence_id', sa.String(length=36), sa.ForeignKey('evidence.id'), nullable=False),
-        sa.Column('reviewer_id', sa.String(length=36), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
+        sa.Column('evidence_id', UUID(as_uuid=False), sa.ForeignKey('evidence.id'), nullable=False),
+        sa.Column('reviewer_id', UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('decision', sa.String(length=50), nullable=False),
         sa.Column('notes', sa.Text),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
@@ -127,9 +128,9 @@ def upgrade() -> None:
 
     op.create_table(
         'audit_events',
-        sa.Column('id', sa.String(length=36), primary_key=True),
+        sa.Column('id', UUID(as_uuid=False), primary_key=True),
         sa.Column('event_type', sa.String(length=128), nullable=False),
-        sa.Column('actor_id', sa.String(length=36), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('actor_id', UUID(as_uuid=False), sa.ForeignKey('users.id'), nullable=True),
         sa.Column('payload', sa.JSON),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )

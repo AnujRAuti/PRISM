@@ -97,7 +97,7 @@ class EvidenceMetadata(Base):
     __tablename__ = "evidence_metadata"
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=False, index=True)
-    metadata = Column(JSONB)
+    metadata_json = Column("metadata", JSONB)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     evidence = relationship("Evidence")

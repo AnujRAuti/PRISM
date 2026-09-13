@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import time
 from sqlalchemy.orm import Session
 from backend.core.config import settings
@@ -8,7 +9,7 @@ from backend.db import models
 
 def test_alembic_upgrade_head():
     # Run alembic upgrade head (assumes DB is reachable)
-    subprocess.check_call([".\\backend\\.venv\\Scripts\\python", "-m", "alembic", "upgrade", "head"], cwd=".")
+    subprocess.check_call([sys.executable, "-m", "alembic", "upgrade", "head"], cwd=".")
 
 
 def test_basic_crud():

@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   db:
-    image: postgis/postgis:15-3.3
+    image: garapadev/postgres-postgis-pgvector:15-stable
     container_name: pofa_db
     restart: unless-stopped
     environment:
@@ -14,5 +14,34 @@ services:
       - db_data:/var/lib/postgresql/data
       - ./docker/pg-init:/docker-entrypoint-initdb.d:ro
 
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: pofa_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    container_name: pofa_minio_init
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_QUARANTINE_BUCKET: ${S3_QUARANTINE_BUCKET:-pofa-quarantine}
+      S3_EVIDENCE_BUCKET: ${S3_EVIDENCE_BUCKET:-pofa-evidence}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do sleep 1; done; mc mb --ignore-existing "local/$${S3_QUARANTINE_BUCKET}"; mc mb --ignore-existing "local/$${S3_EVIDENCE_BUCKET}"; mc anonymous set none "local/$${S3_QUARANTINE_BUCKET}"; mc anonymous set none "local/$${S3_EVIDENCE_BUCKET}"'
+
 volumes:
   db_data:
+  minio_data:
