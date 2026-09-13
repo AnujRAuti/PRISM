@@ -39,9 +39,9 @@ Before writing analysis code, define exactly what the backend is responsible for
 
 ## 1.1 Define the system boundary
 
-- [ ] Write `docs/backend-scope.md`.
-- [ ] Document what PoA does.
-- [ ] Document what PoA does NOT do.
+- [DONE] Write `docs/backend-scope.md`.
+- [DONE] Document what PoA does.
+- [DONE] Document what PoA does NOT do.
 
 ### PoA DOES
 
@@ -77,12 +77,12 @@ Before writing analysis code, define exactly what the backend is responsible for
 
 ## 2.1 Repository
 
-- [ ] Create new GitHub repository.
-- [ ] Name the repository appropriately.
-- [ ] Initialize with README.
-- [ ] Add `.gitignore`.
-- [ ] Add `.env.example`.
-- [ ] Add `LICENSE` if required.
+- [DONE] Create new GitHub repository.
+- [DONE] Name the repository appropriately.
+- [DONE] Initialize with README.
+- [DONE] Add `.gitignore`.
+- [DONE] Add `.env.example`.
+- [DONE] Add `LICENSE` if required.
 
 ## 2.2 Branches
 
@@ -94,9 +94,9 @@ backend
 frontend
 ```
 
-- [ ] `main` = stable integration branch.
-- [ ] `backend` = backend development.
-- [ ] `frontend` = future frontend development.
+- [DONE] `main` = stable integration branch.
+- [DONE] `backend` = backend development.
+- [DONE] `frontend` = future frontend development.
 - [ ] Do all backend work on `backend`.
 - [ ] Do not build frontend until backend API contracts are stable.
 
