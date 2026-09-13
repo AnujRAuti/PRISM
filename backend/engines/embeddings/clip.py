@@ -26,7 +26,10 @@ def image_embedding(data: bytes) -> list[float]:
     image = Image.open(BytesIO(data)).convert("RGB")
     inputs = _processor(images=image, return_tensors="pt")
     with torch.no_grad():
-        vector = _model.get_image_features(**inputs)[0]
+        vision_inputs = {"pixel_values": inputs["pixel_values"]}
+        vision_outputs = _model.vision_model(**vision_inputs)
+        pooled_output = vision_outputs.pooler_output
+        vector = _model.visual_projection(pooled_output)[0]
         vector = vector / vector.norm(p=2)
     values = vector.cpu().tolist()
     if len(values) != settings.embedding_dimension:
