@@ -2,11 +2,12 @@ fastapi
 uvicorn[standard]
 fastapi==0.141.1
 uvicorn[standard]==0.23.1
-pydantic==2.3.0
+pydantic==2.11.9
 pydantic-settings==2.3.0
 sqlalchemy==2.0.52
 alembic==1.11.2
-psycopg-binary==3.1.0
+psycopg-binary==3.2.9
+psycopg2-binary==2.9.9
 redis==4.6.0
 # Database/PostGIS
 geoalchemy2==0.13.0
@@ -19,4 +20,6 @@ Pillow==10.0.0
 imagehash==4.3.1
 numpy==1.26.2
 exifread==3.0.0
+torch==2.8.0
+transformers==4.56.2
 

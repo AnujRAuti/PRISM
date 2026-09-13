@@ -57,6 +57,7 @@ def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
             "duplicate_analysis": {
                 "exact_matches": duplicate_analysis.exact_matches,
                 "perceptual_matches": duplicate_analysis.perceptual_matches,
+                "semantic_matches": duplicate_analysis.semantic_matches,
                 "embedding_status": duplicate_analysis.embedding_status,
                 "embedding_error": duplicate_analysis.embedding_error,
             },

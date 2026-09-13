@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
@@ -13,6 +14,7 @@ from backend.services.storage import StorageService
 class DuplicateAnalysis:
     exact_matches: list[str]
     perceptual_matches: list[dict[str, Any]]
+    semantic_matches: list[dict[str, Any]]
     embedding_status: str
     embedding_error: str | None
 
@@ -22,15 +24,35 @@ def search_similar_embeddings(
     db: Session,
     *,
     exclude_job_id: str | None = None,
+    exclude_evidence_id: str | None = None,
     top_k: int | None = None,
 ) -> list[dict[str, Any]]:
+    latest_embeddings = (
+        db.query(
+            AnalysisJob.evidence_id.label("evidence_id"),
+            func.max(AnalysisResult.created_at).label("latest_created_at"),
+        )
+        .join(AnalysisResult, AnalysisResult.job_id == AnalysisJob.id)
+        .filter(AnalysisResult.embedding.is_not(None))
+        .group_by(AnalysisJob.evidence_id)
+        .subquery()
+    )
     query = (
         db.query(AnalysisResult.job_id, AnalysisJob.evidence_id, AnalysisResult.embedding.cosine_distance(vector).label("distance"))
         .join(AnalysisJob, AnalysisJob.id == AnalysisResult.job_id)
+        .join(
+            latest_embeddings,
+            and_(
+                latest_embeddings.c.evidence_id == AnalysisJob.evidence_id,
+                latest_embeddings.c.latest_created_at == AnalysisResult.created_at,
+            ),
+        )
         .filter(AnalysisResult.embedding.is_not(None))
     )
     if exclude_job_id is not None:
         query = query.filter(AnalysisResult.job_id != exclude_job_id)
+    if exclude_evidence_id is not None:
+        query = query.filter(AnalysisJob.evidence_id != exclude_evidence_id)
     rows = query.order_by("distance").limit(top_k or settings.embedding_top_k).all()
     return [
         {"job_id": row.job_id, "evidence_id": row.evidence_id, "distance": float(row.distance)}
@@ -84,6 +106,7 @@ def analyze_duplicates(
 
     embedding_status = "unavailable"
     embedding_error = None
+    semantic_matches: list[dict[str, Any]] = []
     if storage is not None:
         try:
             data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
@@ -94,6 +117,27 @@ def analyze_duplicates(
                     result = AnalysisResult(job_id=job_id)
                     db.add(result)
                 result.embedding = vector
+                db.flush()
+                semantic_candidates = search_similar_embeddings(
+                    vector,
+                    db,
+                    exclude_job_id=job_id,
+                    exclude_evidence_id=evidence_id,
+                )
+                semantic_matches = semantic_candidates
+                for candidate in semantic_candidates:
+                    distance = candidate["distance"]
+                    _upsert_match(
+                        db,
+                        evidence.id,
+                        candidate["evidence_id"],
+                        "embedding",
+                        embedding_similarity=1.0 - distance,
+                        signals={
+                            "embedding_distance": distance,
+                            "embedding_similarity": 1.0 - distance,
+                        },
+                    )
             embedding_status = "success"
         except Exception as error:
             embedding_error = str(error)
@@ -101,6 +145,7 @@ def analyze_duplicates(
     return DuplicateAnalysis(
         [candidate.id for candidate in exact],
         perceptual,
+        semantic_matches,
         embedding_status,
         embedding_error,
     )
@@ -113,6 +158,7 @@ def _upsert_match(
     match_type: str,
     *,
     phash_distance: int | None = None,
+    embedding_similarity: float | None = None,
     signals: dict[str, Any],
 ) -> None:
     if evidence_id == matched_id:
@@ -133,6 +179,7 @@ def _upsert_match(
                 matched_evidence_id=second,
                 match_type=match_type,
                 phash_distance=phash_distance,
+                embedding_similarity=embedding_similarity,
                 signals=signals,
             )
         )
@@ -141,3 +188,5 @@ def _upsert_match(
         match.signals = {**(match.signals or {}), **signals}
         if phash_distance is not None:
             match.phash_distance = phash_distance
+        if embedding_similarity is not None:
+            match.embedding_similarity = embedding_similarity
