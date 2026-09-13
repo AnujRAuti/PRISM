@@ -1,10 +1,27 @@
-"""Configuration placeholders for the backend."""
 
-from pydantic import BaseSettings
+"""Configuration using Pydantic BaseSettings."""
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     app_name: str = "proof-of-action-backend"
+    environment: str = "development"
+
+    # Data stores
+    database_url: str = "sqlite:///./pofa_dev.db"
+    redis_url: str = "redis://localhost:6379/0"
+
+    # S3 / MinIO
+    s3_endpoint: str = "http://localhost:9000"
+    s3_access_key: str = "minioadmin"
+    s3_secret_key: str = "minioadmin"
+    s3_bucket: str = "pofa"
+
+    jwt_secret: str = "changeme"
+
+    class Config:
+        env_file = ".env"
 
 
 settings = Settings()
