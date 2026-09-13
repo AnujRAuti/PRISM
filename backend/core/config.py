@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     # Data stores
-    database_url: str = "sqlite:///./pofa_dev.db"
+    # Use PostgreSQL in development by default (do not use SQLite).
+    database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/pofa_dev"
     redis_url: str = "redis://localhost:6379/0"
 
     # S3 / MinIO

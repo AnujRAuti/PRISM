@@ -2,17 +2,19 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine import Engine
 from backend.core.config import settings
 
 
-_engine = None
+_engine: Engine | None = None
 _SessionLocal = None
 
 
-def get_engine():
+def get_engine() -> Engine:
     global _engine
     if _engine is None:
-        _engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
+        # For PostgreSQL, no SQLite-specific connect_args are needed.
+        _engine = create_engine(settings.database_url, pool_pre_ping=True)
     return _engine
 
 

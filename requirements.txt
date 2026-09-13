@@ -5,6 +5,8 @@ pydantic-settings
 sqlalchemy
 alembic
 psycopg-binary
+geoalchemy2
+pgvector
 redis
 boto3
 minio

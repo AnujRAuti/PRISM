@@ -16,8 +16,9 @@ def ready():
     # basic readiness: database engine creatable
     try:
         engine = get_engine()
-        conn = engine.connect()
-        conn.close()
+        with engine.connect() as conn:
+            # perform a simple lightweight query to verify DB responsiveness
+            conn.execute("SELECT 1")
         return JSONResponse({"status": "ok"})
     except Exception:
         return JSONResponse({"status": "unavailable"}, status_code=503)

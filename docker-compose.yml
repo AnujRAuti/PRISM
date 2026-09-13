@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: pofa_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pofa_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./docker/pg-init:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  db_data:
