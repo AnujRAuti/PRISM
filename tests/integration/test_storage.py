@@ -1,9 +1,14 @@
+import subprocess
 import urllib.request
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
 
-from backend.services.storage import ObjectNotFoundError, StorageService
+from backend.services.storage import ObjectNotFoundError, StorageError, StorageService
+
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(scope="module")
@@ -60,6 +65,37 @@ def test_presigned_download_returns_uploaded_bytes(object_context):
         assert response.read() == payload
 
 
+def test_object_persists_across_minio_restart(storage):
+    key = f"tests/{uuid4()}/restart-persistence"
+    payload = b"minio-restart-persistence-test"
+
+    try:
+        put_with_presigned_url(storage, key, payload)
+        metadata_before = storage.get_object_metadata(storage.quarantine_bucket, key)
+
+        subprocess.run(
+            ["docker", "compose", "restart", "minio"],
+            cwd=REPOSITORY_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        restarted_storage = StorageService()
+        metadata_after = restarted_storage.get_object_metadata(
+            restarted_storage.quarantine_bucket, key
+        )
+        download_url = restarted_storage.create_presigned_download_url(
+            restarted_storage.quarantine_bucket, key
+        )
+        with urllib.request.urlopen(download_url, timeout=10) as response:
+            assert response.read() == payload
+
+        assert metadata_after == metadata_before
+    finally:
+        storage.delete_object(storage.quarantine_bucket, key)
+
+
 def test_copy_promotes_object(object_context):
     storage, key, payload = object_context
     put_with_presigned_url(storage, key, payload)
@@ -82,5 +118,5 @@ def test_missing_object_raises_application_error(storage):
 
 
 def test_unsafe_key_is_rejected(storage):
-    with pytest.raises(Exception):
+    with pytest.raises(StorageError, match="Storage object key is unsafe"):
         storage.object_exists(storage.quarantine_bucket, "../outside")

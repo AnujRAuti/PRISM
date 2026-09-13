@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     s3_secret_key: str = ""
     s3_region: str = "us-east-1"
     s3_use_ssl: bool = False
-    s3_bucket: str = "pofa"
     s3_quarantine_bucket: str = "pofa-quarantine"
     s3_evidence_bucket: str = "pofa-evidence"
 

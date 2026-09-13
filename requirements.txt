@@ -12,13 +12,11 @@ redis==4.6.0
 geoalchemy2==0.13.0
 pgvector==0.5.0
 
-# Optional / tooling
-boto3==2.0.0
-minio==7.1.0
+# Object storage
+boto3==1.43.93
 python-multipart==0.0.6
 Pillow==10.0.0
 imagehash==4.3.1
 numpy==1.26.2
 exifread==3.0.0
 
-# ML / vector deps: install later in BE-002
