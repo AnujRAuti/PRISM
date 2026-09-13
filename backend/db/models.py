@@ -89,6 +89,8 @@ class Evidence(Base):
     storage_key = Column(String(1024), nullable=False, default="legacy/unknown")
     file_size = Column(Integer, nullable=False, default=0)
     status = Column(String(50), nullable=False, default="uploaded_quarantine")
+    sha256 = Column(String(64), nullable=True, index=True)
+    phash = Column(String(64), nullable=True)
     location = Column(Geometry(geometry_type="POINT", srid=4326), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 

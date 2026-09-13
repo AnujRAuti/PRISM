@@ -134,6 +134,22 @@ class StorageService:
         except (EndpointConnectionError, BotoCoreError) as error:
             raise StorageConnectionError("Unable to connect to object storage") from error
 
+    def get_object_bytes(self, bucket: str, key: str) -> bytes:
+        try:
+            response = self._client.get_object(
+                Bucket=self._bucket(bucket),
+                Key=self._key(key),
+            )
+            body = response["Body"]
+            try:
+                return body.read()
+            finally:
+                body.close()
+        except ClientError as error:
+            raise self._translate(error, bucket=bucket, key=key) from error
+        except (EndpointConnectionError, BotoCoreError) as error:
+            raise StorageConnectionError("Unable to connect to object storage") from error
+
     def bucket_exists(self, bucket: str) -> bool:
         bucket_name = self._bucket(bucket)
         try:
