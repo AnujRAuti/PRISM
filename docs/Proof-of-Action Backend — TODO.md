@@ -179,8 +179,8 @@ backend/
 └── .env.example
 ```
 
-- [ ] Create all directories.
-- [ ] Add `__init__.py` where required.
+- [DONE] Create all directories.
+- [DONE] Add `__init__.py` where required.
 - [ ] Keep API logic separate from analysis engines.
 - [ ] Keep database access separate from business logic.
 
@@ -191,9 +191,9 @@ backend/
 ## 4.1 Python
 
 - [ ] Install supported Python version.
-- [ ] Create virtual environment.
-- [ ] Activate environment.
-- [ ] Upgrade pip.
+- [DONE] Create virtual environment.
+- [DONE] Activate environment.
+- [DONE] Upgrade pip.
 
 ## 4.2 Initial dependencies
 

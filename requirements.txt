@@ -1,0 +1,22 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+sqlalchemy
+alembic
+psycopg-binary
+redis
+boto3
+minio
+python-multipart
+Pillow
+imagehash
+numpy
+exifread
+
+# ML / vector deps (install later)
+# pgvector
+# torch
+# transformers
+# scikit-learn
+# xgboost
