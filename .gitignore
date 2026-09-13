@@ -1,3 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtualenv
+backend/.venv/
+
+# Database files
+*.db
+pofa_dev.db
+
+# Alembic versions (committed migrations are okay; ignore local caches)
+.alembic_tmp
+
+# Editor
+.vscode/
 __pycache__/
 .venv/
 venv/

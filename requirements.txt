@@ -1,24 +1,24 @@
 fastapi
 uvicorn[standard]
-pydantic
-pydantic-settings
-sqlalchemy
-alembic
-psycopg-binary
-geoalchemy2
-pgvector
-redis
-boto3
-minio
-python-multipart
-Pillow
-imagehash
-numpy
-exifread
+fastapi==0.141.1
+uvicorn[standard]==0.23.1
+pydantic==2.3.0
+pydantic-settings==2.3.0
+sqlalchemy==2.0.52
+alembic==1.11.2
+psycopg-binary==3.1.0
+redis==4.6.0
+# Database/PostGIS
+geoalchemy2==0.13.0
+pgvector==0.5.0
 
-# ML / vector deps (install later)
-# pgvector
-# torch
-# transformers
-# scikit-learn
-# xgboost
+# Optional / tooling
+boto3==2.0.0
+minio==7.1.0
+python-multipart==0.0.6
+Pillow==10.0.0
+imagehash==4.3.1
+numpy==1.26.2
+exifread==3.0.0
+
+# ML / vector deps: install later in BE-002

@@ -1,3 +1,11 @@
+"""SQLAlchemy models for PoA backend (BE-001).
+
+Notes:
+- UUID primary keys are used as strings.
+- PostGIS `Geometry` is used for location fields (SRID 4326).
+- `embedding` currently uses an ARRAY(Float) placeholder; do not treat this as pgvector yet.
+"""
+
 import uuid
 import datetime
 
