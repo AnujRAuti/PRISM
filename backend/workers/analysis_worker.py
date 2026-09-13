@@ -8,6 +8,8 @@ from backend.db.session import get_session
 from backend.services.analysis_jobs import utc_now
 from backend.services.analysis_queue import AnalysisQueue, QueueMessage
 from backend.services.fingerprinting import process_evidence
+from backend.services.duplicate_intelligence import analyze_duplicates
+from backend.services.storage import StorageService
 
 
 logger = logging.getLogger(__name__)
@@ -40,12 +42,24 @@ def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
         db.commit()
 
         fingerprint = process_evidence(job.evidence_id, db)
+        duplicate_analysis = analyze_duplicates(
+            job.evidence_id,
+            db,
+            StorageService(),
+            job.id,
+        )
         result: Any = db.query(AnalysisResult).filter(AnalysisResult.job_id == job.id).one_or_none()
         result_payload = {
             "sha256": fingerprint.sha256,
             "phash": fingerprint.phash,
             "exif_status": fingerprint.exif_status,
             "phash_status": "success" if fingerprint.phash else "failed",
+            "duplicate_analysis": {
+                "exact_matches": duplicate_analysis.exact_matches,
+                "perceptual_matches": duplicate_analysis.perceptual_matches,
+                "embedding_status": duplicate_analysis.embedding_status,
+                "embedding_error": duplicate_analysis.embedding_error,
+            },
         }
         if result is None:
             db.add(AnalysisResult(job_id=job.id, result=result_payload))

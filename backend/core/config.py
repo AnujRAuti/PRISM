@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     analysis_queue_name: str = "pofa:analysis:jobs"
     analysis_max_attempts: int = 3
+    phash_max_hamming_distance: int = 8
+    embedding_model_name: str = "openai/clip-vit-base-patch32"
+    embedding_dimension: int = 512
+    embedding_top_k: int = 10
 
     # S3 / MinIO
     s3_endpoint: str = "http://localhost:9000"

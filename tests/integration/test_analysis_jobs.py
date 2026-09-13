@@ -7,7 +7,7 @@ from PIL import Image
 
 from backend.app.main import app
 from backend.core.config import settings
-from backend.db.models import AnalysisJob, AnalysisResult, Evidence, EvidenceMetadata
+from backend.db.models import AnalysisJob, AnalysisResult, DuplicateMatch, Evidence, EvidenceMetadata
 from backend.db.session import get_session
 from backend.services.analysis_queue import AnalysisQueue
 from backend.services.storage import StorageService
@@ -40,6 +40,10 @@ def cleanup(evidence_id: str, storage_key: str, job_id: str | None = None) -> No
     if job_id:
         session.query(AnalysisResult).filter_by(job_id=job_id).delete()
         session.query(AnalysisJob).filter_by(id=job_id).delete()
+    session.query(DuplicateMatch).filter(
+        (DuplicateMatch.evidence_id == evidence_id)
+        | (DuplicateMatch.matched_evidence_id == evidence_id)
+    ).delete(synchronize_session=False)
     session.query(EvidenceMetadata).filter_by(evidence_id=evidence_id).delete()
     session.query(Evidence).filter_by(id=evidence_id).delete()
     session.commit()

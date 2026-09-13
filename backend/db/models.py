@@ -22,7 +22,8 @@ from sqlalchemy import (
     UniqueConstraint,
     Float,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import declarative_base, relationship
 
 from geoalchemy2 import Geometry
@@ -127,7 +128,7 @@ class AnalysisResult(Base):
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     job_id = Column(UUID(as_uuid=False), ForeignKey("analysis_jobs.id"), nullable=False)
     result = Column(JSONB)
-    embedding = Column(ARRAY(Float))  # placeholder: ARRAY(Float) for pgvector-compatible vectors
+    embedding = Column(Vector(512), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     job = relationship("AnalysisJob")
@@ -150,6 +151,10 @@ class DuplicateMatch(Base):
     evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=False)
     matched_evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=False)
     similarity = Column(Integer)
+    match_type = Column(String(50), nullable=False, default="candidate")
+    phash_distance = Column(Integer, nullable=True)
+    embedding_similarity = Column(Float, nullable=True)
+    signals = Column(JSONB, nullable=False, default=dict)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

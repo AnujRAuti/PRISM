@@ -77,3 +77,9 @@ python -m backend.workers.analysis_worker
 Create a job with `POST /api/v1/analysis/jobs` and a JSON body containing `evidence_id`. Retrieve its PostgreSQL-backed state with `GET /api/v1/analysis/jobs/{job_id}`. Jobs move through `queued`, `running`, `completed`, or `failed`; processing retries up to `ANALYSIS_MAX_ATTEMPTS` (3 by default). Redis carries only the job ID, while PostgreSQL remains authoritative for state and results.
 
 The worker invokes the existing BE-004 fingerprinting service and persists the real SHA-256, pHash, and EXIF status in `AnalysisResult`. It does not perform duplicate, fraud, risk, or other later-milestone analysis.
+
+## Duplicate intelligence
+
+BE-006 preserves duplicate signals independently. Exact candidates use equality of persisted SHA-256 values; perceptual candidates use the Hamming distance between persisted pHash values and `PHASH_MAX_HAMMING_DISTANCE` (8 by default). Candidate pairs are stored symmetrically and idempotently in `duplicate_matches` with signal provenance.
+
+The embedding schema is PostgreSQL `VECTOR(512)` and the configured real model is `openai/clip-vit-base-patch32`, with normalized cosine-compatible vectors. Embedding generation is explicit: when a compatible `torch` and `transformers` runtime is installed, the worker computes and persists the real image embedding; otherwise the result records `embedding_status=unavailable` and no vector or semantic similarity is claimed. No fabricated vectors or scores are used.
