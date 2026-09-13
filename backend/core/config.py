@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     s3_use_ssl: bool = False
     s3_quarantine_bucket: str = "pofa-quarantine"
     s3_evidence_bucket: str = "pofa-evidence"
+    max_upload_size: int = 10 * 1024 * 1024
 
     jwt_secret: str = "changeme"
 

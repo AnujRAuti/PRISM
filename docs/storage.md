@@ -33,6 +33,7 @@ S3_REGION=us-east-1
 S3_USE_SSL=false
 S3_QUARANTINE_BUCKET=pofa-quarantine
 S3_EVIDENCE_BUCKET=pofa-evidence
+MAX_UPLOAD_SIZE=10485760
 ```
 
 For production, point `S3_ENDPOINT` and credentials at the selected S3-compatible provider and set `S3_USE_SSL=true`.
@@ -48,3 +49,9 @@ evidence/{evidence_id}/derived/{artifact}
 ```
 
 The storage layer provides presigned upload and download URLs, object existence and metadata checks, server-side copy/promotion, and deletion. It keeps buckets private and does not implement upload validation or evidence processing.
+
+## Evidence upload
+
+`POST /api/v1/evidence` accepts a multipart form field named `file`. The endpoint supports JPEG, PNG, and WebP images up to `MAX_UPLOAD_SIZE` bytes (10 MiB by default). It verifies that the content is a readable image, stores the original in `pofa-quarantine` under `quarantine/{evidence_id}/original`, and creates an `uploaded_quarantine` Evidence record.
+
+The response contains the generated `evidence_id`, the `uploaded` response status, the quarantine `storage_key`, the validated `content_type`, and the byte `size`. Client filenames are retained only as metadata and never control object keys.

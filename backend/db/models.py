@@ -82,10 +82,13 @@ class Claim(Base):
 class Evidence(Base):
     __tablename__ = "evidence"
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=False)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
     claim_id = Column(UUID(as_uuid=False), ForeignKey("claims.id"), nullable=True)
     filename = Column(String(512), nullable=False)
     content_type = Column(String(128))
+    storage_key = Column(String(1024), nullable=False, default="legacy/unknown")
+    file_size = Column(Integer, nullable=False, default=0)
+    status = Column(String(50), nullable=False, default="uploaded_quarantine")
     location = Column(Geometry(geometry_type="POINT", srid=4326), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 

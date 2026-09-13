@@ -121,6 +121,19 @@ class StorageService:
         except (ClientError, BotoCoreError) as error:
             raise PresignedUrlError("Unable to generate a download URL") from error
 
+    def put_object(self, bucket: str, key: str, data: bytes, *, content_type: str) -> None:
+        try:
+            self._client.put_object(
+                Bucket=self._bucket(bucket),
+                Key=self._key(key),
+                Body=data,
+                ContentType=content_type,
+            )
+        except ClientError as error:
+            raise self._translate(error, bucket=bucket, key=key) from error
+        except (EndpointConnectionError, BotoCoreError) as error:
+            raise StorageConnectionError("Unable to connect to object storage") from error
+
     def bucket_exists(self, bucket: str) -> bool:
         bucket_name = self._bucket(bucket)
         try:

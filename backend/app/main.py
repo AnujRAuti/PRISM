@@ -6,6 +6,7 @@ from backend.core.config import settings
 from backend.api.v1.endpoints.health import router as health_router
 from backend.core.logging import setup_logging
 from backend.core.middleware import RequestIDMiddleware
+from backend.api.v1.router import router as api_router
 
 
 setup_logging()
@@ -31,3 +32,4 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 
 app.include_router(health_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api/v1")
