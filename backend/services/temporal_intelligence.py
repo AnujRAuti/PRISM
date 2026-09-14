@@ -103,12 +103,6 @@ def extract_capture_time(exif: dict[str, Any]) -> CaptureTime:
     return CaptureTime(None, False, None)
 
 
-def _as_utc(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        return value
-    return value.astimezone(timezone.utc)
-
-
 def _wall_clock(value: datetime) -> datetime:
     """Normalize to a common comparison basis (naive UTC wall-clock).
 

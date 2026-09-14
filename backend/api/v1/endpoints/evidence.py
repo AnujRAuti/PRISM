@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
@@ -25,9 +26,9 @@ def _match_image_content_type(data: bytes, declared_type: str | None) -> str:
     signature_type = _detect_signature_content_type(data)
     try:
         with Image.open(BytesIO(data)) as image:
+            image_format = (image.format or "").upper()
             image.verify()
-        with Image.open(BytesIO(data)) as image:
-            actual_type = CONTENT_TYPE_MAP.get(image.format.upper())
+        actual_type = CONTENT_TYPE_MAP.get(image_format)
     except (UnidentifiedImageError, OSError) as error:
         raise HTTPException(status_code=415, detail="Uploaded file is not a valid image") from error
 
@@ -74,11 +75,6 @@ async def upload_evidence(
         raise HTTPException(status_code=413, detail="Uploaded file is too large")
 
     actual_type = _match_image_content_type(data, declared_type)
-    if declared_type and declared_type != actual_type:
-        raise HTTPException(
-            status_code=415,
-            detail=f"Content-Type mismatch: declared {declared_type} but actual file is {actual_type}",
-        )
 
     evidence_id = str(uuid4())
     storage = StorageService()
@@ -102,7 +98,18 @@ async def upload_evidence(
         )
         db.add(evidence)
         db.commit()
-    except (StorageError, Exception):
+    except StorageError:
+        # Storage failed: no Evidence row was committed; report the failure
+        # without claiming the upload succeeded.
+        db.rollback()
+        try:
+            storage.delete_object(storage.quarantine_bucket, storage_key)
+        except StorageError:
+            pass
+        raise
+    except SQLAlchemyError:
+        # Database persistence failed after (or before) the object landed in
+        # quarantine: roll back and remove the orphaned object best-effort.
         db.rollback()
         try:
             storage.delete_object(storage.quarantine_bucket, storage_key)

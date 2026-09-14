@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from backend.db.session import get_engine
 
@@ -18,7 +19,7 @@ def ready():
         engine = get_engine()
         with engine.connect() as conn:
             # perform a simple lightweight query to verify DB responsiveness
-            conn.execute("SELECT 1")
+            conn.execute(text("SELECT 1"))
         return JSONResponse({"status": "ok"})
     except Exception:
         return JSONResponse({"status": "unavailable"}, status_code=503)

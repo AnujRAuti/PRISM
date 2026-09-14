@@ -3,11 +3,10 @@
 Notes:
 - UUID primary keys are used as strings.
 - PostGIS `Geometry` is used for location fields (SRID 4326).
-- `embedding` currently uses an ARRAY(Float) placeholder; do not treat this as pgvector yet.
+- `AnalysisResult.embedding` uses pgvector `Vector(512)` for CLIP embeddings.
 """
 
 import uuid
-import datetime
 
 from sqlalchemy import (
     Column,
@@ -18,8 +17,6 @@ from sqlalchemy import (
     Boolean,
     Integer,
     func,
-    Index,
-    UniqueConstraint,
     Float,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB

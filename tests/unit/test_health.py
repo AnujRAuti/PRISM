@@ -13,7 +13,7 @@ def test_health():
 def test_ready():
     client = TestClient(app)
     r = client.get("/api/v1/ready")
-    # SQLite default should be available in dev
+    # PostgreSQL should be available in dev/integration environments
     assert r.status_code in (200, 503)
 
 

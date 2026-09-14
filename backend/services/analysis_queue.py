@@ -44,28 +44,46 @@ class AnalysisQueue:
         pipeline.execute()
 
     def recover_abandoned(self, db: Session) -> int:
+        """Requeue processing-list messages left by dead workers.
+
+        Loss-safety: the head payload is only peeked (LINDEX) until the
+        database decision is made, then removed (LREM) after it has been
+        safely requeued or discarded. A crash between RPUSH and LREM can at
+        most produce a duplicate delivery, which the worker already handles
+        idempotently (completed/failed guards); a message is never lost.
+        """
         recovered = 0
         while True:
-            payload = self.client.lpop(self.processing_name)
+            payload = self.client.lindex(self.processing_name, 0)
             if payload is None:
                 break
             try:
                 job_id = str(json.loads(payload)["job_id"])
             except (TypeError, ValueError, KeyError):
+                self.client.lrem(self.processing_name, 1, payload)
                 continue
             job = db.query(AnalysisJob).filter(AnalysisJob.id == job_id).one_or_none()
             if job is None:
+                self.client.lrem(self.processing_name, 1, payload)
                 continue
             if job.status == "running":
                 job.status = "queued"
                 job.error = "Recovered from abandoned processing state"
-                self.client.rpush(self.queue_name, payload)
+                db.commit()
+                pipeline = self.client.pipeline()
+                pipeline.rpush(self.queue_name, payload)
+                pipeline.lrem(self.processing_name, 1, payload)
+                pipeline.execute()
                 recovered += 1
             elif job.status in {"completed", "failed"}:
-                pass
+                self.client.lrem(self.processing_name, 1, payload)
+                db.commit()
             else:
-                self.client.rpush(self.queue_name, payload)
-            db.commit()
+                pipeline = self.client.pipeline()
+                pipeline.rpush(self.queue_name, payload)
+                pipeline.lrem(self.processing_name, 1, payload)
+                pipeline.execute()
+                db.commit()
         return recovered
 
     def clear(self) -> None:

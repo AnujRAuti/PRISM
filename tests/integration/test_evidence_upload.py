@@ -126,6 +126,15 @@ def test_oversized_upload_is_rejected(monkeypatch):
     assert response.status_code == 413
 
 
+def test_truncated_signature_is_rejected():
+    payload = b"\xff\xd8\xff" + b"\x00" * 64
+    response = client.post(
+        "/api/v1/evidence",
+        files={"file": ("truncated.jpg", payload, "image/jpeg")},
+    )
+    assert response.status_code == 415
+
+
 def test_filename_path_traversal_does_not_control_storage_key():
     payload = image_bytes("PNG")
     response = client.post(

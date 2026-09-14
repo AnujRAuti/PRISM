@@ -1,6 +1,7 @@
 import json
 from io import BytesIO
 from uuid import uuid4
+import json
 
 import redis
 from fastapi.testclient import TestClient
@@ -190,3 +191,53 @@ def test_abandoned_processing_jobs_are_recovered_idempotently():
 
 def test_redis_is_reachable():
     assert redis.Redis.from_url(settings.redis_url).ping() is True
+
+
+def test_recovery_discards_completed_failed_missing_and_invalid_payloads():
+    evidence = create_evidence()
+    queue = AnalysisQueue()
+    queue.clear()
+    session = get_session()
+    keep_job = AnalysisJob(evidence_id=evidence["evidence_id"], status="running", attempt_count=1)
+    done_job = AnalysisJob(evidence_id=evidence["evidence_id"], status="completed", attempt_count=1)
+    failed_job = AnalysisJob(evidence_id=evidence["evidence_id"], status="failed", attempt_count=3)
+    keep_id = done_id = failed_id = None
+    try:
+        session.add_all([keep_job, done_job, failed_job])
+        session.commit()
+        for job in (keep_job, done_job, failed_job):
+            session.refresh(job)
+        keep_id, done_id, failed_id = keep_job.id, done_job.id, failed_job.id
+        queue.client.rpush(queue.processing_name, json.dumps({"job_id": done_id}))
+        queue.client.rpush(queue.processing_name, json.dumps({"job_id": failed_id}))
+        queue.client.rpush(queue.processing_name, json.dumps({"job_id": str(uuid4())}))
+        queue.client.rpush(queue.processing_name, "not-json{{")
+        queue.client.rpush(queue.processing_name, json.dumps({"job_id": keep_id}))
+
+        assert queue.recover_abandoned(session) == 1
+        session.refresh(keep_job)
+        assert keep_job.status == "queued"
+        # Only the genuinely abandoned running job is requeued; terminal,
+        # missing, and corrupt messages are discarded, never reprocessed.
+        assert queue.client.llen(queue.processing_name) == 0
+        queued = [
+            json.loads(item)["job_id"]
+            for item in queue.client.lrange(queue.queue_name, 0, -1)
+        ]
+        assert queued == [keep_id]
+        assert queue.recover_abandoned(session) == 0
+    finally:
+        queue.clear()
+        session.close()
+        cleaner = get_session()
+        known_ids = [job_id for job_id in (keep_id, done_id, failed_id) if job_id is not None]
+        if known_ids:
+            cleaner.query(AnalysisResult).filter(AnalysisResult.job_id.in_(known_ids)).delete(
+                synchronize_session=False
+            )
+            cleaner.query(AnalysisJob).filter(AnalysisJob.id.in_(known_ids)).delete(
+                synchronize_session=False
+            )
+            cleaner.commit()
+        cleaner.close()
+        cleanup(evidence["evidence_id"], evidence["storage_key"], None)

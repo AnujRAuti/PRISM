@@ -4,6 +4,9 @@ __pycache__/
 
 # Virtualenv
 backend/.venv/
+.venv/
+venv/
+env/
 
 # Database files
 *.db
@@ -14,16 +17,10 @@ pofa_dev.db
 
 # Editor
 .vscode/
-__pycache__/
-.venv/
-venv/
-env/
-*.pyc
-.env
+/.idea/
+
 dist/
 build/
 *.egg-info/
-/.idea/
-.vscode/
 *.log
 .env

@@ -138,19 +138,33 @@ def test_latest_embedding_selection_is_deterministic_when_created_at_ties():
         session.refresh(neighbor_job)
 
         shared_time = session.query(AnalysisJob.created_at).first()[0]
-        session.add_all(
-            [
-                AnalysisResult(job_id=anchor_job_1.id, embedding=[0.0] * 512, created_at=shared_time),
-                AnalysisResult(job_id=anchor_job_2.id, embedding=[0.9] * 512, created_at=shared_time),
-                AnalysisResult(job_id=neighbor_job.id, embedding=[0.8] * 512, created_at=shared_time),
-            ]
+        # Non-zero, non-parallel vectors so pgvector cosine distances are
+        # well-defined (no NaN) and deterministically ordered.
+        anchor_result_1 = AnalysisResult(
+            job_id=anchor_job_1.id, embedding=[1.0] + [0.0] * 511, created_at=shared_time
         )
+        anchor_result_2 = AnalysisResult(
+            job_id=anchor_job_2.id, embedding=[0.0, 1.0] + [0.0] * 510, created_at=shared_time
+        )
+        neighbor_result = AnalysisResult(
+            job_id=neighbor_job.id, embedding=[0.0, 0.0, 1.0] + [0.0] * 509, created_at=shared_time
+        )
+        session.add_all([anchor_result_1, anchor_result_2, neighbor_result])
         session.commit()
+        session.refresh(anchor_result_1)
+        session.refresh(anchor_result_2)
 
-        candidates = search_similar_embeddings([0.9] * 512, session, top_k=10)
+        candidates = search_similar_embeddings([0.0, 1.0] + [0.0] * 510, session, top_k=10)
         evidence_ids = [row["evidence_id"] for row in candidates]
         assert evidence_ids.count(anchor["evidence_id"]) == 1
         assert anchor["evidence_id"] in evidence_ids
+        # The tied latest selection must be deterministic: created_at DESC,
+        # result id DESC, so the winner is the tied result with the greater id.
+        expected = anchor_result_2 if anchor_result_2.id > anchor_result_1.id else anchor_result_1
+        anchor_match = next(row for row in candidates if row["evidence_id"] == anchor["evidence_id"])
+        assert anchor_match["job_id"] == expected.job_id
+        repeat = search_similar_embeddings([0.0, 1.0] + [0.0] * 510, session, top_k=10)
+        assert repeat == candidates
     finally:
         session.close()
         cleanup([anchor, neighbor])

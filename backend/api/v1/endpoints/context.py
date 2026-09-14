@@ -32,11 +32,6 @@ from backend.schemas.context import (
 router = APIRouter()
 
 
-def _pagination(limit: int, offset: int) -> None:
-    if limit < 1 or limit > 100 or offset < 0:
-        raise HTTPException(status_code=422, detail="Invalid pagination")
-
-
 def _require_project(project_id: UUID, db: Session) -> Project:
     project = db.query(Project).filter(Project.id == str(project_id)).one_or_none()
     if project is None:
