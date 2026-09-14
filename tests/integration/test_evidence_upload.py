@@ -107,6 +107,16 @@ def test_invalid_uploads_are_rejected(filename, content_type, payload, expected_
     assert response.status_code == expected_status
 
 
+def test_mime_mismatch_is_rejected():
+    payload = image_bytes("PNG")
+    response = client.post(
+        "/api/v1/evidence",
+        files={"file": ("proof.png", payload, "image/jpeg")},
+    )
+    assert response.status_code == 415
+    assert "Content-Type" in response.json()["detail"]
+
+
 def test_oversized_upload_is_rejected(monkeypatch):
     monkeypatch.setattr(settings, "max_upload_size", 32)
     response = client.post(

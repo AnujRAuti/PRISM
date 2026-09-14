@@ -4,7 +4,7 @@ from PIL import Image
 
 from backend.db.models import AnalysisJob, AnalysisResult, DuplicateMatch, Evidence, EvidenceMetadata
 from backend.db.session import get_session
-from backend.services.duplicate_intelligence import analyze_duplicates, phash_distance
+from backend.services.duplicate_intelligence import analyze_duplicates, phash_distance, search_similar_embeddings
 from backend.services.fingerprinting import process_evidence
 from backend.services.storage import StorageService
 
@@ -120,3 +120,37 @@ def test_real_embedding_search_persists_semantic_candidate_and_similarity():
     finally:
         session.close()
         cleanup([first, second])
+
+
+def test_latest_embedding_selection_is_deterministic_when_created_at_ties():
+    anchor = upload(image_bytes((60, 80, 150)), "anchor-tie.jpg")
+    neighbor = upload(image_bytes((60, 81, 151)), "neighbor-tie.jpg")
+    storage = StorageService()
+    session = get_session()
+    try:
+        anchor_job_1 = AnalysisJob(evidence_id=anchor["evidence_id"], status="completed")
+        anchor_job_2 = AnalysisJob(evidence_id=anchor["evidence_id"], status="completed")
+        neighbor_job = AnalysisJob(evidence_id=neighbor["evidence_id"], status="completed")
+        session.add_all([anchor_job_1, anchor_job_2, neighbor_job])
+        session.commit()
+        session.refresh(anchor_job_1)
+        session.refresh(anchor_job_2)
+        session.refresh(neighbor_job)
+
+        shared_time = session.query(AnalysisJob.created_at).first()[0]
+        session.add_all(
+            [
+                AnalysisResult(job_id=anchor_job_1.id, embedding=[0.0] * 512, created_at=shared_time),
+                AnalysisResult(job_id=anchor_job_2.id, embedding=[0.9] * 512, created_at=shared_time),
+                AnalysisResult(job_id=neighbor_job.id, embedding=[0.8] * 512, created_at=shared_time),
+            ]
+        )
+        session.commit()
+
+        candidates = search_similar_embeddings([0.9] * 512, session, top_k=10)
+        evidence_ids = [row["evidence_id"] for row in candidates]
+        assert evidence_ids.count(anchor["evidence_id"]) == 1
+        assert anchor["evidence_id"] in evidence_ids
+    finally:
+        session.close()
+        cleanup([anchor, neighbor])

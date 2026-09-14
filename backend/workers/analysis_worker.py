@@ -127,6 +127,11 @@ def run_worker() -> None:
     queue = AnalysisQueue()
     logger.info("analysis worker started")
     while True:
+        session = get_session()
+        try:
+            queue.recover_abandoned(session)
+        finally:
+            session.close()
         message = queue.dequeue(timeout=5)
         if message is not None:
             process_message(message, queue)

@@ -29,24 +29,23 @@ def search_similar_embeddings(
 ) -> list[dict[str, Any]]:
     latest_embeddings = (
         db.query(
+            AnalysisResult.id.label("result_id"),
             AnalysisJob.evidence_id.label("evidence_id"),
-            func.max(AnalysisResult.created_at).label("latest_created_at"),
+            func.row_number()
+            .over(
+                partition_by=AnalysisJob.evidence_id,
+                order_by=(AnalysisResult.created_at.desc(), AnalysisResult.id.desc()),
+            )
+            .label("row_num"),
         )
         .join(AnalysisResult, AnalysisResult.job_id == AnalysisJob.id)
         .filter(AnalysisResult.embedding.is_not(None))
-        .group_by(AnalysisJob.evidence_id)
         .subquery()
     )
     query = (
         db.query(AnalysisResult.job_id, AnalysisJob.evidence_id, AnalysisResult.embedding.cosine_distance(vector).label("distance"))
         .join(AnalysisJob, AnalysisJob.id == AnalysisResult.job_id)
-        .join(
-            latest_embeddings,
-            and_(
-                latest_embeddings.c.evidence_id == AnalysisJob.evidence_id,
-                latest_embeddings.c.latest_created_at == AnalysisResult.created_at,
-            ),
-        )
+        .join(latest_embeddings, and_(latest_embeddings.c.result_id == AnalysisResult.id, latest_embeddings.c.row_num == 1))
         .filter(AnalysisResult.embedding.is_not(None))
     )
     if exclude_job_id is not None:

@@ -2,8 +2,10 @@ import json
 from dataclasses import dataclass
 
 import redis
+from sqlalchemy.orm import Session
 
 from backend.core.config import settings
+from backend.db.models import AnalysisJob
 
 
 @dataclass(frozen=True)
@@ -40,6 +42,31 @@ class AnalysisQueue:
         pipeline.lrem(self.processing_name, 1, message.payload)
         pipeline.rpush(self.queue_name, message.payload)
         pipeline.execute()
+
+    def recover_abandoned(self, db: Session) -> int:
+        recovered = 0
+        while True:
+            payload = self.client.lpop(self.processing_name)
+            if payload is None:
+                break
+            try:
+                job_id = str(json.loads(payload)["job_id"])
+            except (TypeError, ValueError, KeyError):
+                continue
+            job = db.query(AnalysisJob).filter(AnalysisJob.id == job_id).one_or_none()
+            if job is None:
+                continue
+            if job.status == "running":
+                job.status = "queued"
+                job.error = "Recovered from abandoned processing state"
+                self.client.rpush(self.queue_name, payload)
+                recovered += 1
+            elif job.status in {"completed", "failed"}:
+                pass
+            else:
+                self.client.rpush(self.queue_name, payload)
+            db.commit()
+        return recovered
 
     def clear(self) -> None:
         self.client.delete(self.queue_name, self.processing_name)

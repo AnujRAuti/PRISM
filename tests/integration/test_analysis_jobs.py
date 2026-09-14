@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 from uuid import uuid4
 
@@ -161,6 +162,30 @@ def test_missing_evidence_and_invalid_job_are_rejected():
     assert missing_evidence.status_code == 404
     invalid_job = client.get("/api/v1/analysis/jobs/not-a-uuid")
     assert invalid_job.status_code == 422
+
+
+def test_abandoned_processing_jobs_are_recovered_idempotently():
+    evidence = create_evidence()
+    queue = AnalysisQueue()
+    queue.clear()
+    session = get_session()
+    job = AnalysisJob(evidence_id=evidence["evidence_id"], status="running", attempt_count=1)
+    try:
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+        queue.client.rpush(queue.processing_name, json.dumps({"job_id": job.id}))
+
+        assert queue.recover_abandoned(session) == 1
+        session.refresh(job)
+        assert job.status == "queued"
+        assert queue.client.llen(queue.processing_name) == 0
+        assert queue.client.llen(queue.queue_name) == 1
+        assert queue.recover_abandoned(session) == 0
+    finally:
+        queue.clear()
+        session.close()
+        cleanup(evidence["evidence_id"], evidence["storage_key"], job.id)
 
 
 def test_redis_is_reachable():
