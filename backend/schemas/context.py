@@ -57,11 +57,15 @@ class ClaimCreate(BaseModel):
     claimant_id: UUID | None = None
     title: str = Field(min_length=1, max_length=512)
     description: str | None = None
+    temporal_start_at: datetime | None = None
+    temporal_end_at: datetime | None = None
 
 
 class ClaimUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=512)
     description: str | None = None
+    temporal_start_at: datetime | None = None
+    temporal_end_at: datetime | None = None
 
 
 class ClaimResponse(BaseModel):
@@ -72,6 +76,8 @@ class ClaimResponse(BaseModel):
     claimant_id: UUID | None
     title: str
     description: str | None
+    temporal_start_at: datetime | None = None
+    temporal_end_at: datetime | None = None
     created_at: datetime
 
 

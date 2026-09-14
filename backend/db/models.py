@@ -74,6 +74,8 @@ class Claim(Base):
     claimant_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
     title = Column(String(512), nullable=False)
     description = Column(Text)
+    temporal_start_at = Column(DateTime(timezone=True), nullable=True)
+    temporal_end_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     project = relationship("Project")

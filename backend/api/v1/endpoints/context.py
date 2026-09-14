@@ -118,7 +118,10 @@ def get_activity(project_id: UUID, activity_id: UUID, db: Session = Depends(get_
 def create_claim(project_id: UUID, request: ClaimCreate, db: Session = Depends(get_db)) -> Claim:
     _require_project(project_id, db)
     _require_user(request.claimant_id, db, "Claimant")
-    claim = Claim(project_id=str(project_id), claimant_id=str(request.claimant_id) if request.claimant_id else None, title=request.title, description=request.description)
+    if request.temporal_start_at is not None and request.temporal_end_at is not None:
+        if request.temporal_start_at > request.temporal_end_at:
+            raise HTTPException(status_code=422, detail="temporal_start_at must be <= temporal_end_at")
+    claim = Claim(project_id=str(project_id), claimant_id=str(request.claimant_id) if request.claimant_id else None, title=request.title, description=request.description, temporal_start_at=request.temporal_start_at, temporal_end_at=request.temporal_end_at)
     db.add(claim)
     db.commit()
     db.refresh(claim)
@@ -150,6 +153,13 @@ def update_claim(project_id: UUID, claim_id: UUID, request: ClaimUpdate, db: Ses
         claim.title = request.title
     if "description" in request.model_fields_set:
         claim.description = request.description
+    if "temporal_start_at" in request.model_fields_set:
+        claim.temporal_start_at = request.temporal_start_at
+    if "temporal_end_at" in request.model_fields_set:
+        claim.temporal_end_at = request.temporal_end_at
+    if claim.temporal_start_at is not None and claim.temporal_end_at is not None:
+        if claim.temporal_start_at > claim.temporal_end_at:
+            raise HTTPException(status_code=422, detail="temporal_start_at must be <= temporal_end_at")
     db.commit()
     db.refresh(claim)
     return claim

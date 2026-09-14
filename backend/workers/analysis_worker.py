@@ -10,6 +10,7 @@ from backend.services.analysis_queue import AnalysisQueue, QueueMessage
 from backend.services.fingerprinting import process_evidence
 from backend.services.duplicate_intelligence import analyze_duplicates
 from backend.services.storage import StorageService
+from backend.services.temporal_intelligence import analyze_single
 
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,26 @@ def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
             StorageService(),
             job.id,
         )
+        try:
+            temporal_analysis = analyze_single(job.evidence_id, db)
+        except LookupError:
+            raise
+        except Exception as error:
+            temporal_analysis = {
+                "evidence_id": job.evidence_id,
+                "captured_at": None,
+                "captured_source": None,
+                "captured_tz_known": False,
+                "uploaded_at": None,
+                "capture_upload": "UNKNOWN",
+                "claim_id": None,
+                "claim_window": "UNKNOWN",
+                "relationships": [],
+                "time_differences": [],
+                "inconsistencies": [],
+                "status": "unknown",
+                "error": str(error),
+            }
         result: Any = db.query(AnalysisResult).filter(AnalysisResult.job_id == job.id).one_or_none()
         result_payload = {
             "sha256": fingerprint.sha256,
@@ -61,6 +82,7 @@ def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
                 "embedding_status": duplicate_analysis.embedding_status,
                 "embedding_error": duplicate_analysis.embedding_error,
             },
+            "temporal_analysis": temporal_analysis,
         }
         if result is None:
             db.add(AnalysisResult(job_id=job.id, result=result_payload))
