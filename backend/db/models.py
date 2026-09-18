@@ -113,6 +113,7 @@ class AnalysisJob(Base):
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=False)
     status = Column(String(50), nullable=False, index=True)
+    job_type = Column(String(50), nullable=False, server_default="fingerprint", default="fingerprint")
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     attempt_count = Column(Integer, nullable=False, default=0)
@@ -131,6 +132,37 @@ class AnalysisResult(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     job = relationship("AnalysisJob")
+    detections = relationship(
+        "VisionDetection", back_populates="analysis_result", cascade="all, delete-orphan"
+    )
+
+
+class VisionDetection(Base):
+    """BE-009: one row per YOLO detection (normalized 0..1 bounding boxes).
+
+    Individual detections live in a dedicated table rather than an unbounded
+    JSON array so they stay queryable; the summary/provenance payload lives
+    in the owning ``AnalysisResult.result`` under ``vision_analysis``.
+    """
+
+    __tablename__ = "vision_detections"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    analysis_result_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("analysis_results.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    class_id = Column(Integer, nullable=False)
+    class_name = Column(String(128), nullable=False, index=True)
+    confidence = Column(Float, nullable=False)
+    x_min = Column(Float, nullable=False)
+    y_min = Column(Float, nullable=False)
+    x_max = Column(Float, nullable=False)
+    y_max = Column(Float, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    analysis_result = relationship("AnalysisResult", back_populates="detections")
 
 
 class Anomaly(Base):

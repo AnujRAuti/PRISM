@@ -1,10 +1,12 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
 
 class AnalysisJobCreate(BaseModel):
     evidence_id: str
+    job_type: Literal["fingerprint", "vision"] = "fingerprint"
 
 
 class AnalysisJobResponse(BaseModel):

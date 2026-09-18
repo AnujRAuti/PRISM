@@ -11,6 +11,7 @@ from backend.services.fingerprinting import process_evidence
 from backend.services.duplicate_intelligence import analyze_duplicates
 from backend.services.storage import StorageService
 from backend.services.temporal_intelligence import analyze_single
+from backend.services.vision_intelligence import analyze_vision
 
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,12 @@ def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
         job.attempt_count += 1
         job.error = None
         db.commit()
+
+        if getattr(job, "job_type", "fingerprint") == "vision":
+            _complete_vision_job(db, job)
+            queue.acknowledge(message)
+            logger.info("vision job completed job_id=%s", job.id)
+            return "completed"
 
         fingerprint = process_evidence(job.evidence_id, db)
         duplicate_analysis = analyze_duplicates(
@@ -121,6 +128,24 @@ def _fail(db, job: Any, message: str) -> None:
     job.error = message
     job.completed_at = utc_now()
     db.commit()
+
+
+def _complete_vision_job(db, job: Any) -> None:
+    """Run vision analysis for a vision-typed job (raises on failure).
+
+    Vision failures propagate to the standard retry/failed handling in
+    ``process_message``; they are never converted into successful results.
+    """
+    analysis = analyze_vision(job.evidence_id, db, StorageService(), job.id)
+    job.status = "completed"
+    job.completed_at = utc_now()
+    db.commit()
+    logger.info(
+        "vision analysis stored job_id=%s result_id=%s detection_count=%d",
+        job.id,
+        analysis.result_id,
+        analysis.detection_count,
+    )
 
 
 def run_worker() -> None:

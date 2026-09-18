@@ -20,6 +20,16 @@ class Settings(BaseSettings):
     embedding_dimension: int = 512
     embedding_top_k: int = 10
 
+    # BE-009 Vision Intelligence (Ultralytics YOLO; weights auto-downloaded
+    # at runtime, never committed to Git).
+    vision_enabled: bool = True
+    vision_model_name: str = "yolo11n.pt"
+    vision_conf_threshold: float = 0.25
+    vision_iou_threshold: float = 0.45
+    vision_max_detections: int = 100
+    vision_device: str = "auto"
+    vision_imgsz: int = 640
+
     # S3 / MinIO
     s3_endpoint: str = "http://localhost:9000"
     s3_access_key: str = ""

@@ -20,7 +20,7 @@ router = APIRouter(prefix="/analysis")
 def create_job(request: AnalysisJobCreate, db: Session = Depends(get_db)) -> AnalysisJobResponse:
     try:
         UUID(request.evidence_id)
-        job = create_analysis_job(request.evidence_id, db)
+        job = create_analysis_job(request.evidence_id, db, job_type=request.job_type)
     except ValueError as error:
         raise HTTPException(status_code=422, detail="Invalid evidence ID") from error
     except LookupError as error:

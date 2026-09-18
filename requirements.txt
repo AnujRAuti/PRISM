@@ -19,4 +19,5 @@ numpy==1.26.2
 exifread==3.0.0
 torch==2.8.0
 transformers==4.56.2
+ultralytics==8.4.155
 

@@ -7,14 +7,20 @@ from backend.db.models import AnalysisJob, AnalysisResult, Evidence
 from backend.services.analysis_queue import AnalysisQueue
 
 
+JOB_TYPES = ("fingerprint", "vision")
+
+
 def create_analysis_job(
     evidence_id: str,
     db: Session,
     queue: AnalysisQueue | None = None,
+    job_type: str = "fingerprint",
 ) -> AnalysisJob:
+    if job_type not in JOB_TYPES:
+        raise ValueError(f"Invalid job_type: {job_type!r}")
     if db.query(Evidence).filter(Evidence.id == evidence_id).one_or_none() is None:
         raise LookupError("Evidence not found")
-    job = AnalysisJob(evidence_id=evidence_id, status="queued", attempt_count=0)
+    job = AnalysisJob(evidence_id=evidence_id, status="queued", attempt_count=0, job_type=job_type)
     db.add(job)
     db.commit()
     db.refresh(job)
