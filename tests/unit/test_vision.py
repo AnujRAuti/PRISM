@@ -1,9 +1,10 @@
 """BE-009 unit tests (no model weights, no database, no storage)."""
 
+import os
 from io import BytesIO
 
 import pytest
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from backend.core.config import settings
 from backend.engines.vision.detector import (
@@ -172,3 +173,46 @@ def test_vision_configuration_is_sane():
     assert settings.vision_max_detections >= 1
     assert settings.vision_imgsz >= 32
     assert settings.vision_model_name
+
+
+@pytest.mark.skipif(
+    os.environ.get("YOLO_AUTOINSTALL") not in (None, "False"),
+    reason="operator explicitly opted into ultralytics AutoUpdate",
+)
+def test_yolo_autoinstall_disabled_by_default():
+    # Set by backend.engines.vision.detector at import: ultralytics must
+    # never spawn package-manager subprocesses from our processes.
+    assert os.environ.get("YOLO_AUTOINSTALL") == "False"
+
+
+def test_ultralytics_import_keeps_pristine_pil_open():
+    """Importing ultralytics must not change process-wide decode errors.
+
+    Regression: ultralytics replaces PIL.Image.open with a HEIF lazy
+    loader that converts decode failures into ModuleNotFoundError and
+    triggers AutoUpdate installs (which once gutted the installed Pillow
+    mid-test-run). Our detector neutralizes the patch on import.
+    """
+    ultralytics = pytest.importorskip("ultralytics")
+    assert ultralytics is not None
+    import backend.engines.vision.detector as detector
+
+    detector._neutralize_ultralytics_pil_patch()
+    assert Image.open.__module__ == "PIL.Image"
+    with pytest.raises(UnidentifiedImageError):
+        Image.open(BytesIO(b"this is not an image"))
+
+
+def test_neutralize_restores_patched_opener(monkeypatch):
+    pytest.importorskip("ultralytics")
+    from ultralytics.utils import patches as ultra_patches
+
+    import backend.engines.vision.detector as detector
+
+    def sentinel(*args, **kwargs):
+        raise AssertionError("patched opener must not survive neutralization")
+
+    monkeypatch.setattr(Image, "open", sentinel)
+    assert Image.open is sentinel
+    detector._neutralize_ultralytics_pil_patch()
+    assert Image.open is ultra_patches._image_open

@@ -7,6 +7,7 @@ the analysis as failed — never as a successful empty result.
 """
 
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass
@@ -18,6 +19,12 @@ from backend.core.config import settings
 
 
 logger = logging.getLogger(__name__)
+
+# Ultralytics' import-time requirement checks spawn package-manager
+# subprocesses (AutoUpdate) that mutate the host environment. PoA pins its
+# own dependencies, so AutoUpdate is always off in our processes unless the
+# operator explicitly opts in. Must be set before any ultralytics import.
+os.environ.setdefault("YOLO_AUTOINSTALL", "False")
 
 
 class VisionModelError(RuntimeError):
@@ -110,6 +117,7 @@ def get_model() -> object:
                 "Vision model dependency 'ultralytics' is not installed; "
                 "vision analysis is unavailable"
             ) from error
+        _neutralize_ultralytics_pil_patch()
         try:
             import ultralytics
 
@@ -136,6 +144,31 @@ def reset_model_cache() -> None:
     with _model_lock:
         _model = None
         _model_version = None
+
+
+def _neutralize_ultralytics_pil_patch() -> None:
+    """Restore pristine ``PIL.Image.open`` after an ultralytics import.
+
+    Ultralytics replaces ``PIL.Image.open`` process-wide with a HEIF lazy
+    loader. PoA only accepts JPEG/PNG/WebP and maps PIL decode failures to
+    explicit 415 responses; the wrapper would instead convert those
+    failures into ``ModuleNotFoundError`` (missing ``pi-heif``) and trigger
+    package-manager subprocesses. Restore the saved original so image
+    validation semantics stay intact for the whole process.
+    """
+    try:
+        from ultralytics.utils import patches as ultra_patches
+    except ImportError:
+        return
+    original = getattr(ultra_patches, "_image_open", None)
+    if original is None:  # pragma: no cover - internals changed
+        logger.warning("ultralytics PIL patch layout changed; leaving Image.open as-is")
+        return
+    from PIL import Image as PilImage
+
+    if PilImage.open is not original:
+        PilImage.open = original
+        logger.info("restored pristine PIL.Image.open after ultralytics import")
 
 
 def run_inference(image_bytes: bytes) -> VisionInference:

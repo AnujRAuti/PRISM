@@ -1,6 +1,7 @@
 """BE-010 integration tests against real PostgreSQL infrastructure."""
 
 from io import BytesIO
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -84,6 +85,31 @@ def cleanup(user_id, project_ids, evidence_ids, node_entity_ids=None) -> None:
             if storage.object_exists(storage.quarantine_bucket, key):
                 storage.delete_object(storage.quarantine_bucket, key)
         entity_ids = list(evidence_ids) + list(project_ids) + list(node_entity_ids or [])
+        job_ids = [
+            row[0] for row in session.query(AnalysisJob.id).filter(AnalysisJob.evidence_id.in_(evidence_ids)).all()
+        ]
+        if job_ids:
+            entity_ids.extend(job_ids)
+            entity_ids.extend(
+                row[0]
+                for row in session.query(AnalysisResult.id).filter(AnalysisResult.job_id.in_(job_ids)).all()
+            )
+            entity_ids.extend(
+                row[0]
+                for row in session.query(VisionDetection.id)
+                .join(AnalysisResult, AnalysisResult.id == VisionDetection.analysis_result_id)
+                .filter(AnalysisResult.job_id.in_(job_ids))
+                .all()
+            )
+        entity_ids.extend(
+            row[0]
+            for row in session.query(DuplicateMatch.id)
+            .filter(
+                DuplicateMatch.evidence_id.in_(evidence_ids)
+                | DuplicateMatch.matched_evidence_id.in_(evidence_ids)
+            )
+            .all()
+        )
         node_ids = [
             row[0] for row in session.query(GraphNode.id).filter(GraphNode.entity_id.in_(entity_ids)).all()
         ]
@@ -302,7 +328,16 @@ def test_duplicate_relationship_from_real_be006_output():
             process_evidence(first["evidence_id"], session)
             process_evidence(second["evidence_id"], session)
             analyze_duplicates(first["evidence_id"], session)
-            match = session.query(DuplicateMatch).one()
+            match = (
+                session.query(DuplicateMatch)
+                .filter(
+                    DuplicateMatch.evidence_id
+                    == min(first["evidence_id"], second["evidence_id"]),
+                    DuplicateMatch.matched_evidence_id
+                    == max(first["evidence_id"], second["evidence_id"]),
+                )
+                .one()
+            )
             run_id = str(uuid4())
             edge, created = graph_service.record_duplicate_relationship(
                 session, match.id, analysis_run_id=run_id
@@ -371,7 +406,16 @@ def test_vision_relationship_from_real_be009_output():
     queue.clear()
     job_id = None
     try:
-        evidence = upload("vision-graph.jpg")
+        # Real photo fixture: YOLO yields actual detections (a generated
+        # solid-color image would honestly yield zero).
+        photo = Path(__file__).parents[2] / "test-image.jpg"
+        assert photo.exists(), "test-image.jpg fixture is required"
+        uploaded = client.post(
+            "/api/v1/evidence",
+            files={"file": ("vision-graph.jpg", photo.read_bytes(), "image/jpeg")},
+        )
+        assert uploaded.status_code == 201
+        evidence = uploaded.json()
         evidence_ids.append(evidence["evidence_id"])
         job_id = client.post(
             "/api/v1/analysis/jobs",
@@ -459,9 +503,26 @@ def test_invalid_combination_rejected_with_no_row():
         bad_uuid = client.get("/api/v1/graph/EVIDENCE/not-a-uuid")
         assert bad_uuid.status_code == 422
 
+        # Scoped to this test's entity: no edge may reference it.
         session = get_session()
         try:
-            assert session.query(GraphRelationship).count() == 0
+            node_ids = [
+                row.id
+                for row in session.query(GraphNode)
+                .filter_by(node_type="EVIDENCE", entity_id=evidence["evidence_id"])
+                .all()
+            ]
+            leftovers = (
+                session.query(GraphRelationship)
+                .filter(
+                    GraphRelationship.source_node_id.in_(node_ids)
+                    | GraphRelationship.target_node_id.in_(node_ids)
+                )
+                .count()
+                if node_ids
+                else 0
+            )
+            assert leftovers == 0
         finally:
             session.close()
     finally:
@@ -505,7 +566,21 @@ def test_status_lifecycle_and_pagination():
         )
         session = get_session()
         try:
-            assert session.query(GraphRelationship).count() == 3
+            node_ids = [
+                row.id
+                for row in session.query(GraphNode)
+                .filter_by(node_type="EVIDENCE", entity_id=evidence["evidence_id"])
+                .all()
+            ]
+            assert (
+                session.query(GraphRelationship)
+                .filter(
+                    GraphRelationship.source_node_id.in_(node_ids)
+                    | GraphRelationship.target_node_id.in_(node_ids)
+                )
+                .count()
+                == 3
+            )
         finally:
             session.close()
     finally:
@@ -524,7 +599,23 @@ def test_failed_analysis_produces_no_graph_relationship():
                 graph_service.record_vision_relationship(session, str(uuid4()))
             with pytest.raises(LookupError):
                 graph_service.record_has_analysis(session, evidence["evidence_id"], str(uuid4()))
-            assert session.query(GraphRelationship).count() == 0
+            node_ids = [
+                row.id
+                for row in session.query(GraphNode)
+                .filter_by(node_type="EVIDENCE", entity_id=evidence["evidence_id"])
+                .all()
+            ]
+            leftovers = (
+                session.query(GraphRelationship)
+                .filter(
+                    GraphRelationship.source_node_id.in_(node_ids)
+                    | GraphRelationship.target_node_id.in_(node_ids)
+                )
+                .count()
+                if node_ids
+                else 0
+            )
+            assert leftovers == 0
         finally:
             session.close()
     finally:
