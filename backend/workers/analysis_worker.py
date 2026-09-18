@@ -126,10 +126,10 @@ def _fail(db, job: Any, message: str) -> None:
 def run_worker() -> None:
     queue = AnalysisQueue()
     logger.info("analysis worker started")
-    # Recover exactly once at startup: abandoned messages predate this worker,
-    # so no live job can be stolen. Running recovery inside the loop would add
-    # a DB session plus Redis round trips every 5s and could requeue jobs that
-    # a concurrent worker is actively processing.
+    # Recover at startup: only genuinely abandoned messages (stale/missing
+    # started_at, queued-but-unacknowledged) predate this worker, so no live
+    # job is stolen. Recovery itself skips fresh ``running`` jobs, so it is
+    # also safe to invoke periodically without stealing concurrent work.
     session = get_session()
     try:
         recovered = queue.recover_abandoned(session)

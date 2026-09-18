@@ -1,7 +1,7 @@
 import json
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from uuid import uuid4
-import json
 
 import redis
 from fastapi.testclient import TestClient
@@ -191,6 +191,103 @@ def test_abandoned_processing_jobs_are_recovered_idempotently():
 
 def test_redis_is_reachable():
     assert redis.Redis.from_url(settings.redis_url).ping() is True
+
+
+def test_active_running_job_is_not_stolen_by_recovery():
+    """A live worker's fresh ``running`` job must be left in processing."""
+    evidence = create_evidence()
+    queue = AnalysisQueue()
+    queue.clear()
+    session = get_session()
+    job = AnalysisJob(
+        evidence_id=evidence["evidence_id"],
+        status="running",
+        attempt_count=1,
+        started_at=datetime.now(timezone.utc),
+    )
+    try:
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+        queue.client.rpush(queue.processing_name, json.dumps({"job_id": job.id}))
+
+        assert queue.recover_abandoned(session) == 0
+        session.refresh(job)
+        assert job.status == "running"
+        # Untouched: still in processing, nothing requeued.
+        assert queue.client.llen(queue.processing_name) == 1
+        assert queue.client.llen(queue.queue_name) == 0
+        assert queue.recover_abandoned(session) == 0
+    finally:
+        queue.clear()
+        session.close()
+        cleanup(evidence["evidence_id"], evidence["storage_key"], job.id)
+
+
+def test_stale_running_job_is_recovered_and_requeue_is_dequeueable():
+    """A genuinely abandoned job is reset and its payload can be dequeued."""
+    from backend.core.config import settings as app_settings
+
+    evidence = create_evidence()
+    queue = AnalysisQueue()
+    queue.clear()
+    session = get_session()
+    stale = datetime.now(timezone.utc) - timedelta(
+        seconds=app_settings.analysis_abandoned_timeout_seconds + 60
+    )
+    job = AnalysisJob(
+        evidence_id=evidence["evidence_id"],
+        status="running",
+        attempt_count=1,
+        started_at=stale,
+    )
+    try:
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+        queue.client.rpush(queue.processing_name, json.dumps({"job_id": job.id}))
+
+        assert queue.recover_abandoned(session) == 1
+        session.refresh(job)
+        assert job.status == "queued"
+        assert queue.client.llen(queue.processing_name) == 0
+        # Recovered payload is a normal queue item: dequeue moves it back to
+        # processing for a live worker, then acknowledge completes the cycle.
+        message = queue.dequeue(timeout=1)
+        assert message is not None
+        assert message.job_id == job.id
+        queue.acknowledge(message)
+        assert queue.client.llen(queue.processing_name) == 0
+        assert queue.recover_abandoned(session) == 0
+    finally:
+        queue.clear()
+        session.close()
+        cleanup(evidence["evidence_id"], evidence["storage_key"], job.id)
+
+
+def test_queued_payload_in_processing_is_recovered():
+    """Crash between BRPOPLPUSH and running-state commit must be requeued."""
+    evidence = create_evidence()
+    queue = AnalysisQueue()
+    queue.clear()
+    session = get_session()
+    job = AnalysisJob(evidence_id=evidence["evidence_id"], status="queued", attempt_count=0)
+    try:
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+        queue.client.rpush(queue.processing_name, json.dumps({"job_id": job.id}))
+
+        assert queue.recover_abandoned(session) == 1
+        queued = [
+            json.loads(item)["job_id"]
+            for item in queue.client.lrange(queue.queue_name, 0, -1)
+        ]
+        assert queued == [job.id]
+    finally:
+        queue.clear()
+        session.close()
+        cleanup(evidence["evidence_id"], evidence["storage_key"], job.id)
 
 
 def test_recovery_discards_completed_failed_missing_and_invalid_payloads():

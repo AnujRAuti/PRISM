@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     analysis_queue_name: str = "pofa:analysis:jobs"
     analysis_max_attempts: int = 3
+    analysis_abandoned_timeout_seconds: int = 300
     phash_max_hamming_distance: int = 8
     embedding_model_name: str = "openai/clip-vit-base-patch32"
     embedding_dimension: int = 512

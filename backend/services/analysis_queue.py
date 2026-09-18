@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 import redis
 from sqlalchemy.orm import Session
@@ -46,17 +47,29 @@ class AnalysisQueue:
     def recover_abandoned(self, db: Session) -> int:
         """Requeue processing-list messages left by dead workers.
 
-        Loss-safety: the head payload is only peeked (LINDEX) until the
-        database decision is made, then removed (LREM) after it has been
-        safely requeued or discarded. A crash between RPUSH and LREM can at
-        most produce a duplicate delivery, which the worker already handles
-        idempotently (completed/failed guards); a message is never lost.
+        Abandonment is established from PostgreSQL job state plus the age of
+        ``started_at`` — never from Redis presence alone:
+
+        - ``completed`` / ``failed`` / missing job / corrupt payload:
+          discard from the processing list, never requeue.
+        - ``queued`` (dequeued but crashed before ``running``) or ``running``
+          with a missing/stale ``started_at`` (older than
+          ``analysis_abandoned_timeout_seconds``): genuinely abandoned,
+          reset to ``queued`` and requeue.
+        - ``running`` with a fresh ``started_at``: still actively processed
+          by a live worker — left untouched so recovery never steals it.
+
+        Loss-safety: an abandoned payload is RPUSHed to the main queue
+        before LREM removes it from processing. A crash between RPUSH and
+        LREM can at most produce a duplicate delivery, which the worker
+        already handles idempotently (completed/failed guards); a message
+        is never lost. Active jobs are never moved, so concurrent recovery
+        is safe. Repeated recovery is idempotent.
         """
         recovered = 0
-        while True:
-            payload = self.client.lindex(self.processing_name, 0)
-            if payload is None:
-                break
+        timeout = settings.analysis_abandoned_timeout_seconds
+        payloads = list(self.client.lrange(self.processing_name, 0, -1) or [])
+        for payload in payloads:
             try:
                 job_id = str(json.loads(payload)["job_id"])
             except (TypeError, ValueError, KeyError):
@@ -66,25 +79,44 @@ class AnalysisQueue:
             if job is None:
                 self.client.lrem(self.processing_name, 1, payload)
                 continue
+            if job.status in {"completed", "failed"}:
+                self.client.lrem(self.processing_name, 1, payload)
+                db.commit()
+                continue
+            if job.status == "running" and not _is_abandoned(job, timeout):
+                # Live worker: do not touch.
+                continue
             if job.status == "running":
                 job.status = "queued"
                 job.error = "Recovered from abandoned processing state"
-                db.commit()
-                pipeline = self.client.pipeline()
-                pipeline.rpush(self.queue_name, payload)
-                pipeline.lrem(self.processing_name, 1, payload)
-                pipeline.execute()
-                recovered += 1
-            elif job.status in {"completed", "failed"}:
-                self.client.lrem(self.processing_name, 1, payload)
-                db.commit()
-            else:
-                pipeline = self.client.pipeline()
-                pipeline.rpush(self.queue_name, payload)
-                pipeline.lrem(self.processing_name, 1, payload)
-                pipeline.execute()
-                db.commit()
+            # ``queued`` (or any other non-terminal) payload found in the
+            # processing list means the worker died between BRPOPLPUSH and
+            # acknowledgement: safe to requeue.
+            db.commit()
+            pipeline = self.client.pipeline()
+            pipeline.rpush(self.queue_name, payload)
+            pipeline.lrem(self.processing_name, 1, payload)
+            pipeline.execute()
+            recovered += 1
         return recovered
 
     def clear(self) -> None:
         self.client.delete(self.queue_name, self.processing_name)
+
+
+def _is_abandoned(job: AnalysisJob, timeout_seconds: int) -> bool:
+    """True only when a ``running`` job is genuinely abandoned.
+
+    A missing ``started_at`` predates abandonment tracking and is treated
+    as abandoned (preserves recovery for legacy rows). Otherwise the job
+    is abandoned only when ``started_at`` is older than the timeout, so a
+    live worker with a fresh heartbeat-equivalent timestamp is never
+    stolen. Timezone-naive values are assumed UTC for comparison.
+    """
+    started_at = job.started_at
+    if started_at is None:
+        return True
+    if started_at.tzinfo is None:
+        started_at = started_at.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    return (now - started_at).total_seconds() >= timeout_seconds
