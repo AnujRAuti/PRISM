@@ -332,3 +332,195 @@ class GraphRelationship(Base):
         Index("ix_graph_relationships_dedupe", "dedupe_key"),
     )
 
+
+# ---------------------------------------------------------------------------
+# BE-011 Fusion Engine vocabularies (single source of truth; mirrored by
+# CHECK constraints below and by the BE-011 Alembic migration).
+# ---------------------------------------------------------------------------
+
+FUSION_TARGETS = ("CLAIM", "EVIDENCE")
+
+FUSION_RUN_STATUSES = ("RUNNING", "COMPLETED", "FAILED")
+
+FUSION_ASSESSMENT_VALUES = (
+    "SUPPORTED",
+    "MIXED",
+    "CONTRADICTED",
+    "INSUFFICIENT_EVIDENCE",
+    "UNKNOWN",
+)
+
+FUSION_ASSESSMENT_STATUSES = ("ACTIVE", "SUPERSEDED", "INVALIDATED")
+
+FUSION_PRIORITIES = ("LOW", "NORMAL", "HIGH", "URGENT")
+
+FUSION_SIGNAL_STATES = (
+    "POSITIVE",
+    "NEGATIVE",
+    "NEUTRAL",
+    "UNKNOWN",
+    "UNAVAILABLE",
+    "CONFLICTING",
+    "NOT_APPLICABLE",
+    "NOT_GENERATED",
+)
+
+FUSION_METHOD = "deterministic_signal_fusion"
+FUSION_METHOD_VERSION = "fusion-v1"
+FUSION_DEFAULT_CONFIG_VERSION = "v1"
+
+
+class FusionConfiguration(Base):
+    """BE-011: versioned fusion methodology configuration (weights/thresholds)."""
+
+    __tablename__ = "fusion_configurations"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    version = Column(String(50), nullable=False, unique=True)
+    name = Column(String(256), nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    method_version = Column(String(50), nullable=False)
+    weights = Column(JSONB, nullable=False, default=dict)
+    thresholds = Column(JSONB, nullable=False, default=dict)
+    priority = Column(JSONB, nullable=False, default=dict)
+    signals = Column(JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class FusionRun(Base):
+    """BE-011: one versioned fusion execution over a target (append-only)."""
+
+    __tablename__ = "fusion_runs"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    status = Column(String(50), nullable=False, default="RUNNING", server_default="RUNNING")
+    method = Column(String(256), nullable=False)
+    method_version = Column(String(50), nullable=False)
+    configuration_version = Column(String(50), nullable=False)
+    input_snapshot = Column(JSONB, nullable=False, default=dict)
+    started_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("target_type IN ('CLAIM', 'EVIDENCE')", name="ck_fusion_target_type"),
+        CheckConstraint(
+            "status IN ('RUNNING', 'COMPLETED', 'FAILED')", name="ck_fusion_run_status"
+        ),
+        Index("ix_fusion_runs_target", "target_type", "target_id"),
+        Index("ix_fusion_runs_status", "status"),
+        Index("ix_fusion_runs_created", "created_at"),
+    )
+
+
+class FusionSignal(Base):
+    """BE-011: one normalized contributing signal of a fusion run."""
+
+    __tablename__ = "fusion_signals"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    fusion_run_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("fusion_runs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    signal_type = Column(String(100), nullable=False)
+    state = Column(String(50), nullable=False)
+    source = Column(String(256), nullable=False)
+    source_entity_id = Column(UUID(as_uuid=False), nullable=True)
+    source_analysis_run_id = Column(UUID(as_uuid=False), nullable=True)
+    raw_value = Column(JSONB, nullable=True)
+    normalized_value = Column(Float, nullable=True)
+    weight = Column(Float, nullable=False, default=0.0)
+    method = Column(String(256), nullable=False)
+    method_version = Column(String(50), nullable=False)
+    details = Column(JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    run = relationship("FusionRun")
+
+    __table_args__ = (
+        CheckConstraint(
+            "state IN ('POSITIVE', 'NEGATIVE', 'NEUTRAL', 'UNKNOWN', 'UNAVAILABLE', "
+            "'CONFLICTING', 'NOT_APPLICABLE', 'NOT_GENERATED')",
+            name="ck_fusion_signal_state",
+        ),
+        Index("ix_fusion_signals_run", "fusion_run_id"),
+        Index("ix_fusion_signals_type", "signal_type"),
+    )
+
+
+class IntegrityAssessment(Base):
+    """BE-011: automated evidence-integrity assessment (not a human decision)."""
+
+    __tablename__ = "integrity_assessments"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    fusion_run_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("fusion_runs.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+    )
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    assessment_status = Column(
+        String(50), nullable=False, default="ACTIVE", server_default="ACTIVE"
+    )
+    assessment_value = Column(String(50), nullable=False)
+    integrity_score = Column(Float, nullable=True)
+    signal_summary = Column(JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    run = relationship("FusionRun")
+
+    __table_args__ = (
+        CheckConstraint("target_type IN ('CLAIM', 'EVIDENCE')", name="ck_assessment_target"),
+        CheckConstraint(
+            "assessment_value IN ('SUPPORTED', 'MIXED', 'CONTRADICTED', "
+            "'INSUFFICIENT_EVIDENCE', 'UNKNOWN')",
+            name="ck_assessment_value",
+        ),
+        CheckConstraint(
+            "assessment_status IN ('ACTIVE', 'SUPERSEDED', 'INVALIDATED')",
+            name="ck_assessment_status",
+        ),
+        Index("ix_assessments_target", "target_type", "target_id"),
+        Index("ix_assessments_run", "fusion_run_id"),
+    )
+
+
+class ReviewPriority(Base):
+    """BE-011: operational review-allocation signal (not a fraud ranking)."""
+
+    __tablename__ = "review_priorities"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    fusion_run_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("fusion_runs.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+    )
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    priority = Column(String(50), nullable=False)
+    priority_score = Column(Float, nullable=False)
+    signal_summary = Column(JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    run = relationship("FusionRun")
+
+    __table_args__ = (
+        CheckConstraint("target_type IN ('CLAIM', 'EVIDENCE')", name="ck_priority_target"),
+        CheckConstraint(
+            "priority IN ('LOW', 'NORMAL', 'HIGH', 'URGENT')", name="ck_priority_value"
+        ),
+        Index("ix_priorities_target", "target_type", "target_id"),
+        Index("ix_priorities_run", "fusion_run_id"),
+    )
+
