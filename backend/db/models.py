@@ -570,3 +570,170 @@ class ExplanationRun(Base):
         Index("ix_explanation_runs_run", "fusion_run_id"),
     )
 
+
+# ---------------------------------------------------------------------------
+# BE-013 Review Case vocabularies (single source of truth; mirrored by
+# CHECK constraints below and by the BE-013 Alembic migration).
+# ---------------------------------------------------------------------------
+
+REVIEW_CASE_ORIGINS = (
+    "SYSTEM_SIGNAL",
+    "AUTHORIZED_USER",
+    "CITIZEN_REPORT",
+    "EXTERNAL_SYSTEM",
+)
+
+REVIEW_CASE_STATUSES = (
+    "OPEN",
+    "ASSIGNED",
+    "INVESTIGATING",
+    "DECISION_PENDING",
+    "RESOLVED",
+    "ESCALATED",
+)
+
+REVIEW_CASE_DECISIONS = (
+    "SUPPORTED",
+    "CONTRADICTED",
+    "INCONCLUSIVE",
+    "INSUFFICIENT_EVIDENCE",
+)
+
+CASE_GENERATION_METHOD = "deterministic_case_generation"
+CASE_GENERATION_METHOD_VERSION = "case-generation-v1"
+CASE_GENERATION_DEFAULT_CONFIG_VERSION = "v1"
+
+CASE_GENERATION_RUN_STATUSES = ("RUNNING", "COMPLETED", "FAILED")
+
+
+class CaseGenerationConfiguration(Base):
+    """BE-013: immutable versioned case-generation policy (never mutated)."""
+
+    __tablename__ = "case_generation_configurations"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    version = Column(String(50), nullable=False, unique=True)
+    name = Column(String(256), nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    configuration = Column(JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class CaseGenerationRun(Base):
+    """BE-013: one traceable case-generation evaluation (append-only)."""
+
+    __tablename__ = "case_generation_runs"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    fusion_run_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("fusion_runs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    configuration_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("case_generation_configurations.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    method = Column(String(256), nullable=False)
+    method_version = Column(String(50), nullable=False)
+    input_snapshot = Column(JSONB, nullable=False, default=dict)
+    status = Column(String(50), nullable=False, default="RUNNING", server_default="RUNNING")
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    fusion_run = relationship("FusionRun")
+    configuration = relationship("CaseGenerationConfiguration")
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('RUNNING', 'COMPLETED', 'FAILED')",
+            name="ck_case_generation_run_status",
+        ),
+        Index("ix_case_generation_runs_run", "fusion_run_id"),
+    )
+
+
+class ReviewCase(Base):
+    """BE-013: human-review work item (workflow state, never a verdict itself)."""
+
+    __tablename__ = "review_cases"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    claim_id = Column(UUID(as_uuid=False), ForeignKey("claims.id"), nullable=True)
+    evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=True)
+    fusion_run_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("fusion_runs.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    case_generation_run_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("case_generation_runs.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    origin = Column(String(50), nullable=False)
+    status = Column(String(50), nullable=False, default="OPEN", server_default="OPEN")
+    priority_band = Column(String(50), nullable=True)
+    priority_value = Column(Float, nullable=True)
+    priority_source = Column(String(256), nullable=True)
+    priority_config_version = Column(String(50), nullable=True)
+    assigned_to = Column(UUID(as_uuid=False), nullable=True)
+    assigned_at = Column(DateTime(timezone=True), nullable=True)
+    decision = Column(String(50), nullable=True)
+    decision_rationale = Column(Text, nullable=True)
+    decided_by = Column(UUID(as_uuid=False), nullable=True)
+    decided_at = Column(DateTime(timezone=True), nullable=True)
+    escalated_to = Column(UUID(as_uuid=False), nullable=True)
+    escalated_at = Column(DateTime(timezone=True), nullable=True)
+    escalation_reason = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+
+    fusion_run = relationship("FusionRun")
+    generation_run = relationship("CaseGenerationRun")
+
+    __table_args__ = (
+        CheckConstraint(
+            "origin IN ('SYSTEM_SIGNAL', 'AUTHORIZED_USER', 'CITIZEN_REPORT', 'EXTERNAL_SYSTEM')",
+            name="ck_review_case_origin",
+        ),
+        CheckConstraint(
+            "status IN ('OPEN', 'ASSIGNED', 'INVESTIGATING', 'DECISION_PENDING', "
+            "'RESOLVED', 'ESCALATED')",
+            name="ck_review_case_status",
+        ),
+        Index("ix_review_cases_project", "project_id"),
+        Index("ix_review_cases_status", "status"),
+        Index("ix_review_cases_priority", "priority_band"),
+        Index("ix_review_cases_assigned", "assigned_to"),
+        Index("ix_review_cases_run", "fusion_run_id"),
+        Index("ix_review_cases_created", "created_at"),
+    )
+
+
+class ReviewCaseEvent(Base):
+    """BE-013: append-only case workflow history (never modified)."""
+
+    __tablename__ = "review_case_events"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    case_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("review_cases.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    event_type = Column(String(50), nullable=False)
+    from_status = Column(String(50), nullable=True)
+    to_status = Column(String(50), nullable=True)
+    actor_id = Column(UUID(as_uuid=False), nullable=True)
+    event_metadata = Column("metadata", JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    case = relationship("ReviewCase")
+
+    __table_args__ = (
+        Index("ix_review_case_events_case", "case_id", "created_at"),
+    )
+
