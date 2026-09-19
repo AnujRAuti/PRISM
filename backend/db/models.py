@@ -524,3 +524,49 @@ class ReviewPriority(Base):
         Index("ix_priorities_run", "fusion_run_id"),
     )
 
+
+# ---------------------------------------------------------------------------
+# BE-012 Explainability vocabularies (single source of truth; mirrored by
+# CHECK constraints below and by the BE-012 Alembic migration).
+# ---------------------------------------------------------------------------
+
+EXPLANATION_METHOD = "deterministic_fusion_explanation"
+EXPLANATION_METHOD_VERSION = "explanation-v1"
+
+EXPLANATION_RUN_STATUSES = ("GENERATED", "FAILED")
+
+
+class ExplanationRun(Base):
+    """BE-012: one materialized explanation per fusion run (append-only).
+
+    The structured snapshot preserves the explanation exactly as generated,
+    so historical explanations stay stable when newer runs, edges, or configs
+    appear. Per-signal inputs are NOT duplicated here: the authoritative
+    signal rows live in ``fusion_signals`` and are referenced by fusion run.
+    """
+
+    __tablename__ = "explanation_runs"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    fusion_run_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("fusion_runs.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+    )
+    status = Column(String(50), nullable=False, default="GENERATED", server_default="GENERATED")
+    method = Column(String(256), nullable=False)
+    method_version = Column(String(50), nullable=False)
+    summary = Column(JSONB, nullable=False, default=dict)
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    run = relationship("FusionRun")
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('GENERATED', 'FAILED')", name="ck_explanation_run_status"
+        ),
+        Index("ix_explanation_runs_run", "fusion_run_id"),
+    )
+
