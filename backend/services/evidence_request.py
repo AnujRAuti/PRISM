@@ -359,6 +359,7 @@ def list_requests(
     due_after: datetime | None = None,
     limit: int = 50,
     offset: int = 0,
+    project_ids: set[str] | None = None,
 ):
     if status is not None and status not in STATUSES:
         raise ValueError(f"Unknown request status: {status!r}")
@@ -369,6 +370,7 @@ def list_requests(
     query = request_repo.list_query(
         db,
         project_id=_optional_uuid(project_id, "project_id"),
+        project_ids=project_ids,
         review_case_id=_optional_uuid(review_case_id, "review_case_id"),
         status=status,
         priority=priority,

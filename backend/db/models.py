@@ -43,6 +43,23 @@ class User(Base):
     email = Column(String(256), unique=True, index=True, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # BE-016 identity fields. external_subject is only unique together with
+    # its identity_provider (never a global identifier on its own).
+    external_subject = Column(String(512), nullable=True)
+    identity_provider = Column(String(128), nullable=False, default="local",
+                               server_default="local")
+    display_name = Column(String(256), nullable=True)
+    status = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("identity_provider", "external_subject",
+                         name="uq_user_identity_subject"),
+        CheckConstraint("status IN ('ACTIVE', 'SUSPENDED', 'DISABLED')",
+                        name="ck_user_status"),
+    )
 
 
 class Project(Base):
@@ -51,6 +68,11 @@ class Project(Base):
     name = Column(String(256), index=True, nullable=False)
     owner_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # BE-016 organizational scope (nullable: pre-existing projects stay
+    # unscoped and behave exactly as before).
+    organization_id = Column(UUID(as_uuid=False), ForeignKey("organizations.id"), nullable=True)
+    organizational_unit_id = Column(UUID(as_uuid=False), ForeignKey("organizational_units.id"),
+                                    nullable=True)
 
     owner = relationship("User")
 
@@ -911,6 +933,11 @@ AUDIT_EVENT_TYPES = frozenset(
         "GRAPH_RELATIONSHIP_CREATED",
         "GRAPH_RELATIONSHIP_INVALIDATED",
         "GRAPH_RELATIONSHIP_SUPERSEDED",
+        "USER_CREATED",
+        "ORGANIZATION_CREATED",
+        "ORGANIZATIONAL_UNIT_CREATED",
+        "ROLE_ASSIGNED",
+        "ROLE_REVOKED",
     }
 )
 
@@ -948,5 +975,317 @@ class AuditLedgerEvent(Base):
         Index("ix_audit_ledger_type", "event_type"),
         Index("ix_audit_ledger_resource", "resource_type", "resource_id"),
         Index("ix_audit_ledger_project", "project_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# BE-016 Authentication & Authorization vocabularies (single source of truth;
+# mirrored by CHECK constraints below and by the BE-016 Alembic migration).
+# ---------------------------------------------------------------------------
+
+AUTH_PRINCIPAL_TYPES = ("USER", "API_CLIENT", "SYSTEM", "ANONYMOUS")
+
+AUTH_USER_STATUSES = ("ACTIVE", "SUSPENDED", "DISABLED")
+
+AUTH_ORG_STATUSES = ("ACTIVE", "SUSPENDED", "DISABLED")
+
+AUTH_SCOPE_TYPES = ("GLOBAL", "ORGANIZATION", "ORGANIZATIONAL_UNIT", "PROJECT")
+
+# Baseline roles from the frozen architecture. Roles grant permissions;
+# scopes determine where they apply; neither implies the other.
+AUTH_ROLES = (
+    "CITIZEN",
+    "FIELD_OFFICER",
+    "REVIEWER",
+    "SUPERVISOR",
+    "ADMINISTRATOR",
+    "API_CLIENT",
+)
+
+# Stable explicit permission catalogue. Substantive (decide/resolve) and
+# administrative (*.manage) permissions are disjoint by construction.
+AUTH_PERMISSIONS = (
+    "project.read",
+    "project.create",
+    "project.update",
+    "activity.read",
+    "activity.create",
+    "activity.update",
+    "claim.read",
+    "claim.create",
+    "claim.update",
+    "evidence.read",
+    "evidence.create",
+    "evidence.update_context",
+    "evidence.read_sensitive",
+    "graph.read",
+    "fusion.read",
+    "fusion.execute",
+    "review_case.read",
+    "review_case.assign",
+    "review_case.investigate",
+    "review_case.decide",
+    "review_case.escalate",
+    "review_case.resolve",
+    "review_case.reopen",
+    "evidence_request.read",
+    "evidence_request.create",
+    "evidence_request.issue",
+    "evidence_request.respond",
+    "audit.read",
+    "organization.manage",
+    "user.manage",
+    "role.manage",
+    "configuration.manage",
+)
+
+# Baseline role -> permissions mapping (also seeded for tests/dev via the
+# authorization service; the database remains authoritative at runtime).
+AUTH_ROLE_PERMISSIONS = {
+    "CITIZEN": (
+        "evidence.create",
+        "evidence.read",
+        "evidence_request.create",
+        "evidence_request.respond",
+        "claim.read",
+    ),
+    "FIELD_OFFICER": (
+        "project.read",
+        "activity.read",
+        "activity.create",
+        "claim.read",
+        "claim.create",
+        "claim.update",
+        "evidence.read",
+        "evidence.create",
+        "evidence.update_context",
+        "graph.read",
+        "fusion.read",
+        "review_case.read",
+        "evidence_request.create",
+        "evidence_request.issue",
+        "evidence_request.respond",
+    ),
+    "REVIEWER": (
+        "project.read",
+        "claim.read",
+        "evidence.read",
+        "evidence.read_sensitive",
+        "graph.read",
+        "fusion.read",
+        "review_case.read",
+        "review_case.assign",
+        "review_case.investigate",
+        "review_case.escalate",
+        "review_case.reopen",
+        "evidence_request.read",
+        "evidence_request.respond",
+        "audit.read",
+    ),
+    "SUPERVISOR": (
+        "project.read",
+        "project.create",
+        "claim.read",
+        "evidence.read",
+        "evidence.read_sensitive",
+        "graph.read",
+        "fusion.read",
+        "fusion.execute",
+        "review_case.read",
+        "review_case.assign",
+        "review_case.investigate",
+        "review_case.decide",
+        "review_case.escalate",
+        "review_case.resolve",
+        "review_case.reopen",
+        "evidence_request.read",
+        "evidence_request.respond",
+        "audit.read",
+    ),
+    "ADMINISTRATOR": (
+        "organization.manage",
+        "user.manage",
+        "role.manage",
+        "configuration.manage",
+        "audit.read",
+    ),
+    "API_CLIENT": (),
+}
+
+
+class Organization(Base):
+    """BE-016: top-level ownership/scope boundary (never hard-coded)."""
+
+    __tablename__ = "organizations"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    name = Column(String(256), nullable=False)
+    code = Column(String(128), nullable=False, unique=True)
+    status = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('ACTIVE', 'SUSPENDED', 'DISABLED')",
+            name="ck_organization_status",
+        ),
+        Index("ix_organizations_code", "code"),
+    )
+
+
+class OrganizationalUnit(Base):
+    """BE-016: internal structure within an organization (generic, not governmental)."""
+
+    __tablename__ = "organizational_units"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    organization_id = Column(
+        UUID(as_uuid=False), ForeignKey("organizations.id", ondelete="RESTRICT"), nullable=False
+    )
+    name = Column(String(256), nullable=False)
+    code = Column(String(128), nullable=False)
+    status = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    organization = relationship("Organization")
+
+    __table_args__ = (
+        UniqueConstraint("organization_id", "code", name="uq_org_unit_code"),
+        CheckConstraint(
+            "status IN ('ACTIVE', 'SUSPENDED', 'DISABLED')",
+            name="ck_org_unit_status",
+        ),
+        Index("ix_org_units_org", "organization_id"),
+    )
+
+
+class Role(Base):
+    """BE-016: named permission bundle (grants permissions, never scope)."""
+
+    __tablename__ = "roles"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    name = Column(String(128), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    status = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('ACTIVE', 'SUSPENDED', 'DISABLED')",
+            name="ck_role_status",
+        ),
+        Index("ix_roles_name", "name"),
+    )
+
+
+class Permission(Base):
+    """BE-016: single explicit stable permission string."""
+
+    __tablename__ = "permissions"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    name = Column(String(256), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (Index("ix_permissions_name", "name"),)
+
+
+class RolePermission(Base):
+    """BE-016: role -> permission mapping (unique pairs)."""
+
+    __tablename__ = "role_permissions"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    role_id = Column(
+        UUID(as_uuid=False), ForeignKey("roles.id", ondelete="CASCADE"), nullable=False
+    )
+    permission_id = Column(
+        UUID(as_uuid=False), ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    role = relationship("Role")
+    permission = relationship("Permission")
+
+    __table_args__ = (
+        UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),
+        Index("ix_role_permissions_role", "role_id"),
+    )
+
+
+class UserRoleAssignment(Base):
+    """BE-016: user holds a role within exactly one scope (global/org/unit/project)."""
+
+    __tablename__ = "user_role_assignments"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    user_id = Column(
+        UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    role_id = Column(
+        UUID(as_uuid=False), ForeignKey("roles.id", ondelete="RESTRICT"), nullable=False
+    )
+    scope_type = Column(String(50), nullable=False)
+    organization_id = Column(UUID(as_uuid=False), ForeignKey("organizations.id"), nullable=True)
+    organizational_unit_id = Column(
+        UUID(as_uuid=False), ForeignKey("organizational_units.id"), nullable=True
+    )
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User")
+    role = relationship("Role")
+
+    __table_args__ = (
+        CheckConstraint(
+            "scope_type IN ('GLOBAL', 'ORGANIZATION', 'ORGANIZATIONAL_UNIT', 'PROJECT')",
+            name="ck_assignment_scope",
+        ),
+        UniqueConstraint(
+            "user_id",
+            "role_id",
+            "scope_type",
+            "organization_id",
+            "organizational_unit_id",
+            "project_id",
+            name="uq_user_role_scoped",
+            postgresql_nulls_not_distinct=True,
+        ),
+        Index("ix_assignments_user", "user_id"),
+        Index("ix_assignments_project", "project_id"),
+        Index("ix_assignments_org", "organization_id"),
+    )
+
+
+class ApiClient(Base):
+    """BE-016: first-class API actor with explicit scopes.
+
+    No secret material is stored in V1: development bearer tokens reference
+    the client id directly and are accepted only when explicitly enabled
+    for development/testing. Production key issuance/rotation is deferred.
+    """
+
+    __tablename__ = "api_clients"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    name = Column(String(256), nullable=False, unique=True)
+    scopes = Column(JSONB, nullable=False, default=list)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    status = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('ACTIVE', 'SUSPENDED', 'DISABLED')",
+            name="ck_api_client_status",
+        ),
+        Index("ix_api_clients_name", "name"),
     )
 

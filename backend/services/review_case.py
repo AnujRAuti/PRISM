@@ -442,6 +442,7 @@ def list_cases(
     assigned_to: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    project_ids: set[str] | None = None,
 ):
     """Deterministic paginated case listing with optional filters."""
     if status is not None and status not in STATUSES:
@@ -455,6 +456,7 @@ def list_cases(
     query = case_repo.list_query(
         db,
         project_id=_require_uuid(project_id, "project_id") if project_id else None,
+        project_ids=project_ids,
         status=status,
         priority_band=priority_band,
         origin=origin,

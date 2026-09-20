@@ -22,6 +22,9 @@ from backend.schemas.review_case import (
     ReviewCaseResponse,
 )
 from backend.services import review_case as case_service
+from backend.security.authentication import get_current_principal, is_development_bypass
+from backend.security.authorization import require, visible_project_ids
+from backend.services.authorization import Principal
 
 
 router = APIRouter(prefix="/review-cases")
@@ -53,6 +56,7 @@ def generate_from_fusion(
     response: Response,
     request: CaseGenerateRequest | None = None,
     db: Session = Depends(get_db),
+    principal: Principal = Depends(require("fusion.execute", "fusion_run", "fusion_run_id")),
 ) -> CaseGenerationResponse:
     try:
         case, gen_run, result, reason = case_service.generate_for_fusion(
@@ -81,7 +85,11 @@ def generate_from_fusion(
     response_model=ReviewCaseResponse,
     summary="Retrieve one review case",
 )
-def get_case(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCaseResponse:
+def get_case(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("review_case.read", "review_case", "case_id")),
+) -> ReviewCaseResponse:
     try:
         return _case_item(case_service.get_case(db, str(case_id)))
     except ValueError as error:
@@ -104,7 +112,17 @@ def list_cases(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
 ) -> ReviewCaseListResponse:
+    project_ids: set[str] | None = None
+    if not is_development_bypass(principal):
+        if "review_case.read" not in principal.permissions:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        project_ids = visible_project_ids(db, principal, "review_case.read")
+        if project_id is not None and (
+            project_ids is not None and str(project_id) not in project_ids
+        ):
+            raise HTTPException(status_code=404, detail="Not found")
     try:
         rows, total = case_service.list_cases(
             db,
@@ -115,6 +133,7 @@ def list_cases(
             assigned_to=str(assigned_to) if assigned_to else None,
             limit=limit,
             offset=offset,
+            project_ids=project_ids,
         )
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
@@ -128,7 +147,11 @@ def list_cases(
     response_model=ReviewCaseHistoryResponse,
     summary="Append-only workflow history for a case",
 )
-def get_history(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCaseHistoryResponse:
+def get_history(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("review_case.read", "review_case", "case_id")),
+) -> ReviewCaseHistoryResponse:
     try:
         events = case_service.case_history(db, str(case_id))
     except ValueError as error:
@@ -146,7 +169,10 @@ def get_history(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCaseHisto
     summary="Assign a case (or unassign with null)",
 )
 def assign_case(
-    case_id: UUID, request: CaseAssignmentRequest, db: Session = Depends(get_db)
+    case_id: UUID,
+    request: CaseAssignmentRequest,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("review_case.assign", "review_case", "case_id")),
 ) -> ReviewCaseResponse:
     try:
         return _case_item(
@@ -168,7 +194,12 @@ def assign_case(
     response_model=ReviewCaseResponse,
     summary="Move a case into investigation",
 )
-def investigate_case(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCaseResponse:
+def investigate_case(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("review_case.investigate", "review_case", "case_id")),
+) -> ReviewCaseResponse:
     try:
         return _case_item(case_service.start_investigation(db, str(case_id)))
     except ValueError as error:
@@ -183,7 +214,10 @@ def investigate_case(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCase
     summary="Record a human decision (human-supplied only)",
 )
 def record_decision(
-    case_id: UUID, request: CaseDecisionRequest, db: Session = Depends(get_db)
+    case_id: UUID,
+    request: CaseDecisionRequest,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("review_case.decide", "review_case", "case_id")),
 ) -> ReviewCaseResponse:
     try:
         return _case_item(
@@ -207,7 +241,10 @@ def record_decision(
     summary="Escalate a case (history-preserving)",
 )
 def escalate_case(
-    case_id: UUID, request: CaseEscalationRequest, db: Session = Depends(get_db)
+    case_id: UUID,
+    request: CaseEscalationRequest,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("review_case.escalate", "review_case", "case_id")),
 ) -> ReviewCaseResponse:
     try:
         return _case_item(
@@ -230,7 +267,11 @@ def escalate_case(
     response_model=ReviewCaseResponse,
     summary="Resolve a case (requires a recorded human decision)",
 )
-def resolve_case(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCaseResponse:
+def resolve_case(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("review_case.resolve", "review_case", "case_id")),
+) -> ReviewCaseResponse:
     try:
         return _case_item(case_service.resolve_case(db, str(case_id)))
     except ValueError as error:
@@ -244,7 +285,11 @@ def resolve_case(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCaseResp
     response_model=ReviewCaseResponse,
     summary="Reopen a resolved case (history preserved)",
 )
-def reopen_case(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCaseResponse:
+def reopen_case(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("review_case.reopen", "review_case", "case_id")),
+) -> ReviewCaseResponse:
     try:
         return _case_item(case_service.reopen_case(db, str(case_id)))
     except ValueError as error:
@@ -259,7 +304,9 @@ def reopen_case(case_id: UUID, db: Session = Depends(get_db)) -> ReviewCaseRespo
     summary="Store a new immutable case-generation policy version",
 )
 def create_configuration(
-    request: CaseGenerationConfigurationCreate, db: Session = Depends(get_db)
+    request: CaseGenerationConfigurationCreate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("configuration.manage")),
 ) -> CaseGenerationConfigurationItem:
     try:
         row = case_service.create_policy_configuration(

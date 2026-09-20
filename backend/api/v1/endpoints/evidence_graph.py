@@ -18,6 +18,9 @@ from backend.schemas.evidence_graph import (
     RelationshipType,
 )
 from backend.services import evidence_graph as graph_service
+from backend.security.authentication import get_current_principal
+from backend.security.authorization import filter_graph_edges, require
+from backend.services.authorization import Principal
 
 
 router = APIRouter(prefix="/graph")
@@ -56,7 +59,10 @@ def _to_response(relationship) -> RelationshipResponse:
     summary="Record a graph relationship (intelligence structure, not truth)",
 )
 def create_relationship(
-    request: RelationshipCreate, response: Response, db: Session = Depends(get_db)
+    request: RelationshipCreate,
+    response: Response,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("graph.read")),
 ) -> RelationshipResponse:
     try:
         relationship, created = graph_service.create_relationship(
@@ -83,6 +89,9 @@ def create_relationship(
 @router.get(
     "/{node_type}/{entity_id}",
     summary="One-hop graph traversal for an entity (direction-filterable)",
+    description="Requires graph.read. Returned edges are filtered to projects "
+    "visible to the caller: cross-project intelligence never leaks "
+    "unauthorized project details. Total counts pre-filter traversal matches.",
 )
 def get_entity_graph(
     node_type: NodeType,
@@ -94,6 +103,7 @@ def get_entity_graph(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
 ) -> RelationshipListResponse:
     try:
         rows, total = graph_service.list_for_entity(
@@ -111,6 +121,7 @@ def get_entity_graph(
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+    rows = filter_graph_edges(db, principal, list(rows))
     try:
         node = graph_service.resolve_node(db, node_type.value, str(entity_id), create=False)
     except (ValueError, LookupError) as error:
@@ -134,7 +145,10 @@ def get_entity_graph(
     summary="Supersede or invalidate a relationship (history-preserving)",
 )
 def update_relationship_status(
-    relationship_id: UUID, request: RelationshipStatusUpdate, db: Session = Depends(get_db)
+    relationship_id: UUID,
+    request: RelationshipStatusUpdate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("graph.read")),
 ) -> RelationshipResponse:
     try:
         relationship = graph_service.set_relationship_status(

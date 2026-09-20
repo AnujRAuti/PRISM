@@ -42,6 +42,16 @@ class Settings(BaseSettings):
 
     jwt_secret: str = "changeme"
 
+    # BE-016 Authentication & Authorization foundation.
+    # development: anonymous requests are permitted (existing behavior) while
+    # presented credentials are fully enforced. enforcing: anonymous requests
+    # are rejected (401); use in any shared/production deployment.
+    auth_mode: str = "development"
+    # Development bearer tokens (dev-user-<uuid>, dev-client-<id>) are
+    # non-secret identifiers accepted only when this is explicitly enabled.
+    # Production OIDC/OAuth2 integration must disable this.
+    auth_dev_tokens_enabled: bool = True
+
     class Config:
         env_file = ".env"
 

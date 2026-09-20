@@ -1,10 +1,20 @@
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
+from backend.db.models import Evidence
 from backend.db.session import get_db
-from backend.schemas.evidence import EvidenceUploadResponse
+from backend.schemas.evidence import (
+    EvidenceDownloadResponse,
+    EvidenceResponse,
+    EvidenceUploadResponse,
+)
+from backend.security.authorization import require
 from backend.services.evidence_ingestion import ingest_evidence
+from backend.services.storage import StorageService
+from backend.services.authorization import Principal
 
 
 router = APIRouter()
@@ -14,6 +24,7 @@ router = APIRouter()
 async def upload_evidence(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(require("evidence.create")),
 ) -> EvidenceUploadResponse:
     declared_type = (file.content_type or "").lower().strip()
     # Bounded read: one byte past the limit proves oversize without
@@ -27,3 +38,41 @@ async def upload_evidence(
         content_type=evidence.content_type,
         size=evidence.file_size,
     )
+
+
+@router.get(
+    "/evidence/{evidence_id}",
+    response_model=EvidenceResponse,
+    summary="Retrieve evidence metadata (requires evidence.read)",
+)
+def get_evidence(
+    evidence_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("evidence.read", "evidence", "evidence_id")),
+) -> EvidenceResponse:
+    evidence = db.query(Evidence).filter(Evidence.id == str(evidence_id)).one_or_none()
+    if evidence is None:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+    return EvidenceResponse.model_validate(evidence)
+
+
+@router.get(
+    "/evidence/{evidence_id}/download",
+    response_model=EvidenceDownloadResponse,
+    summary="Issue a presigned download URL (requires evidence.read)",
+    description="The URL is issued only after authorization succeeds. "
+    "401 without credentials (enforcing mode). 403 without permission. "
+    "404 when the evidence is absent or outside the caller's scope.",
+)
+def download_evidence(
+    evidence_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("evidence.read", "evidence", "evidence_id")),
+) -> EvidenceDownloadResponse:
+    evidence = db.query(Evidence).filter(Evidence.id == str(evidence_id)).one_or_none()
+    if evidence is None:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+    storage = StorageService()
+    url = storage.create_presigned_download_url(
+        storage.quarantine_bucket, evidence.storage_key)
+    return EvidenceDownloadResponse(evidence_id=evidence_id, download_url=url)

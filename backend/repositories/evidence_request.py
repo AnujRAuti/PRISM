@@ -6,6 +6,7 @@ Lifecycle rules, fulfillment math, and scope validation live in
 
 from datetime import datetime, timezone
 
+from sqlalchemy import false
 from sqlalchemy.orm import Session
 
 from backend.db.models import (
@@ -104,6 +105,7 @@ def list_query(
     db: Session,
     *,
     project_id: str | None,
+    project_ids: set[str] | None,
     review_case_id: str | None,
     status: str | None,
     priority: str | None,
@@ -115,6 +117,8 @@ def list_query(
     query = db.query(EvidenceRequest)
     if project_id is not None:
         query = query.filter(EvidenceRequest.project_id == project_id)
+    if project_ids is not None:
+        query = query.filter(EvidenceRequest.project_id.in_(project_ids)) if project_ids else query.filter(false())
     if review_case_id is not None:
         query = query.filter(EvidenceRequest.review_case_id == review_case_id)
     if status is not None:

@@ -25,6 +25,8 @@ from backend.schemas.fusion import (
     ReviewPriorityLevel,
 )
 from backend.services import fusion as fusion_service
+from backend.security.authorization import require, require_target
+from backend.services.authorization import Principal
 
 
 router = APIRouter(prefix="/fusion")
@@ -127,6 +129,7 @@ def execute_fusion(
     target_id: UUID,
     request: FusionExecuteRequest | None = None,
     db: Session = Depends(get_db),
+    principal: Principal = Depends(require_target("fusion.execute")),
 ) -> FusionExecuteResponse:
     try:
         run, assessment, priority, signals = fusion_service.run_fusion(
@@ -152,7 +155,11 @@ def execute_fusion(
     response_model=FusionRunDetailResponse,
     summary="Retrieve one fusion execution with its signals and outputs",
 )
-def get_fusion_run(run_id: UUID, db: Session = Depends(get_db)) -> FusionRunDetailResponse:
+def get_fusion_run(
+    run_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("fusion.read", "fusion_run", "run_id")),
+) -> FusionRunDetailResponse:
     try:
         run, signals, assessment, priority = fusion_service.get_run_detail(db, str(run_id))
     except ValueError as error:
@@ -173,7 +180,10 @@ def get_fusion_run(run_id: UUID, db: Session = Depends(get_db)) -> FusionRunDeta
     summary="Latest fusion assessment and review priority for a target",
 )
 def get_latest_fusion(
-    target_type: FusionTargetType, target_id: UUID, db: Session = Depends(get_db)
+    target_type: FusionTargetType,
+    target_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require_target("fusion.read")),
 ) -> FusionLatestResponse:
     try:
         run, assessment, priority = fusion_service.get_latest(db, target_type.value, str(target_id))
@@ -202,6 +212,7 @@ def get_fusion_history(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(require_target("fusion.read")),
 ) -> FusionHistoryResponse:
     try:
         rows, total = fusion_service.run_history(
@@ -230,7 +241,9 @@ def get_fusion_history(
     summary="Store a new versioned fusion configuration",
 )
 def create_configuration(
-    request: FusionConfigurationCreate, db: Session = Depends(get_db)
+    request: FusionConfigurationCreate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("configuration.manage")),
 ) -> FusionConfigurationItem:
     try:
         row = fusion_service.create_configuration(

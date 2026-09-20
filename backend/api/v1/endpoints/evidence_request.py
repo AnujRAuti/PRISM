@@ -22,6 +22,9 @@ from backend.schemas.evidence_request import (
     RequestStatus,
 )
 from backend.services import evidence_request as request_service
+from backend.security.authentication import get_current_principal
+from backend.security.authorization import require, visible_project_ids
+from backend.services.authorization import Principal
 
 
 router = APIRouter(prefix="/evidence-requests")
@@ -60,7 +63,9 @@ def _event_item(event) -> EvidenceRequestEventItem:
     summary="Create an evidence request with item slots",
 )
 def create_request(
-    payload: EvidenceRequestCreate, db: Session = Depends(get_db)
+    payload: EvidenceRequestCreate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("evidence_request.create")),
 ) -> EvidenceRequestResponse:
     try:
         request = request_service.create_request(
@@ -90,7 +95,12 @@ def create_request(
     response_model=EvidenceRequestResponse,
     summary="Retrieve one evidence request with its items",
 )
-def get_request(request_id: UUID, db: Session = Depends(get_db)) -> EvidenceRequestResponse:
+def get_request(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.read", "evidence_request", "request_id")),
+) -> EvidenceRequestResponse:
     try:
         request = request_service.get_request(db, str(request_id))
     except ValueError as error:
@@ -117,11 +127,24 @@ def list_requests(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
 ) -> EvidenceRequestListResponse:
+    from backend.security.authentication import is_development_bypass
+
+    project_ids: set[str] | None = None
+    if not is_development_bypass(principal):
+        if "evidence_request.read" not in principal.permissions:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        project_ids = visible_project_ids(db, principal, "evidence_request.read")
+        if project_id is not None and (
+            project_ids is not None and str(project_id) not in project_ids
+        ):
+            raise HTTPException(status_code=404, detail="Not found")
     try:
         rows, total = request_service.list_requests(
             db,
             project_id=str(project_id) if project_id else None,
+            project_ids=project_ids,
             review_case_id=str(review_case_id) if review_case_id else None,
             status=status.value if status else None,
             priority=priority.value if priority else None,
@@ -145,7 +168,12 @@ def list_requests(
     response_model=EvidenceRequestHistoryResponse,
     summary="Append-only history for a request",
 )
-def get_history(request_id: UUID, db: Session = Depends(get_db)):
+def get_history(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.read", "evidence_request", "request_id")),
+):
     try:
         events = request_service.request_history(db, str(request_id))
     except ValueError as error:
@@ -162,7 +190,12 @@ def get_history(request_id: UUID, db: Session = Depends(get_db)):
     response_model=EvidenceRequestResponse,
     summary="Issue a DRAFT request",
 )
-def issue_request(request_id: UUID, db: Session = Depends(get_db)):
+def issue_request(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.issue", "evidence_request", "request_id")),
+):
     try:
         request = request_service.issue_request(db, str(request_id))
     except ValueError as error:
@@ -180,6 +213,8 @@ def issue_request(request_id: UUID, db: Session = Depends(get_db)):
 def acknowledge_request(
     request_id: UUID, payload: EvidenceRequestResponseAction | None = None,
     db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.respond", "evidence_request", "request_id")),
 ):
     try:
         request = request_service.acknowledge_request(
@@ -201,6 +236,8 @@ def acknowledge_request(
 def link_evidence(
     request_id: UUID, evidence_id: UUID, response: Response,
     item_id: UUID | None = None, db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.respond", "evidence_request", "request_id")),
 ):
     try:
         item, created = request_service.link_evidence(
@@ -225,7 +262,9 @@ def link_evidence(
     summary="Upload new evidence through the standard pipeline and link it",
 )
 async def submit_evidence(
-    request_id: UUID, file: UploadFile = File(...), db: Session = Depends(get_db)
+    request_id: UUID, file: UploadFile = File(...), db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.respond", "evidence_request", "request_id")),
 ):
     declared_type = (file.content_type or "").lower().strip()
     data = await file.read(settings.max_upload_size + 1)
@@ -248,7 +287,13 @@ async def submit_evidence(
     response_model=EvidenceRequestItemResponse,
     summary="Accept received evidence for an item (operational only)",
 )
-def accept_item(request_id: UUID, item_id: UUID, db: Session = Depends(get_db)):
+def accept_item(
+    request_id: UUID,
+    item_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.respond", "evidence_request", "request_id")),
+):
     try:
         return _item(request_service.accept_item(db, str(request_id), str(item_id)))
     except ValueError as error:
@@ -262,7 +307,13 @@ def accept_item(request_id: UUID, item_id: UUID, db: Session = Depends(get_db)):
     response_model=EvidenceRequestItemResponse,
     summary="Reject received evidence for an item (evidence stays valid)",
 )
-def reject_item(request_id: UUID, item_id: UUID, db: Session = Depends(get_db)):
+def reject_item(
+    request_id: UUID,
+    item_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.respond", "evidence_request", "request_id")),
+):
     try:
         return _item(request_service.reject_item(db, str(request_id), str(item_id)))
     except ValueError as error:
@@ -277,7 +328,11 @@ def reject_item(request_id: UUID, item_id: UUID, db: Session = Depends(get_db)):
     summary="Decline a request with a required reason",
 )
 def decline_request(
-    request_id: UUID, payload: EvidenceRequestDeclineRequest, db: Session = Depends(get_db)
+    request_id: UUID,
+    payload: EvidenceRequestDeclineRequest,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.respond", "evidence_request", "request_id")),
 ):
     try:
         request = request_service.decline_request(db, str(request_id), payload.reason)
@@ -293,7 +348,12 @@ def decline_request(
     response_model=EvidenceRequestResponse,
     summary="Cancel a request",
 )
-def cancel_request(request_id: UUID, db: Session = Depends(get_db)):
+def cancel_request(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.issue", "evidence_request", "request_id")),
+):
     try:
         request = request_service.cancel_request(db, str(request_id))
     except ValueError as error:
@@ -308,7 +368,12 @@ def cancel_request(request_id: UUID, db: Session = Depends(get_db)):
     response_model=EvidenceRequestResponse,
     summary="Expire a request with a past due date (explicit, no scheduler)",
 )
-def expire_request(request_id: UUID, db: Session = Depends(get_db)):
+def expire_request(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(
+        require("evidence_request.issue", "evidence_request", "request_id")),
+):
     try:
         request = request_service.expire_request(db, str(request_id))
     except ValueError as error:

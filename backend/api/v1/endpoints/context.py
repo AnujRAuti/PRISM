@@ -8,6 +8,13 @@ from sqlalchemy.orm import Session
 
 from backend.db.models import Activity, Claim, Evidence, Project, User
 from backend.db.session import get_db
+from backend.security.authentication import get_current_principal, is_development_bypass
+from backend.security.authorization import (
+    filter_by_project_scope,
+    require,
+    visible_project_ids,
+)
+from backend.services.authorization import Principal
 from backend.schemas.context import (
     ActivityCreate,
     ActivityListResponse,
@@ -45,7 +52,11 @@ def _require_user(user_id: UUID | None, db: Session, label: str) -> None:
 
 
 @router.post("/projects", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
-def create_project(request: ProjectCreate, db: Session = Depends(get_db)) -> Project:
+def create_project(
+    request: ProjectCreate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("project.create")),
+) -> Project:
     _require_user(request.owner_id, db, "Owner")
     project = Project(name=request.name, owner_id=str(request.owner_id))
     db.add(project)
@@ -60,21 +71,32 @@ def list_projects(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
 ) -> ProjectListResponse:
     query = db.query(Project)
     if owner_id is not None:
         query = query.filter(Project.owner_id == str(owner_id))
+    query = filter_by_project_scope(query, Project.id, db, principal, "project.read")
     total = query.count()
     return ProjectListResponse(items=query.offset(offset).limit(limit).all(), limit=limit, offset=offset, total=total)
 
 
 @router.get("/projects/{project_id}", response_model=ProjectResponse)
-def get_project(project_id: UUID, db: Session = Depends(get_db)) -> Project:
+def get_project(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("project.read", "project", "project_id")),
+) -> Project:
     return _require_project(project_id, db)
 
 
 @router.patch("/projects/{project_id}", response_model=ProjectResponse)
-def update_project(project_id: UUID, request: ProjectUpdate, db: Session = Depends(get_db)) -> Project:
+def update_project(
+    project_id: UUID,
+    request: ProjectUpdate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("project.update", "project", "project_id")),
+) -> Project:
     project = _require_project(project_id, db)
     project.name = request.name
     db.commit()
@@ -161,7 +183,26 @@ def update_claim(project_id: UUID, claim_id: UUID, request: ClaimUpdate, db: Ses
 
 
 @router.patch("/evidence/{evidence_id}/context", response_model=EvidenceContextResponse)
-def update_evidence_context(evidence_id: UUID, request: EvidenceContextUpdate, db: Session = Depends(get_db)) -> EvidenceContextResponse:
+def update_evidence_context(
+    evidence_id: UUID,
+    request: EvidenceContextUpdate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("evidence.update_context", "evidence", "evidence_id")),
+) -> EvidenceContextResponse:
+    from backend.security.authentication import is_development_bypass
+    from backend.security.authorization import visible_project_ids
+
+    evidence = db.query(Evidence).filter(Evidence.id == str(evidence_id)).one_or_none()
+    if evidence is None:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+    _require_project(request.project_id, db)
+    # Scope-escalation guard: moving evidence across projects additionally
+    # requires the target project to be visible (server-resolved, never
+    # trusted from the request body alone).
+    if not is_development_bypass(principal):
+        visible = visible_project_ids(db, principal, "evidence.update_context")
+        if visible is not None and str(request.project_id) not in visible:
+            raise HTTPException(status_code=404, detail="Not found")
     evidence = db.query(Evidence).filter(Evidence.id == str(evidence_id)).one_or_none()
     if evidence is None:
         raise HTTPException(status_code=404, detail="Evidence not found")
@@ -179,7 +220,12 @@ def update_evidence_context(evidence_id: UUID, request: EvidenceContextUpdate, d
 
 
 @router.patch("/evidence/{evidence_id}/location", response_model=LocationResponse)
-def update_evidence_location(evidence_id: UUID, request: LocationUpdate, db: Session = Depends(get_db)) -> LocationResponse:
+def update_evidence_location(
+    evidence_id: UUID,
+    request: LocationUpdate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("evidence.update_context", "evidence", "evidence_id")),
+) -> LocationResponse:
     evidence = db.query(Evidence).filter(Evidence.id == str(evidence_id)).one_or_none()
     if evidence is None:
         raise HTTPException(status_code=404, detail="Evidence not found")

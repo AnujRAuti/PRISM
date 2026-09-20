@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from backend.db.session import get_db
 from backend.schemas.explainability import ExplanationResponse, ExplanationTargetType
 from backend.services import explainability as explain_service
+from backend.security.authorization import require, require_target
+from backend.services.authorization import Principal
 
 
 router = APIRouter(prefix="/explanations")
@@ -41,7 +43,10 @@ def _to_response(content: dict) -> ExplanationResponse:
     summary="Materialize the explanation for a fusion run (idempotent per run)",
 )
 def materialize_explanation(
-    fusion_run_id: UUID, response: Response, db: Session = Depends(get_db)
+    fusion_run_id: UUID,
+    response: Response,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("fusion.read", "fusion_run", "fusion_run_id")),
 ) -> ExplanationResponse:
     try:
         content, created = explain_service.materialize_explanation(db, str(fusion_run_id))
@@ -59,7 +64,9 @@ def materialize_explanation(
     summary="Generate the explanation for a fusion run (read-only)",
 )
 def get_fusion_explanation(
-    fusion_run_id: UUID, db: Session = Depends(get_db)
+    fusion_run_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require("fusion.read", "fusion_run", "fusion_run_id")),
 ) -> ExplanationResponse:
     try:
         content = explain_service.build_explanation(db, str(fusion_run_id))
@@ -75,7 +82,10 @@ def get_fusion_explanation(
     summary="Explain a target's latest fusion assessment",
 )
 def get_target_explanation(
-    target_type: ExplanationTargetType, target_id: UUID, db: Session = Depends(get_db)
+    target_type: ExplanationTargetType,
+    target_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require_target("fusion.read")),
 ) -> ExplanationResponse:
     try:
         content = explain_service.latest_for_target(db, target_type.value, str(target_id))

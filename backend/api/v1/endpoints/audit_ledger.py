@@ -14,6 +14,8 @@ from backend.schemas.audit_ledger import (
     AuditVerificationResponse,
 )
 from backend.services import audit_ledger as audit_service
+from backend.security.authorization import require_global
+from backend.services.authorization import Principal
 
 
 router = APIRouter(prefix="/audit")
@@ -24,7 +26,11 @@ router = APIRouter(prefix="/audit")
     response_model=AuditEventResponse,
     summary="Retrieve one audit event by ID",
 )
-def get_event(event_id: UUID, db: Session = Depends(get_db)) -> AuditEventResponse:
+def get_event(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require_global("audit.read")),
+) -> AuditEventResponse:
     row = audit_repo.get_event(db, str(event_id))
     if row is None:
         raise HTTPException(status_code=404, detail="Audit event not found")
@@ -48,6 +54,7 @@ def list_events(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(require_global("audit.read")),
 ) -> AuditEventListResponse:
     try:
         if since is not None and since.tzinfo is None:
@@ -85,6 +92,7 @@ def verify_ledger(
     from_sequence: int | None = Query(default=None, ge=1),
     to_sequence: int | None = Query(default=None, ge=1),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(require_global("audit.read")),
 ) -> AuditVerificationResponse:
     try:
         result = audit_service.verify_chain(db, from_sequence, to_sequence)

@@ -4,6 +4,7 @@ Policy evaluation, lifecycle rules, and decision validation live in
 ``backend.services.review_case``.
 """
 
+from sqlalchemy import false
 from sqlalchemy.orm import Session
 
 from backend.db.models import (
@@ -127,6 +128,7 @@ def list_query(
     db: Session,
     *,
     project_id: str | None,
+    project_ids: set[str] | None,
     status: str | None,
     priority_band: str | None,
     origin: str | None,
@@ -135,6 +137,8 @@ def list_query(
     query = db.query(ReviewCase)
     if project_id is not None:
         query = query.filter(ReviewCase.project_id == project_id)
+    if project_ids is not None:
+        query = query.filter(ReviewCase.project_id.in_(project_ids)) if project_ids else query.filter(false())
     if status is not None:
         query = query.filter(ReviewCase.status == status)
     if priority_band is not None:
