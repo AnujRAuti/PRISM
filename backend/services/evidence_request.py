@@ -28,6 +28,7 @@ from backend.db.models import (
     ReviewCase,
 )
 from backend.repositories import evidence_request as request_repo
+from backend.services import audit_ledger as audit_service
 from backend.services.evidence_ingestion import ingest_evidence
 
 
@@ -39,7 +40,39 @@ ITEM_STATUSES = frozenset(EVIDENCE_REQUEST_ITEM_STATUSES)
 
 LINKABLE_STATUSES = frozenset({"OPEN", "ACKNOWLEDGED", "PARTIALLY_FULFILLED"})
 
-# Explicit request lifecycle matrix.
+# Domain event -> audit event mapping. Only explicit vocabulary entries are
+# emitted; item-level receipt events stay domain history (incremental).
+REQUEST_AUDIT_TYPES = {
+    "REQUEST_CREATED": "EVIDENCE_REQUEST_CREATED",
+    "REQUEST_ISSUED": "EVIDENCE_REQUEST_ISSUED",
+    "REQUEST_ACKNOWLEDGED": "EVIDENCE_REQUEST_ACKNOWLEDGED",
+    "FULFILLED": "EVIDENCE_REQUEST_FULFILLED",
+    "DECLINED": "EVIDENCE_REQUEST_DECLINED",
+    "CANCELLED": "EVIDENCE_REQUEST_CANCELLED",
+    "EXPIRED": "EVIDENCE_REQUEST_EXPIRED",
+}
+
+
+def _audit_request_event(
+    db: Session, request, event_type: str, actor_id: str | None, action: str
+) -> None:
+    """Emit the audit twin of a request event in the same transaction."""
+    audit_type = REQUEST_AUDIT_TYPES.get(event_type)
+    if audit_type is None:
+        return
+    audit_service.append_event(
+        db,
+        event_type=audit_type,
+        action=action,
+        resource_type="evidence_requests",
+        resource_id=request.id,
+        actor_id=actor_id,
+        project_id=str(request.project_id) if request.project_id else None,
+        payload={"evidence_request_id": request.id, "status": request.status,
+                 "review_case_id": str(request.review_case_id)
+                 if request.review_case_id else None},
+        source="evidence_request_service",
+    )
 TRANSITIONS: dict[str, frozenset[str]] = {
     "DRAFT": frozenset({"OPEN", "CANCELLED"}),
     "OPEN": frozenset({"ACKNOWLEDGED", "DECLINED", "EXPIRED", "CANCELLED", "FULFILLED",
@@ -292,11 +325,13 @@ def create_request(
         to_status="DRAFT", actor_id=requester_id,
         metadata={"item_count": len(items)},
     )
+    _audit_request_event(db, request, "REQUEST_CREATED", requester_id, "create")
     if issue:
         request_repo.insert_event(
             db, request_id=request.id, event_type="REQUEST_ISSUED", from_status="DRAFT",
             to_status="OPEN", actor_id=requester_id, metadata={},
         )
+        _audit_request_event(db, request, "REQUEST_ISSUED", requester_id, "transition")
     db.commit()
     db.refresh(request)
     logger.info("evidence request created request_id=%s status=%s", request.id, status)
@@ -375,6 +410,7 @@ def _apply(
         db, request_id=request.id, event_type=event_type, from_status=from_status,
         to_status=to_status, actor_id=actor_id, metadata=event_metadata or {},
     )
+    _audit_request_event(db, request, event_type, actor_id, "transition")
     db.commit()
     db.refresh(request)
     return request
@@ -432,7 +468,9 @@ def expire_request(db: Session, request_id: str, actor_id: str | None = None,
 # ---------------------------------------------------------------------------
 
 
-def _refresh_fulfillment(db: Session, request: EvidenceRequest) -> EvidenceRequest:
+def _refresh_fulfillment(
+    db: Session, request: EvidenceRequest, actor_id: str | None = None
+) -> EvidenceRequest:
     """Recompute fulfillment; emit a status event only on actual change."""
     if request.status in ("FULFILLED", "DECLINED", "EXPIRED", "CANCELLED", "DRAFT"):
         return request
@@ -443,11 +481,12 @@ def _refresh_fulfillment(db: Session, request: EvidenceRequest) -> EvidenceReque
     validate_transition(request.status, target)
     from_status = request.status
     request.status = target
+    event_type = "FULFILLED" if target == "FULFILLED" else "PARTIAL_FULFILLMENT"
     request_repo.insert_event(
-        db, request_id=request.id,
-        event_type="FULFILLED" if target == "FULFILLED" else "PARTIAL_FULFILLMENT",
-        from_status=from_status, to_status=target, actor_id=None, metadata={},
+        db, request_id=request.id, event_type=event_type,
+        from_status=from_status, to_status=target, actor_id=actor_id, metadata={},
     )
+    _audit_request_event(db, request, event_type, actor_id, "transition")
     return request
 
 
@@ -504,7 +543,7 @@ def link_evidence(
             from_status=request.status, to_status=request.status, actor_id=actor_id,
             metadata={"item_id": slot.id, "evidence_id": evidence_id},
         )
-        _refresh_fulfillment(db, request)
+        _refresh_fulfillment(db, request, actor_id)
         db.commit()
     except IntegrityError:
         # Concurrent duplicate link: the winner is canonical.
@@ -526,12 +565,13 @@ def accept_item(db: Session, request_id: str, item_id: str, actor_id: str | None
         raise LookupError(f"Request item not found: {item_id}")
     validate_item_transition(item.item_status, "ACCEPTED_FOR_REQUEST")
     item.item_status = "ACCEPTED_FOR_REQUEST"
+    actor = _optional_uuid(actor_id, "actor_id")
     request_repo.insert_event(
         db, request_id=request.id, event_type="ITEM_ACCEPTED",
         from_status=request.status, to_status=request.status,
-        actor_id=_optional_uuid(actor_id, "actor_id"), metadata={"item_id": item.id},
+        actor_id=actor, metadata={"item_id": item.id},
     )
-    _refresh_fulfillment(db, request)
+    _refresh_fulfillment(db, request, actor)
     db.commit()
     db.refresh(item)
     db.refresh(request)
@@ -549,12 +589,13 @@ def reject_item(db: Session, request_id: str, item_id: str,
     item.item_status = "REJECTED_FOR_REQUEST"
     if notes is not None:
         item.notes = str(notes)
+    actor = _optional_uuid(actor_id, "actor_id")
     request_repo.insert_event(
         db, request_id=request.id, event_type="ITEM_REJECTED",
         from_status=request.status, to_status=request.status,
-        actor_id=_optional_uuid(actor_id, "actor_id"), metadata={"item_id": item.id},
+        actor_id=actor, metadata={"item_id": item.id},
     )
-    _refresh_fulfillment(db, request)
+    _refresh_fulfillment(db, request, actor)
     db.commit()
     db.refresh(item)
     db.refresh(request)

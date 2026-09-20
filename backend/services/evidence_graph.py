@@ -35,6 +35,7 @@ from backend.db.models import (
     VisionDetection,
 )
 from backend.repositories import evidence_graph as graph_repo
+from backend.services import audit_ledger as audit_service
 
 
 logger = logging.getLogger(__name__)
@@ -189,6 +190,20 @@ def create_relationship(
             provenance={**provenance, "created_at": utc_now().isoformat()},
             explanation=explanation,
         )
+        audit_service.append_event(
+            db,
+            event_type="GRAPH_RELATIONSHIP_CREATED",
+            action="create",
+            resource_type="graph_relationships",
+            resource_id=relationship.id,
+            actor_id=None,
+            project_id=None,
+            payload={"graph_relationship_id": relationship.id,
+                     "relationship_type": relationship_type,
+                     "source": {"node_type": source_type, "entity_id": source_id},
+                     "target": {"node_type": target_type, "entity_id": target_id}},
+            source="evidence_graph_service",
+        )
         db.commit()
     except IntegrityError:
         # Lost a concurrent insert race on the partial-unique dedupe key:
@@ -227,6 +242,23 @@ def set_relationship_status(
     if new_status == "ACTIVE":
         raise ValueError("Relationship is already ACTIVE")
     relationship.relationship_status = new_status
+    audit_service.append_event(
+        db,
+        event_type=(
+            "GRAPH_RELATIONSHIP_SUPERSEDED"
+            if new_status == "SUPERSEDED"
+            else "GRAPH_RELATIONSHIP_INVALIDATED"
+        ),
+        action="transition",
+        resource_type="graph_relationships",
+        resource_id=relationship.id,
+        actor_id=None,
+        project_id=None,
+        payload={"graph_relationship_id": relationship.id,
+                 "relationship_type": relationship.relationship_type,
+                 "from_status": "ACTIVE", "to_status": new_status},
+        source="evidence_graph_service",
+    )
     db.commit()
     db.refresh(relationship)
     return relationship

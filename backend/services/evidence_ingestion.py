@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from backend.core.config import settings
 from backend.db.models import Evidence
+from backend.services import audit_ledger as audit_service
 from backend.services.storage import StorageError, StorageService
 
 
@@ -112,6 +113,20 @@ def ingest_evidence(
             status="uploaded_quarantine",
         )
         db.add(evidence)
+        # The audit twin commits in the same transaction: a failed commit
+        # rolls back both rows, so success is never reported without proof.
+        audit_service.append_event(
+            db,
+            event_type="EVIDENCE_UPLOADED",
+            action="upload",
+            resource_type="evidence",
+            resource_id=evidence_id,
+            actor_id=None,
+            project_id=None,
+            payload={"evidence_id": evidence_id, "filename": evidence.filename,
+                     "content_type": actual_type, "file_size": len(data)},
+            source="evidence_ingestion_service",
+        )
         db.commit()
     except StorageError:
         # Storage failed: no Evidence row was committed; report the failure

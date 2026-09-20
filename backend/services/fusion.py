@@ -55,6 +55,7 @@ from backend.db.models import (
     ReviewPriority,
 )
 from backend.repositories import fusion as fusion_repo
+from backend.services import audit_ledger as audit_service
 from backend.services import evidence_graph as graph_service
 from backend.services.temporal_intelligence import analyze_single
 from backend.services.vision_intelligence import get_latest_vision_result
@@ -823,6 +824,20 @@ def run_fusion(
         fusion_repo.supersede_prior_outputs(db, target_type, target_id, run.id)
         run.status = "COMPLETED"
         run.completed_at = utc_now()
+        audit_service.append_event(
+            db,
+            event_type="FUSION_RUN_CREATED",
+            action="run",
+            resource_type="fusion_runs",
+            resource_id=run.id,
+            actor_id=None,
+            project_id=None,
+            payload={"fusion_run_id": run.id, "target_type": target_type,
+                     "target_id": target_id, "assessment": value,
+                     "priority": priority,
+                     "configuration_version": run.configuration_version},
+            source="fusion_service",
+        )
         db.commit()
     except Exception as error:
         db.rollback()

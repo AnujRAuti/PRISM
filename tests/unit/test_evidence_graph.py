@@ -92,6 +92,9 @@ class FakeQuery:
         rows = self._resolve_all()
         return rows[0] if rows else None
 
+    def first(self):
+        return self.one_or_none()
+
     # -- resolution ----------------------------------------------------
     def _resolve_all(self):
         first = self.entities[0]
@@ -173,6 +176,11 @@ class FakeDB:
 
     def flush(self):
         pass
+
+    def execute(self, *args, **kwargs):
+        # Advisory-lock SELECT issued by the audit ledger on append; the
+        # lock itself is a PostgreSQL concept with no fake equivalent.
+        return None
 
     def commit(self):
         self.commits += 1

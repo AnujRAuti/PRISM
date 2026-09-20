@@ -33,6 +33,7 @@ from backend.db.models import (
 )
 from backend.repositories import fusion as fusion_repo
 from backend.repositories import review_case as case_repo
+from backend.services import audit_ledger as audit_service
 
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,39 @@ RESULT_CREATED = "CASE_CREATED"
 RESULT_EXISTS = "CASE_ALREADY_EXISTS"
 RESULT_NOT_ELIGIBLE = "NOT_ELIGIBLE"
 RESULT_UNAVAILABLE = "UNAVAILABLE"
+
+# Domain event -> audit event mapping. Only explicit vocabulary entries are
+# emitted; other workflow events stay domain history (incremental by design).
+CASE_AUDIT_TYPES = {
+    "CASE_CREATED": "REVIEW_CASE_CREATED",
+    "ASSIGNED": "REVIEW_CASE_ASSIGNED",
+    "DECISION_RECORDED": "REVIEW_CASE_DECISION_RECORDED",
+    "ESCALATED": "REVIEW_CASE_ESCALATED",
+    "RESOLVED": "REVIEW_CASE_RESOLVED",
+    "REOPENED": "REVIEW_CASE_REOPENED",
+}
+
+
+def _audit_case_event(
+    db: Session, case, event_type: str, actor_id: str | None,
+    action: str, extra_payload: dict | None = None,
+) -> None:
+    """Emit the audit twin of a case event in the same transaction."""
+    audit_type = CASE_AUDIT_TYPES.get(event_type)
+    if audit_type is None:
+        return
+    audit_service.append_event(
+        db,
+        event_type=audit_type,
+        action=action,
+        resource_type="review_cases",
+        resource_id=case.id,
+        actor_id=actor_id,
+        project_id=str(case.project_id) if case.project_id else None,
+        payload={"review_case_id": case.id, "status": case.status,
+                 **(extra_payload or {})},
+        source="review_case_service",
+    )
 
 # Explicit lifecycle matrix: current status -> allowed next statuses.
 TRANSITIONS: dict[str, frozenset[str]] = {
@@ -358,6 +392,8 @@ def _generate(db: Session, run, assessment, policy_version: str | None):
             metadata={"fusion_run_id": run.id, "policy_version": config_row.version,
                       "reason": reason},
         )
+        _audit_case_event(db, case, "CASE_CREATED", None, "create",
+                          {"fusion_run_id": run.id})
         gen.status = "COMPLETED"
         gen.completed_at = utc_now()
         db.commit()
@@ -456,6 +492,11 @@ def _apply(
     case_repo.insert_event(
         db, case_id=case.id, event_type=event_type, from_status=from_status,
         to_status=to_status, actor_id=actor_id, metadata=event_metadata or {},
+    )
+    _audit_case_event(
+        db, case, event_type, actor_id,
+        "transition" if to_status != "RESOLVED" else "resolve",
+        {"from_status": from_status, "to_status": to_status},
     )
     db.commit()
     db.refresh(case)

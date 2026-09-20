@@ -9,6 +9,7 @@ Notes:
 import uuid
 
 from sqlalchemy import (
+    BigInteger,
     Column,
     String,
     DateTime,
@@ -872,5 +873,80 @@ class EvidenceRequestEvent(Base):
 
     __table_args__ = (
         Index("ix_evidence_request_events_request", "request_id", "created_at"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# BE-015 Audit Ledger vocabularies (single source of truth; the event
+# vocabulary is enforced by the service layer to stay incrementally
+# extensible without migrations).
+# ---------------------------------------------------------------------------
+
+AUDIT_HASH_ALGORITHM = "SHA-256"
+AUDIT_LEDGER_VERSION = "audit-v1"
+AUDIT_GENESIS_HASH = "GENESIS"
+
+# Explicit governance event vocabulary (BE-015 §20). Only these types may
+# be appended; anything else is rejected rather than recorded vaguely.
+AUDIT_EVENT_TYPES = frozenset(
+    {
+        "EVIDENCE_UPLOADED",
+        "ANALYSIS_COMPLETED",
+        "ANALYSIS_FAILED",
+        "FUSION_RUN_CREATED",
+        "EXPLANATION_GENERATED",
+        "REVIEW_CASE_CREATED",
+        "REVIEW_CASE_ASSIGNED",
+        "REVIEW_CASE_DECISION_RECORDED",
+        "REVIEW_CASE_ESCALATED",
+        "REVIEW_CASE_RESOLVED",
+        "REVIEW_CASE_REOPENED",
+        "EVIDENCE_REQUEST_CREATED",
+        "EVIDENCE_REQUEST_ISSUED",
+        "EVIDENCE_REQUEST_ACKNOWLEDGED",
+        "EVIDENCE_REQUEST_FULFILLED",
+        "EVIDENCE_REQUEST_DECLINED",
+        "EVIDENCE_REQUEST_CANCELLED",
+        "EVIDENCE_REQUEST_EXPIRED",
+        "GRAPH_RELATIONSHIP_CREATED",
+        "GRAPH_RELATIONSHIP_INVALIDATED",
+        "GRAPH_RELATIONSHIP_SUPERSEDED",
+    }
+)
+
+
+class AuditLedgerEvent(Base):
+    """BE-015: append-only tamper-evident audit record (never updated/deleted).
+
+    Ordering comes from the database-assigned ``sequence_number`` (unique,
+    monotonic; assigned under an advisory transaction lock at append time),
+    never from timestamps. ``event_hash`` covers the canonical serialization
+    of all protected fields; ``previous_hash`` chains to the predecessor.
+    """
+
+    __tablename__ = "audit_ledger_events"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    sequence_number = Column(BigInteger, nullable=False, unique=True)
+    event_type = Column(String(100), nullable=False)
+    action = Column(String(100), nullable=False)
+    resource_type = Column(String(100), nullable=False)
+    resource_id = Column(UUID(as_uuid=False), nullable=True)
+    actor_id = Column(UUID(as_uuid=False), nullable=True)
+    project_id = Column(UUID(as_uuid=False), nullable=True)
+    payload = Column(JSONB, nullable=False, default=dict)
+    event_metadata = Column("metadata", JSONB, nullable=False, default=dict)
+    previous_hash = Column(String(256), nullable=False)
+    event_hash = Column(String(256), nullable=False)
+    hash_algorithm = Column(String(50), nullable=False, default=AUDIT_HASH_ALGORITHM)
+    ledger_version = Column(String(50), nullable=False, default=AUDIT_LEDGER_VERSION)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_audit_ledger_sequence", "sequence_number"),
+        Index("ix_audit_ledger_created", "created_at"),
+        Index("ix_audit_ledger_actor", "actor_id"),
+        Index("ix_audit_ledger_type", "event_type"),
+        Index("ix_audit_ledger_resource", "resource_type", "resource_id"),
+        Index("ix_audit_ledger_project", "project_id"),
     )
 
