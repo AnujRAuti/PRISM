@@ -9,6 +9,7 @@ from backend.api.v1.endpoints.evidence_graph import router as graph_router
 from backend.api.v1.endpoints.fusion import router as fusion_router
 from backend.api.v1.endpoints.explainability import router as explainability_router
 from backend.api.v1.endpoints.review_case import router as review_case_router
+from backend.api.v1.endpoints.evidence_request import router as evidence_request_router
 
 router = APIRouter()
 router.include_router(evidence_router)
@@ -20,3 +21,4 @@ router.include_router(graph_router)
 router.include_router(fusion_router)
 router.include_router(explainability_router)
 router.include_router(review_case_router)
+router.include_router(evidence_request_router)

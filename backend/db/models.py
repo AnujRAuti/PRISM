@@ -737,3 +737,140 @@ class ReviewCaseEvent(Base):
         Index("ix_review_case_events_case", "case_id", "created_at"),
     )
 
+
+# ---------------------------------------------------------------------------
+# BE-014 Evidence Request vocabularies (single source of truth; mirrored by
+# CHECK constraints below and by the BE-014 Alembic migration).
+# ---------------------------------------------------------------------------
+
+EVIDENCE_REQUEST_STATUSES = (
+    "DRAFT",
+    "OPEN",
+    "ACKNOWLEDGED",
+    "FULFILLED",
+    "PARTIALLY_FULFILLED",
+    "DECLINED",
+    "EXPIRED",
+    "CANCELLED",
+)
+
+EVIDENCE_REQUEST_PRIORITIES = ("LOW", "NORMAL", "HIGH", "URGENT")
+
+EVIDENCE_REQUEST_ITEM_STATUSES = (
+    "REQUESTED",
+    "RECEIVED",
+    "ACCEPTED_FOR_REQUEST",
+    "REJECTED_FOR_REQUEST",
+)
+
+
+class EvidenceRequest(Base):
+    """BE-014: auditable request for additional evidence (never evidence itself)."""
+
+    __tablename__ = "evidence_requests"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    review_case_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("review_cases.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    activity_id = Column(UUID(as_uuid=False), ForeignKey("activities.id"), nullable=True)
+    claim_id = Column(UUID(as_uuid=False), ForeignKey("claims.id"), nullable=True)
+    evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=True)
+    requester_id = Column(UUID(as_uuid=False), nullable=True)
+    recipient_id = Column(UUID(as_uuid=False), nullable=True)
+    instructions = Column(Text, nullable=False)
+    due_at = Column(DateTime(timezone=True), nullable=True)
+    priority = Column(String(50), nullable=False, default="NORMAL", server_default="NORMAL")
+    status = Column(String(50), nullable=False, default="DRAFT", server_default="DRAFT")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    review_case = relationship("ReviewCase")
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('DRAFT', 'OPEN', 'ACKNOWLEDGED', 'FULFILLED', "
+            "'PARTIALLY_FULFILLED', 'DECLINED', 'EXPIRED', 'CANCELLED')",
+            name="ck_evidence_request_status",
+        ),
+        CheckConstraint(
+            "priority IN ('LOW', 'NORMAL', 'HIGH', 'URGENT')",
+            name="ck_evidence_request_priority",
+        ),
+        Index("ix_evidence_requests_project", "project_id"),
+        Index("ix_evidence_requests_case", "review_case_id"),
+        Index("ix_evidence_requests_status", "status"),
+        Index("ix_evidence_requests_priority", "priority"),
+        Index("ix_evidence_requests_requester", "requester_id"),
+        Index("ix_evidence_requests_recipient", "recipient_id"),
+        Index("ix_evidence_requests_due", "due_at"),
+    )
+
+
+class EvidenceRequestItem(Base):
+    """BE-014: one requested-evidence slot; filled by linking real evidence.
+
+    ACCEPTED_FOR_REQUEST is operational (fulfills this request item), never
+    a statement about the evidence's truth or authenticity.
+    """
+
+    __tablename__ = "evidence_request_items"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    request_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("evidence_requests.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    description = Column(Text, nullable=True)
+    required = Column(Boolean, nullable=False, default=True, server_default="true")
+    evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=True)
+    item_status = Column(String(50), nullable=False, default="REQUESTED", server_default="REQUESTED")
+    linked_at = Column(DateTime(timezone=True), nullable=True)
+    linked_by = Column(UUID(as_uuid=False), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    request = relationship("EvidenceRequest")
+    evidence = relationship("Evidence")
+
+    __table_args__ = (
+        CheckConstraint(
+            "item_status IN ('REQUESTED', 'RECEIVED', 'ACCEPTED_FOR_REQUEST', "
+            "'REJECTED_FOR_REQUEST')",
+            name="ck_evidence_request_item_status",
+        ),
+        # Same evidence linked twice to one request collides; open slots
+        # (NULL evidence) never collide with each other.
+        UniqueConstraint("request_id", "evidence_id", name="uq_request_evidence_link"),
+        Index("ix_evidence_request_items_request", "request_id"),
+        Index("ix_evidence_request_items_evidence", "evidence_id"),
+    )
+
+
+class EvidenceRequestEvent(Base):
+    """BE-014: append-only request workflow history (never modified)."""
+
+    __tablename__ = "evidence_request_events"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    request_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("evidence_requests.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    event_type = Column(String(50), nullable=False)
+    from_status = Column(String(50), nullable=True)
+    to_status = Column(String(50), nullable=True)
+    actor_id = Column(UUID(as_uuid=False), nullable=True)
+    event_metadata = Column("metadata", JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    request = relationship("EvidenceRequest")
+
+    __table_args__ = (
+        Index("ix_evidence_request_events_request", "request_id", "created_at"),
+    )
+
