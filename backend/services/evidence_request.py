@@ -73,6 +73,57 @@ def _audit_request_event(
                  if request.review_case_id else None},
         source="evidence_request_service",
     )
+
+
+def _emit_request_notification(
+    db: Session, request, event_type: str, metadata: dict | None = None
+) -> None:
+    try:
+        from backend.services import notification as notif_service
+
+        meta = metadata or {}
+        notif_type = None
+        payload = {
+            "request_id": str(request.id),
+            "project_id": str(request.project_id) if request.project_id else None,
+            "resource_type": "evidence_request",
+            "resource_id": str(request.id),
+        }
+        if event_type == "REQUEST_ISSUED" and request.recipient_id:
+            notif_type = "EVIDENCE_REQUEST_ISSUED"
+            payload["recipient_id"] = str(request.recipient_id)
+            payload["priority"] = getattr(request, "priority", "NORMAL")
+        elif event_type == "REQUEST_ACKNOWLEDGED" and request.requester_id:
+            notif_type = "EVIDENCE_REQUEST_ACKNOWLEDGED"
+            payload["created_by"] = str(request.requester_id)
+        elif event_type == "PARTIAL_FULFILLMENT" and request.requester_id:
+            notif_type = "EVIDENCE_REQUEST_PARTIALLY_FULFILLED"
+            payload["created_by"] = str(request.requester_id)
+        elif event_type == "FULFILLED" and request.requester_id:
+            notif_type = "EVIDENCE_REQUEST_FULFILLED"
+            payload["created_by"] = str(request.requester_id)
+        elif event_type == "DECLINED" and request.requester_id:
+            notif_type = "EVIDENCE_REQUEST_DECLINED"
+            payload["created_by"] = str(request.requester_id)
+            payload["reason"] = meta.get("reason", "Declined")
+        elif event_type == "EXPIRED" and request.requester_id:
+            notif_type = "EVIDENCE_REQUEST_EXPIRED"
+            payload["created_by"] = str(request.requester_id)
+
+        if notif_type:
+            notif_service.emit_notification_event(
+                db,
+                event_type=notif_type,
+                aggregate_type="EVIDENCE_REQUEST",
+                aggregate_id=str(request.id),
+                payload=payload,
+            )
+    except Exception as exc:
+        logger.warning(
+            "Failed to emit notification for request %s event %s: %s", request.id, event_type, exc
+        )
+
+
 TRANSITIONS: dict[str, frozenset[str]] = {
     "DRAFT": frozenset({"OPEN", "CANCELLED"}),
     "OPEN": frozenset({"ACKNOWLEDGED", "DECLINED", "EXPIRED", "CANCELLED", "FULFILLED",
@@ -332,6 +383,7 @@ def create_request(
             to_status="OPEN", actor_id=requester_id, metadata={},
         )
         _audit_request_event(db, request, "REQUEST_ISSUED", requester_id, "transition")
+        _emit_request_notification(db, request, "REQUEST_ISSUED")
     db.commit()
     db.refresh(request)
     logger.info("evidence request created request_id=%s status=%s", request.id, status)
@@ -413,6 +465,7 @@ def _apply(
         to_status=to_status, actor_id=actor_id, metadata=event_metadata or {},
     )
     _audit_request_event(db, request, event_type, actor_id, "transition")
+    _emit_request_notification(db, request, event_type, event_metadata)
     db.commit()
     db.refresh(request)
     return request
@@ -489,6 +542,7 @@ def _refresh_fulfillment(
         from_status=from_status, to_status=target, actor_id=actor_id, metadata={},
     )
     _audit_request_event(db, request, event_type, actor_id, "transition")
+    _emit_request_notification(db, request, event_type)
     return request
 
 

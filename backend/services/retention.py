@@ -784,6 +784,25 @@ def create_hold(
         payload={"hold_id": row.id, "scope": scope, "reason": str(reason).strip()},
         source="retention_service",
     )
+    try:
+        from backend.services import notification as notif_service
+
+        notif_service.emit_notification_event(
+            db,
+            event_type="RETENTION_HOLD_CREATED",
+            aggregate_type="RETENTION_HOLD",
+            aggregate_id=str(row.id),
+            payload={
+                "hold_id": str(row.id),
+                "scope": scope,
+                "reason": str(reason).strip(),
+                "project_id": str(project_id) if project_id else None,
+                "resource_type": "retention",
+                "resource_id": str(row.id),
+            },
+        )
+    except Exception as exc:
+        logger.warning("Failed to emit notification for hold %s: %s", row.id, exc)
     db.commit()
     db.refresh(row)
     return row
@@ -811,6 +830,24 @@ def release_hold(db: Session, hold_id: str, release_reason: str,
         payload={"hold_id": hold.id, "release_reason": hold.release_reason},
         source="retention_service",
     )
+    try:
+        from backend.services import notification as notif_service
+
+        notif_service.emit_notification_event(
+            db,
+            event_type="RETENTION_HOLD_RELEASED",
+            aggregate_type="RETENTION_HOLD",
+            aggregate_id=str(hold.id),
+            payload={
+                "hold_id": str(hold.id),
+                "release_reason": hold.release_reason,
+                "project_id": str(hold.project_id) if hold.project_id else None,
+                "resource_type": "retention",
+                "resource_id": str(hold.id),
+            },
+        )
+    except Exception as exc:
+        logger.warning("Failed to emit notification for hold release %s: %s", hold.id, exc)
     db.commit()
     db.refresh(hold)
     return hold

@@ -500,9 +500,56 @@ def _apply(
         "transition" if to_status != "RESOLVED" else "resolve",
         {"from_status": from_status, "to_status": to_status},
     )
+    _emit_case_notification(db, case, event_type, event_metadata)
     db.commit()
     db.refresh(case)
     return case
+
+
+def _emit_case_notification(
+    db: Session, case: ReviewCase, event_type: str, metadata: dict | None
+) -> None:
+    try:
+        from backend.services import notification as notif_service
+
+        meta = metadata or {}
+        notif_type = None
+        payload = {
+            "case_id": str(case.id),
+            "project_id": str(case.project_id) if case.project_id else None,
+            "priority_band": getattr(case, "priority_band", "NORMAL"),
+            "resource_type": "review_case",
+            "resource_id": str(case.id),
+        }
+        if event_type == "ASSIGNED" and case.assigned_to:
+            notif_type = "REVIEW_CASE_ASSIGNED"
+            payload["assigned_to"] = str(case.assigned_to)
+        elif event_type == "ESCALATED":
+            notif_type = "REVIEW_CASE_ESCALATED"
+            payload["escalation_reason"] = meta.get("reason", "Escalated for review")
+            if meta.get("escalated_to"):
+                payload["recipients"] = [str(meta["escalated_to"])]
+        elif event_type == "DECISION_RECORDED":
+            notif_type = "REVIEW_CASE_DECISION_PENDING"
+            payload["decision"] = str(case.decision)
+        elif event_type == "REOPENED":
+            notif_type = "REVIEW_CASE_REOPENED"
+            payload["reopen_reason"] = meta.get("reason", "Case reopened")
+            if case.assigned_to:
+                payload["assigned_to"] = str(case.assigned_to)
+
+        if notif_type:
+            notif_service.emit_notification_event(
+                db,
+                event_type=notif_type,
+                aggregate_type="REVIEW_CASE",
+                aggregate_id=str(case.id),
+                payload=payload,
+            )
+    except Exception as exc:
+        logger.warning(
+            "Failed to emit notification for case %s event %s: %s", case.id, event_type, exc
+        )
 
 
 def assign_case(db: Session, case_id: str, assigned_to: str | None, actor_id: str | None = None):

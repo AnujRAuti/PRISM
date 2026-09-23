@@ -947,6 +947,9 @@ AUDIT_EVENT_TYPES = frozenset(
         "DELETION_REQUESTED",
         "RESOURCE_DELETED",
         "DELETION_BLOCKED",
+        "NOTIFICATION_PREFERENCE_CHANGED",
+        "NOTIFICATION_DELIVERY_FAILED",
+        "NOTIFICATION_DELIVERY_SUCCEEDED",
     }
 )
 
@@ -1052,6 +1055,10 @@ AUTH_PERMISSIONS = (
     "retention.archive",
     "retention.restore",
     "retention.delete",
+    "notification.read",
+    "notification.mark_read",
+    "notification.manage_preferences",
+    "notification.admin",
 )
 
 # Baseline role -> permissions mapping (also seeded for tests/dev via the
@@ -1063,6 +1070,9 @@ AUTH_ROLE_PERMISSIONS = {
         "evidence_request.create",
         "evidence_request.respond",
         "claim.read",
+        "notification.read",
+        "notification.mark_read",
+        "notification.manage_preferences",
     ),
     "FIELD_OFFICER": (
         "project.read",
@@ -1080,6 +1090,9 @@ AUTH_ROLE_PERMISSIONS = {
         "evidence_request.create",
         "evidence_request.issue",
         "evidence_request.respond",
+        "notification.read",
+        "notification.mark_read",
+        "notification.manage_preferences",
     ),
     "REVIEWER": (
         "project.read",
@@ -1096,6 +1109,9 @@ AUTH_ROLE_PERMISSIONS = {
         "evidence_request.read",
         "evidence_request.respond",
         "audit.read",
+        "notification.read",
+        "notification.mark_read",
+        "notification.manage_preferences",
     ),
     "SUPERVISOR": (
         "project.read",
@@ -1116,6 +1132,9 @@ AUTH_ROLE_PERMISSIONS = {
         "evidence_request.read",
         "evidence_request.respond",
         "audit.read",
+        "notification.read",
+        "notification.mark_read",
+        "notification.manage_preferences",
     ),
     "ADMINISTRATOR": (
         "organization.manage",
@@ -1129,6 +1148,10 @@ AUTH_ROLE_PERMISSIONS = {
         "retention.archive",
         "retention.restore",
         "retention.delete",
+        "notification.read",
+        "notification.mark_read",
+        "notification.manage_preferences",
+        "notification.admin",
     ),
     "API_CLIENT": (),
 }
@@ -1526,5 +1549,161 @@ class RetentionOperation(Base):
         ),
         Index("ix_retention_operations_resource", "resource_type", "resource_id"),
         Index("ix_retention_operations_status", "status"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# BE-018 Notifications & Event Delivery vocabularies (single source of truth;
+# mirrored by CHECK constraints below and by the BE-018 Alembic migration).
+# ---------------------------------------------------------------------------
+
+NOTIFICATION_TYPES = (
+    "REVIEW_CASE_ASSIGNED",
+    "REVIEW_CASE_ESCALATED",
+    "REVIEW_CASE_DECISION_PENDING",
+    "REVIEW_CASE_REOPENED",
+    "EVIDENCE_REQUEST_ISSUED",
+    "EVIDENCE_REQUEST_ACKNOWLEDGED",
+    "EVIDENCE_REQUEST_PARTIALLY_FULFILLED",
+    "EVIDENCE_REQUEST_FULFILLED",
+    "EVIDENCE_REQUEST_DECLINED",
+    "EVIDENCE_REQUEST_EXPIRED",
+    "RETENTION_HOLD_CREATED",
+    "RETENTION_HOLD_RELEASED",
+    "SYSTEM_SECURITY_EVENT",
+)
+
+NOTIFICATION_STATUSES = ("UNREAD", "READ")
+
+NOTIFICATION_SEVERITIES = ("INFO", "WARNING", "CRITICAL")
+
+NOTIFICATION_CHANNELS = ("IN_APP", "EMAIL")
+
+NOTIFICATION_DELIVERY_STATUSES = (
+    "PENDING",
+    "PROCESSING",
+    "DELIVERED",
+    "FAILED",
+    "RETRYING",
+    "CANCELLED",
+)
+
+NOTIFICATION_OUTBOX_STATUSES = (
+    "PENDING",
+    "PROCESSING",
+    "PUBLISHED",
+    "FAILED",
+)
+
+
+class Notification(Base):
+    """BE-018: first-class in-app notification record."""
+
+    __tablename__ = "notifications"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    recipient_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    organization_id = Column(UUID(as_uuid=False), ForeignKey("organizations.id"), nullable=True)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    notification_type = Column(String(50), nullable=False)
+    title = Column(String(256), nullable=False)
+    body = Column(Text, nullable=False)
+    resource_type = Column(String(50), nullable=True)
+    resource_id = Column(UUID(as_uuid=False), nullable=True)
+    severity = Column(String(20), nullable=False, default="INFO", server_default="INFO")
+    status = Column(String(20), nullable=False, default="UNREAD", server_default="UNREAD")
+    read_at = Column(DateTime(timezone=True), nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('UNREAD', 'READ')",
+            name="ck_notification_status",
+        ),
+        CheckConstraint(
+            "severity IN ('INFO', 'WARNING', 'CRITICAL')",
+            name="ck_notification_severity",
+        ),
+        Index("ix_notifications_recipient_created", "recipient_id", "created_at"),
+        Index("ix_notifications_recipient_status", "recipient_id", "status"),
+        Index("ix_notifications_project", "project_id"),
+        Index("ix_notifications_created_at", "created_at"),
+    )
+
+
+class NotificationDelivery(Base):
+    """BE-018: delivery status per channel for a notification."""
+
+    __tablename__ = "notification_deliveries"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    notification_id = Column(
+        UUID(as_uuid=False), ForeignKey("notifications.id", ondelete="CASCADE"), nullable=False
+    )
+    channel = Column(String(20), nullable=False)
+    status = Column(String(20), nullable=False, default="PENDING", server_default="PENDING")
+    attempts = Column(Integer, nullable=False, default=0, server_default="0")
+    provider = Column(String(50), nullable=False)
+    provider_message_id = Column(String(256), nullable=True)
+    last_error = Column(Text, nullable=True)
+    next_attempt_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("notification_id", "channel", name="uq_delivery_notification_channel"),
+        CheckConstraint(
+            "channel IN ('IN_APP', 'EMAIL')",
+            name="ck_notification_delivery_channel",
+        ),
+        CheckConstraint(
+            "status IN ('PENDING', 'PROCESSING', 'DELIVERED', 'FAILED', 'RETRYING', 'CANCELLED')",
+            name="ck_notification_delivery_status",
+        ),
+        Index("ix_notification_deliveries_status_next_attempt", "status", "next_attempt_at"),
+        Index("ix_notification_deliveries_notification", "notification_id"),
+    )
+
+
+class NotificationPreference(Base):
+    """BE-018: user notification channel preferences per notification type."""
+
+    __tablename__ = "notification_preferences"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    notification_type = Column(String(50), nullable=False)
+    in_app_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    email_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "notification_type", name="uq_notification_preference_user_type"),
+        Index("ix_notification_preferences_user", "user_id"),
+    )
+
+
+class NotificationOutbox(Base):
+    """BE-018: transactional outbox event for reliable asynchronous delivery."""
+
+    __tablename__ = "notification_outbox"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    event_type = Column(String(50), nullable=False)
+    aggregate_type = Column(String(50), nullable=False)
+    aggregate_id = Column(UUID(as_uuid=False), nullable=False)
+    payload = Column(JSONB, nullable=False, default=dict)
+    status = Column(String(20), nullable=False, default="PENDING", server_default="PENDING")
+    attempts = Column(Integer, nullable=False, default=0, server_default="0")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+    last_error = Column(Text, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('PENDING', 'PROCESSING', 'PUBLISHED', 'FAILED')",
+            name="ck_notification_outbox_status",
+        ),
+        Index("ix_notification_outbox_status", "status", "created_at"),
     )
 

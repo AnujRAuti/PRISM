@@ -13,6 +13,7 @@ from backend.api.v1.endpoints.evidence_request import router as evidence_request
 from backend.api.v1.endpoints.audit_ledger import router as audit_ledger_router
 from backend.api.v1.endpoints.auth import router as auth_router
 from backend.api.v1.endpoints.retention import router as retention_router
+from backend.api.v1.endpoints.notification import router as notification_router
 
 router = APIRouter()
 # NOTE: context_router owns GET /evidence/nearby and must precede
@@ -31,3 +32,4 @@ router.include_router(evidence_request_router)
 router.include_router(audit_ledger_router)
 router.include_router(auth_router)
 router.include_router(retention_router)
+router.include_router(notification_router)

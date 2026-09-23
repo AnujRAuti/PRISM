@@ -74,6 +74,16 @@ ACTION_PERMISSIONS = {
     "user.manage": "user.manage",
     "role.manage": "role.manage",
     "configuration.manage": "configuration.manage",
+    "retention.read": "retention.read",
+    "retention.manage_policy": "retention.manage_policy",
+    "retention.manage_hold": "retention.manage_hold",
+    "retention.archive": "retention.archive",
+    "retention.restore": "retention.restore",
+    "retention.delete": "retention.delete",
+    "notification.read": "notification.read",
+    "notification.mark_read": "notification.mark_read",
+    "notification.manage_preferences": "notification.manage_preferences",
+    "notification.admin": "notification.admin",
 }
 
 
@@ -521,6 +531,11 @@ def resolve_resource_scope(
                     holder_project = (
                         str(evidence.project_id) if evidence and evidence.project_id else None
                     )
+        elif resource_type == "notification":
+            from backend.db.models import Notification
+
+            row = db.query(Notification).filter(Notification.id == resource_id).one_or_none()
+            holder_project = str(row.project_id) if row and row.project_id else None
         else:
             return Resource(resource_type, resource_id)
         if holder_project is not None:
