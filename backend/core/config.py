@@ -1,4 +1,3 @@
-
 """Configuration using Pydantic BaseSettings."""
 
 from pydantic_settings import BaseSettings
@@ -51,6 +50,15 @@ class Settings(BaseSettings):
     # non-secret identifiers accepted only when this is explicitly enabled.
     # Production OIDC/OAuth2 integration must disable this.
     auth_dev_tokens_enabled: bool = True
+
+    # BE-020 Observability Configuration
+    otel_enabled: bool = False
+    otel_service_name: str = "poa-backend"
+    otel_exporter_otlp_endpoint: str = ""
+    otel_trace_sample_rate: float = 0.1
+    prometheus_enabled: bool = True
+    observability_log_format: str = "json"
+    observability_redact_sensitive: bool = True
 
     class Config:
         env_file = ".env"
