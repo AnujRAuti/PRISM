@@ -21,13 +21,14 @@ from backend.db.models import (
     NotificationOutbox,
     NotificationPreference,
     Project,
+    Role,
     User,
     UserRoleAssignment,
 )
 from backend.repositories import notification as notif_repo
 from backend.services import audit_ledger as audit_service
 from backend.services import authorization as auth_service
-from backend.services.authorization import Principal, Resource, can
+from backend.services.authorization import Principal, Resource, can, resolve_user_principal
 
 
 logger = logging.getLogger(__name__)
@@ -248,9 +249,10 @@ def _find_supervisors_for_project(db: Session, project_id: str) -> list[str]:
     """Find users who hold the SUPERVISOR role covering this project."""
     assignments = (
         db.query(UserRoleAssignment)
+        .join(Role, Role.id == UserRoleAssignment.role_id)
         .filter(
-            UserRoleAssignment.role_name == "SUPERVISOR",
-            UserRoleAssignment.status == "ACTIVE",
+            Role.name == "SUPERVISOR",
+            Role.status == "ACTIVE",
         )
         .all()
     )
@@ -267,9 +269,10 @@ def _find_admins_for_project(db: Session, project_id: str) -> list[str]:
     """Find users who hold the ADMINISTRATOR role covering this project."""
     assignments = (
         db.query(UserRoleAssignment)
+        .join(Role, Role.id == UserRoleAssignment.role_id)
         .filter(
-            UserRoleAssignment.role_name == "ADMINISTRATOR",
-            UserRoleAssignment.status == "ACTIVE",
+            Role.name == "ADMINISTRATOR",
+            Role.status == "ACTIVE",
         )
         .all()
     )
@@ -308,10 +311,8 @@ def filter_authorized_recipients(
         if user is None or user.status != "ACTIVE":
             continue
 
-        # Build principal for user
-        from backend.security.authentication import build_principal_for_user
-
-        principal = build_principal_for_user(db, user)
+        # Build principal for user using the authorization service
+        principal = resolve_user_principal(db, uid)
 
         # Check permission: if notification references a project/resource,
         # user must have read access for that resource type or project.read
