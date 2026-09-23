@@ -235,14 +235,6 @@ def system_principal() -> Principal:
     )
 
 
-def system_principal() -> Principal:
-    return Principal(
-        principal_id="system", principal_type="SYSTEM", authenticated=True,
-        status="ACTIVE", display_name="system",
-        permissions={permission: (Scope(scope_type="GLOBAL"),) for permission in PERMISSIONS},
-    )
-
-
 # ---------------------------------------------------------------------------
 # Administrative operations (each audited; same-transaction semantics)
 # ---------------------------------------------------------------------------

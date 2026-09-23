@@ -938,6 +938,15 @@ AUDIT_EVENT_TYPES = frozenset(
         "ORGANIZATIONAL_UNIT_CREATED",
         "ROLE_ASSIGNED",
         "ROLE_REVOKED",
+        "RETENTION_POLICY_CREATED",
+        "RETENTION_POLICY_ACTIVATED",
+        "RETENTION_HOLD_CREATED",
+        "RETENTION_HOLD_RELEASED",
+        "RESOURCE_ARCHIVED",
+        "RESOURCE_RESTORED",
+        "DELETION_REQUESTED",
+        "RESOURCE_DELETED",
+        "DELETION_BLOCKED",
     }
 )
 
@@ -1037,6 +1046,12 @@ AUTH_PERMISSIONS = (
     "user.manage",
     "role.manage",
     "configuration.manage",
+    "retention.read",
+    "retention.manage_policy",
+    "retention.manage_hold",
+    "retention.archive",
+    "retention.restore",
+    "retention.delete",
 )
 
 # Baseline role -> permissions mapping (also seeded for tests/dev via the
@@ -1108,6 +1123,12 @@ AUTH_ROLE_PERMISSIONS = {
         "role.manage",
         "configuration.manage",
         "audit.read",
+        "retention.read",
+        "retention.manage_policy",
+        "retention.manage_hold",
+        "retention.archive",
+        "retention.restore",
+        "retention.delete",
     ),
     "API_CLIENT": (),
 }
@@ -1287,5 +1308,223 @@ class ApiClient(Base):
             name="ck_api_client_status",
         ),
         Index("ix_api_clients_name", "name"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# BE-017 Retention & Data Governance vocabularies (single source of truth;
+# mirrored by CHECK constraints below and by the BE-017 Alembic migration).
+# ---------------------------------------------------------------------------
+
+RETENTION_RESOURCE_TYPES = (
+    "EVIDENCE",
+    "ANALYSIS_RESULT",
+    "FUSION_RUN",
+    "REVIEW_CASE",
+    "EVIDENCE_REQUEST",
+    "AUDIT_LEDGER_EVENT",
+)
+
+RETENTION_STATES = (
+    "ACTIVE",
+    "ELIGIBLE_FOR_ARCHIVE",
+    "ARCHIVED",
+    "ELIGIBLE_FOR_DELETION",
+    "DELETION_PENDING",
+    "DELETED",
+)
+
+RETENTION_ANCHORS = (
+    "INGESTED_AT",
+    "CAPTURED_AT",
+    "PROJECT_COMPLETED_AT",
+    "CASE_RESOLVED_AT",
+    "REQUEST_FULFILLED_AT",
+    "DECISION_AT",
+    "SUPERSEDED_AT",
+    "CUSTOM_POLICY_EVENT",
+)
+
+RETENTION_POLICY_STATUSES = ("DRAFT", "ACTIVE", "SUPERSEDED", "RETIRED")
+
+RETENTION_HOLD_STATUSES = ("ACTIVE", "RELEASED", "EXPIRED", "CANCELLED")
+
+RETENTION_HOLD_SCOPES = ("RESOURCE", "PROJECT", "CASE", "CLAIM", "ORGANIZATION")
+
+RETENTION_OPERATION_TYPES = ("ARCHIVE", "RESTORE", "DELETE")
+
+RETENTION_OPERATION_STATUSES = ("RUNNING", "COMPLETED", "FAILED")
+
+
+class RetentionPolicy(Base):
+    """BE-017: named retention policy identity (rules live in versions)."""
+
+    __tablename__ = "retention_policies"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    name = Column(String(256), nullable=False)
+    description = Column(Text, nullable=True)
+    resource_type = Column(String(50), nullable=False)
+    scope_type = Column(String(50), nullable=False)
+    organization_id = Column(UUID(as_uuid=False), ForeignKey("organizations.id"), nullable=True)
+    organizational_unit_id = Column(
+        UUID(as_uuid=False), ForeignKey("organizational_units.id"), nullable=True
+    )
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=False), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "resource_type IN ('EVIDENCE', 'ANALYSIS_RESULT', 'FUSION_RUN', "
+            "'REVIEW_CASE', 'EVIDENCE_REQUEST', 'AUDIT_LEDGER_EVENT')",
+            name="ck_retention_policy_resource",
+        ),
+        CheckConstraint(
+            "scope_type IN ('GLOBAL', 'ORGANIZATION', 'ORGANIZATIONAL_UNIT', 'PROJECT')",
+            name="ck_retention_policy_scope",
+        ),
+        Index("ix_retention_policies_resource", "resource_type"),
+        Index("ix_retention_policies_project", "project_id"),
+        Index("ix_retention_policies_org", "organization_id"),
+    )
+
+
+class RetentionPolicyVersion(Base):
+    """BE-017: immutable versioned rules (new version, never mutation)."""
+
+    __tablename__ = "retention_policy_versions"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    policy_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("retention_policies.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    version = Column(Integer, nullable=False)
+    rules = Column(JSONB, nullable=False, default=dict)
+    status = Column(String(50), nullable=False, default="DRAFT", server_default="DRAFT")
+    effective_from = Column(DateTime(timezone=True), nullable=True)
+    effective_until = Column(DateTime(timezone=True), nullable=True)
+    created_by = Column(UUID(as_uuid=False), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    policy = relationship("RetentionPolicy")
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "version", name="uq_policy_version"),
+        CheckConstraint(
+            "status IN ('DRAFT', 'ACTIVE', 'SUPERSEDED', 'RETIRED')",
+            name="ck_policy_version_status",
+        ),
+        Index("ix_policy_versions_policy", "policy_id"),
+    )
+
+
+class RetentionState(Base):
+    """BE-017: explicit retention lifecycle per resource (separate from domain)."""
+
+    __tablename__ = "retention_states"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    resource_type = Column(String(50), nullable=False)
+    resource_id = Column(UUID(as_uuid=False), nullable=False)
+    project_id = Column(UUID(as_uuid=False), nullable=True)
+    organization_id = Column(UUID(as_uuid=False), nullable=True)
+    state = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    policy_version_id = Column(
+        UUID(as_uuid=False), ForeignKey("retention_policy_versions.id"), nullable=True
+    )
+    anchor = Column(String(50), nullable=True)
+    anchor_timestamp = Column(DateTime(timezone=True), nullable=True)
+    expiry_timestamp = Column(DateTime(timezone=True), nullable=True)
+    previous_storage_key = Column(Text, nullable=True)
+    evaluated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("resource_type", "resource_id", name="uq_retention_state_resource"),
+        CheckConstraint(
+            "state IN ('ACTIVE', 'ELIGIBLE_FOR_ARCHIVE', 'ARCHIVED', "
+            "'ELIGIBLE_FOR_DELETION', 'DELETION_PENDING', 'DELETED')",
+            name="ck_retention_state",
+        ),
+        Index("ix_retention_states_resource", "resource_type", "resource_id"),
+        Index("ix_retention_states_state", "state"),
+        Index("ix_retention_states_expiry", "expiry_timestamp"),
+        Index("ix_retention_states_project", "project_id"),
+        Index("ix_retention_states_policy", "policy_version_id"),
+    )
+
+
+class RetentionHold(Base):
+    """BE-017: first-class hold (history preserved; never deleted)."""
+
+    __tablename__ = "retention_holds"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    scope = Column(String(50), nullable=False)
+    resource_type = Column(String(50), nullable=True)
+    resource_id = Column(UUID(as_uuid=False), nullable=True)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    claim_id = Column(UUID(as_uuid=False), ForeignKey("claims.id"), nullable=True)
+    case_id = Column(UUID(as_uuid=False), ForeignKey("review_cases.id"), nullable=True)
+    organization_id = Column(UUID(as_uuid=False), ForeignKey("organizations.id"), nullable=True)
+    reason = Column(Text, nullable=False)
+    authority = Column(String(256), nullable=True)
+    status = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    created_by = Column(UUID(as_uuid=False), nullable=True)
+    released_by = Column(UUID(as_uuid=False), nullable=True)
+    release_reason = Column(Text, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    released_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "scope IN ('RESOURCE', 'PROJECT', 'CASE', 'CLAIM', 'ORGANIZATION')",
+            name="ck_hold_scope",
+        ),
+        CheckConstraint(
+            "status IN ('ACTIVE', 'RELEASED', 'EXPIRED', 'CANCELLED')",
+            name="ck_hold_status",
+        ),
+        Index("ix_holds_status", "status"),
+        Index("ix_holds_project", "project_id"),
+        Index("ix_holds_resource", "resource_type", "resource_id"),
+    )
+
+
+class RetentionOperation(Base):
+    """BE-017: traceable archive/restore/delete execution (append-only)."""
+
+    __tablename__ = "retention_operations"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    resource_type = Column(String(50), nullable=False)
+    resource_id = Column(UUID(as_uuid=False), nullable=False)
+    operation = Column(String(50), nullable=False)
+    status = Column(String(50), nullable=False, default="RUNNING", server_default="RUNNING")
+    policy_version_id = Column(
+        UUID(as_uuid=False), ForeignKey("retention_policy_versions.id"), nullable=True
+    )
+    actor_id = Column(UUID(as_uuid=False), nullable=True)
+    details = Column(JSONB, nullable=False, default=dict)
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "operation IN ('ARCHIVE', 'RESTORE', 'DELETE')",
+            name="ck_retention_operation_type",
+        ),
+        CheckConstraint(
+            "status IN ('RUNNING', 'COMPLETED', 'FAILED')",
+            name="ck_retention_operation_status",
+        ),
+        Index("ix_retention_operations_resource", "resource_type", "resource_id"),
+        Index("ix_retention_operations_status", "status"),
     )
 

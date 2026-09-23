@@ -64,23 +64,10 @@ def require(action: str, resource_type: str | None = None, id_param: str | None 
             resource_id = request.path_params.get(id_param)
         resource = (
             resolve_resource_scope(db, resource_type, str(resource_id))
-            if resource_id is not None
-            else Resource(resource_type)
+            if resource_type is not None and resource_id is not None
+            else Resource(resource_type or "global")
         )
-        decision = can(principal, action, resource)
-        secure_log_decision(request, principal, action, resource,
-                            decision.allowed, decision.reason)
-        if decision.allowed:
-            return principal
-        if decision.reason in ("SCOPE_DENIED", "RESOURCE_UNSCOPEABLE"):
-            # Indistinguishable from "not found" where disclosure matters.
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail="Not found")
-        if decision.reason == "UNAUTHENTICATED":
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail="Authentication required")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="Forbidden")
+        return enforce(principal, action, resource, request)
     return dependency
 
 
@@ -137,6 +124,30 @@ def visible_project_ids(
 def permission_description(action: str) -> str:
     """Human-readable required permission for OpenAPI documentation."""
     return f"Requires permission: {ACTION_PERMISSIONS.get(action, action)}"
+
+
+def enforce(principal: Principal, action: str, resource: Resource,
+            request: Request | None = None) -> Principal:
+    """Evaluate can() and map denials to structured HTTP errors.
+
+    NO_PERMISSION -> 403, SCOPE_DENIED/RESOURCE_UNSCOPEABLE -> 404
+    (indistinguishable from absent), UNAUTHENTICATED -> 401.
+    Shared by require() and endpoints with custom scope resolution.
+    """
+    decision = can(principal, action, resource)
+    if request is not None:
+        secure_log_decision(request, principal, action, resource,
+                            decision.allowed, decision.reason)
+    if decision.allowed:
+        return principal
+    if decision.reason in ("SCOPE_DENIED", "RESOURCE_UNSCOPEABLE"):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Not found")
+    if decision.reason == "UNAUTHENTICATED":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Authentication required")
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Forbidden")
 
 
 def filter_graph_edges(db: Session, principal: Principal, rows: list):
@@ -203,19 +214,7 @@ def require_target(action: str):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail="Unsupported fusion target")
         resource = resolve_resource_scope(db, target_type, str(target_id))
-        decision = can(principal, action, resource)
-        secure_log_decision(request, principal, action, resource,
-                            decision.allowed, decision.reason)
-        if decision.allowed:
-            return principal
-        if decision.reason in ("SCOPE_DENIED", "RESOURCE_UNSCOPEABLE"):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail="Not found")
-        if decision.reason == "UNAUTHENTICATED":
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail="Authentication required")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="Forbidden")
+        return enforce(principal, action, resource, request)
     return dependency
 
 
