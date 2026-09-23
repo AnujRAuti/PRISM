@@ -722,3 +722,4 @@ def list_events(
         offset=offset,
     )
     return [IntegrationEventResponse.model_validate(e) for e in events]
+

@@ -318,3 +318,4 @@ def downgrade() -> None:
     op.drop_table("external_references")
     op.drop_table("api_credentials")
     op.drop_table("external_systems")
+

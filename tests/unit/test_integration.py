@@ -341,3 +341,4 @@ def test_webhook_subscription_update_validates_status():
 
     with pytest.raises(ValidationError, match="ACTIVE, SUSPENDED, or DISABLED"):
         WebhookSubscriptionUpdate(status="DESTROYED")
+

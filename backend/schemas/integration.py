@@ -303,3 +303,4 @@ class ExternalClaimImport(BaseModel):
         if v is not None and v.tzinfo is None:
             raise ValueError("source_timestamp must be timezone-aware")
         return v
+
