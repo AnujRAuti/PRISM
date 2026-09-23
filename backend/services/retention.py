@@ -987,6 +987,19 @@ def archive_evidence(db: Session, evidence_id: str, actor_id: str | None,
                      "sha256": evidence.sha256},
             source="retention_service",
         )
+        try:
+            from backend.services import webhook as webhook_service
+
+            webhook_service.enqueue_webhook_event(
+                db,
+                event_type="retention.archived",
+                aggregate_type="RETENTION",
+                aggregate_id=str(evidence_id),
+                project_id=str(evidence.project_id) if evidence.project_id else None,
+                data={"resource_type": "evidence", "evidence_id": str(evidence_id)},
+            )
+        except Exception as exc:
+            logger.warning("Failed to emit webhook for archived resource %s: %s", evidence_id, exc)
         db.commit()
     except Exception as error:
         db.rollback()
@@ -1179,6 +1192,19 @@ def delete_evidence(db: Session, evidence_id: str, actor_id: str | None,
             payload={"evidence_id": evidence_id, "sha256": details["sha256"]},
             source="retention_service",
         )
+        try:
+            from backend.services import webhook as webhook_service
+
+            webhook_service.enqueue_webhook_event(
+                db,
+                event_type="retention.deleted",
+                aggregate_type="RETENTION",
+                aggregate_id=str(evidence_id),
+                project_id=str(project_id) if project_id else None,
+                data={"resource_type": "evidence", "evidence_id": str(evidence_id)},
+            )
+        except Exception as exc:
+            logger.warning("Failed to emit webhook for deleted resource %s: %s", evidence_id, exc)
         db.commit()
     except (LookupError, ValueError):
         raise

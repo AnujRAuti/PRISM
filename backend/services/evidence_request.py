@@ -124,6 +124,41 @@ def _emit_request_notification(
         )
 
 
+def _emit_request_webhook(
+    db: Session, request, event_type: str, metadata: dict | None = None
+) -> None:
+    try:
+        from backend.services import webhook as webhook_service
+
+        wh_type = None
+        if event_type == "REQUEST_ISSUED":
+            wh_type = "evidence_request.issued"
+        elif event_type == "FULFILLED":
+            wh_type = "evidence_request.fulfilled"
+        elif event_type == "DECLINED":
+            wh_type = "evidence_request.declined"
+        elif event_type == "EXPIRED":
+            wh_type = "evidence_request.expired"
+
+        if wh_type:
+            webhook_service.enqueue_webhook_event(
+                db,
+                event_type=wh_type,
+                aggregate_type="EVIDENCE_REQUEST",
+                aggregate_id=str(request.id),
+                project_id=str(request.project_id) if request.project_id else None,
+                data={
+                    "request_id": str(request.id),
+                    "status": request.status,
+                },
+            )
+    except Exception as exc:
+        logger.warning(
+            "Failed to emit webhook for request %s event %s: %s", request.id, event_type, exc
+        )
+
+
+
 TRANSITIONS: dict[str, frozenset[str]] = {
     "DRAFT": frozenset({"OPEN", "CANCELLED"}),
     "OPEN": frozenset({"ACKNOWLEDGED", "DECLINED", "EXPIRED", "CANCELLED", "FULFILLED",
@@ -384,6 +419,7 @@ def create_request(
         )
         _audit_request_event(db, request, "REQUEST_ISSUED", requester_id, "transition")
         _emit_request_notification(db, request, "REQUEST_ISSUED")
+        _emit_request_webhook(db, request, "REQUEST_ISSUED")
     db.commit()
     db.refresh(request)
     logger.info("evidence request created request_id=%s status=%s", request.id, status)
@@ -466,6 +502,7 @@ def _apply(
     )
     _audit_request_event(db, request, event_type, actor_id, "transition")
     _emit_request_notification(db, request, event_type, event_metadata)
+    _emit_request_webhook(db, request, event_type, event_metadata)
     db.commit()
     db.refresh(request)
     return request
@@ -543,6 +580,7 @@ def _refresh_fulfillment(
     )
     _audit_request_event(db, request, event_type, actor_id, "transition")
     _emit_request_notification(db, request, event_type)
+    _emit_request_webhook(db, request, event_type)
     return request
 
 

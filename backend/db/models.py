@@ -950,6 +950,17 @@ AUDIT_EVENT_TYPES = frozenset(
         "NOTIFICATION_PREFERENCE_CHANGED",
         "NOTIFICATION_DELIVERY_FAILED",
         "NOTIFICATION_DELIVERY_SUCCEEDED",
+        # BE-019 integration audit events
+        "API_CLIENT_CREATED",
+        "API_CLIENT_DISABLED",
+        "API_CREDENTIAL_CREATED",
+        "API_CREDENTIAL_REVOKED",
+        "EXTERNAL_SYSTEM_CREATED",
+        "EXTERNAL_REFERENCE_CREATED",
+        "WEBHOOK_CREATED",
+        "WEBHOOK_DISABLED",
+        "WEBHOOK_DELIVERY_FAILED",
+        "WEBHOOK_DELIVERY_SUCCEEDED",
     }
 )
 
@@ -1059,6 +1070,15 @@ AUTH_PERMISSIONS = (
     "notification.mark_read",
     "notification.manage_preferences",
     "notification.admin",
+    # BE-019 integration permissions
+    "integration.read",
+    "integration.manage",
+    "api_client.manage",
+    "credential.manage",
+    "external_data.read",
+    "external_data.write",
+    "webhook.manage",
+    "webhook.read",
 )
 
 # Baseline role -> permissions mapping (also seeded for tests/dev via the
@@ -1135,6 +1155,9 @@ AUTH_ROLE_PERMISSIONS = {
         "notification.read",
         "notification.mark_read",
         "notification.manage_preferences",
+        "integration.read",
+        "external_data.read",
+        "webhook.read",
     ),
     "ADMINISTRATOR": (
         "organization.manage",
@@ -1152,6 +1175,14 @@ AUTH_ROLE_PERMISSIONS = {
         "notification.mark_read",
         "notification.manage_preferences",
         "notification.admin",
+        "integration.read",
+        "integration.manage",
+        "api_client.manage",
+        "credential.manage",
+        "external_data.read",
+        "external_data.write",
+        "webhook.manage",
+        "webhook.read",
     ),
     "API_CLIENT": (),
 }
@@ -1707,3 +1738,278 @@ class NotificationOutbox(Base):
         Index("ix_notification_outbox_status", "status", "created_at"),
     )
 
+
+# ---------------------------------------------------------------------------
+# BE-019 External Integrations & API Client Platform vocabularies.
+# ---------------------------------------------------------------------------
+
+EXTERNAL_SYSTEM_TYPES = (
+    "GOVERNMENT_PORTAL",
+    "FIELD_SYSTEM",
+    "PROJECT_MANAGEMENT",
+    "DOCUMENT_SYSTEM",
+    "INSPECTION_SYSTEM",
+    "DATA_PLATFORM",
+    "OTHER",
+)
+
+EXTERNAL_SYSTEM_STATUSES = ("ACTIVE", "SUSPENDED", "DISABLED")
+
+WEBHOOK_EVENT_TYPES = (
+    "review_case.created",
+    "review_case.assigned",
+    "review_case.escalated",
+    "review_case.resolved",
+    "evidence_request.issued",
+    "evidence_request.fulfilled",
+    "evidence_request.declined",
+    "evidence_request.expired",
+    "fusion.completed",
+    "retention.archived",
+    "retention.deleted",
+)
+
+WEBHOOK_DELIVERY_STATUSES = ("PENDING", "PROCESSING", "DELIVERED", "RETRYING", "FAILED", "DISABLED")
+
+INTEGRATION_EVENT_STATUSES = ("PENDING", "PUBLISHED", "FAILED")
+
+
+class ExternalSystem(Base):
+    """BE-019: registered external system (government portal, field system, etc.)."""
+
+    __tablename__ = "external_systems"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    organization_id = Column(
+        UUID(as_uuid=False), ForeignKey("organizations.id", ondelete="RESTRICT"), nullable=True
+    )
+    name = Column(String(256), nullable=False)
+    code = Column(String(128), nullable=False, unique=True)
+    system_type = Column(String(50), nullable=False)
+    status = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    description = Column(Text, nullable=True)
+    metadata_ = Column("metadata", JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "system_type IN ('GOVERNMENT_PORTAL','FIELD_SYSTEM','PROJECT_MANAGEMENT',"
+            "'DOCUMENT_SYSTEM','INSPECTION_SYSTEM','DATA_PLATFORM','OTHER')",
+            name="ck_external_system_type",
+        ),
+        CheckConstraint(
+            "status IN ('ACTIVE', 'SUSPENDED', 'DISABLED')",
+            name="ck_external_system_status",
+        ),
+        Index("ix_external_systems_org", "organization_id"),
+        Index("ix_external_systems_code", "code"),
+    )
+
+
+class ApiCredential(Base):
+    """BE-019: hashed API credential for an ApiClient. Secret never stored plaintext."""
+
+    __tablename__ = "api_credentials"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    client_id = Column(
+        UUID(as_uuid=False), ForeignKey("api_clients.id", ondelete="CASCADE"), nullable=False
+    )
+    credential_hash = Column(String(256), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    last_used_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("ix_api_credentials_client", "client_id"),
+        Index("ix_api_credentials_client_revoked", "client_id", "revoked_at"),
+    )
+
+
+class ExternalReference(Base):
+    """BE-019: bidirectional mapping between PoA resources and external system identifiers."""
+
+    __tablename__ = "external_references"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    external_system_id = Column(
+        UUID(as_uuid=False), ForeignKey("external_systems.id", ondelete="RESTRICT"), nullable=False
+    )
+    resource_type = Column(String(100), nullable=False)
+    resource_id = Column(UUID(as_uuid=False), nullable=False)
+    external_id = Column(String(512), nullable=False)
+    external_version = Column(String(128), nullable=True)
+    first_seen_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_seen_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "external_system_id",
+            "resource_type",
+            "external_id",
+            name="uq_external_reference_source_id",
+        ),
+        Index("ix_external_references_system", "external_system_id"),
+        Index("ix_external_references_resource", "resource_type", "resource_id"),
+    )
+
+
+class ExternalAssertion(Base):
+    """BE-019: provenance-preserving assertion from an external system (not PoA truth)."""
+
+    __tablename__ = "external_assertions"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    external_system_id = Column(
+        UUID(as_uuid=False), ForeignKey("external_systems.id", ondelete="RESTRICT"), nullable=False
+    )
+    resource_type = Column(String(100), nullable=True)
+    resource_id = Column(UUID(as_uuid=False), nullable=True)
+    external_id = Column(String(512), nullable=True)
+    source_timestamp = Column(DateTime(timezone=True), nullable=True)
+    ingested_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    payload = Column(JSONB, nullable=False, default=dict)
+    api_client_id = Column(UUID(as_uuid=False), ForeignKey("api_clients.id"), nullable=True)
+    request_id = Column(String(256), nullable=True)
+
+    __table_args__ = (
+        Index("ix_external_assertions_system", "external_system_id"),
+        Index("ix_external_assertions_resource", "resource_type", "resource_id"),
+        Index("ix_external_assertions_ingested", "ingested_at"),
+    )
+
+
+class IdempotencyKey(Base):
+    """BE-019: per-client idempotency key with request body hash for conflict detection."""
+
+    __tablename__ = "idempotency_keys"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    client_id = Column(
+        UUID(as_uuid=False), ForeignKey("api_clients.id", ondelete="CASCADE"), nullable=False
+    )
+    idempotency_key = Column(String(256), nullable=False)
+    request_hash = Column(String(256), nullable=False)
+    result_payload = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("client_id", "idempotency_key", name="uq_idempotency_client_key"),
+        Index("ix_idempotency_keys_client", "client_id"),
+        Index("ix_idempotency_keys_expires", "expires_at"),
+    )
+
+
+class WebhookSubscription(Base):
+    """BE-019: outbound webhook subscription for an external system."""
+
+    __tablename__ = "webhook_subscriptions"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    external_system_id = Column(
+        UUID(as_uuid=False), ForeignKey("external_systems.id", ondelete="CASCADE"), nullable=False
+    )
+    endpoint_url = Column(String(2048), nullable=False)
+    status = Column(String(50), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    subscribed_events = Column(JSONB, nullable=False, default=list)
+    secret_hash = Column(String(256), nullable=False)
+    consecutive_failures = Column(Integer, nullable=False, default=0, server_default="0")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+    last_delivery_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('ACTIVE', 'SUSPENDED', 'DISABLED')",
+            name="ck_webhook_subscription_status",
+        ),
+        Index("ix_webhook_subscriptions_system", "external_system_id"),
+        Index("ix_webhook_subscriptions_status", "status"),
+    )
+
+
+class WebhookEvent(Base):
+    """BE-019: durable integration event written transactionally (outbox for webhook delivery)."""
+
+    __tablename__ = "webhook_events"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    event_type = Column(String(100), nullable=False)
+    event_version = Column(Integer, nullable=False, default=1, server_default="1")
+    aggregate_type = Column(String(100), nullable=False)
+    aggregate_id = Column(UUID(as_uuid=False), nullable=False)
+    project_id = Column(UUID(as_uuid=False), nullable=True)
+    payload = Column(JSONB, nullable=False, default=dict)
+    status = Column(String(20), nullable=False, default="PENDING", server_default="PENDING")
+    occurred_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('PENDING', 'PUBLISHED', 'FAILED')",
+            name="ck_webhook_event_status",
+        ),
+        Index("ix_webhook_events_status", "status", "created_at"),
+        Index("ix_webhook_events_project", "project_id"),
+    )
+
+
+class WebhookDelivery(Base):
+    """BE-019: delivery attempt for one webhook event to one subscription."""
+
+    __tablename__ = "webhook_deliveries"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    webhook_event_id = Column(
+        UUID(as_uuid=False), ForeignKey("webhook_events.id", ondelete="CASCADE"), nullable=False
+    )
+    subscription_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("webhook_subscriptions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    status = Column(String(20), nullable=False, default="PENDING", server_default="PENDING")
+    attempt_count = Column(Integer, nullable=False, default=0, server_default="0")
+    last_status_code = Column(Integer, nullable=True)
+    last_error = Column(Text, nullable=True)
+    next_attempt_at = Column(DateTime(timezone=True), nullable=True)
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "webhook_event_id", "subscription_id", name="uq_webhook_delivery_event_sub"
+        ),
+        CheckConstraint(
+            "status IN ('PENDING', 'PROCESSING', 'DELIVERED', 'RETRYING', 'FAILED', 'DISABLED')",
+            name="ck_webhook_delivery_status",
+        ),
+        Index("ix_webhook_deliveries_status_next", "status", "next_attempt_at"),
+        Index("ix_webhook_deliveries_event", "webhook_event_id"),
+        Index("ix_webhook_deliveries_subscription", "subscription_id"),
+    )
+
+
+class IntegrationEvent(Base):
+    """BE-019: stable integration event store with immutable identity."""
+
+    __tablename__ = "integration_events"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    event_type = Column(String(100), nullable=False)
+    event_version = Column(Integer, nullable=False, default=1, server_default="1")
+    aggregate_type = Column(String(100), nullable=False)
+    aggregate_id = Column(UUID(as_uuid=False), nullable=False)
+    project_id = Column(UUID(as_uuid=False), nullable=True)
+    payload = Column(JSONB, nullable=False, default=dict)
+    status = Column(String(20), nullable=False, default="PENDING", server_default="PENDING")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('PENDING', 'PUBLISHED', 'FAILED')",
+            name="ck_integration_event_status",
+        ),
+        Index("ix_integration_events_status", "status", "created_at"),
+        Index("ix_integration_events_aggregate", "aggregate_type", "aggregate_id"),
+        Index("ix_integration_events_project", "project_id"),
+    )

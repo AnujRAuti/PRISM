@@ -48,6 +48,24 @@ def resolve_principal(request: Request, db: Session) -> Principal:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Authentication required")
         return anonymous_principal()
+    # Check for BE-019 API client credentials: <client_id>:<secret> or poa_<client_id>:<secret>
+    if ":" in token:
+        from backend.services.integration import authenticate_api_client
+
+        raw_token = token[4:] if token.startswith("poa_") else token
+        client_id_str, _, secret = raw_token.partition(":")
+        try:
+            client_id = str(UUID(client_id_str))
+            client = authenticate_api_client(db, client_id, secret)
+            if client is not None:
+                principal = resolve_client_principal(db, client)
+                if principal.status == "ACTIVE":
+                    return principal
+        except (ValueError, SQLAlchemyError):
+            pass
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid credentials")
+
     if not settings.auth_dev_tokens_enabled:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Invalid credentials")

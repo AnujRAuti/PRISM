@@ -838,6 +838,25 @@ def run_fusion(
                      "configuration_version": run.configuration_version},
             source="fusion_service",
         )
+        try:
+            from backend.services import webhook as webhook_service
+
+            webhook_service.enqueue_webhook_event(
+                db,
+                event_type="fusion.completed",
+                aggregate_type="FUSION_RUN",
+                aggregate_id=str(run.id),
+                project_id=None,
+                data={
+                    "fusion_run_id": str(run.id),
+                    "target_type": target_type,
+                    "target_id": target_id,
+                    "assessment": value,
+                    "priority": priority,
+                },
+            )
+        except Exception as exc:
+            logger.warning("Failed to emit webhook for fusion run %s: %s", run.id, exc)
         db.commit()
     except Exception as error:
         db.rollback()

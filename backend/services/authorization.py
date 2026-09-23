@@ -84,6 +84,14 @@ ACTION_PERMISSIONS = {
     "notification.mark_read": "notification.mark_read",
     "notification.manage_preferences": "notification.manage_preferences",
     "notification.admin": "notification.admin",
+    "integration.read": "integration.read",
+    "integration.manage": "integration.manage",
+    "api_client.manage": "api_client.manage",
+    "credential.manage": "credential.manage",
+    "external_data.read": "external_data.read",
+    "external_data.write": "external_data.write",
+    "webhook.manage": "webhook.manage",
+    "webhook.read": "webhook.read",
 }
 
 
@@ -536,6 +544,25 @@ def resolve_resource_scope(
 
             row = db.query(Notification).filter(Notification.id == resource_id).one_or_none()
             holder_project = str(row.project_id) if row and row.project_id else None
+        elif resource_type == "external_system":
+            from backend.db.models import ExternalSystem
+
+            row = db.query(ExternalSystem).filter(ExternalSystem.id == resource_id).one_or_none()
+            if row is not None and row.organization_id:
+                organization_id = str(row.organization_id)
+        elif resource_type == "api_client":
+            from backend.db.models import ApiClient
+
+            row = db.query(ApiClient).filter(ApiClient.id == resource_id).one_or_none()
+            holder_project = str(row.project_id) if row and row.project_id else None
+        elif resource_type == "webhook_subscription":
+            from backend.db.models import ExternalSystem, WebhookSubscription
+
+            row = db.query(WebhookSubscription).filter(WebhookSubscription.id == resource_id).one_or_none()
+            if row is not None:
+                ext_sys = db.query(ExternalSystem).filter(ExternalSystem.id == row.external_system_id).one_or_none()
+                if ext_sys and ext_sys.organization_id:
+                    organization_id = str(ext_sys.organization_id)
         else:
             return Resource(resource_type, resource_id)
         if holder_project is not None:

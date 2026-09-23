@@ -394,6 +394,7 @@ def _generate(db: Session, run, assessment, policy_version: str | None):
         )
         _audit_case_event(db, case, "CASE_CREATED", None, "create",
                           {"fusion_run_id": run.id})
+        _emit_case_webhook(db, case, "CREATED", {"fusion_run_id": run.id})
         gen.status = "COMPLETED"
         gen.completed_at = utc_now()
         db.commit()
@@ -501,6 +502,7 @@ def _apply(
         {"from_status": from_status, "to_status": to_status},
     )
     _emit_case_notification(db, case, event_type, event_metadata)
+    _emit_case_webhook(db, case, event_type, event_metadata)
     db.commit()
     db.refresh(case)
     return case
@@ -550,6 +552,43 @@ def _emit_case_notification(
         logger.warning(
             "Failed to emit notification for case %s event %s: %s", case.id, event_type, exc
         )
+
+
+def _emit_case_webhook(
+    db: Session, case: ReviewCase, event_type: str, metadata: dict | None = None
+) -> None:
+    try:
+        from backend.services import webhook as webhook_service
+
+        wh_type = None
+        if event_type in ("CREATED", "CASE_CREATED"):
+            wh_type = "review_case.created"
+        elif event_type == "ASSIGNED":
+            wh_type = "review_case.assigned"
+        elif event_type == "ESCALATED":
+            wh_type = "review_case.escalated"
+        elif event_type == "RESOLVED":
+            wh_type = "review_case.resolved"
+
+        if wh_type:
+            webhook_service.enqueue_webhook_event(
+                db,
+                event_type=wh_type,
+                aggregate_type="REVIEW_CASE",
+                aggregate_id=str(case.id),
+                project_id=str(case.project_id) if case.project_id else None,
+                data={
+                    "case_id": str(case.id),
+                    "status": case.status,
+                    "priority_band": getattr(case, "priority_band", "NORMAL"),
+                    "assigned_to": str(case.assigned_to) if case.assigned_to else None,
+                },
+            )
+    except Exception as exc:
+        logger.warning(
+            "Failed to emit webhook for case %s event %s: %s", case.id, event_type, exc
+        )
+
 
 
 def assign_case(db: Session, case_id: str, assigned_to: str | None, actor_id: str | None = None):
