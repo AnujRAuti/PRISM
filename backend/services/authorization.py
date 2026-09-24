@@ -92,6 +92,17 @@ ACTION_PERMISSIONS = {
     "external_data.write": "external_data.write",
     "webhook.manage": "webhook.manage",
     "webhook.read": "webhook.read",
+    # BE-021 governance actions (§11)
+    "dispute.create": "dispute.create",
+    "dispute.read": "dispute.read",
+    "dispute.review": "dispute.review",
+    "dispute.resolve": "dispute.resolve",
+    "correction.create": "correction.create",
+    "correction.read": "correction.read",
+    "correction.approve": "correction.approve",
+    "correction.apply": "correction.apply",
+    "intelligence.invalidate": "intelligence.invalidate",
+    "intelligence.reprocess": "intelligence.reprocess",
 }
 
 
@@ -480,6 +491,22 @@ def create_api_client(
     return row
 
 
+def governance_target_resource(target_type: str | None) -> str | None:
+    """BE-021 dispute/invalidation target type -> resolvable resource type.
+
+    Returns ``None`` for unknown types so callers stay fail-closed (an
+    unresolvable target yields an unscopeable resource rather than a leak).
+    """
+    return {
+        "EVIDENCE": "evidence",
+        "CLAIM": "claim",
+        "REVIEW_CASE": "review_case",
+        "EVIDENCE_CLAIM_RELATIONSHIP": "graph_relationship",
+        "FUSION_ASSESSMENT": "integrity_assessment",
+        "EXTERNAL_ASSERTION": "external_assertion",
+    }.get(target_type or "")
+
+
 def resolve_resource_scope(
     db: Session, resource_type: str, resource_id: str | None
 ) -> Resource:
@@ -561,6 +588,100 @@ def resolve_resource_scope(
             row = db.query(WebhookSubscription).filter(WebhookSubscription.id == resource_id).one_or_none()
             if row is not None:
                 ext_sys = db.query(ExternalSystem).filter(ExternalSystem.id == row.external_system_id).one_or_none()
+                if ext_sys and ext_sys.organization_id:
+                    organization_id = str(ext_sys.organization_id)
+        elif resource_type == "dispute":
+            # BE-021: disputes carry their (possibly null) project scope; when
+            # the target itself is not project-scoped (fusion assessment,
+            # graph relationship, external assertion), scope derives from the
+            # target so the governance workflow stays reachable.
+            from backend.db.models import Dispute
+
+            row = db.query(Dispute).filter(Dispute.id == resource_id).one_or_none()
+            holder_project = str(row.project_id) if row and row.project_id else None
+            if row is not None and holder_project is None:
+                target_resource = governance_target_resource(row.target_type)
+                if target_resource is not None:
+                    return resolve_resource_scope(db, target_resource, str(row.target_id))
+        elif resource_type == "correction_request":
+            from backend.db.models import CorrectionRequest
+
+            row = db.query(CorrectionRequest).filter(CorrectionRequest.id == resource_id).one_or_none()
+            holder_project = str(row.project_id) if row and row.project_id else None
+            if row is not None and holder_project is None:
+                # Corrections only target evidence; fall back to its project.
+                return resolve_resource_scope(db, "evidence", str(row.target_id))
+        elif resource_type == "reprocessing_request":
+            from backend.db.models import ReprocessingRequest
+
+            row = db.query(ReprocessingRequest).filter(ReprocessingRequest.id == resource_id).one_or_none()
+            holder_project = str(row.project_id) if row and row.project_id else None
+            if row is not None and holder_project is None:
+                # Reprocessing only applies to evidence; fall back to its project.
+                return resolve_resource_scope(db, "evidence", str(row.evidence_id))
+        elif resource_type == "intelligence_invalidation":
+            from backend.db.models import IntelligenceInvalidation
+
+            row = db.query(IntelligenceInvalidation).filter(
+                IntelligenceInvalidation.id == resource_id
+            ).one_or_none()
+            holder_project = str(row.project_id) if row and row.project_id else None
+            if row is not None and holder_project is None:
+                target_resource = governance_target_resource(row.target_type)
+                if target_resource is not None:
+                    return resolve_resource_scope(db, target_resource, str(row.target_id))
+        elif resource_type == "graph_relationship":
+            # BE-021: scope a relationship by its endpoint nodes' owning
+            # projects (the same resolution the graph list filter uses).
+            from backend.db.models import GraphNode, GraphRelationship
+            from backend.services import evidence_graph as graph_service
+
+            row = (
+                db.query(GraphRelationship)
+                .filter(GraphRelationship.id == resource_id)
+                .one_or_none()
+            )
+            if row is not None:
+                nodes = (
+                    db.query(GraphNode)
+                    .filter(GraphNode.id.in_({row.source_node_id, row.target_node_id}))
+                    .all()
+                )
+                projects = graph_service._node_project_map(db, nodes)
+                endpoint_projects = {projects.get(node.id) for node in nodes} - {None}
+                if len(endpoint_projects) == 1:
+                    holder_project = next(iter(endpoint_projects))
+                elif len(endpoint_projects) > 1:
+                    # Cross-project edge: fall back to the source's project so
+                    # a single project grant cannot authorize it silently.
+                    source_project = projects.get(row.source_node_id)
+                    holder_project = source_project
+        elif resource_type == "integrity_assessment":
+            # BE-021: scope an assessment through its fusion run's target.
+            from backend.db.models import IntegrityAssessment
+
+            row = (
+                db.query(IntegrityAssessment)
+                .filter(IntegrityAssessment.id == resource_id)
+                .one_or_none()
+            )
+            if row is not None:
+                return resolve_resource_scope(db, "fusion_run", str(row.fusion_run_id))
+        elif resource_type == "external_assertion":
+            # BE-021: assertions belong to an external system's organization.
+            from backend.db.models import ExternalAssertion, ExternalSystem
+
+            row = (
+                db.query(ExternalAssertion)
+                .filter(ExternalAssertion.id == resource_id)
+                .one_or_none()
+            )
+            if row is not None:
+                ext_sys = (
+                    db.query(ExternalSystem)
+                    .filter(ExternalSystem.id == row.external_system_id)
+                    .one_or_none()
+                )
                 if ext_sys and ext_sys.organization_id:
                     organization_id = str(ext_sys.organization_id)
         else:

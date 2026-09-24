@@ -75,6 +75,9 @@ COMPATIBILITY: frozenset[tuple[str, str, str]] = frozenset(
         ("ANALYSIS_RESULT", "DERIVED_FROM", "EVIDENCE"),
         ("VISION_DETECTION", "DERIVED_FROM", "ANALYSIS_RESULT"),
         ("DUPLICATE_MATCH", "DERIVED_FROM", "EVIDENCE"),
+        # BE-021 evidence version lineage (§9): a new evidence version derived
+        # from a corrected original. The edge direction is NEW → OLD.
+        ("EVIDENCE", "DERIVED_FROM", "EVIDENCE"),
     }
 )
 

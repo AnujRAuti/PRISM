@@ -17,6 +17,22 @@ from backend.services.vision_intelligence import analyze_vision
 logger = logging.getLogger(__name__)
 
 
+def _complete_reprocessing_hook(db: Any, job: Any) -> None:
+    """BE-021 §17: when a job that a reprocessing request delegated to
+    finishes, mark that request COMPLETED. Failure-isolated — governance
+    bookkeeping must never break the analysis pipeline — and idempotent."""
+    try:
+        from backend.services import governance as governance_service
+
+        governance_service.complete_reprocessing(
+            db, analysis_job_id=str(job.id), completed_by=None
+        )
+    except Exception:
+        logger.exception(
+            "reprocessing completion hook failed job_id=%s", job.id
+        )
+
+
 def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
     db = get_session()
     job = None
@@ -98,6 +114,7 @@ def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
         job.status = "completed"
         job.completed_at = utc_now()
         db.commit()
+        _complete_reprocessing_hook(db, job)
         queue.acknowledge(message)
         logger.info("analysis job completed job_id=%s", job.id)
         return "completed"
@@ -140,6 +157,7 @@ def _complete_vision_job(db, job: Any) -> None:
     job.status = "completed"
     job.completed_at = utc_now()
     db.commit()
+    _complete_reprocessing_hook(db, job)
     logger.info(
         "vision analysis stored job_id=%s result_id=%s detection_count=%d",
         job.id,

@@ -15,6 +15,9 @@ from backend.api.v1.endpoints.auth import router as auth_router
 from backend.api.v1.endpoints.retention import router as retention_router
 from backend.api.v1.endpoints.notification import router as notification_router
 from backend.api.v1.endpoints.integration import router as integration_router
+from backend.api.v1.endpoints.dispute import router as dispute_router
+from backend.api.v1.endpoints.correction import router as correction_router
+from backend.api.v1.endpoints.governance import router as governance_router
 
 router = APIRouter()
 # NOTE: context_router owns GET /evidence/nearby and must precede
@@ -35,3 +38,8 @@ router.include_router(auth_router)
 router.include_router(retention_router)
 router.include_router(notification_router)
 router.include_router(integration_router)
+# BE-021 governance routers: dispute/correction workflows plus the
+# dependency-inspection and reprocessing surfaces under /governance.
+router.include_router(dispute_router)
+router.include_router(correction_router)
+router.include_router(governance_router)

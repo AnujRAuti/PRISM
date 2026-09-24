@@ -22,6 +22,7 @@ from sqlalchemy import (
     CheckConstraint,
     Index,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from pgvector.sqlalchemy import Vector
@@ -139,6 +140,12 @@ class AnalysisJob(Base):
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id"), nullable=False)
     status = Column(String(50), nullable=False, index=True)
+    # BE-021: derived-intelligence staleness, orthogonal to the execution
+    # status above (queued/running/completed/failed describe the worker;
+    # staleness describes whether the output is still current governance-wise).
+    staleness = Column(
+        String(20), nullable=False, default="CURRENT", server_default="CURRENT"
+    )
     job_type = Column(String(50), nullable=False, server_default="fingerprint", default="fingerprint")
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
@@ -147,6 +154,14 @@ class AnalysisJob(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     evidence = relationship("Evidence")
+
+    __table_args__ = (
+        CheckConstraint(
+            "staleness IN ('CURRENT', 'STALE', 'INVALIDATED', 'SUPERSEDED')",
+            name="ck_analysis_job_staleness",
+        ),
+        Index("ix_analysis_jobs_staleness", "staleness"),
+    )
 
 
 class AnalysisResult(Base):
@@ -417,6 +432,11 @@ class FusionRun(Base):
     target_type = Column(String(50), nullable=False)
     target_id = Column(UUID(as_uuid=False), nullable=False)
     status = Column(String(50), nullable=False, default="RUNNING", server_default="RUNNING")
+    # BE-021: staleness of the fused output — a stale run stays historical and
+    # queryable but must no longer be treated as current intelligence.
+    staleness = Column(
+        String(20), nullable=False, default="CURRENT", server_default="CURRENT"
+    )
     method = Column(String(256), nullable=False)
     method_version = Column(String(50), nullable=False)
     configuration_version = Column(String(50), nullable=False)
@@ -431,8 +451,13 @@ class FusionRun(Base):
         CheckConstraint(
             "status IN ('RUNNING', 'COMPLETED', 'FAILED')", name="ck_fusion_run_status"
         ),
+        CheckConstraint(
+            "staleness IN ('CURRENT', 'STALE', 'INVALIDATED', 'SUPERSEDED')",
+            name="ck_fusion_run_staleness",
+        ),
         Index("ix_fusion_runs_target", "target_type", "target_id"),
         Index("ix_fusion_runs_status", "status"),
+        Index("ix_fusion_runs_staleness", "staleness"),
         Index("ix_fusion_runs_created", "created_at"),
     )
 
@@ -577,6 +602,11 @@ class ExplanationRun(Base):
         unique=True,
     )
     status = Column(String(50), nullable=False, default="GENERATED", server_default="GENERATED")
+    # BE-021: historical explanations stay retrievable; staleness marks that
+    # the lineage behind them is no longer current. Content is never mutated.
+    staleness = Column(
+        String(20), nullable=False, default="CURRENT", server_default="CURRENT"
+    )
     method = Column(String(256), nullable=False)
     method_version = Column(String(50), nullable=False)
     summary = Column(JSONB, nullable=False, default=dict)
@@ -590,7 +620,12 @@ class ExplanationRun(Base):
         CheckConstraint(
             "status IN ('GENERATED', 'FAILED')", name="ck_explanation_run_status"
         ),
+        CheckConstraint(
+            "staleness IN ('CURRENT', 'STALE', 'INVALIDATED', 'SUPERSEDED')",
+            name="ck_explanation_run_staleness",
+        ),
         Index("ix_explanation_runs_run", "fusion_run_id"),
+        Index("ix_explanation_runs_staleness", "staleness"),
     )
 
 
@@ -961,6 +996,27 @@ AUDIT_EVENT_TYPES = frozenset(
         "WEBHOOK_DISABLED",
         "WEBHOOK_DELIVERY_FAILED",
         "WEBHOOK_DELIVERY_SUCCEEDED",
+        # BE-021 governance audit events. The spec (§23) lists twelve
+        # minimum events; the remaining five cover other explicit governance
+        # actions so that every action has an accurate audit twin (§23 also
+        # requires "every governance action" to emit an audit event).
+        "DISPUTE_CREATED",
+        "DISPUTE_ASSIGNED",
+        "DISPUTE_REVIEW_STARTED",
+        "DISPUTE_ESCALATED",
+        "DISPUTE_RESOLVED",
+        "DISPUTE_REJECTED",
+        "DISPUTE_WITHDRAWN",
+        "CORRECTION_REQUESTED",
+        "CORRECTION_REVIEW_STARTED",
+        "CORRECTION_APPROVED",
+        "CORRECTION_REJECTED",
+        "CORRECTION_APPLIED",
+        "CORRECTION_CANCELLED",
+        "INTELLIGENCE_INVALIDATED",
+        "INTELLIGENCE_REPROCESS_REQUESTED",
+        "INTELLIGENCE_REPROCESS_COMPLETED",
+        "INTELLIGENCE_REPROCESS_FAILED",
     }
 )
 
@@ -1079,6 +1135,18 @@ AUTH_PERMISSIONS = (
     "external_data.write",
     "webhook.manage",
     "webhook.read",
+    # BE-021 governance permissions (narrowly scoped; substantive actions
+    # stay disjoint from administrative ones per §12)
+    "dispute.create",
+    "dispute.read",
+    "dispute.review",
+    "dispute.resolve",
+    "correction.create",
+    "correction.read",
+    "correction.approve",
+    "correction.apply",
+    "intelligence.invalidate",
+    "intelligence.reprocess",
 )
 
 # Baseline role -> permissions mapping (also seeded for tests/dev via the
@@ -1093,6 +1161,12 @@ AUTH_ROLE_PERMISSIONS = {
         "notification.read",
         "notification.mark_read",
         "notification.manage_preferences",
+        # BE-021: citizens may raise disputes and request corrections, but
+        # never review/resolve/approve them.
+        "dispute.create",
+        "dispute.read",
+        "correction.create",
+        "correction.read",
     ),
     "FIELD_OFFICER": (
         "project.read",
@@ -1113,6 +1187,13 @@ AUTH_ROLE_PERMISSIONS = {
         "notification.read",
         "notification.mark_read",
         "notification.manage_preferences",
+        # BE-021: officers may dispute/request corrections and trigger
+        # reprocessing through the existing pipeline; not approvers.
+        "dispute.create",
+        "dispute.read",
+        "correction.create",
+        "correction.read",
+        "intelligence.reprocess",
     ),
     "REVIEWER": (
         "project.read",
@@ -1132,6 +1213,12 @@ AUTH_ROLE_PERMISSIONS = {
         "notification.read",
         "notification.mark_read",
         "notification.manage_preferences",
+        # BE-021: reviewers investigate disputes but do not resolve them.
+        "dispute.create",
+        "dispute.read",
+        "dispute.review",
+        "correction.create",
+        "correction.read",
     ),
     "SUPERVISOR": (
         "project.read",
@@ -1158,6 +1245,18 @@ AUTH_ROLE_PERMISSIONS = {
         "integration.read",
         "external_data.read",
         "webhook.read",
+        # BE-021: supervisors are the substantive governance decision-makers
+        # (resolve disputes, approve/apply corrections, invalidate, reprocess).
+        "dispute.create",
+        "dispute.read",
+        "dispute.review",
+        "dispute.resolve",
+        "correction.create",
+        "correction.read",
+        "correction.approve",
+        "correction.apply",
+        "intelligence.invalidate",
+        "intelligence.reprocess",
     ),
     "ADMINISTRATOR": (
         "organization.manage",
@@ -1183,6 +1282,10 @@ AUTH_ROLE_PERMISSIONS = {
         "external_data.write",
         "webhook.manage",
         "webhook.read",
+        # BE-021: administrators get governance READ ONLY — they must not
+        # automatically become substantive decision-makers (§12).
+        "dispute.read",
+        "correction.read",
     ),
     "API_CLIENT": (),
 }
@@ -1602,6 +1705,17 @@ NOTIFICATION_TYPES = (
     "RETENTION_HOLD_CREATED",
     "RETENTION_HOLD_RELEASED",
     "SYSTEM_SECURITY_EVENT",
+    # BE-021 governance notifications (reference IDs only; never evidence
+    # content — §24)
+    "DISPUTE_CREATED",
+    "DISPUTE_ASSIGNED",
+    "DISPUTE_ESCALATED",
+    "DISPUTE_RESOLVED",
+    "CORRECTION_APPROVED",
+    "CORRECTION_REJECTED",
+    "CORRECTION_APPLIED",
+    "INTELLIGENCE_INVALIDATED",
+    "REPROCESSING_COMPLETED",
 )
 
 NOTIFICATION_STATUSES = ("UNREAD", "READ")
@@ -2012,4 +2126,365 @@ class IntegrationEvent(Base):
         Index("ix_integration_events_status", "status", "created_at"),
         Index("ix_integration_events_aggregate", "aggregate_type", "aggregate_id"),
         Index("ix_integration_events_project", "project_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# BE-021 Dispute, Correction & Intelligence Invalidation Governance
+# vocabularies (single source of truth; mirrored by CHECK constraints below
+# and by the BE-021 Alembic migration).
+# ---------------------------------------------------------------------------
+
+# Staleness of derived intelligence (§14). Kept in a dedicated column so the
+# established execution semantics of each parent status are never overloaded.
+INTELLIGENCE_STALENESS_STATES = ("CURRENT", "STALE", "INVALIDATED", "SUPERSEDED")
+
+# Objects that may be disputed (§5.1). "Fusion Assessment" maps to the BE-011
+# integrity assessment; "Review Case outcome" disputes the recorded human
+# decision without reopening or rewriting it (§20-21).
+DISPUTE_TARGET_TYPES = (
+    "EVIDENCE",
+    "EVIDENCE_CLAIM_RELATIONSHIP",
+    "CLAIM",
+    "EXTERNAL_ASSERTION",
+    "FUSION_ASSESSMENT",
+    "REVIEW_CASE",
+)
+
+DISPUTE_STATUSES = (
+    "OPEN",
+    "UNDER_REVIEW",
+    "RESOLVED",
+    "REJECTED",
+    "WITHDRAWN",
+    "ESCALATED",
+)
+
+# Statuses that still represent an active challenge (idempotency window).
+DISPUTE_ACTIVE_STATUSES = ("OPEN", "UNDER_REVIEW", "ESCALATED")
+
+# Human resolution vocabulary (§7) — deliberately excludes FRAUD/AUTHENTIC/
+# FAKE/TRUE/FALSE: those collapse evidence state and human governance.
+DISPUTE_RESOLUTIONS = ("UPHELD", "REJECTED", "INCONCLUSIVE", "INSUFFICIENT_EVIDENCE")
+
+# Corrections apply to mutable CONTEXT of evidence (§8); evidence bytes and
+# their cryptographic identity stay immutable. EVIDENCE_FILE corrections
+# never overwrite the original — a new version is ingested through the
+# normal pipeline and linked via DERIVED_FROM lineage (§9).
+CORRECTION_TARGET_TYPES = ("EVIDENCE",)
+
+CORRECTION_CATEGORIES = (
+    "PROJECT_ASSOCIATION",
+    "CLAIM_ASSOCIATION",
+    "LOCATION_CONTEXT",
+    "CONTEXTUAL_METADATA",
+    "DESCRIPTIVE_FIELD",
+    "EVIDENCE_FILE",
+)
+
+# Approval and application remain distinct steps (§10).
+CORRECTION_STATUSES = (
+    "REQUESTED",
+    "UNDER_REVIEW",
+    "APPROVED",
+    "APPLIED",
+    "REJECTED",
+    "CANCELLED",
+)
+
+# What triggered an invalidation of governed intelligence.
+INVALIDATION_CAUSES = ("DISPUTE", "CORRECTION", "DIRECT")
+
+# Reprocessing delegates to the existing BE-005 analysis pipeline (§17).
+REPROCESSING_TARGET_TYPES = ("EVIDENCE",)
+REPROCESSING_STATUSES = ("PENDING", "COMPLETED", "FAILED")
+
+
+class Dispute(Base):
+    """BE-021: authorized challenge against an object or assertion (§5.6).
+
+    A dispute never mutates its target: resolution records human governance
+    metadata only. One active dispute per (target, initiator) is enforced by
+    a partial unique index so retries stay idempotent (§28).
+    """
+
+    __tablename__ = "disputes"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    initiator_id = Column(UUID(as_uuid=False), nullable=False)
+    reason = Column(String(256), nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String(50), nullable=False, default="OPEN", server_default="OPEN")
+    assigned_to = Column(UUID(as_uuid=False), nullable=True)
+    assigned_at = Column(DateTime(timezone=True), nullable=True)
+    escalated_to = Column(UUID(as_uuid=False), nullable=True)
+    escalated_at = Column(DateTime(timezone=True), nullable=True)
+    escalation_reason = Column(Text, nullable=True)
+    resolution = Column(String(50), nullable=True)
+    resolution_rationale = Column(Text, nullable=True)
+    resolved_by = Column(UUID(as_uuid=False), nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "target_type IN ('EVIDENCE', 'EVIDENCE_CLAIM_RELATIONSHIP', 'CLAIM', "
+            "'EXTERNAL_ASSERTION', 'FUSION_ASSESSMENT', 'REVIEW_CASE')",
+            name="ck_dispute_target_type",
+        ),
+        CheckConstraint(
+            "status IN ('OPEN', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED', "
+            "'WITHDRAWN', 'ESCALATED')",
+            name="ck_dispute_status",
+        ),
+        CheckConstraint(
+            "resolution IN ('UPHELD', 'REJECTED', 'INCONCLUSIVE', "
+            "'INSUFFICIENT_EVIDENCE') OR resolution IS NULL",
+            name="ck_dispute_resolution",
+        ),
+        CheckConstraint(
+            "(resolution IS NULL AND resolved_by IS NULL AND resolved_at IS NULL) "
+            "OR (resolution IS NOT NULL AND resolved_by IS NOT NULL "
+            "AND resolved_at IS NOT NULL)",
+            name="ck_dispute_resolution_complete",
+        ),
+        CheckConstraint(
+            "(resolution IS NULL) = (status <> 'RESOLVED')",
+            name="ck_dispute_resolution_status_consistent",
+        ),
+        Index("ix_disputes_target", "target_type", "target_id"),
+        Index("ix_disputes_status", "status"),
+        Index("ix_disputes_project", "project_id"),
+        Index("ix_disputes_initiator", "initiator_id"),
+        Index("ix_disputes_assigned", "assigned_to"),
+        Index("ix_disputes_created", "created_at"),
+        # Idempotency (§28): at most one ACTIVE challenge per target+initiator.
+        Index(
+            "uq_disputes_active_target_initiator",
+            "target_type",
+            "target_id",
+            "initiator_id",
+            unique=True,
+            postgresql_where=text("status IN ('OPEN', 'UNDER_REVIEW', 'ESCALATED')"),
+        ),
+    )
+
+
+class DisputeEvent(Base):
+    """BE-021: append-only dispute workflow history (never modified)."""
+
+    __tablename__ = "dispute_events"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    dispute_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("disputes.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    event_type = Column(String(50), nullable=False)
+    from_status = Column(String(50), nullable=True)
+    to_status = Column(String(50), nullable=True)
+    actor_id = Column(UUID(as_uuid=False), nullable=True)
+    event_metadata = Column("metadata", JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    dispute = relationship("Dispute")
+
+    __table_args__ = (
+        Index("ix_dispute_events_dispute", "dispute_id", "created_at"),
+    )
+
+
+class CorrectionRequest(Base):
+    """BE-021: first-class correction workflow for mutable evidence context (§10).
+
+    Approval and application are distinct. ``requested_change`` carries the
+    proposed context diff; ``applied_change`` records what was actually
+    applied (for EVIDENCE_FILE corrections: the new evidence version and its
+    lineage edge). Evidence bytes and checksums are never rewritten (§8).
+    """
+
+    __tablename__ = "correction_requests"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    category = Column(String(50), nullable=False)
+    requested_change = Column(JSONB, nullable=False, default=dict)
+    reason = Column(Text, nullable=False)
+    requester_id = Column(UUID(as_uuid=False), nullable=False)
+    status = Column(String(50), nullable=False, default="REQUESTED", server_default="REQUESTED")
+    resolver_id = Column(UUID(as_uuid=False), nullable=True)
+    resolution_rationale = Column(Text, nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    applied_by = Column(UUID(as_uuid=False), nullable=True)
+    applied_at = Column(DateTime(timezone=True), nullable=True)
+    applied_change = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint("target_type IN ('EVIDENCE')", name="ck_correction_target_type"),
+        CheckConstraint(
+            "category IN ('PROJECT_ASSOCIATION', 'CLAIM_ASSOCIATION', "
+            "'LOCATION_CONTEXT', 'CONTEXTUAL_METADATA', 'DESCRIPTIVE_FIELD', "
+            "'EVIDENCE_FILE')",
+            name="ck_correction_category",
+        ),
+        CheckConstraint(
+            "status IN ('REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'APPLIED', "
+            "'REJECTED', 'CANCELLED')",
+            name="ck_correction_status",
+        ),
+        CheckConstraint(
+            "(status = 'APPLIED') = (applied_at IS NOT NULL AND applied_by IS NOT NULL)",
+            name="ck_correction_application_consistent",
+        ),
+        Index("ix_correction_requests_target", "target_type", "target_id"),
+        Index("ix_correction_requests_status", "status"),
+        Index("ix_correction_requests_project", "project_id"),
+        Index("ix_correction_requests_requester", "requester_id"),
+        Index("ix_correction_requests_created", "created_at"),
+        # Idempotency (§28) / integrity (§39): at most one ACTIVE request per
+        # (target, category, requester). A different requester may still file
+        # their own request for the same change; the service-level dedupe
+        # additionally collapses identical changes across requesters.
+        Index(
+            "uq_correction_active_target_category_requester",
+            "target_type",
+            "target_id",
+            "category",
+            "requester_id",
+            unique=True,
+            postgresql_where=text(
+                "status IN ('REQUESTED', 'UNDER_REVIEW', 'APPROVED')"
+            ),
+        ),
+    )
+
+
+class CorrectionEvent(Base):
+    """BE-021: append-only correction workflow history (never modified)."""
+
+    __tablename__ = "correction_events"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    correction_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("correction_requests.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    event_type = Column(String(50), nullable=False)
+    from_status = Column(String(50), nullable=True)
+    to_status = Column(String(50), nullable=True)
+    actor_id = Column(UUID(as_uuid=False), nullable=True)
+    event_metadata = Column("metadata", JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    correction = relationship("CorrectionRequest")
+
+    __table_args__ = (
+        Index("ix_correction_events_correction", "correction_id", "created_at"),
+    )
+
+
+class IntelligenceInvalidation(Base):
+    """BE-021: record of a governed invalidation and its downstream reach.
+
+    The target row itself is never deleted or rewritten; downstream outputs
+    are marked stale/invalidated via their staleness columns / existing graph
+    and assessment lifecycles. The affected_* counts are bounded aggregates
+    for audit payloads — not a second lineage store.
+    """
+
+    __tablename__ = "intelligence_invalidations"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    cause = Column(String(50), nullable=False)
+    dispute_id = Column(
+        UUID(as_uuid=False), ForeignKey("disputes.id", ondelete="RESTRICT"), nullable=True
+    )
+    correction_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("correction_requests.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    reason = Column(Text, nullable=False)
+    invalidated_by = Column(UUID(as_uuid=False), nullable=False)
+    affected_analysis = Column(Integer, nullable=False, default=0, server_default="0")
+    affected_fusion = Column(Integer, nullable=False, default=0, server_default="0")
+    affected_explanations = Column(Integer, nullable=False, default=0, server_default="0")
+    affected_relationships = Column(Integer, nullable=False, default=0, server_default="0")
+    affected_assessments = Column(Integer, nullable=False, default=0, server_default="0")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "target_type IN ('EVIDENCE', 'EVIDENCE_CLAIM_RELATIONSHIP', 'CLAIM', "
+            "'EXTERNAL_ASSERTION', 'FUSION_ASSESSMENT', 'REVIEW_CASE')",
+            name="ck_invalidation_target_type",
+        ),
+        CheckConstraint(
+            "cause IN ('DISPUTE', 'CORRECTION', 'DIRECT')", name="ck_invalidation_cause"
+        ),
+        Index("ix_intelligence_invalidations_target", "target_type", "target_id"),
+        Index("ix_intelligence_invalidations_dispute", "dispute_id"),
+        Index("ix_intelligence_invalidations_correction", "correction_id"),
+        Index("ix_intelligence_invalidations_created", "created_at"),
+    )
+
+
+class ReprocessingRequest(Base):
+    """BE-021: request to re-run the existing analysis pipeline (§17).
+
+    Delegation only: the referenced ``analysis_job_id`` is created through
+    BE-005's :func:`create_analysis_job`; BE-021 never duplicates worker
+    logic, and no historical run is ever modified. One PENDING request per
+    evidence item is enforced by a partial unique index (§28).
+    """
+
+    __tablename__ = "reprocessing_requests"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    evidence_id = Column(
+        UUID(as_uuid=False), ForeignKey("evidence.id", ondelete="RESTRICT"), nullable=False
+    )
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    invalidation_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("intelligence_invalidations.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    requested_by = Column(UUID(as_uuid=False), nullable=False)
+    reason = Column(Text, nullable=False)
+    status = Column(String(50), nullable=False, default="PENDING", server_default="PENDING")
+    analysis_job_id = Column(
+        UUID(as_uuid=False), ForeignKey("analysis_jobs.id", ondelete="RESTRICT"), nullable=True
+    )
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint("status IN ('PENDING', 'COMPLETED', 'FAILED')",
+                        name="ck_reprocessing_status"),
+        Index("ix_reprocessing_requests_evidence", "evidence_id"),
+        Index("ix_reprocessing_requests_status", "status"),
+        Index("ix_reprocessing_requests_invalidation", "invalidation_id"),
+        Index("ix_reprocessing_requests_created", "created_at"),
+        # Idempotency (§28): one PENDING reprocessing request per evidence item.
+        Index(
+            "uq_reprocessing_pending_evidence",
+            "evidence_id",
+            unique=True,
+            postgresql_where=text("status = 'PENDING'"),
+        ),
     )
