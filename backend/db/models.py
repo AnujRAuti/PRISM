@@ -1017,6 +1017,18 @@ AUDIT_EVENT_TYPES = frozenset(
         "INTELLIGENCE_REPROCESS_REQUESTED",
         "INTELLIGENCE_REPROCESS_COMPLETED",
         "INTELLIGENCE_REPROCESS_FAILED",
+        # BE-022 publication governance audit events (§26). Every publication
+        # mutation emits its accurate audit twin.
+        "PUBLICATION_CREATED",
+        "PUBLICATION_REVIEW_STARTED",
+        "PUBLICATION_APPROVED",
+        "PUBLICATION_REJECTED",
+        "PUBLICATION_PUBLISHED",
+        "PUBLICATION_UNPUBLISHED",
+        "PUBLICATION_POLICY_CREATED",
+        "PUBLICATION_POLICY_UPDATED",
+        "PUBLICATION_ELIGIBILITY_FAILED",
+        "PUBLIC_PUBLICATION_VERSION_CREATED",
     }
 )
 
@@ -1147,6 +1159,17 @@ AUTH_PERMISSIONS = (
     "correction.apply",
     "intelligence.invalidate",
     "intelligence.reprocess",
+    # BE-022 publication governance permissions (§14). Substantive actions
+    # (approve/publish/unpublish) stay disjoint from administrative ones
+    # (policy.manage), and administrators are NOT granted the substantive
+    # actions by default — §14 requires explicit grant.
+    "publication.create",
+    "publication.read",
+    "publication.review",
+    "publication.approve",
+    "publication.publish",
+    "publication.unpublish",
+    "publication.policy.manage",
 )
 
 # Baseline role -> permissions mapping (also seeded for tests/dev via the
@@ -1194,6 +1217,10 @@ AUTH_ROLE_PERMISSIONS = {
         "correction.create",
         "correction.read",
         "intelligence.reprocess",
+        # BE-022: officers may request publication but never approve or
+        # publish their own request (§15 separation of duties).
+        "publication.create",
+        "publication.read",
     ),
     "REVIEWER": (
         "project.read",
@@ -1219,6 +1246,11 @@ AUTH_ROLE_PERMISSIONS = {
         "dispute.review",
         "correction.create",
         "correction.read",
+        # BE-022: reviewers review publication requests but do not approve,
+        # publish, or unpublish them (§15).
+        "publication.create",
+        "publication.read",
+        "publication.review",
     ),
     "SUPERVISOR": (
         "project.read",
@@ -1257,6 +1289,15 @@ AUTH_ROLE_PERMISSIONS = {
         "correction.apply",
         "intelligence.invalidate",
         "intelligence.reprocess",
+        # BE-022: supervisors are the substantive publication decision-makers
+        # (approve, publish, unpublish) — but never manage policy, which stays
+        # administrative (§14).
+        "publication.create",
+        "publication.read",
+        "publication.review",
+        "publication.approve",
+        "publication.publish",
+        "publication.unpublish",
     ),
     "ADMINISTRATOR": (
         "organization.manage",
@@ -1286,6 +1327,13 @@ AUTH_ROLE_PERMISSIONS = {
         # automatically become substantive decision-makers (§12).
         "dispute.read",
         "correction.read",
+        # BE-022: administrators manage policy (administrative) and read
+        # publications, but are NOT granted approve/publish/unpublish.
+        # §14: administrative authority never implies substantive publication
+        # authority. Policy management could otherwise be used to widen the
+        # allowed field set and then self-approve the result.
+        "publication.read",
+        "publication.policy.manage",
     ),
     "API_CLIENT": (),
 }
@@ -1716,6 +1764,14 @@ NOTIFICATION_TYPES = (
     "CORRECTION_APPLIED",
     "INTELLIGENCE_INVALIDATED",
     "REPROCESSING_COMPLETED",
+    # BE-022 publication notifications (§27). Reference IDs only, routed
+    # through the existing outbox — no direct email delivery.
+    "PUBLICATION_SUBMITTED",
+    "PUBLICATION_APPROVED",
+    "PUBLICATION_REJECTED",
+    "PUBLICATION_PUBLISHED",
+    "PUBLICATION_UNPUBLISHED",
+    "PUBLICATION_REQUIRES_REVIEW",
 )
 
 NOTIFICATION_STATUSES = ("UNREAD", "READ")
@@ -2487,4 +2543,465 @@ class ReprocessingRequest(Base):
             unique=True,
             postgresql_where=text("status = 'PENDING'"),
         ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# BE-022 Publication, Transparency & Public Evidence Governance vocabularies
+# (single source of truth; mirrored by CHECK constraints below and by the
+# BE-022 Alembic migration n4o5p6q7r022).
+# ---------------------------------------------------------------------------
+
+# §10 Default visibility classes. These are the architecture's pre-existing
+# visibility concepts. Only PUBLIC may ever be returned through public
+# endpoints — read authorization on an internal object does NOT imply PUBLIC.
+PUBLIC_VISIBILITY_CLASSES = (
+    "PUBLIC",
+    "CITIZEN_OWNED_PRIVATE",
+    "OPERATIONAL",
+    "INTELLIGENCE_INTERNAL",
+    "ADMINISTRATIVE_SECURITY",
+)
+
+# §4 Publication targets. This tuple IS the explicit allowlist: a target type
+# absent from it is NOT_PUBLISHABLE_TYPE, never a policy accident.
+PUBLICATION_TARGET_TYPES = (
+    "PROJECT",
+    "ACTIVITY",
+    "CLAIM",
+    "EVIDENCE",
+    "REVIEW_CASE",
+    "FUSION_ASSESSMENT",
+)
+
+# §6 Controlled publication lifecycle. A PUBLISHED item may never silently
+# return to an editable published state; material changes create a new version.
+PUBLICATION_STATUSES = (
+    "DRAFT",
+    "PENDING_REVIEW",
+    "APPROVED",
+    "PUBLISHED",
+    "UNPUBLISHED",
+    "REJECTED",
+)
+
+# §11 Deterministic releasability blockers. These are returned as structured
+# reasons; they are never collapsed into a single NOT_ALLOWED.
+PUBLICATION_BLOCKERS = (
+    "UNAUTHORIZED",
+    "NOT_PUBLISHABLE_TYPE",
+    "PRIVATE_VISIBILITY",
+    "ACTIVE_DISPUTE",
+    "UNRESOLVED_CORRECTION",
+    "RETENTION_RESTRICTION",
+    "LEGAL_HOLD",
+    "MISSING_REQUIRED_APPROVAL",
+    "SENSITIVE_DATA_PRESENT",
+    "SOURCE_RESTRICTION",
+    "UNAVAILABLE_PUBLIC_DERIVATIVE",
+)
+
+# §14 Authorization levels for publication policies (min_authorization_level).
+PUBLICATION_AUTHORIZATION_LEVELS = ("REVIEWER", "SUPERVISOR", "ADMINISTRATOR")
+
+# §15 Role vocabulary used only for approval-separation bookkeeping.
+PUBLICATION_POLICY_ROLES = ("REQUESTER", "REVIEWER", "SUPERVISOR_APPROVER", "PUBLISHER")
+
+# §22 Location precision policies for public projection.
+LOCATION_PRECISION_POLICIES = ("EXACT", "APPROXIMATE", "AREA", "HIDDEN")
+
+# §9 Redaction levels.
+PUBLICATION_REDACTION_LEVELS = ("NONE", "STANDARD", "STRICT")
+
+# §20 Public media derivative types.
+PUBLIC_MEDIA_DERIVATIVE_TYPES = (
+    "ORIGINAL",
+    "THUMBNAIL",
+    "PREVIEW",
+    "REDACTED",
+    "TRANSCODED",
+)
+
+# §4/§19 Objects that may never be exposed publicly regardless of policy.
+# Enforced defensively by the projection layer.
+PUBLICATION_INTERNALLY_PROHIBITED_FIELDS = (
+    "storage_key",
+    "credential",
+    "credentials",
+    "auth",
+    "authorization",
+    "password",
+    "token",
+    "secret",
+    "exif",
+    "private_metadata",
+    "internal_notes",
+    "reviewer_notes",
+    "priority_score",
+    "review_priority",
+    "fusion_signals",
+    "internal_graph",
+    "user_id",
+    "user_ids",
+    "actor_id",
+    "reviewer_id",
+)
+
+
+class PublicationPolicy(Base):
+    """BE-022: named publication policy identity (rules live in versions).
+
+    A policy is the reusable identity; its rules are versioned through
+    :class:`PublicationPolicyVersion`, which is immutable. Changing a policy
+    creates a new version — it never mutates the existing one (§9).
+    """
+
+    __tablename__ = "publication_policies"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    versions = relationship(
+        "PublicationPolicyVersion",
+        back_populates="policy",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        UniqueConstraint("name", name="uq_publication_policy_name"),
+    )
+
+
+class PublicationPolicyVersion(Base):
+    """BE-022: immutable versioned publication rules (§9).
+
+    One version is the ACTIVE one at a time; publishing a new version
+    SUPERSEDES the prior. Historical versions stay queryable because a
+    published snapshot must remain attributable to the exact policy that
+    authorized it.
+    """
+
+    __tablename__ = "publication_policy_versions"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    policy_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("publication_policies.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    version = Column(String(20), nullable=False)
+    status = Column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
+    allowed_target_types = Column(JSONB, nullable=False, default=list)
+    public_fields = Column(JSONB, nullable=False, default=list)
+    prohibited_fields = Column(JSONB, nullable=False, default=list)
+    allow_media_exposure = Column(Boolean, nullable=False, default=False, server_default="false")
+    allow_derived_intelligence = Column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    allow_review_outcomes = Column(Boolean, nullable=False, default=False, server_default="false")
+    min_authorization_level = Column(
+        String(20), nullable=False, default="REVIEWER", server_default="REVIEWER"
+    )
+    required_approvals = Column(Integer, nullable=False, default=1, server_default="1")
+    require_separation_of_duties = Column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    location_precision = Column(
+        String(20), nullable=False, default="HIDDEN", server_default="HIDDEN"
+    )
+    retention_publication_duration_days = Column(Integer, nullable=True)
+    geographic_restrictions = Column(JSONB, nullable=True)
+    privacy_restrictions = Column(JSONB, nullable=True)
+    redaction_level = Column(
+        String(20), nullable=False, default="STANDARD", server_default="STANDARD"
+    )
+    created_by = Column(UUID(as_uuid=False), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    policy = relationship("PublicationPolicy", back_populates="versions")
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "version", name="uq_publication_policy_version"),
+        CheckConstraint(
+            "status IN ('DRAFT', 'ACTIVE', 'SUPERSEDED', 'RETIRED')",
+            name="ck_publication_policy_version_status",
+        ),
+        CheckConstraint(
+            "min_authorization_level IN ('REVIEWER', 'SUPERVISOR', 'ADMINISTRATOR')",
+            name="ck_publication_policy_auth_level",
+        ),
+        CheckConstraint(
+            "location_precision IN ('EXACT', 'APPROXIMATE', 'AREA', 'HIDDEN')",
+            name="ck_publication_policy_location_precision",
+        ),
+        CheckConstraint(
+            "redaction_level IN ('NONE', 'STANDARD', 'STRICT')",
+            name="ck_publication_policy_redaction",
+        ),
+        CheckConstraint("required_approvals >= 1", name="ck_publication_policy_required_approvals"),
+        CheckConstraint(
+            "version ~ '^\\d+\\.\\d+$'", name="ck_publication_policy_version_format"
+        ),
+        # Exactly one ACTIVE version per policy.
+        Index(
+            "uq_publication_policy_active_version",
+            "policy_id",
+            unique=True,
+            postgresql_where=text("status = 'ACTIVE'"),
+        ),
+        Index("ix_publication_policy_versions_policy", "policy_id"),
+    )
+
+
+class PublicIdentifier(Base):
+    """BE-022: stable, non-sensitive public identifier (§16).
+
+    Never derived from a secret and never exposing the internal UUID. The
+    identifier is stable across publication versions: it is minted once per
+    target and reused by every version of that target's publication.
+    """
+
+    __tablename__ = "public_identifiers"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    public_id = Column(String(50), nullable=False)
+    namespace = Column(String(20), nullable=False, default="POA", server_default="POA")
+    identifier_type = Column(
+        String(20), nullable=False, default="SEQUENTIAL", server_default="SEQUENTIAL"
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("public_id", name="uq_public_identifier_public_id"),
+        # One identifier per target: stability across versions is structural.
+        UniqueConstraint(
+            "target_type", "target_id", name="uq_public_identifier_target"
+        ),
+        CheckConstraint(
+            "target_type IN ('PROJECT', 'ACTIVITY', 'CLAIM', 'EVIDENCE', "
+            "'REVIEW_CASE', 'FUSION_ASSESSMENT')",
+            name="ck_public_identifier_target_type",
+        ),
+        CheckConstraint(
+            "identifier_type IN ('SEQUENTIAL', 'HASHED', 'RANDOM')",
+            name="ck_public_identifier_type",
+        ),
+        Index("ix_public_identifiers_public_id", "public_id"),
+        Index("ix_public_identifiers_target", "target_type", "target_id"),
+    )
+
+
+class Publication(Base):
+    """BE-022: first-class governed public representation (§4).
+
+    The publication row is the *governance container*; the actual
+    public-facing payload lives in immutable :class:`PublicationVersion`
+    snapshots. Status on this row tracks the current lifecycle state.
+
+    Publication means "this specific information has been authorized for
+    public visibility" — it never asserts that the underlying evidence is
+    true (§2).
+    """
+
+    __tablename__ = "publications"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    policy_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("publication_policies.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    policy_version_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("publication_policy_versions.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    public_id = Column(String(50), nullable=True)
+    current_version_number = Column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    status = Column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
+    requested_by = Column(UUID(as_uuid=False), nullable=False)
+    reviewer_id = Column(UUID(as_uuid=False), nullable=True)
+    approver_id = Column(UUID(as_uuid=False), nullable=True)
+    publisher_id = Column(UUID(as_uuid=False), nullable=True)
+    reason = Column(Text, nullable=False)
+    submitted_at = Column(DateTime(timezone=True), nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    unpublished_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    versions = relationship(
+        "PublicationVersion",
+        back_populates="publication",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "target_type IN ('PROJECT', 'ACTIVITY', 'CLAIM', 'EVIDENCE', "
+            "'REVIEW_CASE', 'FUSION_ASSESSMENT')",
+            name="ck_publication_target_type",
+        ),
+        CheckConstraint(
+            "status IN ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'PUBLISHED', "
+            "'UNPUBLISHED', 'REJECTED')",
+            name="ck_publication_status",
+        ),
+        CheckConstraint("current_version_number >= 0", name="ck_publication_version_number"),
+        # §6: a published item may not silently return to an editable state.
+        CheckConstraint(
+            "(status = 'PUBLISHED') = (published_at IS NOT NULL AND unpublished_at IS NULL)",
+            name="ck_publication_published_consistent",
+        ),
+        CheckConstraint(
+            "(status = 'UNPUBLISHED') = (unpublished_at IS NOT NULL)",
+            name="ck_publication_unpublished_consistent",
+        ),
+        Index("ix_publications_target", "target_type", "target_id"),
+        Index("ix_publications_status", "status"),
+        Index("ix_publications_public_id", "public_id"),
+        Index("ix_publications_created", "created_at"),
+        # One governed publication container per target.
+        UniqueConstraint(
+            "target_type", "target_id", name="uq_publication_active_target"
+        ),
+    )
+
+
+class PublicationVersion(Base):
+    """BE-022: immutable published snapshot version (§7, §8, §32).
+
+    Once ``status`` reaches PUBLISHED the row is frozen: the snapshot is the
+    historical public representation and is never rebuilt from mutable domain
+    records. Material changes create a new version rather than mutating this
+    one. JSONB is used for the structured snapshot; raw media never lives here.
+    """
+
+    __tablename__ = "publication_versions"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    publication_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("publications.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    version_number = Column(Integer, nullable=False)
+    snapshot = Column(JSONB, nullable=False, default=dict)
+    public_id = Column(String(50), nullable=False)
+    target_type = Column(String(50), nullable=False)
+    target_id = Column(UUID(as_uuid=False), nullable=False)
+    status = Column(String(20), nullable=False, default="DRAFT", server_default="DRAFT")
+    policy_version_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("publication_policy_versions.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    source_version_references = Column(JSONB, nullable=True)
+    requested_by = Column(UUID(as_uuid=False), nullable=False)
+    approved_by = Column(UUID(as_uuid=False), nullable=True)
+    published_by = Column(UUID(as_uuid=False), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    unpublished_at = Column(DateTime(timezone=True), nullable=True)
+
+    publication = relationship("Publication", back_populates="versions")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "publication_id", "version_number", name="uq_publication_version_number"
+        ),
+        CheckConstraint("version_number >= 1", name="ck_publication_version_positive"),
+        CheckConstraint(
+            "status IN ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'PUBLISHED', "
+            "'UNPUBLISHED', 'REJECTED')",
+            name="ck_publication_version_status",
+        ),
+        CheckConstraint(
+            "(status = 'PUBLISHED') = (published_at IS NOT NULL AND unpublished_at IS NULL)",
+            name="ck_publication_version_published_consistent",
+        ),
+        Index("ix_publication_versions_publication", "publication_id"),
+        Index("ix_publication_versions_status", "status"),
+        Index("ix_publication_versions_public_id", "public_id"),
+        Index("ix_publication_versions_created", "created_at"),
+    )
+
+
+class PublicationEvent(Base):
+    """BE-022: append-only publication workflow history (never modified)."""
+
+    __tablename__ = "publication_events"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    publication_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("publications.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    event_type = Column(String(50), nullable=False)
+    from_status = Column(String(20), nullable=True)
+    to_status = Column(String(20), nullable=True)
+    actor_id = Column(UUID(as_uuid=False), nullable=True)
+    reason = Column(Text, nullable=True)
+    event_metadata = Column("metadata", JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_publication_events_publication", "publication_id", "created_at"),
+        Index("ix_publication_events_created", "created_at"),
+    )
+
+
+class PublicMediaDerivative(Base):
+    """BE-022: approved public-safe derivative of original evidence (§19, §20).
+
+    The derivative references the original evidence row; original evidence
+    bytes are never modified. Storage keys recorded here are derivative
+    storage references governed by BE-002, and are NEVER exposed through a
+    public response — the public surface serves media by public ID only.
+    """
+
+    __tablename__ = "public_media_derivatives"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    publication_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("publications.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    publication_version_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("publication_versions.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    original_evidence_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("evidence.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    derivative_type = Column(String(20), nullable=False)
+    storage_key = Column(String(255), nullable=False)
+    storage_bucket = Column(String(100), nullable=False)
+    transformation = Column(Text, nullable=True)
+    transformation_version = Column(String(20), nullable=True)
+    sha256 = Column(String(64), nullable=True)
+    created_by = Column(UUID(as_uuid=False), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "derivative_type IN ('ORIGINAL', 'THUMBNAIL', 'PREVIEW', "
+            "'REDACTED', 'TRANSCODED')",
+            name="ck_public_media_derivative_type",
+        ),
+        Index("ix_public_media_derivatives_publication", "publication_id"),
+        Index("ix_public_media_derivatives_evidence", "original_evidence_id"),
     )

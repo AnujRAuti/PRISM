@@ -103,6 +103,14 @@ ACTION_PERMISSIONS = {
     "correction.apply": "correction.apply",
     "intelligence.invalidate": "intelligence.invalidate",
     "intelligence.reprocess": "intelligence.reprocess",
+    # BE-022 publication governance actions (§14)
+    "publication.create": "publication.create",
+    "publication.read": "publication.read",
+    "publication.review": "publication.review",
+    "publication.approve": "publication.approve",
+    "publication.publish": "publication.publish",
+    "publication.unpublish": "publication.unpublish",
+    "publication.policy.manage": "publication.policy.manage",
 }
 
 
@@ -507,6 +515,22 @@ def governance_target_resource(target_type: str | None) -> str | None:
     }.get(target_type or "")
 
 
+def publication_target_resource(target_type: str | None) -> str | None:
+    """BE-022 publication target type -> resolvable resource type.
+
+    Returns ``None`` for unknown types so an unresolvable target yields an
+    unscopeable resource rather than a scope leak.
+    """
+    return {
+        "PROJECT": "project",
+        "ACTIVITY": "activity",
+        "CLAIM": "claim",
+        "EVIDENCE": "evidence",
+        "REVIEW_CASE": "review_case",
+        "FUSION_ASSESSMENT": "integrity_assessment",
+    }.get(target_type or "")
+
+
 def resolve_resource_scope(
     db: Session, resource_type: str, resource_id: str | None
 ) -> Resource:
@@ -619,6 +643,22 @@ def resolve_resource_scope(
             if row is not None and holder_project is None:
                 # Reprocessing only applies to evidence; fall back to its project.
                 return resolve_resource_scope(db, "evidence", str(row.evidence_id))
+        elif resource_type == "publication":
+            # BE-022: a publication is scoped through its target so that a
+            # project-scoped grant reaches it, and an unscoped target stays
+            # unscoped (fail-closed) rather than being world-readable.
+            from backend.db.models import Publication
+
+            row = db.query(Publication).filter(Publication.id == resource_id).one_or_none()
+            if row is not None:
+                return resolve_resource_scope(
+                    db, publication_target_resource(row.target_type), str(row.target_id)
+                )
+        elif resource_type == "publication_policy":
+            # BE-022: policies are administrative configuration, not scoped
+            # domain objects. They resolve to a bare resource so only GLOBAL
+            # assignments can manage them.
+            return Resource(resource_type, resource_id)
         elif resource_type == "intelligence_invalidation":
             from backend.db.models import IntelligenceInvalidation
 
