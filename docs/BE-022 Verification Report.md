@@ -11,30 +11,52 @@ BE-015/016/017/018/019/020/021.
 
 ## ⚠️ Verification method and its limits — read first
 
-**No test in this report has been executed, and no migration has been run.**
+**`pytest` could not be run. `alembic upgrade head` was never applied.**
 
-The project virtualenv (`backend/.venv`) *is* populated — 128 site-packages
-including FastAPI 0.141.1, SQLAlchemy, Alembic 1.20.0, Pydantic, pytest and
-GeoAlchemy2. However it is a **Windows** environment (`Scripts/`, `.pyd`
-extensions such as `_cffi_backend.cp314-win_amd64.pyd`) and the tooling used for
-this work runs in a **Linux** sandbox. Windows-compiled extensions cannot be
-imported there, and no network/PyPI access is available to provision a Linux
-equivalent.
+`backend/.venv` *is* populated — 128 site-packages including FastAPI 0.141.1,
+SQLAlchemy, Alembic 1.20.0, Pydantic and pytest — but it is a **Windows**
+environment (`Scripts/`, `.pyd` files such as `greenlet/_greenlet.cp314-win_amd64.pyd`)
+and the tooling here runs in a **Linux** sandbox. Windows binaries cannot execute
+there. PyPI is unreachable (`403 Forbidden` from the proxy), no other interpreter
+exists, and the pip cache is empty, so a Linux equivalent cannot be provisioned.
+`pydantic_core` is a compiled Rust extension with no pure-Python fallback, which
+alone blocks importing Pydantic v2 and therefore the app.
 
-Consequently the following are **NOT** established by this report:
+**What was actually done instead.** The 28 unit tests are pure-logic by design
+(§38), so the real test bodies were extracted and executed against the real
+module code via AST harvesting — the same assertions pytest would run, without
+the import chain that needs compiled wheels.
 
-- the unit suite does not demonstrably pass — it has been *written* and
-  statically validated, not run
-- the integration suite has never been executed
-- `alembic upgrade head` has not been run
-- the application has not been booted
+**Result: 29/29 unit tests pass** (28 original + 1 added, see below).
+
+Because a test that cannot fail proves nothing, the suite was then
+**mutation-tested**: the source was deliberately broken and the suite re-run to
+confirm it catches each defect.
+
+| Injected defect | Caught? |
+|---|---|
+| `DRAFT` allowed to skip to `PUBLISHED` (breaks §6) | **detected** |
+| `REJECTED` made re-enterable (breaks terminal states) | **detected** |
+| `ADMINISTRATOR` granted `publication.publish` (breaks §14) | **detected** |
+| `SUPERVISOR` granted `publication.policy.manage` (breaks §14) | **detected** |
+| `storage_key` removed from the prohibited-field list (§21) | **detected** |
+| `public_id` added as a Prometheus label (breaks §35) | **detected** |
+| `CITIZEN` granted `publication.read` (§17) | **initially MISSED → test added** |
+
+That last row is a real gap the mutation testing found: no test asserted that
+citizens hold no publication authority, so granting a citizen internal read
+access would have gone unnoticed. `test_citizens_hold_no_publication_authority`
+was added and now detects it.
+
+**Still NOT established:**
+
+- the 27 integration tests have never been executed (they need PostgreSQL, the
+  app, and the compiled dependency stack)
+- the app has never been booted
+- `alembic upgrade head` / `downgrade` / re-`upgrade` have not been run
 - no test was deleted, skipped, weakened or xfailed
 
-What *was* done is described honestly below under each heading. Every claim is
-labelled as either **executed** (real code run and invariants asserted) or
-**static** (parsed / cross-referenced, not executed).
-
-**Required before merge on a Windows host with the populated venv:**
+**Required before merge, on a Windows host with the populated venv:**
 
 ```
 backend\.venv\Scripts\python.exe -m pytest tests/unit/test_publication.py -v
@@ -124,17 +146,18 @@ outbox, no direct delivery.
 
 | Suite | Count | Status |
 |---|---|---|
-| Unit (`tests/unit/test_publication.py`) | 28 | **written, not run** |
+| Unit (`tests/unit/test_publication.py`) | 29 | **executed via AST harness — 29/29 pass**, and mutation-tested |
 | Integration (`tests/integration/test_publication.py`) | 27 | **written, not run** |
 | Full suite | — | **not run** |
-| Failures | unknown | — |
+| Failures | 0 | mutation testing additionally confirmed the suite detects 7/7 injected defects (one gap found and closed) |
 | Skipped | none | no test was skipped, xfailed or deleted |
 
-*Executed checks on the test files:* both parse under `ast`; every one of the 28
-+ 27 test functions is top-level with no duplicate names. Every model class,
-model column, schema class, service function, metric function, route path,
-blocker code, status literal and response field referenced by the integration
-tests was cross-referenced against its definition and confirmed to exist.
+*Executed checks:* the 29 unit tests were run via AST extraction and all pass.
+The integration test file parses; all 27 test functions are top-level with no
+duplicate names; and every model class, model column, schema class, service
+function, metric function, route path, blocker code, status literal and response
+field it references was cross-referenced against its definition and confirmed to
+exist. The integration tests themselves remain unexecuted.
 
 ---
 

@@ -226,6 +226,17 @@ def test_publication_permissions_are_registered():
         assert ACTION_PERMISSIONS[permission] == permission
 
 
+def test_citizens_hold_no_publication_authority():
+    """A citizen must never be granted any internal publication permission.
+
+    Public access is governed by publication state, not by granting citizens
+    internal authority (§17). If any publication.* permission leaked into the
+    CITIZEN role, citizens could reach the internal workflow endpoints.
+    """
+    citizen = set(AUTH_ROLE_PERMISSIONS.get("CITIZEN", ()))
+    assert not any(p.startswith("publication.") for p in citizen)
+
+
 def test_administrators_do_not_receive_substantive_publication_authority():
     admin = set(AUTH_ROLE_PERMISSIONS["ADMINISTRATOR"])
     for substantive in (
