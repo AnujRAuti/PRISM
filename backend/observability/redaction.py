@@ -45,6 +45,10 @@ SAFE_KEY_PATTERNS = {
     re.compile(r'trace_id', re.IGNORECASE),
     re.compile(r'span_id', re.IGNORECASE),
     re.compile(r'request_id', re.IGNORECASE),
+    # Plural container keys ("tokens", "access_tokens") are recursed into
+    # instead of flattened; their sensitive leaf keys (access_token,
+    # refresh_token, ...) are still redacted by the sensitive patterns.
+    re.compile(r'tokens$', re.IGNORECASE),
 }
 
 # Specific keys that should always be redacted regardless of patterns
@@ -104,21 +108,26 @@ def is_sensitive_key(key: str) -> bool:
 
 def redact_value(value: Any) -> Any:
     """
-    Redact a sensitive value.
-    
+    Redact a sensitive value (partial length-based redaction).
+
+    Used for heuristic value-level redaction (strings that merely *look*
+    like tokens). Sensitive *keys* are redacted with the full placeholder
+    by :func:`redact_sensitive_data`.
+
     Args:
         value: The value to redact
-        
+
     Returns:
-        Redacted value (typically "[REDACTED]")
+        Redacted value
     """
     if isinstance(value, str) and len(value) > 0:
-        # For very short values, just return [REDACTED]
-        if len(value) <= 4:
+        n = len(value)
+        if n <= 4:
             return "[REDACTED]"
-        # For longer values, show first and last character with redaction in middle
-        if len(value) <= 8:
+        if n == 5:
             return value[0] + "[REDACTED]" + value[-1]
+        if n <= 7:
+            return value[:2] + "[REDACTED]" + value[-1]
         return value[:2] + "[REDACTED]" + value[-2:]
     return "[REDACTED]"
 
@@ -160,14 +169,15 @@ def redact_sensitive_data(data: Any, _visited: Set[int] = None) -> Any:
         if isinstance(data, dict):
             redacted_dict = {}
             for key, value in data.items():
-                # Recursively process the value first
-                processed_value = redact_sensitive_data(value, _visited.copy())
-                
-                # If the key indicates sensitive data, redact the value
+                # If the key indicates sensitive data, the entire value is
+                # replaced with the placeholder — partial redaction could
+                # leak credential fragments into telemetry.
                 if is_sensitive_key(key):
-                    redacted_dict[key] = redact_value(processed_value)
+                    redacted_dict[key] = "[REDACTED]"
                 else:
-                    redacted_dict[key] = processed_value
+                    redacted_dict[key] = redact_sensitive_data(
+                        value, _visited.copy()
+                    )
             return redacted_dict
         
         # Handle lists and tuples

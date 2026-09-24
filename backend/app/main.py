@@ -1,26 +1,26 @@
+import logging
 import time
+
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.core.config import settings
-from backend.core.logging import setup_logging, request_id_ctx
+from backend.core.logging import setup_logging
 from backend.core.middleware import RequestIDMiddleware
 from backend.api.v1.router import router as api_router
-from backend.observability.logging import setup_logging as setup_obs_logging, get_logger
+from backend.api.v1.endpoints.health import router as health_router
+from backend.observability.logging import setup_logging as setup_obs_logging
 from backend.observability.tracing import init_tracing, shutdown_tracing
 from backend.observability.health import liveness_endpoint, readiness_endpoint, health_endpoint
 from backend.observability.metrics import get_metrics
-from backend.observability.redaction import redact_sensitive_data
 
-logger = get_logger(__name__)
+stdlib_logger = logging.getLogger(__name__)
 
 setup_logging()
-setup_obs_logging()  # Setup structured JSON logging
-
-# Initialize observability
-if settings.otel_enabled:
-    init_tracing()
+# Structured logging is best-effort: it degrades to the stdlib config above
+# when structlog is unavailable and must never block application startup.
+setup_obs_logging()
 
 app = FastAPI(title=settings.app_name)
 
@@ -33,37 +33,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Request ID middleware
+# Request ID middleware (BE-001 behavior preserved)
 app.add_middleware(RequestIDMiddleware)
 
 
-# Metrics middleware
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
-    """Collect HTTP request metrics."""
+    """BE-020: collect HTTP metrics with bounded labels only.
+
+    The route label uses the matched route template (e.g.
+    ``/api/v1/evidence/{evidence_id}``), never the raw path — UUID-bearing
+    raw paths would explode metric-label cardinality.
+    """
     method = request.method
-    url = str(request.url)
-    # Extract route pattern (simplified - in production you'd want to get the actual route)
-    route = request.url.path
-    
     start_time = time.time()
+    status_code = 500
     try:
         response = await call_next(request)
         status_code = response.status_code
         return response
-    except Exception as exc:
-        status_code = 500
-        raise exc
     finally:
-        # Record metrics
-        duration = time.time() - start_time
-        metrics = get_metrics()
-        metrics.record_http_request(
-            method=method,
-            route=route,
-            status_code=status_code,
-            duration_seconds=duration
-        )
+        route = getattr(request.scope.get("route"), "path", None) or "unmatched"
+        try:
+            get_metrics().record_http_request(
+                method=method,
+                route=route,
+                status_code=status_code,
+                duration_seconds=time.time() - start_time,
+            )
+        except Exception:
+            # Telemetry failure must never take down the application.
+            stdlib_logger.debug("failed to record http metrics", exc_info=True)
 
 
 @app.exception_handler(Exception)
@@ -71,69 +71,69 @@ async def generic_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": "internal server error"})
 
 
-# Health endpoints using our new implementation
-@app.get("/health")
+# ---------------------------------------------------------------------------
+# BE-001 health/readiness contract (preserved; original endpoints).
+# ---------------------------------------------------------------------------
+app.include_router(health_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api/v1")
+
+
+# ---------------------------------------------------------------------------
+# BE-020 operational endpoints (liveness/readiness/metrics).
+# ---------------------------------------------------------------------------
+@app.get("/health", summary="Liveness probe (process alive, dependency-agnostic)")
 async def liveness():
-    """Liveness endpoint - checks if application process is alive."""
     details, status_code = liveness_endpoint()
     return JSONResponse(content=details, status_code=status_code)
 
 
-@app.get("/ready")
+@app.get("/ready", summary="Readiness probe (required dependencies available)")
 async def readiness():
-    """Readiness endpoint - checks if instance can safely receive work."""
     details, status_code = readiness_endpoint()
     return JSONResponse(content=details, status_code=status_code)
 
 
-@app.get("/healthz")
-async def health():
-    """Combined health endpoint."""
+@app.get("/healthz", summary="Combined liveness + readiness snapshot")
+async def combined_health():
     details, status_code = health_endpoint()
     return JSONResponse(content=details, status_code=status_code)
 
 
-# Prometheus metrics endpoint
-@app.get("/metrics")
-async def metrics():
-    """Prometheus metrics endpoint."""
+@app.get("/metrics", summary="Prometheus-compatible metrics exposition")
+async def prometheus_metrics():
     if not settings.prometheus_enabled:
-        return JSONResponse(
-            content={"error": "Prometheus metrics disabled"},
-            status_code=404
-        )
-    
+        return JSONResponse(content={"detail": "metrics disabled"}, status_code=404)
     try:
-        from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-        metrics_data = generate_latest()
-        return JSONResponse(
-            content=metrics_data.decode("utf-8"),
-            media_type=CONTENT_TYPE_LATEST
+        from prometheus_client import (
+            CONTENT_TYPE_LATEST,
+            generate_latest,
         )
     except ImportError:
         return JSONResponse(
-            content={"error": "Prometheus client not available"},
-            status_code=500
+            content={"detail": "prometheus client not installed"}, status_code=503
         )
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
-app.include_router(api_router, prefix="/api/v1")
-
-
-# Startup and shutdown events
 @app.on_event("startup")
 async def startup_event():
-    """Application startup event."""
-    logger.info("application.starting", 
-                version="0.1.0",
-                environment=settings.environment,
-                otel_enabled=settings.otel_enabled,
-                prometheus_enabled=settings.prometheus_enabled)
+    if settings.otel_enabled:
+        try:
+            init_tracing()
+        except Exception:
+            stdlib_logger.exception("OpenTelemetry initialization failed; continuing without tracing")
+    stdlib_logger.info(
+        "application.starting",
+        extra={"otel_enabled": settings.otel_enabled,
+               "prometheus_enabled": settings.prometheus_enabled},
+    )
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Application shutdown event."""
-    logger.info("application.shutting_down")
+    stdlib_logger.info("application.shutting_down")
     if settings.otel_enabled:
-        shutdown_tracing()
+        try:
+            shutdown_tracing()
+        except Exception:
+            stdlib_logger.warning("OpenTelemetry shutdown failed", exc_info=True)

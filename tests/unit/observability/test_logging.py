@@ -17,16 +17,27 @@ from backend.observability.logging import (
     add_request_id,
     add_trace_ids,
     add_service_info,
-    format_as_json
+    format_as_json,
+    STRUCTLOG_AVAILABLE,
 )
+import backend.observability.logging as logging_module
 from backend.observability.redaction import redact_sensitive_data
 
 
 def test_setup_logging():
-    """Test logging setup."""
-    with patch('logging.basicConfig') as mock_basic_config:
-        setup_logging()
-        mock_basic_config.assert_called_once()
+    """Test logging setup.
+
+    structlog optional at runtime: when available, setup_logging must
+    configure it; when missing, the call degrades to a stdlib no-op
+    instead of raising (telemetry must never break startup).
+    """
+    logging_module.STRUCTLOG_CONFIGURED = False
+    setup_logging()
+    if STRUCTLOG_AVAILABLE:
+        assert logging_module.STRUCTLOG_CONFIGURED is True
+    else:
+        # Graceful fallback: no exception, no structlog configuration.
+        assert logging_module.STRUCTLOG_CONFIGURED is False
 
 
 def test_get_logger():

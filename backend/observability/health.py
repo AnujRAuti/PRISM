@@ -1,16 +1,52 @@
-"""
-Health checks and readiness probes for Proof-of-Action backend.
+"""BE-020 health checks and readiness probes.
+
+Liveness answers "is this process alive?" and never fails merely because
+PostgreSQL/Redis/Storage are temporarily unavailable. Readiness answers
+"can this instance safely receive work?" and fails when *required*
+dependencies are unavailable. Optional checks never fail readiness on
+their own; the semantics are intentionally not combined.
 """
 import logging
 import time
-from typing import Dict, Any, Tuple
 from enum import Enum
+from typing import Any, Dict, Tuple
 
 from backend.core.config import settings
-from backend.observability.redaction import redact_sensitive_data
-from backend.observability.logging import get_logger
 
-logger = get_logger(__name__)
+try:  # pragma: no cover - availability probed once at import
+    from sqlalchemy import create_engine, text
+
+    SQLALCHEMY_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    SQLALCHEMY_AVAILABLE = False
+
+try:  # pragma: no cover
+    import redis
+
+    REDIS_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    redis = None
+    REDIS_AVAILABLE = False
+
+try:  # pragma: no cover
+    import boto3
+    from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
+
+    BOTO3_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    boto3 = None
+    BOTO3_AVAILABLE = False
+    class NoCredentialsError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class ClientError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class BotoCoreError(Exception):  # type: ignore[no-redef]
+        pass
+
+
+logger = logging.getLogger(__name__)
 
 
 class HealthStatus(Enum):
@@ -22,154 +58,140 @@ class HealthStatus(Enum):
 
 class HealthCheck:
     """Base health check class."""
-    
+
     def __init__(self, name: str, required: bool = True):
         self.name = name
         self.required = required
-    
+
     def check(self) -> Tuple[HealthStatus, Dict[str, Any]]:
-        """
-        Perform the health check.
-        
-        Returns:
-            Tuple of (status, details_dict)
-        """
+        """Perform the health check; returns (status, details)."""
         raise NotImplementedError
 
 
 class PostgresHealthCheck(HealthCheck):
-    """PostgreSQL connectivity health check."""
-    
+    """PostgreSQL connectivity health check (required)."""
+
     def __init__(self):
         super().__init__("postgresql", required=True)
-    
+
     def check(self) -> Tuple[HealthStatus, Dict[str, Any]]:
-        try:
-            # Import here to avoid hard dependency if not used
-            from sqlalchemy import create_engine, text
-            from sqlalchemy.exc import SQLAlchemyError
-            
-            engine = create_engine(settings.database_url)
-            with engine.connect() as conn:
-                result = conn.execute(text("SELECT 1"))
-                result.fetchone()
-            
-            engine.dispose()
-            return HealthStatus.HEALTHY, {
-                "message": "PostgreSQL connection successful",
-                "response_time_ms": 0  # Would measure actual time in production
-            }
-        except ImportError:
+        if not SQLALCHEMY_AVAILABLE:
             return HealthStatus.UNKNOWN, {
                 "message": "SQLAlchemy not available for PostgreSQL check"
             }
+        engine = None
+        try:
+            engine = create_engine(settings.database_url)
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            return HealthStatus.HEALTHY, {
+                "message": "PostgreSQL connection successful"
+            }
         except Exception as e:
-            logger.warning(f"PostgreSQL health check failed: {e}")
+            logger.warning("PostgreSQL health check failed: %s", e)
             return HealthStatus.UNHEALTHY, {
                 "message": "PostgreSQL connection failed",
-                "error": str(e) if settings.environment == "development" else "connection_failed"
+                "error": str(e) if settings.environment == "development" else "connection_failed",
             }
+        finally:
+            if engine is not None:
+                try:
+                    engine.dispose()
+                except Exception:
+                    pass
 
 
 class RedisHealthCheck(HealthCheck):
-    """Redis connectivity health check."""
-    
+    """Redis connectivity health check (required)."""
+
     def __init__(self):
         super().__init__("redis", required=True)
-    
+
     def check(self) -> Tuple[HealthStatus, Dict[str, Any]]:
-        try:
-            # Import here to avoid hard dependency if not used
-            import redis
-            
-            r = redis.from_url(settings.redis_url)
-            r.ping()
-            
-            return HealthStatus.HEALTHY, {
-                "message": "Redis connection successful",
-                "response_time_ms": 0  # Would measure actual time in production
-            }
-        except ImportError:
+        if not REDIS_AVAILABLE:
             return HealthStatus.UNKNOWN, {
                 "message": "Redis library not available"
             }
+        try:
+            client = redis.from_url(settings.redis_url)
+            client.ping()
+            try:
+                client.close()
+            except Exception:
+                pass
+            return HealthStatus.HEALTHY, {
+                "message": "Redis connection successful"
+            }
         except Exception as e:
-            logger.warning(f"Redis health check failed: {e}")
+            logger.warning("Redis health check failed: %s", e)
             return HealthStatus.UNHEALTHY, {
                 "message": "Redis connection failed",
-                "error": str(e) if settings.environment == "development" else "connection_failed"
+                "error": str(e) if settings.environment == "development" else "connection_failed",
             }
 
 
 class StorageHealthCheck(HealthCheck):
-    """Storage service health check."""
-    
+    """Object-storage connectivity health check (required)."""
+
     def __init__(self):
         super().__init__("storage", required=True)
-    
+
     def check(self) -> Tuple[HealthStatus, Dict[str, Any]]:
-        try:
-            # Import here to avoid hard dependency if not used
-            import boto3
-            from botocore.exceptions import ClientError, NoCredentialsError
-            
-            # Configure S3 client for MinIO
-            s3_client = boto3.client(
-                's3',
-                endpoint_url=settings.s3_endpoint,
-                aws_access_key_id=settings.s3_access_key,
-                aws_secret_access_key=settings.s3_secret_key,
-                use_ssl=settings.s3_use_ssl
-            )
-            
-            # Try to list buckets as a simple connectivity test
-            s3_client.list_buckets()
-            
-            return HealthStatus.HEALTHY, {
-                "message": "Storage service connection successful",
-                "response_time_ms": 0  # Would measure actual time in production
-            }
-        except ImportError:
+        if not BOTO3_AVAILABLE:
             return HealthStatus.UNKNOWN, {
                 "message": "Boto3 not available for storage check"
             }
+        try:
+            client = boto3.client(
+                "s3",
+                endpoint_url=settings.s3_endpoint,
+                aws_access_key_id=settings.s3_access_key,
+                aws_secret_access_key=settings.s3_secret_key,
+                region_name=settings.s3_region,
+                use_ssl=settings.s3_use_ssl,
+            )
+            client.list_buckets()
+            return HealthStatus.HEALTHY, {
+                "message": "Storage service connection successful"
+            }
         except NoCredentialsError:
+            logger.warning("Storage health check failed: missing credentials")
             return HealthStatus.UNHEALTHY, {
                 "message": "Storage credentials not available",
-                "error": "missing_credentials" if settings.environment == "development" else "auth_failed"
+                "error": "missing_credentials",
             }
-        except ClientError as e:
-            logger.warning(f"Storage health check failed: {e}")
+        except (ClientError, BotoCoreError) as e:
+            logger.warning("Storage health check failed: %s", e)
             return HealthStatus.UNHEALTHY, {
                 "message": "Storage service connection failed",
-                "error": str(e) if settings.environment == "development" else "connection_failed"
+                "error": str(e) if settings.environment == "development" else "connection_failed",
             }
         except Exception as e:
-            logger.warning(f"Storage health check failed: {e}")
+            logger.warning("Storage health check failed: %s", e)
             return HealthStatus.UNHEALTHY, {
                 "message": "Storage service connection failed",
-                "error": str(e) if settings.environment == "development" else "connection_failed"
+                "error": str(e) if settings.environment == "development" else "connection_failed",
             }
 
 
 class ApplicationHealthCheck(HealthCheck):
-    """Basic application health check."""
-    
+    """Basic application-process health check (never fails on dependencies)."""
+
     def __init__(self):
         super().__init__("application", required=False)
-    
+
     def check(self) -> Tuple[HealthStatus, Dict[str, Any]]:
         return HealthStatus.HEALTHY, {
             "message": "Application is running",
             "timestamp": time.time(),
             "version": "0.1.0",
-            "environment": settings.environment
+            "environment": settings.environment,
         }
 
 
 class HealthChecker:
     """Manages health checks and determines overall health status."""
-    
+
     def __init__(self):
         self.checks = [
             ApplicationHealthCheck(),
@@ -178,54 +200,42 @@ class HealthChecker:
             StorageHealthCheck(),
         ]
         self._check_map = {check.name: check for check in self.checks}
-    
+
     def get_liveness_status(self) -> Tuple[HealthStatus, Dict[str, Any]]:
-        """
-        Get liveness status - checks if application process is alive.
-        Should not fail due to external dependencies being unavailable.
-        """
-        # Liveness only checks the application itself, not dependencies
-        app_check = self._check_map["application"]
-        status, details = app_check.check()
-        
+        """Liveness: is the application process alive (dependency-agnostic)."""
+        status, details = self._check_map["application"].check()
         return status, {
             "status": status.value,
             "timestamp": time.time(),
             "checks": {
                 "application": {
                     "status": status.value,
-                    "message": details.get("message", "")
+                    "message": details.get("message", ""),
                 }
-            }
+            },
         }
-    
+
     def get_readiness_status(self) -> Tuple[HealthStatus, Dict[str, Any]]:
-        """
-        Get readiness status - checks if instance can safely receive work.
-        Should fail when required dependencies are unavailable.
+        """Readiness: can this instance safely receive work?
+
+        Required dependency unavailable/unknown -> UNHEALTHY. Optional
+        dependency unavailable -> reported but never fails readiness alone.
         """
         overall_status = HealthStatus.HEALTHY
         check_results = {}
-        
         for check in self.checks:
             status, details = check.check()
             check_results[check.name] = {
                 "status": status.value,
                 "message": details.get("message", ""),
-                "required": check.required
+                "required": check.required,
             }
-            
-            # If any required check is unhealthy, overall status is unhealthy
-            if check.required and status == HealthStatus.UNHEALTHY:
+            if check.required and status != HealthStatus.HEALTHY:
                 overall_status = HealthStatus.UNHEALTHY
-            # If any required check is unknown, we might want to treat as unhealthy
-            elif check.required and status == HealthStatus.UNKNOWN:
-                overall_status = HealthStatus.UNHEALTHY
-        
         return overall_status, {
             "status": overall_status.value,
             "timestamp": time.time(),
-            "checks": check_results
+            "checks": check_results,
         }
 
 
@@ -234,42 +244,36 @@ health_checker = HealthChecker()
 
 
 def get_liveness() -> Tuple[HealthStatus, Dict[str, Any]]:
-    """Get liveness status."""
     return health_checker.get_liveness_status()
 
 
 def get_readiness() -> Tuple[HealthStatus, Dict[str, Any]]:
-    """Get readiness status."""
     return health_checker.get_readiness_status()
 
 
-# FastAPI endpoint handlers (to be imported by API routers)
 def liveness_endpoint():
-    """FastAPI endpoint handler for liveness check."""
+    """(details, http_status) for the liveness probe."""
     status, details = get_liveness()
-    status_code = 200 if status == HealthStatus.HEALTHY else 503
-    return details, status_code
+    return details, 200 if status == HealthStatus.HEALTHY else 503
 
 
 def readiness_endpoint():
-    """FastAPI endpoint handler for readiness check."""
+    """(details, http_status) for the readiness probe."""
     status, details = get_readiness()
-    status_code = 200 if status == HealthStatus.HEALTHY else 503
-    return details, status_code
+    return details, 200 if status == HealthStatus.HEALTHY else 503
 
 
 def health_endpoint():
-    """Combined health endpoint (returns both liveness and readiness)."""
+    """(details, http_status) combining liveness and readiness snapshots."""
     liveness_status, liveness_details = get_liveness()
     readiness_status, readiness_details = get_readiness()
-    
-    # Overall status is healthy only if both liveness and readiness are healthy
-    overall_healthy = (liveness_status == HealthStatus.HEALTHY and 
-                      readiness_status == HealthStatus.HEALTHY)
-    
+    overall_healthy = (
+        liveness_status == HealthStatus.HEALTHY
+        and readiness_status == HealthStatus.HEALTHY
+    )
     return {
         "status": "healthy" if overall_healthy else "unhealthy",
         "timestamp": time.time(),
         "liveness": liveness_details,
-        "readiness": readiness_details
+        "readiness": readiness_details,
     }, 200 if overall_healthy else 503
