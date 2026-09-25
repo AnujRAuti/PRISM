@@ -1,7 +1,8 @@
 """
 Unit tests for observability health checks.
 """
-from unittest.mock import Mock, patch
+from contextlib import ExitStack
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -57,15 +58,21 @@ def test_postgres_health_check_success(mock_settings):
     mock_settings.database_url = "postgresql://test:test@localhost:5432/test"
     
     with patch('backend.observability.health.create_engine') as mock_create_engine:
-        mock_engine = Mock()
-        mock_conn = Mock()
-        mock_result = Mock()
+        # MagicMock (not Mock) so ``engine.connect()`` supports the ``with``
+        # statement. Production uses ``with engine.connect() as conn:`` — the
+        # SQLAlchemy context-manager contract that both closes and rolls back
+        # the connection on exit. A plain Mock has no ``__enter__``, so the
+        # check raised AttributeError and reported UNHEALTHY.
+        mock_engine = MagicMock()
+        mock_conn = MagicMock()
+        mock_result = MagicMock()
         mock_result.fetchone.return_value = [1]
-        
+
         mock_engine.connect.return_value.__enter__.return_value = mock_conn
+        mock_engine.connect.return_value.__exit__.return_value = False
         mock_conn.execute.return_value = mock_result
         mock_create_engine.return_value = mock_engine
-        
+
         check = PostgresHealthCheck()
         status, details = check.check()
         
@@ -149,18 +156,23 @@ def test_health_checker_liveness():
 def test_health_checker_readiness():
     """Test HealthChecker readiness status."""
     checker = HealthChecker()
-    
-    # Mock all checks to return healthy
-    for name, check in checker._check_map.items():
-        with patch.object(check, 'check') as mock_check:
+
+    # Mock all checks to return healthy. Every patch must stay open for the
+    # duration of the readiness call: readiness is an aggregate over all
+    # registered checks, so closing each patch at the end of its loop
+    # iteration would run the real postgres/redis/storage probes and assert on
+    # live dependencies instead of on the aggregation logic under test.
+    with ExitStack() as stack:
+        for name, check in checker._check_map.items():
+            mock_check = stack.enter_context(patch.object(check, 'check'))
             mock_check.return_value = (HealthStatus.HEALTHY, {"message": f"{name} healthy"})
-    
-    status, details = checker.get_readiness_status()
-    
+
+        status, details = checker.get_readiness_status()
+
     assert status == HealthStatus.HEALTHY
     assert details["status"] == "healthy"
     assert "checks" in details
-    
+
     # Check that all expected checks are present
     expected_checks = ["application", "postgresql", "redis", "storage"]
     for check_name in expected_checks:

@@ -121,6 +121,26 @@ def make_policy(headers, resource_type="EVIDENCE", scope="GLOBAL", scope_id=None
     return policy, version
 
 
+def _purge_all_retention_policies() -> None:
+    """Remove every retention policy so a test can assert an empty catalogue.
+
+    Only used by tests whose contract is "no policy applies". Everything else
+    scopes its policy to its own project and never needs this.
+    """
+    session = get_session()
+    try:
+        policy_ids = [row[0] for row in session.query(RetentionPolicy.id).all()]
+        if not policy_ids:
+            return
+        session.query(RetentionPolicyVersion).filter(
+            RetentionPolicyVersion.policy_id.in_(policy_ids)).delete(synchronize_session=False)
+        session.query(RetentionPolicy).filter(
+            RetentionPolicy.id.in_(policy_ids)).delete(synchronize_session=False)
+        session.commit()
+    finally:
+        session.close()
+
+
 def cleanup(user_ids, project_ids, evidence_ids, policy_ids=None, hold_ids=None) -> None:
     storage = StorageService()
     session = get_session()
@@ -169,6 +189,20 @@ def cleanup(user_ids, project_ids, evidence_ids, policy_ids=None, hold_ids=None)
                 synchronize_session=False)
             session.query(RetentionPolicy).filter(RetentionPolicy.id.in_(policy_ids)).delete(
                 synchronize_session=False)
+        # Project-scoped role assignments reference the project by FK, so they
+        # must be removed BEFORE the projects they point at. Deleting projects
+        # first violates that FK and aborts the whole cleanup transaction.
+        if user_ids or project_ids:
+            from backend.db.models import UserRoleAssignment
+
+            if project_ids:
+                session.query(UserRoleAssignment).filter(
+                    UserRoleAssignment.project_id.in_(project_ids)).delete(
+                    synchronize_session=False)
+            if user_ids:
+                session.query(UserRoleAssignment).filter(
+                    UserRoleAssignment.user_id.in_(user_ids)).delete(
+                    synchronize_session=False)
         if project_ids:
             session.query(Activity).filter(Activity.project_id.in_(project_ids)).delete(
                 synchronize_session=False)
@@ -177,10 +211,6 @@ def cleanup(user_ids, project_ids, evidence_ids, policy_ids=None, hold_ids=None)
             session.query(Project).filter(Project.id.in_(project_ids)).delete(
                 synchronize_session=False)
         if user_ids:
-            from backend.db.models import UserRoleAssignment
-
-            session.query(UserRoleAssignment).filter(
-                UserRoleAssignment.user_id.in_(user_ids)).delete(synchronize_session=False)
             session.query(User).filter(User.id.in_(user_ids)).delete(synchronize_session=False)
         session.commit()
     finally:
@@ -189,9 +219,14 @@ def cleanup(user_ids, project_ids, evidence_ids, policy_ids=None, hold_ids=None)
 
 def test_policy_lifecycle_and_validation():
     admin_id, headers = make_admin()
-    policy_ids = []
+    policy_ids, project_ids = [], []
     try:
-        policy, v1 = make_policy(headers, activate=False)
+        # Scoped to its own project so an ACTIVE version here can never collide
+        # with another test's policy during evaluation.
+        project = make_project(admin_id, "retention lifecycle")
+        project_ids.append(project["id"])
+        policy, v1 = make_policy(headers, scope="PROJECT",
+                                 scope_id=project["id"], activate=False)
         policy_ids.append(policy["id"])
         assert v1["status"] == "DRAFT" and v1["version"] == 1
         assert client.post(f"/api/v1/retention/policies/versions/{v1['id']}/activate",
@@ -219,16 +254,18 @@ def test_policy_lifecycle_and_validation():
         assert client.post("/api/v1/retention/policies", json={
             "name": "bad", "resource_type": "BOGUS", "scope_type": "GLOBAL",
         }, headers=headers).status_code == 422
-        # Audit trail for policy lifecycle.
+        # Audit trail for policy lifecycle. v1 is activated here and v2 is
+        # activated above, so this policy has TWO activation events -- one per
+        # lifecycle operation, as the BE-015 ledger contract requires.
         session = get_session()
         try:
             assert session.query(AuditLedgerEvent).filter(
                 AuditLedgerEvent.event_type == "RETENTION_POLICY_ACTIVATED",
-                AuditLedgerEvent.resource_id == policy["id"]).count() == 1
+                AuditLedgerEvent.resource_id == policy["id"]).count() == 2
         finally:
             session.close()
     finally:
-        cleanup([admin_id], [], [], policy_ids)
+        cleanup([admin_id], project_ids, [], policy_ids)
 
 
 def test_eligible_and_ineligible_evaluation():
@@ -243,7 +280,7 @@ def test_eligible_and_ineligible_evaluation():
         link_evidence(fresh["evidence_id"], project["id"])
         link_evidence(old["evidence_id"], project["id"])
         backdate_evidence(old["evidence_id"], 400)
-        policy, _ = make_policy(headers, rules={
+        policy, _ = make_policy(headers, scope="PROJECT", scope_id=project["id"], rules={
             "retention_days": 365, "archive_after_days": None,
             "anchor": "INGESTED_AT", "allow_derived_cleanup": False})
         policy_ids.append(policy["id"])
@@ -293,6 +330,14 @@ def test_unknown_and_missing_policy_fail_closed():
         evidence_ids.append(evidence["evidence_id"])
         link_evidence(evidence["evidence_id"], project["id"])
 
+        # This test asserts NO_APPLICABLE_POLICY, which is only meaningful when
+        # no policy can match. The suite runs against a persistent database, and
+        # an earlier failing run can leave an ACTIVE policy behind -- a GLOBAL
+        # one would then match this evidence and turn the expected
+        # NO_APPLICABLE_POLICY into POLICY_CONFLICT. Establish the precondition
+        # explicitly instead of inheriting whatever the database happens to hold.
+        _purge_all_retention_policies()
+
         # No policy at all: fail closed.
         body = client.post("/api/v1/retention/evaluate", json={
             "resource_type": "EVIDENCE", "resource_id": evidence["evidence_id"]},
@@ -301,7 +346,7 @@ def test_unknown_and_missing_policy_fail_closed():
         assert body["blocking_reasons"] == ["NO_APPLICABLE_POLICY"]
 
         # CAPTURED_AT anchor with no EXIF: missing anchor, not negative.
-        policy, _ = make_policy(headers, rules={
+        policy, _ = make_policy(headers, scope="PROJECT", scope_id=project["id"], rules={
             "retention_days": 1, "archive_after_days": None,
             "anchor": "CAPTURED_AT", "allow_derived_cleanup": False})
         policy_ids = [policy["id"]]
@@ -324,7 +369,7 @@ def test_hold_blocks_and_release_restores():
         evidence_ids.append(evidence["evidence_id"])
         link_evidence(evidence["evidence_id"], project["id"])
         backdate_evidence(evidence["evidence_id"], 400)
-        policy, _ = make_policy(headers, rules={
+        policy, _ = make_policy(headers, scope="PROJECT", scope_id=project["id"], rules={
             "retention_days": 365, "archive_after_days": None,
             "anchor": "INGESTED_AT", "allow_derived_cleanup": False})
         policy_ids.append(policy["id"])
@@ -378,7 +423,7 @@ def test_open_case_and_request_block_deletion():
         evidence_ids.append(evidence["evidence_id"])
         link_evidence(evidence["evidence_id"], project["id"])
         backdate_evidence(evidence["evidence_id"], 400)
-        policy, _ = make_policy(headers, rules={
+        policy, _ = make_policy(headers, scope="PROJECT", scope_id=project["id"], rules={
             "retention_days": 30, "archive_after_days": None,
             "anchor": "INGESTED_AT", "allow_derived_cleanup": True})
         policy_ids.append(policy["id"])
@@ -437,7 +482,7 @@ def test_archive_restore_sha_preserved():
         evidence_ids.append(evidence["evidence_id"])
         link_evidence(evidence["evidence_id"], project["id"])
         backdate_evidence(evidence["evidence_id"], 100)
-        policy, _ = make_policy(headers, rules={
+        policy, _ = make_policy(headers, scope="PROJECT", scope_id=project["id"], rules={
             "retention_days": 365, "archive_after_days": 30,
             "anchor": "INGESTED_AT", "allow_derived_cleanup": False})
         policy_ids.append(policy["id"])
@@ -485,6 +530,7 @@ def test_archive_restore_sha_preserved():
 
 def test_controlled_deletion_end_to_end():
     admin_id, headers = make_admin()
+    user_ids = [admin_id]
     project_ids, evidence_ids, policy_ids = [], [], []
     try:
         project = make_project(admin_id, "retention delete")
@@ -494,7 +540,7 @@ def test_controlled_deletion_end_to_end():
         evidence_ids.append(evidence["evidence_id"])
         link_evidence(evidence["evidence_id"], project["id"])
         backdate_evidence(evidence["evidence_id"], 400)
-        policy, _ = make_policy(headers, rules={
+        policy, _ = make_policy(headers, scope="PROJECT", scope_id=project["id"], rules={
             "retention_days": 30, "archive_after_days": None,
             "anchor": "INGESTED_AT", "allow_derived_cleanup": True})
         policy_ids.append(policy["id"])
@@ -520,12 +566,29 @@ def test_controlled_deletion_end_to_end():
             f"/api/v1/retention/delete/EVIDENCE/{evidence['evidence_id']}",
             headers=headers).json()
         assert again["result"] == "ALREADY_DELETED"
-        # Presigned URLs can no longer be issued after deletion.
+        # Presigned URLs can no longer be issued after deletion. ADMINISTRATOR
+        # is an administrative role and deliberately does NOT hold evidence.read
+        # (models.py AUTH_ROLE_PERMISSIONS), so asking it would be denied with
+        # 403 NO_PERMISSION before existence is ever considered. A CITIZEN does
+        # hold evidence.read, so for that principal the 404 is the genuine
+        # "no such evidence" signal this assertion is about.
+        reader_id, reader_headers = make_admin("retention-evidence-reader")
+        user_ids.append(reader_id)
+        session = get_session()
+        try:
+            auth_service.assign_role(session, user_id=reader_id, role_name="CITIZEN",
+                                     scope_type="GLOBAL")
+            session.commit()
+        finally:
+            session.close()
         assert client.get(f"/api/v1/evidence/{evidence['evidence_id']}/download",
-                          headers=headers).status_code == 404
+                          headers=reader_headers).status_code == 404
+        # And the administrative role is still correctly denied.
+        assert client.get(f"/api/v1/evidence/{evidence['evidence_id']}/download",
+                          headers=headers).status_code == 403
         evidence_ids.remove(evidence["evidence_id"])
     finally:
-        cleanup([admin_id], project_ids, evidence_ids, policy_ids)
+        cleanup(user_ids, project_ids, evidence_ids, policy_ids)
 
 
 def test_concurrent_deletion_single_winner():
@@ -540,7 +603,7 @@ def test_concurrent_deletion_single_winner():
         evidence_ids.append(evidence["evidence_id"])
         link_evidence(evidence["evidence_id"], project["id"])
         backdate_evidence(evidence["evidence_id"], 400)
-        policy, _ = make_policy(headers, rules={
+        policy, _ = make_policy(headers, scope="PROJECT", scope_id=project["id"], rules={
             "retention_days": 30, "archive_after_days": None,
             "anchor": "INGESTED_AT", "allow_derived_cleanup": True})
         policy_ids.append(policy["id"])
@@ -593,27 +656,26 @@ def test_authorization_scoping():
         try:
             from backend.services import authorization as auth_service
 
-            auth_service.assign_role(session, user_id=scoped_id, role_name="ADMINISTRATOR",
-                                     scope_type="PROJECT", project_id=project_a["id"])
-            session.commit()
-        finally:
-            session.close()
-        admin_id, headers = scoped_id, {"Authorization": f"Bearer dev-user-{scoped_id}"}
-        evidence = upload(image_bytes((22, 23, 24)), "scoped.jpg")
-        evidence_ids.append(evidence["evidence_id"])
-        link_evidence(evidence["evidence_id"], project_a["id"])
+            admin_id, headers = scoped_id, {"Authorization": f"Bearer dev-user-{scoped_id}"}
+            evidence = upload(image_bytes((22, 23, 24)), "scoped.jpg")
+            evidence_ids.append(evidence["evidence_id"])
+            link_evidence(evidence["evidence_id"], project_a["id"])
 
-        from backend.services import authorization as auth_service
+            from backend.services import authorization as auth_service
 
-        session = get_session()
-        try:
-            scoped = auth_service.assign_role(
-                session, user_id=owner_id, role_name="ADMINISTRATOR",
+            # The project-scoped principal is `scoped_id`, whose GLOBAL grant was
+            # stripped above so it holds ADMINISTRATOR only within Project A. Using
+            # `owner_id` here would be meaningless: `make_admin` gave it a GLOBAL
+            # ADMINISTRATOR grant, and a GLOBAL assignment legitimately covers
+            # every project, so a Project-B policy would be correctly allowed (201)
+            # and the cross-project assertion could never hold.
+            auth_service.assign_role(
+                session, user_id=scoped_id, role_name="ADMINISTRATOR",
                 scope_type="PROJECT", project_id=project_a["id"])
             session.commit()
         finally:
             session.close()
-        scoped_headers = {"Authorization": f"Bearer dev-user-{owner_id}"}
+        scoped_headers = {"Authorization": f"Bearer dev-user-{scoped_id}"}
 
         policy = client.post("/api/v1/retention/policies", json={
             "name": "scoped-pol", "resource_type": "EVIDENCE", "scope_type": "PROJECT",
@@ -660,7 +722,7 @@ def test_fusion_history_preserved_and_audit_chain_intact():
         link_evidence(keep["evidence_id"], project["id"])
         link_evidence(doomed["evidence_id"], project["id"])
         backdate_evidence(doomed["evidence_id"], 400)
-        policy, _ = make_policy(headers, rules={
+        policy, _ = make_policy(headers, scope="PROJECT", scope_id=project["id"], rules={
             "retention_days": 30, "archive_after_days": None,
             "anchor": "INGESTED_AT", "allow_derived_cleanup": True})
         policy_ids.append(policy["id"])

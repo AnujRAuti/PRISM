@@ -6,6 +6,7 @@ target's project, workflow actions resolve the dispute's own project, and
 out-of-scope resources are indistinguishable from absent (404).
 """
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -39,8 +40,40 @@ from backend.services.authorization import (
 router = APIRouter(prefix="/disputes")
 
 
+def _iso(value):
+    """ORM timestamps are datetimes; the response contract serializes ISO strings.
+
+    PoA's convention is that a ``str`` timestamp field in a response schema is an
+    ISO-8601 string on the wire (see the retention service's ``_iso`` helper).
+    ``DisputeResponse.model_validate`` will not coerce a datetime to ``str``, so
+    the projection boundary must normalize it here rather than widen the schema
+    to ``datetime`` and diverge from the rest of the API.
+    """
+    return value.isoformat() if isinstance(value, datetime) else value
+
+
 def _item(dispute) -> DisputeResponse:
-    return DisputeResponse.model_validate(dispute)
+    return DisputeResponse(
+        id=UUID(dispute.id),
+        target_type=dispute.target_type,
+        target_id=UUID(dispute.target_id),
+        project_id=UUID(dispute.project_id) if dispute.project_id else None,
+        initiator_id=UUID(dispute.initiator_id),
+        reason=dispute.reason,
+        description=dispute.description,
+        status=dispute.status,
+        assigned_to=UUID(dispute.assigned_to) if dispute.assigned_to else None,
+        assigned_at=_iso(dispute.assigned_at),
+        escalated_to=UUID(dispute.escalated_to) if dispute.escalated_to else None,
+        escalated_at=_iso(dispute.escalated_at),
+        escalation_reason=dispute.escalation_reason,
+        resolution=dispute.resolution,
+        resolution_rationale=dispute.resolution_rationale,
+        resolved_by=UUID(dispute.resolved_by) if dispute.resolved_by else None,
+        resolved_at=_iso(dispute.resolved_at),
+        created_at=_iso(dispute.created_at),
+        updated_at=_iso(dispute.updated_at),
+    )
 
 
 def _event_item(event) -> DisputeEventItem:

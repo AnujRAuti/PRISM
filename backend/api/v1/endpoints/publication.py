@@ -16,11 +16,32 @@ router = APIRouter(prefix="/publications")
 
 
 def _get_principal_or_raise(principal: Principal) -> str:
-    """Get principal ID or raise 401 if not authenticated (except in dev bypass)."""
-    if is_development_bypass(principal):
-        # In dev bypass, we still need a principal ID for audit trails
-        # For publication endpoints, we'll use a special dev user
-        return "dev-user"
+    """Resolve the actor identity that will be persisted in UUID-backed columns.
+
+    BE-022 records the acting principal in ``Publication.requested_by``,
+    ``approver_id``, ``publisher_id``, ``PublicationEvent.actor_id`` and the
+    BE-015 audit ledger — all of which are UUID columns referencing
+    ``users.id``.
+
+    A ``Principal.principal_id`` is an *authorization* identity, not
+    necessarily a persisted user id: an anonymous principal has ``None`` and
+    ``system_principal()`` uses the sentinel ``"system"``. Neither is a UUID,
+    so neither may be written to those columns.
+
+    The previous implementation invented the literal string ``"dev-user"``
+    during development bypass, which reached PostgreSQL as
+    ``invalid input syntax for type uuid: "dev-user"``. This now follows the
+    BE-021 dispute pattern: return the real principal identity, or require one.
+    Authorization is unchanged — ``require(...)`` has already run.
+    """
+    if is_development_bypass(principal) and not principal.principal_id:
+        raise HTTPException(
+            status_code=401,
+            detail=(
+                "Authentication required: development bypass does not identify a "
+                "user, so no actor can be attributed to this action"
+            ),
+        )
     if not principal.principal_id:
         raise HTTPException(status_code=401, detail="Authentication required")
     return principal.principal_id
@@ -138,9 +159,17 @@ def list_publications(
 def submit_review(
     publication_id: str,
     db: Session = Depends(get_db),
-    principal: Principal = Depends(require("publication.review", "publication", "publication_id")),
+    principal: Principal = Depends(require("publication.create", "publication", "publication_id")),
 ) -> publication_schemas.PublicationResponse:
-    """Submit a publication request for review."""
+    """Submit a publication request for review.
+
+    The DRAFT -> PENDING_REVIEW handover is the requester submitting their own
+    work, so it is gated on ``publication.create`` (the permission that admits
+    an actor to raise a request at all) and the service additionally requires
+    the actor to be the requester. ``publication.review`` is deliberately not
+    required here: it belongs to whoever later adjudicates the request, and
+    submission confers no publication authority.
+    """
     principal_id = _get_principal_or_raise(principal)
     try:
         return publication_schemas.PublicationResponse.model_validate(
@@ -274,7 +303,11 @@ def create_publication_policy(
     principal: Principal = Depends(require("publication.policy.manage")),
 ) -> publication_schemas.PublicationPolicyResponse:
     """Create a new publication policy."""
-    principal_id = _get_principal_or_raise(principal)
+    # PublicationPolicyVersion.created_by is a NULLABLE UUID column, so an
+    # unattributable (development-bypass/anonymous) actor is recorded as NULL
+    # rather than rejected or fabricated. An authenticated principal whose id
+    # is not a UUID is still rejected downstream as a 422.
+    principal_id = principal.principal_id
     try:
         policy, created = publication_service.create_publication_policy(
             db,

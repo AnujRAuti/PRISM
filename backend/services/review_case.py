@@ -313,6 +313,15 @@ def _generate(db: Session, run, assessment, policy_version: str | None):
     config_row, policy = get_policy(db, policy_version)
     scope = _target_scope(db, run.target_type, str(run.target_id))
 
+    # Serialize concurrent generation attempts for this fusion run. The
+    # read-then-insert sequence below is otherwise racy: two callers can both
+    # observe "no active case" and both reach insert_case, and the partial
+    # unique index then rejects the loser by aborting its transaction. Locking
+    # the run row here makes the loser block until the winner commits, so the
+    # per-run check below observes the committed winner and returns it. Taken
+    # after get_policy so that policy bootstrap's own commit cannot release the
+    # lock early; held until this transaction ends.
+    fusion_repo.lock_run(db, run.id)
     existing = case_repo.active_system_case_for_run(db, run.id)
     if existing is not None:
         return existing, None, RESULT_EXISTS, "ACTIVE_CASE_FOR_RUN"
@@ -348,6 +357,18 @@ def _generate(db: Session, run, assessment, policy_version: str | None):
         return None, gen, RESULT_NOT_ELIGIBLE, reason
     if policy.get("dedupe_open_cases_per_target", True):
         open_cases = case_repo.open_cases_for_target(db, run.target_type, str(run.target_id))
+        # BE-013 §8/§9: the same fusion_run_id always converges on the SAME case.
+        # The per-run check above (line 316) and this per-target check are separated
+        # by policy evaluation, so a competing request can commit its case for THIS
+        # run in that window. It then shows up in `open_cases` and would otherwise
+        # take the TARGET_CASE_OPEN branch, returning None instead of the winner --
+        # and because that happens before `insert_case`, the partial unique index
+        # never fires and the IntegrityError path below is never reached. Re-check
+        # the per-run case first so this branch can only report a genuinely
+        # different run's open case.
+        same_run = next((c for c in open_cases if c.fusion_run_id == run.id), None)
+        if same_run is not None:
+            return same_run, None, RESULT_EXISTS, "ACTIVE_CASE_FOR_RUN"
         if open_cases:
             gen = case_repo.insert_generation_run(
                 db, fusion_run_id=run.id, configuration_id=config_row.id,

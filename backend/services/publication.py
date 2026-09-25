@@ -40,6 +40,7 @@ from backend.db.models import (
 )
 from backend.observability import publication_metrics as metrics
 from backend.repositories import publication as pub_repo
+from backend.services.audit_ledger import normalize_value
 
 logger = logging.getLogger(__name__)
 
@@ -138,9 +139,15 @@ def _plain(value: Any) -> Any:
 def create_publication_policy(db: Session, payload: dict, actor_id: str | None) -> tuple:
     """Create a policy (idempotent on name) with its first ACTIVE version.
 
-    Returns ``(policy, created)``. Re-submitting an existing policy name is
-    a no-op that returns the existing policy rather than raising, so a
-    retried admin request cannot create a duplicate.
+    Returns ``(view, created)`` where ``view`` is the explicit
+    ``policy_view`` projection — policy identity joined with its ACTIVE
+    version — never a bare ORM object. Callers must not attempt to serialise
+    ``PublicationPolicy`` directly, because the policy's configuration lives on
+    ``PublicationPolicyVersion`` (§9) and would be missing from the response.
+
+    Re-submitting an existing policy name is a no-op that returns the existing
+    policy's current ACTIVE version rather than raising, so a retried admin
+    request cannot create a duplicate (§28 idempotency).
     """
     name = (payload.get("name") or "").strip()
     if not name:
@@ -148,7 +155,14 @@ def create_publication_policy(db: Session, payload: dict, actor_id: str | None) 
 
     existing = pub_repo.get_policy_by_name(db, name)
     if existing is not None:
-        return existing, False
+        # Idempotent path: still resolve the ACTIVE version so the response
+        # carries the same shape as a freshly created policy.
+        return (
+            policy_view(
+                existing, pub_repo.get_active_policy_version(db, existing.id)
+            ),
+            False,
+        )
 
     allowed = [_plain(t) for t in (payload.get("allowed_target_types") or [])]
     unknown = [t for t in allowed if t not in PUBLICATION_TARGET_TYPES]
@@ -181,19 +195,21 @@ def create_publication_policy(db: Session, payload: dict, actor_id: str | None) 
         geographic_restrictions=payload.get("geographic_restrictions"),
         privacy_restrictions=payload.get("privacy_restrictions"),
         redaction_level=_plain(payload.get("redaction_level")) or "STANDARD",
-        created_by=actor_id,
+        # created_by is a nullable UUID column: an anonymous actor is stored
+        # as NULL, never as a fabricated identity string.
+        created_by=_optional_uuid(actor_id, "created_by"),
     )
     _audit(
         db,
         "PUBLICATION_POLICY_CREATED",
         "create",
         policy.id,
-        actor_id,
+        _optional_uuid(actor_id, "created_by"),
         {"policy_id": policy.id, "name": name, "version": version.version},
     )
     db.commit()
     db.refresh(policy)
-    return policy, True
+    return policy_view(policy, version), True
 
 
 def policy_view(policy: PublicationPolicy, version: PublicationPolicyVersion | None) -> dict:
@@ -461,6 +477,37 @@ def check_eligibility(db: Session, publication_id: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def _require_uuid(value: str | UUID, label: str) -> str:
+    """Coerce a persisted-actor identity to a UUID string or fail loudly.
+
+    Every BE-022 column that records an actor (``Publication.requested_by``,
+    ``PublicationPolicyVersion.created_by``, ``PublicationEvent.actor_id``,
+    the audit ledger, ...) is UUID-backed. A principal identity is *not*
+    automatically a UUID: anonymous principals have ``None``, and
+    ``system_principal()`` uses the sentinel string ``"system"``. Persisting
+    those verbatim raises an opaque ``InvalidTextRepresentation`` deep in
+    PostgreSQL, so the boundary is validated here and surfaced as a 422.
+
+    This mirrors ``_require_uuid``/``_optional_uuid`` in BE-017 retention,
+    BE-015 audit, BE-021 dispute/correction and BE-018 notification.
+    """
+    try:
+        return str(UUID(str(value)))
+    except (ValueError, AttributeError, TypeError) as error:
+        raise ValueError(f"Invalid {label}: {value!r}") from error
+
+
+def _optional_uuid(value: str | UUID | None, label: str) -> str | None:
+    """Nullable counterpart: ``None`` stays ``None``, anything else must be a UUID.
+
+    An anonymous principal is represented as NULL in provenance columns rather
+    than being written as a fabricated user identity.
+    """
+    if value is None:
+        return None
+    return _require_uuid(value, label)
+
+
 def _assert_no_prohibited_fields(payload: dict) -> None:
     """Defensive last line of defense against a leak (§5/§21).
 
@@ -477,6 +524,43 @@ def _assert_no_prohibited_fields(payload: dict) -> None:
                 stack.append(value)
         elif isinstance(current, (list, tuple)):
             stack.extend(current)
+
+
+def _json_safe_snapshot(payload: dict) -> dict:
+    """Return the projection in a deterministic, JSON-safe form (§32).
+
+    The snapshot is persisted as PostgreSQL JSONB and frozen as the historical
+    public record. JSONB has no native temporal type, so a projection carrying a
+    Python ``datetime`` (``collected_at``, ``occurred_at``,
+    ``temporal_start_at``, ``temporal_end_at``) reaches the driver as an
+    unserializable object and the INSERT fails.
+
+    Canonicalization happens HERE, at the boundary where the public projection
+    becomes the persisted snapshot -- not per-field at each projector, and not
+    at the repository. Three properties follow:
+
+    * every projector is covered by one rule, so a new target type cannot
+      reintroduce the failure by forgetting a field;
+    * the stored snapshot is reproducible -- the same evidence published twice
+      yields identical JSON, which §32 requires and a one-off ``.isoformat()``
+      at a single call site would not guarantee;
+    * the underlying ORM rows are never mutated to make persistence work.
+
+    This reuses the BE-015 canonicalizer (``audit_ledger.normalize_value``)
+    rather than adding a second serializer. Its conversions are the project
+    convention: ``datetime`` -> tz-aware ISO-8601 in UTC, ``UUID`` -> ``str``,
+    ``bytes`` -> hex, dict keys sorted. It deliberately has no catch-all: an
+    unknown type RAISES rather than being coerced, so a future leak surfaces as
+    a loud failure instead of being silently stringified into the public record.
+
+    The prohibited-field check is re-run on the canonical form. Normalization
+    cannot invent a new key, but it does turn values into strings, and this
+    keeps the guard on the exact structure that will be persisted rather than
+    on an intermediate object.
+    """
+    safe = normalize_value(payload)
+    _assert_no_prohibited_fields(safe)
+    return safe
 
 
 def _project_project(db: Session, row: Project, policy: PublicationPolicyVersion | None) -> dict:
@@ -565,6 +649,10 @@ def build_snapshot(
     The output is derived only from explicit allowlisted fields, so it cannot
     contain storage keys, EXIF, internal graph edges, reviewer notes, or
     internal signal values.
+
+    The returned dict is JSON-safe and canonical (§32): timestamps are
+    tz-aware ISO-8601 strings and keys are sorted. See ``_json_safe_snapshot``
+    for why the boundary lives here.
     """
     public_id = ensure_public_identifier(db, publication.target_type, publication.target_id)
     target_type = publication.target_type
@@ -616,7 +704,9 @@ def build_snapshot(
 
     payload["public_id"] = public_id
     _assert_no_prohibited_fields(payload)
-    return payload
+    # The projection above is the source of the snapshot; this is the single
+    # point where it becomes something JSONB can store (§32).
+    return _json_safe_snapshot(payload)
 
 
 # ---------------------------------------------------------------------------
@@ -637,6 +727,11 @@ def create_publication(db: Session, payload: dict, actor_id: str) -> tuple:
     reason = (payload.get("reason") or "").strip()
     if not reason:
         raise ValueError("A publication reason is required")
+
+    # Publication.requested_by is NOT NULL and UUID-backed, so the requester
+    # must be a real persisted user identity. A synthetic/development actor is
+    # rejected here with a 422 rather than crashing the insert.
+    actor_id = _require_uuid(actor_id, "requested_by")
 
     if target_type not in PUBLICATION_TARGET_TYPES:
         raise ValueError(f"Not a publishable target type: {target_type}")
@@ -735,20 +830,40 @@ def _transition(
     actor_id: str,
     audit_event: str,
     reason: str | None = None,
+    requester_only: bool = False,
 ) -> Publication:
     """Apply one guarded lifecycle transition under a row lock.
 
     The row lock plus the expected-state check makes concurrent publish
     attempts serialize: the loser sees a state that no longer matches and
     raises rather than double-publishing.
+
+    ``requester_only`` restricts the transition to the actor who raised the
+    request. It is set for the DRAFT -> PENDING_REVIEW handover, which is the
+    requester submitting their own work rather than a reviewer exercising
+    judgement (§6, §15). Submission confers no publication authority — approval
+    still requires ``publication.approve`` plus its own separation-of-duties
+    check — so scoping the handover to the requester is strictly narrower than
+    letting any reviewer move another's draft forward.
     """
+    # Single choke point for every transition that persists an actor into
+    # UUID-backed columns (PublicationEvent.actor_id + the audit ledger).
+    actor_id = _require_uuid(actor_id, "actor_id")
     publication = pub_repo.get_publication_for_update(db, publication_id)
     if publication is None:
         raise LookupError(f"Publication not found: {publication_id}")
+    # The state machine is the outer guard: report an impossible transition
+    # before an ownership complaint, so a caller retrying an already-submitted
+    # request is told the real reason rather than being told they are not the
+    # requester.
     if publication.status not in expected_from:
         raise ValueError(
             f"Invalid transition: {publication.status} -> {to_status} "
             f"(expected one of {expected_from})"
+        )
+    if requester_only and str(publication.requested_by) != str(actor_id):
+        raise ValueError(
+            "Only the requester may submit their own publication request for review"
         )
     validate_transition(publication.status, to_status)
     previous = publication.status
@@ -770,6 +885,14 @@ def _transition(
 
 
 def submit_review(db: Session, publication_id: str, actor_id: str) -> Publication:
+    """Submit a DRAFT request for review (§6).
+
+    This is the requester handing over their own work, not a reviewer
+    exercising judgement, so it is restricted to ``requested_by``. The
+    endpoint gates on ``publication.create`` — the permission that admits an
+    actor to raise a request in the first place — rather than
+    ``publication.review``, which belongs to whoever later adjudicates it.
+    """
     return _transition(
         db,
         publication_id,
@@ -778,11 +901,14 @@ def submit_review(db: Session, publication_id: str, actor_id: str) -> Publicatio
         event_type="REVIEW_STARTED",
         actor_id=actor_id,
         audit_event="PUBLICATION_REVIEW_STARTED",
+        requester_only=True,
     )
 
 
 def approve_publication(db: Session, publication_id: str, actor_id: str) -> Publication:
     """Approve a request. Enforces releasability and separation of duties (§15)."""
+    # approver_id is UUID-backed; reject a synthetic actor before persisting.
+    actor_id = _require_uuid(actor_id, "actor_id")
     publication = pub_repo.get_publication_for_update(db, publication_id)
     if publication is None:
         raise LookupError(f"Publication not found: {publication_id}")
@@ -854,6 +980,8 @@ def publish_publication(db: Session, publication_id: str, actor_id: str) -> Publ
     A published item never returns to an editable published state; republishing
     after a material change creates the next version number (§6, §7).
     """
+    # published_by / publisher_id are UUID-backed.
+    actor_id = _require_uuid(actor_id, "actor_id")
     publication = pub_repo.get_publication_for_update(db, publication_id)
     if publication is None:
         raise LookupError(f"Publication not found: {publication_id}")
@@ -940,6 +1068,8 @@ def unpublish_publication(
     db: Session, publication_id: str, actor_id: str, reason: str | None = None
 ) -> Publication:
     """Withdraw a publication. The historical version row is preserved (§7)."""
+    # PublicationEvent.actor_id is UUID-backed.
+    actor_id = _require_uuid(actor_id, "actor_id")
     publication = pub_repo.get_publication_for_update(db, publication_id)
     if publication is None:
         raise LookupError(f"Publication not found: {publication_id}")

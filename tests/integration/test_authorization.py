@@ -474,8 +474,15 @@ def test_administrator_cannot_decide_but_can_administer():
                 AuditLedgerEvent.event_type == "ORGANIZATION_CREATED",
                 AuditLedgerEvent.resource_id == org.json()["id"],
             ).count() == 1
-            session.query(AuditLedgerEvent).filter(
-                AuditLedgerEvent.resource_id == org.json()["id"]).delete()
+            # BE-015: the audit ledger is append-only and is deliberately
+            # NEVER cleaned up by tests. Deleting this event would leave a
+            # permanent sequence gap in the hash chain, because sequence
+            # numbers are allocated as max(sequence_number) + 1 and are
+            # never reused. The organization row itself is still removed
+            # (no FK points at it from the ledger -- audit_ledger_events
+            # references its subjects only by id, never by constraint, so
+            # an audit row outliving its subject is correct behaviour, not
+            # an orphan).
             from backend.db.models import Organization as _O
 
             session.query(_O).filter(_O.id == org.json()["id"]).delete()

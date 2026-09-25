@@ -313,19 +313,28 @@ def invalidate_target(
 
     if dispute_id is not None:
         dispute_id = _require_uuid(dispute_id, "dispute_id")
+    if correction_id is not None:
+        correction_id = _require_uuid(correction_id, "correction_id")
+
+    # §29: serialize concurrent invalidations of the same target. This lock is
+    # also what makes the exactly-once checks below safe: two callers racing on
+    # the same correction both arrive here, one waits, and the loser only
+    # re-reads the existing invalidation AFTER the winner has committed. A
+    # check placed before this lock would let both callers observe "absent" and
+    # each insert a duplicate row (the ix_intelligence_invalidations_correction
+    # index is intentionally non-unique, so the database does not catch it).
+    target_row = governance_repo.lock_target_row(db, target_type, target_id)
+    if target_row is None:
+        raise LookupError(f"{target_type} target not found: {target_id}")
+
+    if dispute_id is not None:
         existing = governance_repo.invalidation_for_dispute(db, dispute_id)
         if existing is not None:
             return existing, None  # exactly-once per dispute (§28)
     if correction_id is not None:
-        correction_id = _require_uuid(correction_id, "correction_id")
         existing = governance_repo.invalidation_for_correction(db, correction_id)
         if existing is not None:
             return existing, None  # exactly-once per correction (§28)
-
-    # §29: serialize concurrent invalidations of the same target.
-    target_row = governance_repo.lock_target_row(db, target_type, target_id)
-    if target_row is None:
-        raise LookupError(f"{target_type} target not found: {target_id}")
 
     project_id: str | None = None
     if target_type in {"EVIDENCE", "CLAIM", "REVIEW_CASE"}:

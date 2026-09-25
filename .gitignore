@@ -4,10 +4,10 @@ __pycache__/
 
 # Virtualenv
 backend/.venv/
+backend/.venv312/
 .venv/
 venv/
 env/
-
 # Database files
 *.db
 pofa_dev.db

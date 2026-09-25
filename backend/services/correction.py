@@ -648,9 +648,11 @@ def apply_correction(
 
     if correction.status == "APPLIED":
         # Idempotent retry (§28) + crash healing: re-ensure the follow-up
-        # steps without duplicating any record.
-        _ensure_evidence_lineage(db, correction)
+        # steps without duplicating any record. Same ordering as the fresh-apply
+        # path below — invalidation first, lineage second — so a crash between
+        # the two steps cannot heal itself into an INVALIDATED lineage edge.
         invalidation, reprocessing = _invalidate_for_correction(db, correction, applied_by)
+        _ensure_evidence_lineage(db, correction)
         return correction, invalidation, reprocessing
 
     if correction.status != "APPROVED":
@@ -684,8 +686,18 @@ def apply_correction(
     governance_metrics.record_correction_applied(correction.category)
 
     # Follow-up transactions (each independently idempotent / healable).
-    _ensure_evidence_lineage(db, correction)
+    #
+    # Order matters. The invalidation is scoped to the corrected target (the
+    # superseded ORIGINAL evidence) and marks every ACTIVE graph relationship
+    # whose source OR target is that evidence. The `DERIVED_FROM` lineage edge
+    # points NEW -> OLD, so the original is its target node: creating that edge
+    # first makes it visible to the invalidation and the very provenance link
+    # that records supersession is immediately marked INVALIDATED (§8/§9
+    # require it to stay ACTIVE). Invalidate first, then record lineage, so
+    # the edge survives as a durable provenance link. Both steps are
+    # independently idempotent, so the ordering carries no retry risk.
     invalidation, reprocessing = _invalidate_for_correction(db, correction, applied_by)
+    _ensure_evidence_lineage(db, correction)
     return correction, invalidation, reprocessing
 
 

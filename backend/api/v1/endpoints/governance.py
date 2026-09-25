@@ -6,6 +6,7 @@ Scope is resolved server-side from the path's governed target; responses
 carry reference metadata only (§24, §34).
 """
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -67,6 +68,38 @@ def _actor(principal: Principal, request_actor: UUID | None) -> str | None:
     if request_actor is not None:
         return str(request_actor)
     return principal.principal_id
+
+
+def _invalidation_item(invalidation) -> InvalidationResponse:
+    """Project an invalidation row, normalizing ORM timestamps to ISO strings.
+
+    ``InvalidationResponse.created_at`` is declared ``str`` because that is the
+    serialized wire contract (the same convention as the dispute, correction
+    and retention responses; see the retention service's ``_iso`` helper).
+    Pydantic will not coerce a ``datetime`` into ``str`` under
+    ``from_attributes``, so the projection boundary normalizes it here.
+    """
+    return InvalidationResponse(
+        id=UUID(invalidation.id),
+        target_type=invalidation.target_type,
+        target_id=UUID(invalidation.target_id),
+        project_id=UUID(invalidation.project_id) if invalidation.project_id else None,
+        cause=invalidation.cause,
+        dispute_id=UUID(invalidation.dispute_id) if invalidation.dispute_id else None,
+        correction_id=UUID(invalidation.correction_id) if invalidation.correction_id else None,
+        reason=invalidation.reason,
+        invalidated_by=UUID(invalidation.invalidated_by),
+        affected_analysis=invalidation.affected_analysis,
+        affected_fusion=invalidation.affected_fusion,
+        affected_explanations=invalidation.affected_explanations,
+        affected_relationships=invalidation.affected_relationships,
+        affected_assessments=invalidation.affected_assessments,
+        created_at=(
+            invalidation.created_at.isoformat()
+            if isinstance(invalidation.created_at, datetime)
+            else invalidation.created_at
+        ),
+    )
 
 
 @router.get(
@@ -137,7 +170,7 @@ def invalidate(
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
-    return InvalidationResponse.model_validate(invalidation)
+    return _invalidation_item(invalidation)
 
 
 @router.get(
@@ -153,7 +186,7 @@ def get_invalidation(
     ),
 ) -> InvalidationResponse:
     try:
-        return InvalidationResponse.model_validate(
+        return _invalidation_item(
             governance_service.get_invalidation(db, str(invalidation_id))
         )
     except ValueError as error:

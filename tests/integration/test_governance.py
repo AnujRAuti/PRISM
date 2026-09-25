@@ -54,6 +54,7 @@ from backend.db.models import (
     UserRoleAssignment,
 )
 from backend.db.session import get_session
+from backend.observability import governance_metrics
 from backend.services import authorization as auth_service
 from backend.services import governance as governance_service
 from backend.services import retention as retention_service
@@ -138,20 +139,27 @@ def link_evidence(evidence_id: str, project_id: str, claim_id: str | None = None
 
 
 def process(evidence_id: str) -> str:
-    """Run fingerprint + duplicate analysis directly (no worker needed)."""
+    """Run fingerprint + duplicate analysis directly (no worker needed).
+
+    BE-006 creates the AnalysisJob; the worker would normally do this. The job
+    is created here (same pattern as test_duplicate_intelligence) and its id is
+    threaded into analyze_duplicates so the embedding branch persists an
+    AnalysisResult — that row is the ANALYSIS_RESULT node governance
+    invalidation must reach. Without a job_id, analyze_duplicates skips the
+    embedding branch and no AnalysisResult exists to invalidate.
+    """
     from backend.services.duplicate_intelligence import analyze_duplicates
     from backend.services.fingerprinting import process_evidence
 
     session = get_session()
     try:
+        job = AnalysisJob(evidence_id=evidence_id, status="running", attempt_count=1)
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
         process_evidence(evidence_id, session)
-        analyze_duplicates(evidence_id, session, StorageService(), None)
-        job = (
-            session.query(AnalysisJob)
-            .filter(AnalysisJob.evidence_id == evidence_id)
-            .order_by(AnalysisJob.created_at.desc())
-            .first()
-        )
+        analyze_duplicates(evidence_id, session, StorageService(), job.id)
         return str(job.id)
     finally:
         session.close()
@@ -336,11 +344,16 @@ def cleanup(
             | set(run_ids)
             | set(extra_target_ids)
         )
-        session.query(AuditLedgerEvent).filter(
-            AuditLedgerEvent.resource_id.in_(all_ids)
-            | AuditLedgerEvent.actor_id.in_(user_ids)
-            | AuditLedgerEvent.project_id.in_(project_ids)
-        ).delete(synchronize_session=False)
+        # BE-015: audit_ledger_events is append-only and is deliberately
+        # NEVER deleted here. The previous cleanup removed rows by
+        # resource_id / actor_id / project_id, which matched events at
+        # arbitrary positions in the chain and left permanent sequence
+        # gaps -- sequence numbers are allocated as max(sequence_number)+1
+        # and are never reused, so a deleted row's number can never be
+        # reclaimed. An audit event that outlives the user, project or
+        # governance row it references is correct ledger behaviour: the
+        # ledger records that the actor existed and acted, and it holds no
+        # FK to any subject, so nothing is orphaned by retaining it.
         session.query(NotificationOutbox).filter(
             NotificationOutbox.aggregate_id.in_(all_ids)
         ).delete(synchronize_session=False)
@@ -414,12 +427,16 @@ def cleanup(
         session.query(Claim).filter(Claim.project_id.in_(project_ids)).delete(
             synchronize_session=False
         )
+        # Role assignments reference the project, so they must go first or the
+        # Project delete fails on the FK. Scope to these projects as well as
+        # these users: a role may have been granted at project scope.
+        session.query(UserRoleAssignment).filter(
+            UserRoleAssignment.user_id.in_(user_ids)
+            | UserRoleAssignment.project_id.in_(project_ids)
+        ).delete(synchronize_session=False)
         session.query(Project).filter(Project.id.in_(project_ids)).delete(
             synchronize_session=False
         )
-        session.query(UserRoleAssignment).filter(
-            UserRoleAssignment.user_id.in_(user_ids)
-        ).delete(synchronize_session=False)
         if org_ids:
             session.query(Organization).filter(
                 Organization.id.in_(org_ids)
@@ -1543,6 +1560,10 @@ def test_authorization_isolation_across_projects():
                 "target_type": "EVIDENCE",
                 "target_id": evidence_b["evidence_id"],
                 "reason": "challenge inside project B",
+                # Explicit initiator distinct from the reviewing supervisor:
+                # §12 forbids the dispute initiator from reviewing it, so leaving
+                # this unset would make supervisor_b both requester and reviewer.
+                "initiator_id": str(owner_b.id),
             },
             headers=headers_b,
         ).json()

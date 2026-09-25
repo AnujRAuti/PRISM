@@ -400,16 +400,19 @@ def pending_reprocessing_for_job(
 def lock_pending_reprocessing_for_job(
     db: Session, analysis_job_id: str
 ) -> ReprocessingRequest | None:
-    """SELECT ... FOR UPDATE the PENDING request delegating to this job.
+    """SELECT ... FOR UPDATE the request delegating to this job.
 
     Used by the analysis-worker completion hook so a worker finish and any
-    concurrent manual completion serialize (§29)."""
+    concurrent manual completion serialize (§29).
+
+    Deliberately not filtered to PENDING: the completion hook is idempotent
+    (§17), so a repeated call after the request is already COMPLETED must find
+    the row and return it unchanged rather than raising "not found". The
+    caller owns the state machine and rejects any other status.
+    """
     return (
         db.query(ReprocessingRequest)
-        .filter(
-            ReprocessingRequest.analysis_job_id == analysis_job_id,
-            ReprocessingRequest.status == "PENDING",
-        )
+        .filter(ReprocessingRequest.analysis_job_id == analysis_job_id)
         .with_for_update()
         .one_or_none()
     )

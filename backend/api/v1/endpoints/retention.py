@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from backend.db.session import get_db
@@ -108,6 +108,7 @@ def _enforce_policy_scope(
 @router.post(
     "/policies",
     response_model=PolicyResponse,
+    status_code=status.HTTP_201_CREATED,
     summary="Create a retention policy identity (requires retention.manage_policy)",
 )
 def create_policy(
@@ -174,6 +175,7 @@ def list_policies(
 @router.post(
     "/policies/{policy_id}/versions",
     response_model=PolicyVersionResponse,
+    status_code=status.HTTP_201_CREATED,
     summary="Append an immutable policy version (requires retention.manage_policy)",
 )
 def create_policy_version(
@@ -385,6 +387,7 @@ def _enforce_hold_scope(
 @router.post(
     "/holds",
     response_model=HoldResponse,
+    status_code=status.HTTP_201_CREATED,
     summary="Create a hold (requires retention.manage_hold)",
 )
 def create_hold(
@@ -495,6 +498,18 @@ def _enforce_evidence_scope(
 
     row = db.query(Evidence).filter(Evidence.id == evidence_id).one_or_none()
     if row is None:
+        # A completed deletion removes the evidence row, so the scope lookup that
+        # authorizes the action cannot see it. BE-017 §52 requires a repeat delete
+        # (and each losing racer in a concurrent delete) to converge on the
+        # deterministic ALREADY_DELETED result rather than 404 -- that result is
+        # produced by `delete_evidence`, so the guard must defer to the service
+        # whenever a completed DELETE operation exists for this target. Any other
+        # missing evidence remains a 404, and no scope decision is skipped: the
+        # completed operation is only ever created by an already-authorized
+        # deletion of this exact resource.
+        if action == "retention.delete" and retention_repo.completed_delete_for(
+                db, "EVIDENCE", evidence_id) is not None:
+            return
         raise HTTPException(status_code=404, detail="Evidence not found")
     _enforce_scope(
         db, request, principal, action,

@@ -1014,6 +1014,10 @@ AUDIT_EVENT_TYPES = frozenset(
         "CORRECTION_APPLIED",
         "CORRECTION_CANCELLED",
         "INTELLIGENCE_INVALIDATED",
+        # Emitted as a review-case event when an invalidation changes the
+        # intelligence a non-resolved case depends on (§20). Registered here so
+        # the governed event vocabulary stays complete and auditable.
+        "DEPENDENT_INTELLIGENCE_CHANGED",
         "INTELLIGENCE_REPROCESS_REQUESTED",
         "INTELLIGENCE_REPROCESS_COMPLETED",
         "INTELLIGENCE_REPROCESS_FAILED",

@@ -6,6 +6,7 @@ from the resolver/applicant (§12), and scope is enforced server-side against
 the targeted evidence (creation) or the request's project (workflow).
 """
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -32,8 +33,37 @@ from backend.services.authorization import Principal, resolve_resource_scope
 router = APIRouter(prefix="/corrections")
 
 
+def _iso(value):
+    """ORM timestamps are datetimes; the response contract serializes ISO strings.
+
+    Mirrors the retention service's ``_iso`` helper: a ``str`` timestamp field
+    in a PoA response schema is an ISO-8601 string on the wire, and Pydantic
+    will not coerce a datetime into one. The projection boundary normalizes it
+    here rather than widening the schema to ``datetime``.
+    """
+    return value.isoformat() if isinstance(value, datetime) else value
+
+
 def _item(correction) -> CorrectionResponse:
-    return CorrectionResponse.model_validate(correction)
+    return CorrectionResponse(
+        id=UUID(correction.id),
+        target_type=correction.target_type,
+        target_id=UUID(correction.target_id),
+        project_id=UUID(correction.project_id) if correction.project_id else None,
+        category=correction.category,
+        requested_change=correction.requested_change or {},
+        reason=correction.reason,
+        requester_id=UUID(correction.requester_id),
+        status=correction.status,
+        resolver_id=UUID(correction.resolver_id) if correction.resolver_id else None,
+        resolution_rationale=correction.resolution_rationale,
+        resolved_at=_iso(correction.resolved_at),
+        applied_by=UUID(correction.applied_by) if correction.applied_by else None,
+        applied_at=_iso(correction.applied_at),
+        applied_change=correction.applied_change,
+        created_at=_iso(correction.created_at),
+        updated_at=_iso(correction.updated_at),
+    )
 
 
 def _event_item(event) -> CorrectionEventItem:

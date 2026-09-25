@@ -78,6 +78,22 @@ def get_run(db: Session, run_id: str) -> FusionRun | None:
     return db.query(FusionRun).filter(FusionRun.id == run_id).one_or_none()
 
 
+def lock_run(db: Session, run_id: str) -> FusionRun | None:
+    """Lock the run row so concurrent mutations derived from it serialize.
+
+    Review-case generation is a read-then-insert sequence: check for an
+    existing active case, then insert one. Without a lock two callers can both
+    observe "no case" and both attempt the insert. The partial unique index then
+    correctly rejects the loser, but only by aborting its transaction. Taking
+    the row lock up front means the loser blocks and, once it resumes, observes
+    the winner's committed row. Same pattern as publication/correction/dispute
+    mutations. The lock is held until the caller's transaction ends.
+    """
+    return (
+        db.query(FusionRun).filter(FusionRun.id == run_id).with_for_update().one_or_none()
+    )
+
+
 def insert_signals(db: Session, run_id: str, signals: list[dict]) -> list[FusionSignal]:
     rows = [
         FusionSignal(
