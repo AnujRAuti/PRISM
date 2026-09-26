@@ -24,4 +24,5 @@ exifread==3.0.0
 torch==2.8.0
 transformers==4.56.2
 ultralytics==8.4.155
+pi-heif==0.7.0
 

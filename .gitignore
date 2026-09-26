@@ -4,7 +4,7 @@ __pycache__/
 
 # Virtualenv
 backend/.venv/
-backend/.venv312/
+backend/.venv312*/
 .venv/
 venv/
 env/

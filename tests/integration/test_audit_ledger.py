@@ -6,6 +6,7 @@ fixtures and never delete audit rows.
 
 import threading
 from io import BytesIO
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -284,7 +285,7 @@ def test_no_application_mutation_path():
 
 
 def test_no_test_deletes_audit_ledger_rows():
-    """BE-015 append-only: no test may DELETE from audit_ledger_events.
+    """BE-015 append-only: no test may destroy audit_ledger_events rows.
 
     Sequence numbers are allocated in Python as max(sequence_number) + 1
     and are never reused, so a row deleted from the middle of the chain
@@ -294,49 +295,24 @@ def test_no_test_deletes_audit_ledger_rows():
     resource_id / actor_id / project_id), which produced seven historical
     gaps across 36 missing sequence numbers.
 
-    This is a static guard over the test tree: it fails if any test
-    re-introduces a delete against the ledger, whether via the ORM or raw
-    SQL, so the invariant cannot silently regress.
+    The scanning logic itself lives in ``tests/audit_guard.py`` so it can be
+    regression-tested against synthetic sources without a database (see
+    ``tests/unit/test_audit_guard.py``). This test is the integration-level
+    assertion that the real test tree is clean.
     """
-    import ast
-    from pathlib import Path
+    from tests.audit_guard import scan_test_tree
 
     tests_root = Path(__file__).resolve().parent.parent
-    this_file = Path(__file__).resolve()
-    # Assembled at runtime so this guard cannot match its own source: the
-    # needle below and the docstring both spell out the forbidden SQL, and a
-    # literal would make the test fail on itself.
-    needle = " ".join(("delete", "from", "audit_ledger" + "_events"))
-    offenders = []
-
-    for path in sorted(tests_root.rglob("*.py")):
-        if path.resolve() == this_file:
-            continue  # this guard necessarily contains the pattern
-        source = path.read_text(encoding="utf-8", errors="ignore")
-        tree = ast.parse(source)
-
-        # (a) ORM deletes: <expr>.query(AuditLedgerEvent)...delete()
-        for node in ast.walk(tree):
-            if not (isinstance(node, ast.Call)
-                    and isinstance(node.func, ast.Attribute)
-                    and node.func.attr == "delete"):
-                continue
-            receiver = ast.get_source_segment(source, node.func.value) or ""
-            if "AuditLedgerEvent" in receiver:
-                offenders.append(f"{path.name}:{node.lineno} ORM delete")
-
-        # (b) raw SQL against the ledger table
-        for lineno, line in enumerate(source.splitlines(), start=1):
-            stripped = line.strip()
-            if stripped.startswith("#"):
-                continue
-            normalised = " ".join(stripped.lower().split())
-            if needle in normalised:
-                offenders.append(f"{path.name}:{lineno} raw SQL delete")
-
-    assert not offenders, (
-        "audit_ledger_events is append-only; these sites delete ledger "
-        "rows and will corrupt the hash chain: " + "; ".join(offenders)
+    violations = scan_test_tree(
+        tests_root,
+        # Both this file and the guard's own regression file necessarily
+        # contain the forbidden patterns as fixtures and documentation.
+        skip_files=frozenset({"test_audit_ledger.py", "test_audit_guard.py"}),
+    )
+    assert violations == [], (
+        "audit_ledger_events is append-only; these sites destroy ledger "
+        "rows and will corrupt the hash chain:\n"
+        + "\n".join(str(v) for v in violations)
     )
 
 

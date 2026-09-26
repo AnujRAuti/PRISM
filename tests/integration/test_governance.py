@@ -18,6 +18,7 @@ import threading
 from io import BytesIO
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
@@ -148,6 +149,25 @@ def process(evidence_id: str) -> str:
     invalidation must reach. Without a job_id, analyze_duplicates skips the
     embedding branch and no AnalysisResult exists to invalidate.
     """
+    return process_with_analysis(evidence_id)[0]
+
+
+def process_with_analysis(evidence_id: str) -> tuple[str, object]:
+    """Same as :func:`process`, but also returns the DuplicateAnalysis.
+
+    BE-023: an AnalysisResult is persisted *only* when the CLIP embedding
+    succeeds — ``analyze_duplicates`` creates that row inside the branch that
+    calls ``image_embedding``, and swallows any failure into
+    ``DuplicateAnalysis.embedding_error``. So whether an ANALYSIS_RESULT node
+    can exist at all is an ML-availability precondition, not a governance
+    guarantee.
+
+    This exposes the already-returned ``DuplicateAnalysis`` (it carries
+    ``embedding_status``/``embedding_error``) so a test can tell "ML could not
+    run" apart from "the graph failed to traverse". No production contract is
+    added; :func:`process` keeps its exact signature and behaviour for its
+    existing callers.
+    """
     from backend.services.duplicate_intelligence import analyze_duplicates
     from backend.services.fingerprinting import process_evidence
 
@@ -159,8 +179,8 @@ def process(evidence_id: str) -> str:
         session.refresh(job)
 
         process_evidence(evidence_id, session)
-        analyze_duplicates(evidence_id, session, StorageService(), job.id)
-        return str(job.id)
+        analysis = analyze_duplicates(evidence_id, session, StorageService(), job.id)
+        return str(job.id), analysis
     finally:
         session.close()
 
@@ -1022,10 +1042,33 @@ def test_dependencies_endpoint_reports_bounded_graph():
     claim = api_create_claim(project["id"])
     evidence = api_upload(image_bytes(), f"be021-dep-{uuid4().hex[:8]}.jpg")
     link_evidence(evidence["evidence_id"], project["id"], claim["id"])
-    process(evidence["evidence_id"])
+    _, analysis = process_with_analysis(evidence["evidence_id"])
     add_graph_edge(evidence["evidence_id"], claim["id"])
     chain = add_fusion_chain(evidence["evidence_id"])
     try:
+        # BE-023 §8: the ANALYSIS_RESULT node below depends on the CLIP
+        # embedding branch having actually run. analyze_duplicates creates
+        # that row *inside* the branch that calls image_embedding, and
+        # swallows any failure into DuplicateAnalysis.embedding_error -- so
+        # when the ML stack is unavailable there is no AnalysisResult for the
+        # graph to traverse, and this assertion would fail for an
+        # environmental reason that has nothing to do with governance.
+        #
+        # The skip is therefore tied to the observed embedding outcome, not
+        # to convenience. When ML is available the branch succeeds and every
+        # assertion below -- including ANALYSIS_RESULT -- runs unchanged.
+        if analysis.embedding_status != "success":
+            from tests.preflight import classify_ml
+
+            ml_state = classify_ml()
+            pytest.skip(
+                f"{ml_state.describe()} | CLIP embedding did not succeed "
+                f"(embedding_status={analysis.embedding_status!r}, "
+                f"embedding_error={analysis.embedding_error!r}); no AnalysisResult "
+                "row exists, so the ANALYSIS_RESULT dependency node cannot be "
+                "traversed. This is an ML precondition, not a governance failure."
+            )
+
         response = client.get(
             f"/api/v1/governance/EVIDENCE/{evidence['evidence_id']}/dependencies"
         )

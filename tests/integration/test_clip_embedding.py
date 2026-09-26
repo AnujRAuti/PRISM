@@ -4,10 +4,15 @@ import pytest
 
 from backend.core.config import settings
 from backend.engines.embeddings.clip import image_embedding
+from tests.preflight import ml_skip_reason
 
 
-pytest.importorskip("torch")
-pytest.importorskip("transformers")
+# BE-023 §8: distinguish ML UNAVAILABLE from a passing run. An anonymous
+# `pytest.importorskip("torch")` hides the fact that nothing was verified;
+# ml_skip_reason() names the exact state in the skip report instead.
+_ML_REASON = ml_skip_reason()
+if _ML_REASON:
+    pytest.skip(_ML_REASON, allow_module_level=True)
 
 
 TEST_IMAGE = Path(__file__).parents[2] / "test-image.jpg"
