@@ -29,3 +29,4 @@ build/
 *.egg-info/
 *.log
 .env
+backend/.venv312*/
