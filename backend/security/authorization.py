@@ -9,6 +9,8 @@ server-side resource scope, and either returns the principal or raises a
 structured 401/403/404. Endpoints must never branch on roles directly.
 """
 
+from uuid import UUID
+
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import false
 from sqlalchemy.orm import Session
@@ -27,6 +29,22 @@ from backend.services.authorization import (
     can,
     resolve_resource_scope,
 )
+
+
+def reject_malformed_resource_id(value: object) -> None:
+    """422 before any DB lookup: all scoped resource ids are UUID columns.
+
+    Without this, ``resolve_resource_scope`` queries with the raw path
+    string and PostgreSQL raises DataError, surfacing as a 500 instead of
+    FastAPI's normal 422 validation contract (DF-SD-01).
+    """
+    try:
+        UUID(str(value))
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid resource identifier",
+        ) from error
 
 
 def require(action: str, resource_type: str | None = None, id_param: str | None = None):
@@ -62,6 +80,8 @@ def require(action: str, resource_type: str | None = None, id_param: str | None 
         resource_id = None
         if id_param is not None:
             resource_id = request.path_params.get(id_param)
+        if resource_type is not None and resource_id is not None:
+            reject_malformed_resource_id(resource_id)
         resource = (
             resolve_resource_scope(db, resource_type, str(resource_id))
             if resource_type is not None and resource_id is not None
@@ -213,6 +233,7 @@ def require_target(action: str):
         if target_type not in ("claim", "evidence") or target_id is None:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail="Unsupported fusion target")
+        reject_malformed_resource_id(target_id)
         resource = resolve_resource_scope(db, target_type, str(target_id))
         return enforce(principal, action, resource, request)
     return dependency

@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from backend.db.session import get_db
 from backend.schemas.temporal import TemporalAnalysisResponse, TemporalRequest
 from backend.services.temporal_intelligence import analyze_evidence
+from backend.security.authorization import require
+from backend.services.authorization import Principal
 
 
 router = APIRouter(prefix="/analysis")
@@ -16,6 +18,7 @@ def run_temporal_analysis(
     evidence_id: UUID,
     request: TemporalRequest | None = None,
     db: Session = Depends(get_db),
+    principal: Principal = Depends(require("evidence.read", "evidence", "evidence_id")),
 ) -> TemporalAnalysisResponse:
     compare_ids = [str(item) for item in (request.compare_evidence_ids if request else []) or []]
     for candidate in compare_ids:

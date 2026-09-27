@@ -14,6 +14,8 @@ from backend.schemas.vision import (
     VisionResultPayload,
 )
 from backend.services.vision_intelligence import get_latest_vision_result
+from backend.security.authorization import require
+from backend.services.authorization import Principal
 
 
 router = APIRouter()
@@ -25,6 +27,7 @@ def get_evidence_vision(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    principal: Principal = Depends(require("evidence.read", "evidence", "evidence_id")),
 ) -> VisionEvidenceResponse:
     evidence = db.query(Evidence).filter(Evidence.id == str(evidence_id)).one_or_none()
     if evidence is None:
