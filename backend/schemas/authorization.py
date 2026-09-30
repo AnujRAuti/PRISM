@@ -158,3 +158,69 @@ class ApiClientResponse(BaseModel):
     scopes: list[str] = Field(default_factory=list)
     project_id: UUID | None = None
     status: UserStatus
+
+
+# -- BE-025 administrative control plane --------------------------------------
+
+class OrganizationUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=256)
+    status: UserStatus | None = None
+
+
+class OrganizationListResponse(BaseModel):
+    items: list[OrganizationResponse]
+    limit: int
+    offset: int
+    total: int
+
+
+class OrganizationalUnitUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=256)
+    status: UserStatus | None = None
+
+
+class OrganizationalUnitListResponse(BaseModel):
+    items: list[OrganizationalUnitResponse]
+    limit: int
+    offset: int
+    total: int
+
+
+class UserStatusUpdate(BaseModel):
+    status: UserStatus
+
+
+class UserListResponse(BaseModel):
+    items: list[UserResponse]
+    limit: int
+    offset: int
+    total: int
+
+
+class RoleAssignmentListResponse(BaseModel):
+    items: list[RoleAssignmentResponse]
+    limit: int
+    offset: int
+    total: int
+
+
+class ProjectScopeUpdate(BaseModel):
+    """Set-or-clear semantics: an omitted field keeps its current value; an
+    explicit null clears it (GLOBAL authority required, enforced server-side)."""
+
+    organization_id: UUID | None = None
+    organizational_unit_id: UUID | None = None
+
+
+class ProjectOwnershipUpdate(BaseModel):
+    owner_id: UUID
+
+
+class AdminProjectResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    owner_id: UUID
+    organization_id: UUID | None = None
+    organizational_unit_id: UUID | None = None

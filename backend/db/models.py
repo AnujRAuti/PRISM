@@ -1033,6 +1033,13 @@ AUDIT_EVENT_TYPES = frozenset(
         "PUBLICATION_POLICY_UPDATED",
         "PUBLICATION_ELIGIBILITY_FAILED",
         "PUBLIC_PUBLICATION_VERSION_CREATED",
+        # BE-025 administrative control-plane audit events. Every admin
+        # mutation emits its accurate audit twin.
+        "ORGANIZATION_UPDATED",
+        "ORGANIZATIONAL_UNIT_UPDATED",
+        "USER_STATUS_CHANGED",
+        "PROJECT_SCOPE_CHANGED",
+        "PROJECT_OWNERSHIP_CHANGED",
     }
 )
 
@@ -1475,6 +1482,17 @@ class UserRoleAssignment(Base):
         CheckConstraint(
             "scope_type IN ('GLOBAL', 'ORGANIZATION', 'ORGANIZATIONAL_UNIT', 'PROJECT')",
             name="ck_assignment_scope",
+        ),
+        CheckConstraint(
+            "(scope_type = 'GLOBAL' AND organization_id IS NULL"
+            " AND organizational_unit_id IS NULL AND project_id IS NULL)"
+            " OR (scope_type = 'ORGANIZATION' AND organization_id IS NOT NULL"
+            " AND organizational_unit_id IS NULL AND project_id IS NULL)"
+            " OR (scope_type = 'ORGANIZATIONAL_UNIT' AND organizational_unit_id IS NOT NULL"
+            " AND organization_id IS NULL AND project_id IS NULL)"
+            " OR (scope_type = 'PROJECT' AND project_id IS NOT NULL"
+            " AND organization_id IS NULL AND organizational_unit_id IS NULL)",
+            name="ck_assignment_scope_matrix",
         ),
         UniqueConstraint(
             "user_id",

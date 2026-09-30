@@ -5,7 +5,7 @@ broken graph does not fail loudly at test time -- it fails as a confusing
 collection of missing tables much later. These checks run with no database
 connection and assert the graph is what the project claims it is:
 
-* exactly one head (``n4o5p6q7r022``, the BE-022 publication head),
+* exactly one head (``o5p6q7r8s025``, the BE-025 assignment-scope head),
 * a single linear root-to-head path (no multi-parent merge nodes),
 * no ``down_revision`` pointing at a revision that does not exist.
 
@@ -46,10 +46,13 @@ VERSIONS_DIR = REPO_ROOT / "alembic" / "versions"
 #: The single expected head. Bumping this is a deliberate act, not an
 #: accident: a new migration that is not wired into the chain, or a second
 #: head created by a parallel branch merge, must fail here.
-EXPECTED_HEAD = "n4o5p6q7r022"
+#: Bumped by BE-025 (M1 assignment scope/ID matrix, down_revision
+#: n4o5p6q7r022) after confirming `alembic heads` reports exactly one head.
+EXPECTED_HEAD = "o5p6q7r8s025"
 
-#: BE-023 revision count at the time this test was written.
-EXPECTED_REVISION_COUNT = 19
+#: BE-023 revision count at the time this test was written (19), advanced by
+#: each milestone that genuinely adds a migration. BE-025 added one: 20.
+EXPECTED_REVISION_COUNT = 20
 
 
 @dataclass(frozen=True)

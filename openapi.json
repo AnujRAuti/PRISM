@@ -3467,17 +3467,16 @@
     "/api/v1/auth/users": {
       "post": {
         "summary": "Create a managed user (requires user.manage)",
-        "description": "401 without credentials (enforcing mode). 403 without user.manage.",
         "operationId": "create_user_api_v1_auth_users_post",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UserCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -3489,6 +3488,72 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "409": {
+            "description": "Conflict. Either the resource being created already exists, or a deterministic administrative invariant refused the change (for example, removing the last active GLOBAL administrator)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List managed users (requires GLOBAL user.manage)",
+        "operationId": "list_users_api_v1_auth_users_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
           },
           "422": {
             "description": "Validation Error",
@@ -3530,6 +3595,77 @@
               }
             }
           },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/users/{user_id}/status": {
+      "patch": {
+        "summary": "Suspend/disable/reactivate a user (requires GLOBAL user.manage; 409 when it would deactivate the last GLOBAL administrator)",
+        "operationId": "update_user_status_api_v1_auth_users__user_id__status_patch",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "409": {
+            "description": "Conflict. Either the resource being created already exists, or a deterministic administrative invariant refused the change (for example, removing the last active GLOBAL administrator)."
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3548,14 +3684,14 @@
         "summary": "Create an organization (requires organization.manage)",
         "operationId": "create_organization_api_v1_auth_organizations_post",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/OrganizationCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -3567,6 +3703,69 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List organizations visible to the caller (requires organization.manage)",
+        "operationId": "list_organizations_api_v1_auth_organizations_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
           },
           "422": {
             "description": "Validation Error",
@@ -3583,7 +3782,7 @@
     },
     "/api/v1/auth/organizations/{organization_id}": {
       "get": {
-        "summary": "Retrieve an organization (requires organization.manage)",
+        "summary": "Retrieve an organization (organization.manage must cover the organization)",
         "operationId": "get_organization_api_v1_auth_organizations__organization_id__get",
         "parameters": [
           {
@@ -3608,6 +3807,72 @@
               }
             }
           },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update an organization's name/status (code immutable; organization.manage must cover the organization)",
+        "operationId": "update_organization_api_v1_auth_organizations__organization_id__patch",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Organization Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3623,7 +3888,7 @@
     },
     "/api/v1/auth/organizations/{organization_id}/units": {
       "post": {
-        "summary": "Create an organizational unit (requires organization.manage)",
+        "summary": "Create an organizational unit (organization.manage covering the organization)",
         "operationId": "create_unit_api_v1_auth_organizations__organization_id__units_post",
         "parameters": [
           {
@@ -3658,6 +3923,15 @@
               }
             }
           },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3671,7 +3945,7 @@
         }
       },
       "get": {
-        "summary": "List units of an organization (requires organization.manage)",
+        "summary": "List units of an organization (organization.manage covering the organization)",
         "operationId": "list_units_api_v1_auth_organizations__organization_id__units_get",
         "parameters": [
           {
@@ -3683,6 +3957,29 @@
               "format": "uuid",
               "title": "Organization Id"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
           }
         ],
         "responses": {
@@ -3691,14 +3988,125 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/OrganizationalUnitResponse"
-                  },
-                  "title": "Response List Units Api V1 Auth Organizations  Organization Id  Units Get"
+                  "$ref": "#/components/schemas/OrganizationalUnitListResponse"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/units/{unit_id}": {
+      "get": {
+        "summary": "Retrieve an organizational unit (organization.manage covering the unit)",
+        "operationId": "get_unit_api_v1_auth_units__unit_id__get",
+        "parameters": [
+          {
+            "name": "unit_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Unit Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationalUnitResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a unit's name/status (organization membership is immutable)",
+        "operationId": "update_unit_api_v1_auth_units__unit_id__patch",
+        "parameters": [
+          {
+            "name": "unit_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Unit Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationalUnitUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationalUnitResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
           },
           "422": {
             "description": "Validation Error",
@@ -3717,17 +4125,58 @@
       "get": {
         "summary": "List roles (requires role.manage)",
         "operationId": "list_roles_api_v1_auth_roles_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/RoleResponse"
                   },
-                  "type": "array",
                   "title": "Response List Roles Api V1 Auth Roles Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -3739,17 +4188,58 @@
       "get": {
         "summary": "List permissions (requires role.manage)",
         "operationId": "list_permissions_api_v1_auth_permissions_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/PermissionResponse"
                   },
-                  "type": "array",
                   "title": "Response List Permissions Api V1 Auth Permissions Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -3759,7 +4249,7 @@
     },
     "/api/v1/auth/users/{user_id}/roles": {
       "post": {
-        "summary": "Assign a scoped role (requires role.manage; 200 when already assigned)",
+        "summary": "Assign a scoped role (role.manage must cover the target scope; GLOBAL targets and ADMINISTRATOR require GLOBAL; 200 when already assigned)",
         "operationId": "assign_role_api_v1_auth_users__user_id__roles_post",
         "parameters": [
           {
@@ -3794,6 +4284,85 @@
               }
             }
           },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List a user's role assignments visible to the caller (requires role.manage)",
+        "operationId": "list_user_roles_api_v1_auth_users__user_id__roles_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleAssignmentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3809,7 +4378,7 @@
     },
     "/api/v1/auth/users/{user_id}/roles/{assignment_id}": {
       "delete": {
-        "summary": "Revoke a role assignment (requires role.manage)",
+        "summary": "Revoke a role assignment (role.manage must cover the assignment scope; 409 when it would remove the last GLOBAL administrator)",
         "operationId": "revoke_role_api_v1_auth_users__user_id__roles__assignment_id__delete",
         "parameters": [
           {
@@ -3836,6 +4405,18 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "409": {
+            "description": "Conflict. Either the resource being created already exists, or a deterministic administrative invariant refused the change (for example, removing the last active GLOBAL administrator)."
           },
           "422": {
             "description": "Validation Error",
@@ -3874,6 +4455,136 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "409": {
+            "description": "Conflict. Either the resource being created already exists, or a deterministic administrative invariant refused the change (for example, removing the last active GLOBAL administrator)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/projects/{project_id}/scope": {
+      "patch": {
+        "summary": "Bind or clear a project's organization/unit (organization.manage must cover the project's current and destination scopes; clearing requires GLOBAL)",
+        "operationId": "update_project_scope_api_v1_auth_projects__project_id__scope_patch",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectScopeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProjectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/projects/{project_id}/ownership": {
+      "post": {
+        "summary": "Transfer project ownership to an active user (organization.manage must cover the project)",
+        "operationId": "transfer_project_ownership_api_v1_auth_projects__project_id__ownership_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectOwnershipUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProjectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required (enforcing mode)."
+          },
+          "403": {
+            "description": "Permission not held. GLOBAL-only guards reject a permission held in a narrower scope, as do the BE-025 containment rules (a GLOBAL target or an ADMINISTRATOR grant requires GLOBAL role.manage)."
+          },
+          "404": {
+            "description": "Target absent, or foreign to the caller's scope. A resource outside the caller is reported exactly like a missing one so administrative endpoints cannot enumerate other organizations."
           },
           "422": {
             "description": "Validation Error",
@@ -8516,6 +9227,55 @@
           "created_at"
         ],
         "title": "ActivityResponse"
+      },
+      "AdminProjectResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "owner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Owner Id"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "organizational_unit_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organizational Unit Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "owner_id"
+        ],
+        "title": "AdminProjectResponse"
       },
       "AnalysisJobCreate": {
         "properties": {
@@ -13873,6 +14633,37 @@
         ],
         "title": "OrganizationCreate"
       },
+      "OrganizationListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrganizationResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "limit",
+          "offset",
+          "total"
+        ],
+        "title": "OrganizationListResponse"
+      },
       "OrganizationResponse": {
         "properties": {
           "id": {
@@ -13901,6 +14692,35 @@
         ],
         "title": "OrganizationResponse"
       },
+      "OrganizationUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "OrganizationUpdate"
+      },
       "OrganizationalUnitCreate": {
         "properties": {
           "name": {
@@ -13922,6 +14742,37 @@
           "code"
         ],
         "title": "OrganizationalUnitCreate"
+      },
+      "OrganizationalUnitListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrganizationalUnitResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "limit",
+          "offset",
+          "total"
+        ],
+        "title": "OrganizationalUnitListResponse"
       },
       "OrganizationalUnitResponse": {
         "properties": {
@@ -13956,6 +14807,35 @@
           "status"
         ],
         "title": "OrganizationalUnitResponse"
+      },
+      "OrganizationalUnitUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "OrganizationalUnitUpdate"
       },
       "PermissionResponse": {
         "properties": {
@@ -14410,6 +15290,20 @@
         ],
         "title": "ProjectListResponse"
       },
+      "ProjectOwnershipUpdate": {
+        "properties": {
+          "owner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Owner Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "owner_id"
+        ],
+        "title": "ProjectOwnershipUpdate"
+      },
       "ProjectResponse": {
         "properties": {
           "id": {
@@ -14440,6 +15334,37 @@
           "created_at"
         ],
         "title": "ProjectResponse"
+      },
+      "ProjectScopeUpdate": {
+        "properties": {
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "organizational_unit_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organizational Unit Id"
+          }
+        },
+        "type": "object",
+        "title": "ProjectScopeUpdate",
+        "description": "Set-or-clear semantics: an omitted field keeps its current value; an\nexplicit null clears it (GLOBAL authority required, enforced server-side)."
       },
       "ProjectUpdate": {
         "properties": {
@@ -16528,6 +17453,37 @@
         ],
         "title": "RoleAssignmentCreate"
       },
+      "RoleAssignmentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RoleAssignmentResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "limit",
+          "offset",
+          "total"
+        ],
+        "title": "RoleAssignmentListResponse"
+      },
       "RoleAssignmentResponse": {
         "properties": {
           "id": {
@@ -16859,6 +17815,37 @@
         ],
         "title": "UserCreate"
       },
+      "UserListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "limit",
+          "offset",
+          "total"
+        ],
+        "title": "UserListResponse"
+      },
       "UserResponse": {
         "properties": {
           "id": {
@@ -16918,6 +17905,18 @@
           "DISABLED"
         ],
         "title": "UserStatus"
+      },
+      "UserStatusUpdate": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "UserStatusUpdate"
       },
       "ValidationError": {
         "properties": {

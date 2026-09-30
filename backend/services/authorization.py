@@ -369,12 +369,34 @@ def _require_uuid(value: str, label: str) -> str:
         raise ValueError(f"Invalid {label}: {value!r}") from error
 
 
+def _lock_row(db: Session, model, row_id: str):
+    """Read one row under a row lock for an audited mutation.
+
+    Every audited mutation here computes a ``before``/``after`` delta, so the
+    read must serialize with concurrent writers to the same row: an unlocked
+    read lets two writers both report the same predecessor, lets a writer audit
+    a transition another transaction already committed, and lets a revocation
+    delete a row that a concurrent revocation already removed.
+    """
+    return (db.query(model).filter(model.id == row_id)
+            .with_for_update().one_or_none())
+
+
 def assign_role(
     db: Session, *, user_id: str, role_name: str, scope_type: str,
     organization_id: str | None = None, organizational_unit_id: str | None = None,
     project_id: str | None = None, actor_id: str | None = None,
+    actor: Principal | None = None,
 ):
-    """Assign a scoped role (ROLE_ASSIGNED audit; concurrent-safe, idempotent)."""
+    """Assign a scoped role (ROLE_ASSIGNED audit; concurrent-safe, idempotent).
+
+    ``actor`` (when provided) is checked against the BE-025 containment rules:
+    E1 — GLOBAL-scope assignments and any assignment of ADMINISTRATOR require
+    GLOBAL role.manage; E2 — role.manage must cover the target scope (foreign
+    targets deny as 404, matching BE-016 indistinguishability). ``actor=None``
+    is reserved for internal/system callers (seeding, tests, development-mode
+    bypass) exactly as before this milestone.
+    """
     from sqlalchemy.exc import IntegrityError as _IntegrityError
 
     from backend.db.models import OrganizationalUnit, Organization, Project
@@ -412,6 +434,21 @@ def assign_role(
             raise ValueError("PROJECT assignments require exactly project_id")
         if db.query(Project).filter(Project.id == project_id).one_or_none() is None:
             raise LookupError(f"Project not found: {project_id}")
+    if actor is not None:
+        if scope_type == "GLOBAL":
+            if not _holds_global(actor, "role.manage"):
+                raise AdminOperationError(
+                    403, "GLOBAL-scope assignments require GLOBAL role.manage authority")
+        else:
+            target = _assignment_target_resource(
+                db, scope_type, organization_id=organization_id,
+                organizational_unit_id=organizational_unit_id, project_id=project_id)
+            decision = can(actor, "role.manage", target)
+            if not decision.allowed:
+                raise _deny_for(decision)
+        if role_name == "ADMINISTRATOR" and not _holds_global(actor, "role.manage"):
+            raise AdminOperationError(
+                403, "Assigning ADMINISTRATOR requires GLOBAL role.manage authority")
     try:
         row = auth_repo.insert_assignment(
             db, user_id=user_id, role_id=role.id, scope_type=scope_type,
@@ -453,14 +490,45 @@ def assign_role(
     return row, created
 
 
-def revoke_assignment(db: Session, *, assignment_id: str, actor_id: str | None = None) -> None:
-    """Revoke a role assignment (ROLE_REVOKED audit)."""
+def revoke_assignment(db: Session, *, assignment_id: str, actor_id: str | None = None,
+                      actor: Principal | None = None) -> None:
+    """Revoke a role assignment (ROLE_REVOKED audit).
+
+    ``actor`` (when provided) must hold role.manage covering the assignment's
+    own scope (E2), and revoking the last active GLOBAL ADMINISTRATOR
+    assignment is refused with 409 under a transaction-scoped advisory lock
+    so concurrent second-to-last revocations serialize deterministically.
+    """
+    from backend.db.models import Role as RoleModel
     from backend.db.models import UserRoleAssignment
 
     assignment_id = _require_uuid(assignment_id, "assignment_id")
-    row = db.query(UserRoleAssignment).filter(UserRoleAssignment.id == assignment_id).one_or_none()
+    row = _lock_row(db, UserRoleAssignment, assignment_id)
     if row is None:
         raise LookupError(f"Role assignment not found: {assignment_id}")
+    if actor is not None:
+        if row.scope_type == "GLOBAL":
+            if not _holds_global(actor, "role.manage"):
+                raise AdminOperationError(
+                    403, "GLOBAL-scope assignments require GLOBAL role.manage authority")
+        else:
+            target = _assignment_target_resource(
+                db, row.scope_type,
+                organization_id=str(row.organization_id) if row.organization_id else None,
+                organizational_unit_id=str(row.organizational_unit_id)
+                if row.organizational_unit_id else None,
+                project_id=str(row.project_id) if row.project_id else None)
+            decision = can(actor, "role.manage", target)
+            if not decision.allowed:
+                raise _deny_for(decision)
+    role_row = db.query(RoleModel).filter(RoleModel.id == row.role_id).one_or_none()
+    if (role_row is not None and role_row.name == "ADMINISTRATOR"
+            and row.scope_type == "GLOBAL"):
+        _lock_last_admin(db)
+        if _would_leave_no_global_administrator(db, str(row.user_id),
+                                                exclude_assignment_id=str(row.id)):
+            raise AdminOperationError(
+                409, "Cannot revoke the last active GLOBAL administrator")
     snapshot = {"user_id": str(row.user_id), "role_id": str(row.role_id),
                 "scope_type": row.scope_type, "project_id": str(row.project_id)
                 if row.project_id else None}
@@ -469,6 +537,238 @@ def revoke_assignment(db: Session, *, assignment_id: str, actor_id: str | None =
     _audit_admin(db, "ROLE_REVOKED", "revoke", "user_role_assignments", assignment_id,
                  actor_id, snapshot["project_id"], snapshot)
     db.commit()
+
+
+UNSET = object()
+
+
+def update_organization(db: Session, *, organization_id: str,
+                        name: str | None = None, status: str | None = None,
+                        actor_id: str | None = None):
+    """Update an organization's name/status (code immutable; audited no-op-free)."""
+    organization_id = _require_uuid(organization_id, "organization_id")
+    row = _lock_row(db, Organization, organization_id)
+    if row is None:
+        raise LookupError(f"Organization not found: {organization_id}")
+    if name is not None and not name.strip():
+        raise ValueError("Organization name must not be blank")
+    if status is not None and status not in USER_STATUS_VALUES:
+        raise ValueError(f"Unknown organization status: {status!r}")
+    before = {"name": row.name, "status": row.status}
+    if name is not None:
+        row.name = name.strip()
+    if status is not None:
+        row.status = status
+    after = {"name": row.name, "status": row.status}
+    if before == after:
+        return row
+    _audit_admin(db, "ORGANIZATION_UPDATED", "update", "organizations",
+                 organization_id, actor_id, None,
+                 {"organization_id": organization_id, "before": before, "after": after})
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_unit(db: Session, *, unit_id: str, name: str | None = None,
+                status: str | None = None, actor_id: str | None = None):
+    """Update a unit's name/status (organization membership immutable; audited)."""
+    unit_id = _require_uuid(unit_id, "unit_id")
+    row = _lock_row(db, OrganizationalUnit, unit_id)
+    if row is None:
+        raise LookupError(f"Organizational unit not found: {unit_id}")
+    if name is not None and not name.strip():
+        raise ValueError("Unit name must not be blank")
+    if status is not None and status not in USER_STATUS_VALUES:
+        raise ValueError(f"Unknown unit status: {status!r}")
+    before = {"name": row.name, "status": row.status}
+    if name is not None:
+        row.name = name.strip()
+    if status is not None:
+        row.status = status
+    after = {"name": row.name, "status": row.status}
+    if before == after:
+        return row
+    _audit_admin(db, "ORGANIZATIONAL_UNIT_UPDATED", "update", "organizational_units",
+                 unit_id, actor_id, None,
+                 {"unit_id": unit_id, "organization_id": str(row.organization_id),
+                  "before": before, "after": after})
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def set_user_status(db: Session, *, user_id: str, status: str,
+                    actor_id: str | None = None):
+    """Suspend/disable/reactivate a managed user (audited; last-admin guarded).
+
+    ``is_active`` mirrors the ACTIVE state so both existing gates in
+    ``resolve_user_principal`` stay consistent. Revoking access is immediate:
+    principals are rebuilt per request from the database.
+    """
+    from backend.db.models import User
+
+    user_id = _require_uuid(user_id, "user_id")
+    if status not in USER_STATUS_VALUES:
+        raise ValueError(f"Unknown user status: {status!r}")
+    row = _lock_row(db, User, user_id)
+    if row is None:
+        raise LookupError(f"User not found: {user_id}")
+    if row.status == status and row.is_active == (status == "ACTIVE"):
+        return row
+    if status != "ACTIVE":
+        _lock_last_admin(db)
+        if _would_leave_no_global_administrator(db, user_id, None, removes_user=True):
+            raise AdminOperationError(
+                409, "Cannot deactivate the last active GLOBAL administrator")
+    before = row.status
+    row.status = status
+    row.is_active = status == "ACTIVE"
+    _audit_admin(db, "USER_STATUS_CHANGED", "update", "users", user_id, actor_id, None,
+                 {"user_id": user_id, "status": {"before": before, "after": status}})
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def visible_organization_ids(db: Session, actor: Principal | None) -> set[str] | None:
+    """Organizations an actor may administer (None = all; unit grants include parent)."""
+    if actor is None:
+        return None
+    scopes = actor.permissions.get("organization.manage", ())
+    ids: set[str] = set()
+    for scope in scopes:
+        if scope.scope_type == "GLOBAL":
+            return None
+        if scope.scope_type == "ORGANIZATION" and scope.organization_id:
+            ids.add(scope.organization_id)
+        elif scope.scope_type == "ORGANIZATIONAL_UNIT" and scope.organizational_unit_id:
+            unit = auth_repo.get_unit(db, scope.organizational_unit_id)
+            if unit is not None:
+                ids.add(str(unit.organization_id))
+    return ids
+
+
+def list_visible_assignments(db: Session, *, user_id: str,
+                             actor: Principal | None) -> list:
+    """Assignments of a user visible to the actor (role.manage must cover each)."""
+    user_id = _require_uuid(user_id, "user_id")
+    rows = auth_repo.assignments_for_user(db, user_id)
+    if actor is None:
+        return rows
+    visible = []
+    for row in rows:
+        target = _assignment_target_resource(
+            db, row.scope_type,
+            organization_id=str(row.organization_id) if row.organization_id else None,
+            organizational_unit_id=str(row.organizational_unit_id)
+            if row.organizational_unit_id else None,
+            project_id=str(row.project_id) if row.project_id else None)
+        if can(actor, "role.manage", target).allowed:
+            visible.append(row)
+    return visible
+
+
+def change_project_scope(db: Session, *, project_id: str,
+                         organization_id=UNSET, organizational_unit_id=UNSET,
+                         actor: Principal | None = None, actor_id: str | None = None):
+    """Bind/clear a project's organization/unit (E2/E4; audited; no partial state).
+
+    Destination authority: binding or rebinding requires organization.manage
+    covering the destination org/unit; clearing any binding requires a GLOBAL
+    grant; the endpoint-level require() already pins authority over the
+    project's *current* scope (so initially unscoped projects escape every
+    non-GLOBAL caller there).
+    """
+    project = _lock_row(db, Project, project_id)
+    if project is None:
+        raise LookupError(f"Project not found: {project_id}")
+    current_org = str(project.organization_id) if project.organization_id else None
+    current_unit = (str(project.organizational_unit_id)
+                    if project.organizational_unit_id else None)
+    new_org = (current_org if organization_id is UNSET
+               else _require_uuid(organization_id, "organization_id")
+               if organization_id is not None else None)
+    new_unit = (current_unit if organizational_unit_id is UNSET
+                else _require_uuid(organizational_unit_id, "organizational_unit_id")
+                if organizational_unit_id is not None else None)
+    if new_org == current_org and new_unit == current_unit:
+        return project
+    if new_unit is not None and new_org is None:
+        raise ValueError("A project in an organizational unit must name its organization")
+    if (new_org is None and current_org is not None) or (
+            new_unit is None and current_unit is not None):
+        if actor is not None and not _holds_global(actor, "organization.manage"):
+            raise AdminOperationError(
+                403, "Clearing a project's organizational scope requires GLOBAL authority")
+    if new_org is not None and new_org != current_org:
+        org_row = auth_repo.get_organization(db, new_org)
+        if org_row is None:
+            raise LookupError(f"Organization not found: {new_org}")
+        if org_row.status != "ACTIVE":
+            raise ValueError("Cannot bind a project to an inactive organization")
+        if actor is not None:
+            decision = can(actor, "organization.manage",
+                           Resource("organization", resource_id=new_org,
+                                    organization_id=new_org))
+            if not decision.allowed:
+                raise _deny_for(decision)
+    if new_unit is not None:
+        unit_row = auth_repo.get_unit(db, new_unit)
+        if unit_row is None:
+            raise LookupError(f"Organizational unit not found: {new_unit}")
+        # Validated even when the unit itself is unchanged: rebinding only the
+        # organization must never leave the project inside a foreign unit.
+        if str(unit_row.organization_id) != new_org:
+            raise ValueError("Organizational unit does not belong to the organization")
+        if unit_row.status != "ACTIVE":
+            raise ValueError("Cannot bind a project to an inactive organizational unit")
+        if new_unit != current_unit and actor is not None:
+            decision = can(actor, "organization.manage",
+                           Resource("organizational_unit", resource_id=new_unit,
+                                    organizational_unit_id=new_unit,
+                                    organization_id=new_org))
+            if not decision.allowed:
+                raise _deny_for(decision)
+    project.organization_id = new_org
+    project.organizational_unit_id = new_unit
+    _audit_admin(db, "PROJECT_SCOPE_CHANGED", "update", "projects", project_id,
+                 actor_id, project_id,
+                 {"project_id": project_id,
+                  "before": {"organization_id": current_org,
+                             "organizational_unit_id": current_unit},
+                  "after": {"organization_id": new_org,
+                            "organizational_unit_id": new_unit}})
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def change_project_owner(db: Session, *, project_id: str, owner_id: str,
+                         actor_id: str | None = None):
+    """Transfer project ownership to an active user (audited)."""
+    from backend.db.models import User
+
+    project = _lock_row(db, Project, project_id)
+    if project is None:
+        raise LookupError(f"Project not found: {project_id}")
+    owner_id = _require_uuid(owner_id, "owner_id")
+    new_owner = db.query(User).filter(User.id == owner_id).one_or_none()
+    if new_owner is None:
+        raise LookupError(f"User not found: {owner_id}")
+    if new_owner.status != "ACTIVE" or not new_owner.is_active:
+        raise ValueError("New owner must be an active user")
+    current_owner = str(project.owner_id)
+    if current_owner == owner_id:
+        return project
+    project.owner_id = owner_id
+    _audit_admin(db, "PROJECT_OWNERSHIP_CHANGED", "update", "projects", project_id,
+                 actor_id, project_id,
+                 {"project_id": project_id,
+                  "owner_id": {"before": current_owner, "after": owner_id}})
+    db.commit()
+    db.refresh(project)
+    return project
 
 
 def create_api_client(
@@ -497,6 +797,108 @@ def create_api_client(
         raise ValueError(f"API client name already exists: {name.strip()}") from error
     db.refresh(row)
     return row
+
+
+class AdminOperationError(Exception):
+    """BE-025 deterministic administrative denial carrying its HTTP mapping."""
+
+    def __init__(self, status_code: int, detail: str) -> None:
+        self.status_code = status_code
+        self.detail = detail
+        super().__init__(detail)
+
+
+USER_STATUS_VALUES = ("ACTIVE", "SUSPENDED", "DISABLED")
+
+# Fixed namespace key for pg_advisory_xact_lock guarding last-administrator
+# removal; every revocation/deactivation serializes on this single lock.
+_LAST_ADMIN_LOCK_KEY = 0x504F413235
+
+
+def _deny_for(decision: AuthorizationDecision) -> AdminOperationError:
+    """Map a containment denial like enforce() does (out-of-scope -> 404)."""
+    if decision.reason in ("SCOPE_DENIED", "RESOURCE_UNSCOPEABLE"):
+        return AdminOperationError(404, "Not found")
+    if decision.reason == "UNAUTHENTICATED":
+        return AdminOperationError(401, "Authentication required")
+    return AdminOperationError(403, "Forbidden")
+
+
+def _holds_global(actor: Principal, permission: str) -> bool:
+    return any(
+        scope.scope_type == "GLOBAL" for scope in actor.permissions.get(permission, ())
+    )
+
+
+def _assignment_target_resource(
+    db: Session, scope_type: str,
+    organization_id: str | None = None,
+    organizational_unit_id: str | None = None,
+    project_id: str | None = None,
+) -> Resource:
+    """The resource an actor's role.manage grant must cover for an operation."""
+    if scope_type == "GLOBAL":
+        return Resource("global")
+    if scope_type == "ORGANIZATION":
+        return Resource("organization", resource_id=organization_id,
+                        organization_id=organization_id)
+    if scope_type == "ORGANIZATIONAL_UNIT":
+        unit = auth_repo.get_unit(db, organizational_unit_id) if organizational_unit_id else None
+        return Resource("organizational_unit", resource_id=organizational_unit_id,
+                        organizational_unit_id=organizational_unit_id,
+                        organization_id=str(unit.organization_id) if unit else None)
+    return resolve_resource_scope(db, "project", project_id)
+
+
+def _lock_last_admin(db: Session) -> None:
+    from sqlalchemy import text
+
+    db.execute(text("SELECT pg_advisory_xact_lock(:key)"),
+               {"key": _LAST_ADMIN_LOCK_KEY})
+
+
+def _active_global_administrators(db: Session) -> dict[str, int]:
+    """user_id -> count of ACTIVE GLOBAL ADMINISTRATOR assignments."""
+    from backend.db.models import Role as RoleModel
+    from backend.db.models import User as UserModel
+    from backend.db.models import UserRoleAssignment
+
+    rows = (
+        db.query(UserRoleAssignment.user_id)
+        .join(RoleModel, RoleModel.id == UserRoleAssignment.role_id)
+        .join(UserModel, UserModel.id == UserRoleAssignment.user_id)
+        .filter(UserRoleAssignment.scope_type == "GLOBAL",
+                RoleModel.name == "ADMINISTRATOR",
+                RoleModel.status == "ACTIVE",
+                UserModel.status == "ACTIVE",
+                UserModel.is_active.is_(True))
+        .all()
+    )
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[str(row[0])] = counts.get(str(row[0]), 0) + 1
+    return counts
+
+
+def _would_leave_no_global_administrator(db: Session, user_id: str,
+                                         exclude_assignment_id: str | None,
+                                         removes_user: bool = False) -> bool:
+    """Would the operation leave zero active GLOBAL administrators?
+
+    ``exclude_assignment_id`` removes a single assignment (revocation);
+    ``removes_user`` removes every grant the user holds (deactivation), which
+    is why a lone admin holding several GLOBAL assignments is still the last
+    one.
+    """
+    counts = _active_global_administrators(db)
+    if user_id not in counts:
+        return False
+    if any(key != user_id for key in counts):
+        return False
+    if removes_user:
+        return True
+    remaining = counts[user_id] - (1 if exclude_assignment_id else 0)
+    return remaining <= 0
 
 
 def governance_target_resource(target_type: str | None) -> str | None:
