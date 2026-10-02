@@ -19,6 +19,7 @@ from sqlalchemy import (
     Integer,
     func,
     Float,
+    Numeric,
     CheckConstraint,
     Index,
     UniqueConstraint,
@@ -1040,6 +1041,21 @@ AUDIT_EVENT_TYPES = frozenset(
         "USER_STATUS_CHANGED",
         "PROJECT_SCOPE_CHANGED",
         "PROJECT_OWNERSHIP_CHANGED",
+        # BE-026 field operations and offline synchronization. Security
+        # failures and conflicts are events, never silent outcomes.
+        "FIELD_ASSIGNMENT_CREATED",
+        "FIELD_ASSIGNMENT_STATUS_CHANGED",
+        "FIELD_ASSIGNMENT_EXPIRED",
+        "FIELD_ASSIGNMENT_ACCESSED",
+        "FIELD_ASSIGNMENT_SECURITY_FAILURE",
+        "FIELD_SESSION_OPENED",
+        "FIELD_SESSION_CLOSED",
+        "FIELD_SYNC_ACCEPTED",
+        "FIELD_SYNC_DUPLICATE",
+        "FIELD_SYNC_REJECTED",
+        "FIELD_SYNC_CONFLICT",
+        "FIELD_SYNC_CONFLICT_RESOLVED",
+        "FIELD_EVIDENCE_ASSOCIATED",
     }
 )
 
@@ -1181,6 +1197,12 @@ AUTH_PERMISSIONS = (
     "publication.publish",
     "publication.unpublish",
     "publication.policy.manage",
+    # BE-026 field operations. Both are purely additive: a field assignment
+    # is operational work, never an authorization grant, so synchronization
+    # requires this permission AND a server-verified scope AND an active
+    # assignment. Nothing else gains either one.
+    "field.sync",
+    "field_assignment.manage",
 )
 
 # Baseline role -> permissions mapping (also seeded for tests/dev via the
@@ -1232,6 +1254,9 @@ AUTH_ROLE_PERMISSIONS = {
         # publish their own request (§15 separation of duties).
         "publication.create",
         "publication.read",
+        # BE-026: synchronize captures captured against an active field
+        # assignment. Scope and assignment state are re-checked server-side.
+        "field.sync",
     ),
     "REVIEWER": (
         "project.read",
@@ -1345,6 +1370,10 @@ AUTH_ROLE_PERMISSIONS = {
         # allowed field set and then self-approve the result.
         "publication.read",
         "publication.policy.manage",
+        # BE-026: field assignment administration and conflict resolution are
+        # administrative. SUPERVISOR is deliberately not granted this in
+        # BE-026 (reviewers/supervisors keep existing semantics unchanged).
+        "field_assignment.manage",
     ),
     "API_CLIENT": (),
 }
@@ -3026,4 +3055,346 @@ class PublicMediaDerivative(Base):
         ),
         Index("ix_public_media_derivatives_publication", "publication_id"),
         Index("ix_public_media_derivatives_evidence", "original_evidence_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# BE-026: field operations and offline evidence capture
+# ---------------------------------------------------------------------------
+
+FIELD_ASSIGNMENT_STATUSES = ("ACTIVE", "RELEASED", "REVOKED", "EXPIRED")
+FIELD_SESSION_STATUSES = ("ACTIVE", "CLOSED", "EXPIRED")
+#: ``PENDING`` is a reservation, not a queue position: ``ingest_evidence``
+#: commits the Evidence row itself, so the operation identity has to be
+#: committed *before* ingest runs. That is what makes a concurrent or repeated
+#: submission physically unable to create a second Evidence row.
+FIELD_OPERATION_STATUSES = ("PENDING", "ACCEPTED", "VALIDATION_FAILED", "CONFLICT")
+FIELD_CONFLICT_REASONS = (
+    "PAYLOAD_MISMATCH",
+    "ASSIGNMENT_REVOKED",
+    "ASSIGNMENT_EXPIRED",
+    "SESSION_CLOSED",
+    "OPERATION_SESSION_MISMATCH",
+    "CONTEXT_RESOURCE_MISSING",
+    "ASSIGNMENT_SUPERSEDED",
+)
+FIELD_LOCATION_SOURCES = ("DEVICE_GPS", "DEVICE_MANUAL", "CLIENT_INFERRED", "UNKNOWN")
+FIELD_RESOLUTION_STATUSES = ("UNRESOLVED", "RESOLVED")
+
+#: Response-only synchronization vocabulary (task §11). ``rejected`` and
+#: ``temporarily_unavailable`` are deliberately absent from the persisted
+#: ``FIELD_OPERATION_STATUSES``: a denial never mutates domain state, and a
+#: dependency outage rolls back so a retry can succeed. ``PENDING`` is the
+#: inverse case — an internal reservation that is never a response; a caller
+#: that reaches a live reservation is told ``temporarily_unavailable`` so it
+#: retries into the real outcome.
+FIELD_SYNC_STATUSES = (
+    "accepted",
+    "already_synchronized",
+    "rejected",
+    "conflict",
+    "authorization_denied",
+    "validation_failed",
+    "temporarily_unavailable",
+)
+
+
+class FieldAssignment(Base):
+    """BE-026: operational field work. Grants no authority whatsoever.
+
+    Authorization continues to come only from ``user_role_assignments`` via
+    ``can()``. A synchronization succeeds when the permission gate, the
+    server-resolved scope gate and one ACTIVE row of this table all hold; an
+    assignment for a user without the matching role grant produces a denial,
+    never access. Revocation closes the row instead of deleting it so that
+    "assignment revoked while the device was offline" stays testable.
+    """
+
+    __tablename__ = "field_assignments"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    user_id = Column(
+        UUID(as_uuid=False), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    project_id = Column(
+        UUID(as_uuid=False), ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False
+    )
+    # Organizational scope is derived server-side from the project and is never
+    # accepted from a client, so there is no field to forge.
+    organization_id = Column(UUID(as_uuid=False), ForeignKey("organizations.id"), nullable=True)
+    organizational_unit_id = Column(
+        UUID(as_uuid=False), ForeignKey("organizational_units.id"), nullable=True
+    )
+    claim_id = Column(UUID(as_uuid=False), ForeignKey("claims.id"), nullable=True)
+    activity_id = Column(UUID(as_uuid=False), ForeignKey("activities.id"), nullable=True)
+    status = Column(String(32), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    valid_from = Column(DateTime(timezone=True), nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    instructions = Column(Text, nullable=True)
+    created_by = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    revoked_by = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    closed_reason = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('ACTIVE', 'RELEASED', 'REVOKED', 'EXPIRED')",
+            name="ck_field_assignment_status",
+        ),
+        CheckConstraint(
+            "expires_at IS NULL OR valid_from IS NULL OR expires_at > valid_from",
+            name="ck_field_assignment_validity_window",
+        ),
+        CheckConstraint(
+            "closed_reason IS NULL OR status <> 'ACTIVE'",
+            name="ck_field_assignment_closed_reason",
+        ),
+        # One general ACTIVE assignment per (officer, project) ...
+        Index(
+            "uq_field_assignments_active_general",
+            "user_id", "project_id",
+            unique=True,
+            postgresql_where=text("status = 'ACTIVE' AND claim_id IS NULL"),
+        ),
+        # ... and one per (officer, project, claim) for claim-scoped work.
+        Index(
+            "uq_field_assignments_active_claim",
+            "user_id", "project_id", "claim_id",
+            unique=True,
+            postgresql_where=text("status = 'ACTIVE' AND claim_id IS NOT NULL"),
+        ),
+        Index("ix_field_assignments_user_status", "user_id", "status"),
+        Index("ix_field_assignments_project", "project_id"),
+    )
+
+
+class FieldSession(Base):
+    """BE-026: server-minted execution context for one assignment.
+
+    The session is what stops an offline client from authorizing itself with a
+    stale assignment snapshot: it is created by the server after the authority
+    check, and every synchronization is re-validated against both the session
+    row and the current assignment row.
+    """
+
+    __tablename__ = "field_sessions"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    assignment_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey("field_assignments.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    # Copied from the assignment at open time; never accepted from a client.
+    user_id = Column(
+        UUID(as_uuid=False), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    project_id = Column(
+        UUID(as_uuid=False), ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False
+    )
+    organization_id = Column(UUID(as_uuid=False), ForeignKey("organizations.id"), nullable=True)
+    status = Column(String(32), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    session_label = Column(String(128), nullable=True)
+    client_device_id = Column(String(128), nullable=True)
+    started_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    #: Lets the client compute its own clock skew. Never used to rewrite or
+    #: backfill a client-reported timestamp.
+    server_time_at_open = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    closed_at = Column(DateTime(timezone=True), nullable=True)
+    close_reason = Column(String(255), nullable=True)
+    last_sync_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('ACTIVE', 'CLOSED', 'EXPIRED')",
+            name="ck_field_session_status",
+        ),
+        CheckConstraint(
+            "(status = 'ACTIVE' AND closed_at IS NULL)"
+            " OR (status <> 'ACTIVE' AND closed_at IS NOT NULL)",
+            name="ck_field_session_close_shape",
+        ),
+        Index(
+            "uq_field_sessions_active_device",
+            "assignment_id", "client_device_id",
+            unique=True,
+            postgresql_where=text("status = 'ACTIVE' AND client_device_id IS NOT NULL"),
+        ),
+        Index("ix_field_sessions_user_status", "user_id", "status"),
+        Index("ix_field_sessions_assignment", "assignment_id"),
+    )
+
+
+class FieldCaptureOperation(Base):
+    """BE-026: idempotent offline synchronization ledger and provenance record.
+
+    One row per (officer, ``client_operation_id``). The unique constraint is
+    what makes a retry after a timeout answerable and a duplicate Evidence
+    impossible; ``request_hash`` (which covers a digest of the payload bytes)
+    is what turns "same identity, different payload" into an explicit conflict
+    instead of a silent overwrite. Client-asserted and server-observed
+    timestamps are stored separately and independently nullable, so a value
+    that was never known stays unknown rather than being fabricated from a
+    neighbouring column.
+    """
+
+    __tablename__ = "field_capture_operations"
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    user_id = Column(
+        UUID(as_uuid=False), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    client_operation_id = Column(String(128), nullable=False)
+    client_capture_id = Column(String(128), nullable=True)
+    client_device_id = Column(String(128), nullable=True)
+    session_id = Column(UUID(as_uuid=False), ForeignKey("field_sessions.id"), nullable=True)
+    assignment_id = Column(UUID(as_uuid=False), ForeignKey("field_assignments.id"), nullable=True)
+    project_id = Column(UUID(as_uuid=False), ForeignKey("projects.id"), nullable=True)
+    claim_id = Column(UUID(as_uuid=False), ForeignKey("claims.id"), nullable=True)
+    # SET NULL: retention may later remove the canonical row, but the
+    # synchronization and provenance record must survive.
+    evidence_id = Column(UUID(as_uuid=False), ForeignKey("evidence.id", ondelete="SET NULL"),
+                         nullable=True)
+
+    request_hash = Column(String(64), nullable=False)
+    #: Idempotency digest of the submitted bytes. Not the Evidence fingerprint
+    #: (that stays the analysis job's job); both hash the same bytes, so they
+    #: agree, and Stage D verifies exactly that.
+    payload_sha256 = Column(String(64), nullable=False)
+    declared_content_type = Column(String(128), nullable=True)
+    filename = Column(String(512), nullable=True)
+    file_size = Column(BigInteger, nullable=False)
+
+    status = Column(String(32), nullable=False)
+    #: Machine-readable reasons for a pre-ingest rejection, kept on the row so
+    #: the durable record explains itself to a retrying client and to audit.
+    validation_errors = Column(
+        JSONB, nullable=False, default=list, server_default=text("'[]'")
+    )
+
+    captured_at = Column(DateTime(timezone=True), nullable=True)
+    queued_at = Column(DateTime(timezone=True), nullable=True)
+    uploaded_at = Column(DateTime(timezone=True), nullable=True)
+    received_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+    #: Observed ordering anomalies (labels, never rewrites or rejections).
+    timestamp_flags = Column(JSONB, nullable=False, default=list, server_default=text("'[]'"))
+
+    latitude = Column(Numeric(9, 6), nullable=True)
+    longitude = Column(Numeric(9, 6), nullable=True)
+    capture_accuracy_m = Column(Numeric(10, 2), nullable=True)
+    altitude_m = Column(Numeric(8, 2), nullable=True)
+    location_source = Column(String(32), nullable=True)
+    zero_island_confirmed = Column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+
+    conflict_reason = Column(String(64), nullable=True)
+    conflict_detail = Column(JSONB, nullable=True)
+    resolution_status = Column(
+        String(32), nullable=False, default="UNRESOLVED", server_default="UNRESOLVED"
+    )
+    resolved_by = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    resolution_note = Column(Text, nullable=True)
+    #: Terminal annotation kind: DISMISSED or RESUBMISSION_REQUIRED.
+    resolution_outcome = Column(String(32), nullable=True)
+
+    sync_count = Column(Integer, nullable=False, default=1, server_default=text("1"))
+    last_synced_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "client_operation_id", name="uq_field_operations_user_client_id"
+        ),
+        CheckConstraint(
+            "char_length(client_operation_id) >= 8",
+            name="ck_field_operations_operation_id_length",
+        ),
+        CheckConstraint(
+            "status IN ('PENDING', 'ACCEPTED', 'VALIDATION_FAILED', 'CONFLICT')",
+            name="ck_field_operations_status",
+        ),
+        CheckConstraint(
+            "status <> 'VALIDATION_FAILED' OR validation_errors <> '[]'::jsonb",
+            name="ck_field_operations_validation_shape",
+        ),
+        CheckConstraint(
+            "status <> 'PENDING' OR evidence_id IS NULL",
+            name="ck_field_operations_pending_is_reservation",
+        ),
+        CheckConstraint(
+            "conflict_reason IN ('PAYLOAD_MISMATCH', 'ASSIGNMENT_REVOKED',"
+            " 'ASSIGNMENT_EXPIRED', 'SESSION_CLOSED', 'OPERATION_SESSION_MISMATCH',"
+            " 'CONTEXT_RESOURCE_MISSING', 'ASSIGNMENT_SUPERSEDED')",
+            name="ck_field_operations_conflict_reason",
+        ),
+        # A conflict is either a CONFLICT row with a reason or a row with
+        # neither; the CHECK also keeps PAYLOAD_MISMATCH (recorded in the
+        # ledger against the untouched existing row) out of this table.
+        CheckConstraint(
+            "(status = 'CONFLICT' AND conflict_reason IS NOT NULL)"
+            " OR (status <> 'CONFLICT' AND conflict_reason IS NULL)",
+            name="ck_field_operations_conflict_shape",
+        ),
+        CheckConstraint(
+            "resolution_status = 'UNRESOLVED' OR status = 'CONFLICT'",
+            name="ck_field_operations_resolution_needs_conflict",
+        ),
+        CheckConstraint(
+            "resolution_status IN ('UNRESOLVED', 'RESOLVED')",
+            name="ck_field_operations_resolution_status",
+        ),
+        # No "ACCEPTED implies evidence_id IS NOT NULL" CHECK: the evidence FK
+        # is ON DELETE SET NULL, so a retention purge legitimately leaves an
+        # accepted operation pointing at nothing. A CHECK here would abort that
+        # purge (and every later UPDATE of the row), so the pairing is a
+        # service-level invariant instead: the executor writes status and
+        # evidence_id in one statement and never writes ACCEPTED without one.
+        CheckConstraint("latitude IS NULL OR (latitude >= -90 AND latitude <= 90)",
+                        name="ck_field_operations_latitude_range"),
+        CheckConstraint("longitude IS NULL OR (longitude >= -180 AND longitude <= 180)",
+                        name="ck_field_operations_longitude_range"),
+        CheckConstraint("capture_accuracy_m IS NULL OR (capture_accuracy_m > 0"
+                        " AND capture_accuracy_m <= 100000)",
+                        name="ck_field_operations_accuracy_range"),
+        CheckConstraint("altitude_m IS NULL OR (altitude_m >= -1000 AND altitude_m <= 10000)",
+                        name="ck_field_operations_altitude_range"),
+        CheckConstraint(
+            "num_nonnulls(latitude, longitude) IN (0, 2)",
+            name="ck_field_operations_coordinate_pair",
+        ),
+        # Missing GPS can never be silently recorded as 0,0.
+        CheckConstraint(
+            "NOT (latitude = 0 AND longitude = 0 AND zero_island_confirmed IS NOT TRUE)",
+            name="ck_field_operations_zero_island_confirmed",
+        ),
+        CheckConstraint("latitude IS NULL OR location_source IS NOT NULL",
+                        name="ck_field_operations_source_when_located"),
+        CheckConstraint("capture_accuracy_m IS NULL OR latitude IS NOT NULL",
+                        name="ck_field_operations_accuracy_needs_fix"),
+        CheckConstraint(
+            "location_source IS NULL OR location_source IN"
+            " ('DEVICE_GPS', 'DEVICE_MANUAL', 'CLIENT_INFERRED', 'UNKNOWN')",
+            name="ck_field_operations_location_source",
+        ),
+        Index("ix_field_operations_user_status", "user_id", "status"),
+        Index("ix_field_operations_session", "session_id"),
+        Index("ix_field_operations_evidence", "evidence_id"),
+        Index(
+            "ix_field_operations_open_conflicts",
+            "created_at",
+            postgresql_where=text("status = 'CONFLICT' AND resolution_status = 'UNRESOLVED'"),
+        ),
     )

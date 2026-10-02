@@ -9034,6 +9034,713 @@
         }
       }
     },
+    "/api/v1/field/assignments": {
+      "post": {
+        "summary": "Create a field assignment (requires field_assignment.manage)",
+        "description": "Operational work only: an assignment grants no authority. The capturing officer still needs a scoped evidence.create grant covering the project, re-evaluated at every synchronization. Organization and unit are derived from the project, never accepted from the caller.",
+        "operationId": "create_assignment_api_v1_field_assignments_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldAssignmentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldAssignmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "409": {
+            "description": "Conflict: a duplicate assignment, a closed context, or an explicit synchronization conflict carrying sync_status \"conflict\"."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      },
+      "get": {
+        "summary": "List field assignments (requires field_assignment.manage)",
+        "operationId": "list_assignments_api_v1_field_assignments_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FieldAssignmentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldAssignmentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/assignments/{assignment_id}": {
+      "get": {
+        "summary": "Read one field assignment (requires field_assignment.manage)",
+        "description": "Administrative read. Officers see their own assignments through the assigned-work feed, which is scoped to them and carries no administrative fields.",
+        "operationId": "get_assignment_api_v1_field_assignments__assignment_id__get",
+        "parameters": [
+          {
+            "name": "assignment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assignment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldAssignmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/assignments/{assignment_id}/status": {
+      "patch": {
+        "summary": "Release or revoke a field assignment (requires field_assignment.manage)",
+        "description": "Never deletes. A closed assignment stays as the historical record, and captures queued against it afterwards resolve to an explicit synchronization conflict rather than being silently accepted.",
+        "operationId": "change_assignment_status_api_v1_field_assignments__assignment_id__status_patch",
+        "parameters": [
+          {
+            "name": "assignment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assignment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldAssignmentStatusUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldAssignmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "409": {
+            "description": "Conflict: a duplicate assignment, a closed context, or an explicit synchronization conflict carrying sync_status \"conflict\"."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/work": {
+      "get": {
+        "summary": "Assigned-work feed for the calling officer (requires field.sync)",
+        "description": "Authorization-filtered before counting, and limited to this officer's own active assignments plus the context each one names. Exposes nothing about other projects, claims, activities, evidence, or reviews.",
+        "operationId": "get_work_feed_api_v1_field_work_get",
+        "parameters": [
+          {
+            "name": "assignment_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Assignment Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldWorkListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/sessions": {
+      "post": {
+        "summary": "Open a field session against one of the caller's assignments (requires field.sync)",
+        "description": "The session is minted server-side after current authority is re-checked, so a stored assignment snapshot confers nothing on its own.",
+        "operationId": "open_session_api_v1_field_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldSessionOpenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "409": {
+            "description": "Conflict: a duplicate assignment, a closed context, or an explicit synchronization conflict carrying sync_status \"conflict\"."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/sessions/{session_id}/close": {
+      "post": {
+        "summary": "Close the caller's own field session (requires field.sync)",
+        "operationId": "close_session_api_v1_field_sessions__session_id__close_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldSessionCloseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "409": {
+            "description": "Conflict: a duplicate assignment, a closed context, or an explicit synchronization conflict carrying sync_status \"conflict\"."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/sync": {
+      "post": {
+        "summary": "Synchronize one offline capture (requires field.sync)",
+        "description": "Multipart, one capture per request. Reuses the existing ingestion validator, quarantine storage, hashing and audit ledger; the operation identity is (officer, client_operation_id), so a retry answers with the stored outcome instead of a second Evidence row. Authority, assignment state and session state are re-evaluated on every call. The project, claim and location association are resolved from server rows.",
+        "operationId": "synchronize_capture_api_v1_field_sync_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_synchronize_capture_api_v1_field_sync_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldSyncResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty capture payload. Raised by the existing ingestion validator; BE-026 reuses it rather than adding a second one."
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "409": {
+            "description": "Conflict: a duplicate assignment, a closed context, or an explicit synchronization conflict carrying sync_status \"conflict\"."
+          },
+          "413": {
+            "description": "Capture exceeds the configured upload limit (existing validator)."
+          },
+          "415": {
+            "description": "Unsupported or mismatched image content type (existing validator)."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          },
+          "503": {
+            "description": "Synchronization temporarily unavailable (dependency outage or an execution already in flight for this operation identity)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/captures/{client_operation_id}": {
+      "get": {
+        "summary": "Recover the stored outcome for one of the caller's captures (requires field.sync)",
+        "description": "Lets a client that lost a response resolve the operation identity it already used. Owner-only; another officer's identifier is indistinguishable from a missing one.",
+        "operationId": "get_capture_api_v1_field_captures__client_operation_id__get",
+        "parameters": [
+          {
+            "name": "client_operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Client Operation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldCaptureOperationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/operations": {
+      "get": {
+        "summary": "List synchronization outcomes and open conflicts (requires field_assignment.manage)",
+        "operationId": "list_operations_api_v1_field_operations_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FieldOperationStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "resolution_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FieldResolutionStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resolution Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldOperationListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
+    "/api/v1/field/operations/{operation_id}/resolve": {
+      "post": {
+        "summary": "Resolve a synchronization conflict (requires field_assignment.manage)",
+        "description": "A human annotation on a terminal record. Resolution ingests nothing, changes no Evidence, and never clears the conflict fields; the capture must be re-submitted under a new client_operation_id.",
+        "operationId": "resolve_conflict_api_v1_field_operations__operation_id__resolve_post",
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Operation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldConflictResolveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldCaptureOperationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Field surfaces bind rows to an identified officer, so even the development bypass cannot stand in for one."
+          },
+          "403": {
+            "description": "Permission not held (field.sync or field_assignment.manage)."
+          },
+          "404": {
+            "description": "Target absent or outside the caller's scope; out-of-scope is reported exactly like missing so these routes cannot enumerate other officers' work."
+          },
+          "409": {
+            "description": "Conflict: a duplicate assignment, a closed context, or an explicit synchronization conflict carrying sync_status \"conflict\"."
+          },
+          "422": {
+            "description": "Request validation or capture metadata rejected (naive timestamp, half a GPS fix, unconfirmed 0,0, unknown field)."
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Liveness probe (process alive, dependency-agnostic)",
@@ -9758,6 +10465,20 @@
           "external_system_id"
         ],
         "title": "Body_submit_external_evidence_api_v1_integrations_evidence_post"
+      },
+      "Body_synchronize_capture_api_v1_field_sync_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_synchronize_capture_api_v1_field_sync_post"
       },
       "Body_upload_evidence_api_v1_evidence_post": {
         "properties": {
@@ -12770,6 +13491,1438 @@
           "updated_at"
         ],
         "title": "ExternalSystemResponse"
+      },
+      "FieldAssignmentCloseStatus": {
+        "type": "string",
+        "enum": [
+          "RELEASED",
+          "REVOKED"
+        ],
+        "title": "FieldAssignmentCloseStatus",
+        "description": "The only transitions a manager may request; ``EXPIRED`` is server-set."
+      },
+      "FieldAssignmentCreateRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "claim_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim Id"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id",
+          "project_id"
+        ],
+        "title": "FieldAssignmentCreateRequest"
+      },
+      "FieldAssignmentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FieldAssignmentResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "FieldAssignmentListResponse"
+      },
+      "FieldAssignmentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "organizational_unit_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organizational Unit Id"
+          },
+          "claim_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim Id"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "revoked_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked By"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "closed_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed Reason"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "project_id",
+          "status"
+        ],
+        "title": "FieldAssignmentResponse"
+      },
+      "FieldAssignmentStatus": {
+        "type": "string",
+        "enum": [
+          "ACTIVE",
+          "RELEASED",
+          "REVOKED",
+          "EXPIRED"
+        ],
+        "title": "FieldAssignmentStatus"
+      },
+      "FieldAssignmentStatusUpdateRequest": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/FieldAssignmentCloseStatus"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "reason"
+        ],
+        "title": "FieldAssignmentStatusUpdateRequest"
+      },
+      "FieldCaptureOperationResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "client_operation_id": {
+            "type": "string",
+            "title": "Client Operation Id"
+          },
+          "client_capture_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Capture Id"
+          },
+          "client_device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Device Id"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "assignment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignment Id"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "claim_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim Id"
+          },
+          "evidence_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "resolution_status": {
+            "type": "string",
+            "title": "Resolution Status"
+          },
+          "resolution_outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Outcome"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "resolution_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Note"
+          },
+          "conflict_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conflict Reason"
+          },
+          "conflict_detail": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conflict Detail"
+          },
+          "validation_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Validation Errors"
+          },
+          "timestamp_flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Timestamp Flags"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "queued_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queued At"
+          },
+          "uploaded_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploaded At"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed At"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "declared_content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declared Content Type"
+          },
+          "file_size": {
+            "type": "integer",
+            "title": "File Size"
+          },
+          "payload_sha256": {
+            "type": "string",
+            "title": "Payload Sha256"
+          },
+          "request_hash": {
+            "type": "string",
+            "title": "Request Hash"
+          },
+          "location_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Source"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "capture_accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Accuracy M"
+          },
+          "altitude_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Altitude M"
+          },
+          "zero_island_confirmed": {
+            "type": "boolean",
+            "title": "Zero Island Confirmed",
+            "default": false
+          },
+          "sync_count": {
+            "type": "integer",
+            "title": "Sync Count"
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "client_operation_id",
+          "status",
+          "resolution_status",
+          "file_size",
+          "payload_sha256",
+          "request_hash",
+          "sync_count"
+        ],
+        "title": "FieldCaptureOperationResponse"
+      },
+      "FieldConflictReason": {
+        "type": "string",
+        "enum": [
+          "PAYLOAD_MISMATCH",
+          "ASSIGNMENT_REVOKED",
+          "ASSIGNMENT_EXPIRED",
+          "SESSION_CLOSED",
+          "OPERATION_SESSION_MISMATCH",
+          "CONTEXT_RESOURCE_MISSING",
+          "ASSIGNMENT_SUPERSEDED"
+        ],
+        "title": "FieldConflictReason"
+      },
+      "FieldConflictResolveRequest": {
+        "properties": {
+          "outcome": {
+            "$ref": "#/components/schemas/FieldResolutionOutcome"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "outcome",
+          "note"
+        ],
+        "title": "FieldConflictResolveRequest"
+      },
+      "FieldLocationReport": {
+        "properties": {
+          "reported": {
+            "type": "boolean",
+            "title": "Reported"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "capture_accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Accuracy M"
+          },
+          "altitude_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Altitude M"
+          },
+          "location_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Source"
+          },
+          "zero_island_confirmed": {
+            "type": "boolean",
+            "title": "Zero Island Confirmed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "reported"
+        ],
+        "title": "FieldLocationReport",
+        "description": "Client-reported fix as assertion data.\n\n``reported`` is false whenever no coordinates were supplied, so a missing\nfix is never representable as ``0,0``; PostGIS on Evidence stays the only\nauthoritative location."
+      },
+      "FieldOperationListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FieldCaptureOperationResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "FieldOperationListResponse"
+      },
+      "FieldOperationStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "ACCEPTED",
+          "VALIDATION_FAILED",
+          "CONFLICT"
+        ],
+        "title": "FieldOperationStatus"
+      },
+      "FieldResolutionOutcome": {
+        "type": "string",
+        "enum": [
+          "DISMISSED",
+          "RESUBMISSION_REQUIRED"
+        ],
+        "title": "FieldResolutionOutcome"
+      },
+      "FieldResolutionStatus": {
+        "type": "string",
+        "enum": [
+          "UNRESOLVED",
+          "RESOLVED"
+        ],
+        "title": "FieldResolutionStatus"
+      },
+      "FieldSessionCloseRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "FieldSessionCloseRequest"
+      },
+      "FieldSessionOpenRequest": {
+        "properties": {
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assignment Id"
+          },
+          "session_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Label"
+          },
+          "client_device_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Device Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "assignment_id"
+        ],
+        "title": "FieldSessionOpenRequest"
+      },
+      "FieldSessionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assignment Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "session_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Label"
+          },
+          "client_device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Device Id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "server_time_at_open": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Server Time At Open"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "close_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Reason"
+          },
+          "last_sync_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sync At"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "assignment_id",
+          "user_id",
+          "project_id",
+          "status"
+        ],
+        "title": "FieldSessionResponse"
+      },
+      "FieldSyncResponse": {
+        "properties": {
+          "sync_status": {
+            "$ref": "#/components/schemas/FieldSyncStatus"
+          },
+          "operation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Operation Id"
+          },
+          "client_operation_id": {
+            "type": "string",
+            "title": "Client Operation Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FieldOperationStatus"
+          },
+          "evidence_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Id"
+          },
+          "evidence_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Status"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "claim_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim Id"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "assignment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignment Id"
+          },
+          "conflict_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FieldConflictReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "validation_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Validation Errors"
+          },
+          "timestamp_flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Timestamp Flags"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "queued_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queued At"
+          },
+          "uploaded_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploaded At"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed At"
+          },
+          "location": {
+            "$ref": "#/components/schemas/FieldLocationReport"
+          },
+          "file_size": {
+            "type": "integer",
+            "title": "File Size"
+          },
+          "sync_count": {
+            "type": "integer",
+            "title": "Sync Count"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sync_status",
+          "operation_id",
+          "client_operation_id",
+          "status",
+          "location",
+          "file_size",
+          "sync_count",
+          "message"
+        ],
+        "title": "FieldSyncResponse",
+        "description": "Synchronization outcome for one capture.\n\n``captured_at``/``queued_at``/``uploaded_at`` echo exactly what the client\nreported (or ``None`` when it never knew), while ``received_at`` and\n``processed_at`` are server-observed. No field is ever derived from\nanother."
+      },
+      "FieldSyncStatus": {
+        "type": "string",
+        "enum": [
+          "accepted",
+          "already_synchronized",
+          "rejected",
+          "conflict",
+          "authorization_denied",
+          "validation_failed",
+          "temporarily_unavailable"
+        ],
+        "title": "FieldSyncStatus"
+      },
+      "FieldWorkItem": {
+        "properties": {
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assignment Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "project": {
+            "$ref": "#/components/schemas/WorkProject"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "active_session_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Session Id"
+          },
+          "claim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkClaim"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkActivity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "assignment_id",
+          "status",
+          "project"
+        ],
+        "title": "FieldWorkItem",
+        "description": "One assigned task, with only the context that assignment names."
+      },
+      "FieldWorkListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FieldWorkItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "FieldWorkListResponse"
       },
       "FusionConfigurationCreate": {
         "properties": {
@@ -18388,6 +20541,75 @@
         },
         "type": "object",
         "title": "WebhookSubscriptionUpdate"
+      },
+      "WorkActivity": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "verb": {
+            "type": "string",
+            "title": "Verb"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "verb"
+        ],
+        "title": "WorkActivity"
+      },
+      "WorkClaim": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "WorkClaim"
+      },
+      "WorkProject": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "WorkProject"
       },
       "backend__schemas__authorization__ApiClientCreate": {
         "properties": {

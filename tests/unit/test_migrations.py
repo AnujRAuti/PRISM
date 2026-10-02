@@ -47,12 +47,15 @@ VERSIONS_DIR = REPO_ROOT / "alembic" / "versions"
 #: accident: a new migration that is not wired into the chain, or a second
 #: head created by a parallel branch merge, must fail here.
 #: Bumped by BE-025 (M1 assignment scope/ID matrix, down_revision
-#: n4o5p6q7r022) after confirming `alembic heads` reports exactly one head.
-EXPECTED_HEAD = "o5p6q7r8s025"
+#: n4o5p6q7r022), then by BE-026 (three field-operations tables, one additive
+#: revision, down_revision o5p6q7r8s025) after confirming `alembic heads`
+#: reports exactly one head.
+EXPECTED_HEAD = "p6q7r8s9t026"
 
 #: BE-023 revision count at the time this test was written (19), advanced by
 #: each milestone that genuinely adds a migration. BE-025 added one: 20.
-EXPECTED_REVISION_COUNT = 20
+#: BE-026 adds one: 21.
+EXPECTED_REVISION_COUNT = 21
 
 
 @dataclass(frozen=True)

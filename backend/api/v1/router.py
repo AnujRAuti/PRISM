@@ -20,6 +20,7 @@ from backend.api.v1.endpoints.correction import router as correction_router
 from backend.api.v1.endpoints.governance import router as governance_router
 from backend.api.v1.endpoints.publication import router as publication_router
 from backend.api.v1.endpoints.public import router as public_router
+from backend.api.v1.endpoints.field import router as field_router
 
 router = APIRouter()
 # NOTE: context_router owns GET /evidence/nearby and must precede
@@ -48,3 +49,5 @@ router.include_router(governance_router)
 # BE-022 publication routers: publication workflow and public access
 router.include_router(publication_router)
 router.include_router(public_router)
+# BE-026 field operations: assignments, sessions, offline evidence sync
+router.include_router(field_router)

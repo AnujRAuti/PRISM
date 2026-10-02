@@ -111,6 +111,9 @@ ACTION_PERMISSIONS = {
     "publication.publish": "publication.publish",
     "publication.unpublish": "publication.unpublish",
     "publication.policy.manage": "publication.policy.manage",
+    # BE-026 field operations actions
+    "field.sync": "field.sync",
+    "field_assignment.manage": "field_assignment.manage",
 }
 
 
