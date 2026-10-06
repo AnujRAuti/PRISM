@@ -12,13 +12,18 @@ class RequestIdFilter(logging.Filter):
         return True
 
 
+LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s [rid=%(request_id)s] %(message)s"
+
+
 def setup_logging():
     root = logging.getLogger()
     if root.handlers:
         return
     handler = logging.StreamHandler(sys.stdout)
-    fmt = "%(asctime)s %(levelname)s %(name)s [rid=%(request_id)s] %(message)s"
-    handler.setFormatter(logging.Formatter(fmt))
+    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    # The filter belongs on the handler, not the root logger: ancestor logger
+    # filters are not consulted for records propagating up from third-party
+    # loggers, and those records then fail to format the [rid=...] field.
+    handler.addFilter(RequestIdFilter())
     root.setLevel(logging.INFO)
     root.addHandler(handler)
-    root.addFilter(RequestIdFilter())

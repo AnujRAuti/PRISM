@@ -41,6 +41,13 @@ class Settings(BaseSettings):
 
     jwt_secret: str = "changeme"
 
+    # CORS. Comma-separated list of the origins allowed to call this API with
+    # credentials. The default keeps the historical development behaviour
+    # (every origin), which must be replaced for any shared deployment: with
+    # allow_credentials on, a wildcard makes the middleware echo back whatever
+    # Origin the caller sent, so any website can read authenticated responses.
+    cors_allow_origins: str = "*"
+
     # BE-016 Authentication & Authorization foundation.
     # development: anonymous requests are permitted (existing behavior) while
     # presented credentials are fully enforced. enforcing: anonymous requests
@@ -59,6 +66,12 @@ class Settings(BaseSettings):
     prometheus_enabled: bool = True
     observability_log_format: str = "json"
     observability_redact_sensitive: bool = True
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """The allowlist as a list; an empty or blank value keeps every origin."""
+        origins = [o.strip() for o in self.cors_allow_origins.split(",") if o.strip()]
+        return origins or ["*"]
 
     class Config:
         env_file = ".env"

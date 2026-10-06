@@ -24,10 +24,13 @@ setup_obs_logging()
 
 app = FastAPI(title=settings.app_name)
 
-# Basic CORS (allow dev origins)
+# CORS origins come from the environment (CORS_ALLOW_ORIGINS). The default is
+# still every origin, so a shared deployment must set the real frontend
+# origins: with allow_credentials on, the wildcard makes the middleware echo
+# back the caller's Origin header.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
