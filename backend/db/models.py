@@ -76,6 +76,10 @@ class Project(Base):
     organizational_unit_id = Column(UUID(as_uuid=False), ForeignKey("organizational_units.id"),
                                     nullable=True)
 
+    # Explicit name: the initial migration created ix_projects_owner, which
+    # index=True would not match.
+    __table_args__ = (Index("ix_projects_owner", "owner_id"),)
+
     owner = relationship("User")
 
 
@@ -121,6 +125,13 @@ class Evidence(Base):
     phash = Column(String(64), nullable=True)
     location = Column(Geometry(geometry_type="POINT", srid=4326), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Named explicitly: these initial-migration indexes omit the _id suffix
+    # that index=True's automatic naming would add.
+    __table_args__ = (
+        Index("ix_evidence_project", "project_id"),
+        Index("ix_evidence_claim", "claim_id"),
+    )
 
     project = relationship("Project")
     claim = relationship("Claim")
@@ -229,6 +240,13 @@ class DuplicateMatch(Base):
     embedding_similarity = Column(Float, nullable=True)
     signals = Column(JSONB, nullable=False, default=dict)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Enforced by BE-006 since f9b5d7e3c006; declared so the model describes
+    # the constraint rather than the drift check proposing to drop it.
+    __table_args__ = (
+        UniqueConstraint("evidence_id", "matched_evidence_id",
+                         name="uq_duplicate_match_pair"),
+    )
 
 
 class ReviewDecision(Base):
@@ -369,6 +387,14 @@ class GraphRelationship(Base):
         Index("ix_graph_relationships_type", "relationship_type"),
         Index("ix_graph_relationships_run", "analysis_run_id"),
         Index("ix_graph_relationships_dedupe", "dedupe_key"),
+        # BE-010's partial uniqueness, declared with the same convention the
+        # BE-021/022/026 models use for database-enforced uniqueness rules.
+        Index(
+            "uq_graph_relationships_dedupe_active",
+            "dedupe_key",
+            unique=True,
+            postgresql_where=text("relationship_status = 'ACTIVE'"),
+        ),
     )
 
 
@@ -770,6 +796,13 @@ class ReviewCase(Base):
         Index("ix_review_cases_assigned", "assigned_to"),
         Index("ix_review_cases_run", "fusion_run_id"),
         Index("ix_review_cases_created", "created_at"),
+        # BE-013: at most one active SYSTEM_SIGNAL case per fusion run.
+        Index(
+            "uq_review_case_active_run",
+            "fusion_run_id",
+            unique=True,
+            postgresql_where=text("origin = 'SYSTEM_SIGNAL' AND status <> 'RESOLVED'"),
+        ),
     )
 
 
