@@ -165,6 +165,11 @@ def create_user(
         raise HTTPException(status_code=422, detail=str(error)) from error
     except IntegrityError as error:
         db.rollback()
+        if auth_service.identity_conflict(error) is None:
+            # Not a duplicate identity: a NOT NULL / foreign-key / primary-key
+            # failure is a server fault, and reporting it as 409 would blame
+            # the caller for it. Let the catch-all handler answer 500.
+            raise
         raise HTTPException(status_code=409, detail="Username, email, or identity already exists") from error
     return UserResponse.model_validate(row)
 
@@ -524,11 +529,11 @@ def list_user_roles(
 ) -> RoleAssignmentListResponse:
     if auth_repo.get_user(db, str(user_id)) is None:
         raise HTTPException(status_code=404, detail="User not found")
-    rows = auth_service.list_visible_assignments(
-        db, user_id=str(user_id), actor=_admin_actor(principal))
-    rows = sorted(rows, key=lambda row: (row.created_at, row.id))[offset:offset + limit]
+    rows = sorted(auth_service.list_visible_assignments(
+        db, user_id=str(user_id), actor=_admin_actor(principal)),
+        key=lambda row: (row.created_at, row.id))
     return RoleAssignmentListResponse(
-        items=[_assignment_response(db, row) for row in rows],
+        items=[_assignment_response(db, row) for row in rows[offset:offset + limit]],
         limit=limit, offset=offset, total=len(rows))
 
 

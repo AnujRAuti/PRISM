@@ -56,12 +56,17 @@ ACCEPTED: tuple[AcceptedDrift, ...] = (
         "remove_constraint|user_role_assignments|uq_user_role_scoped",
         classification="B",
         reason=(
-            "Alembic 1.11.2 reflects a UNIQUE constraint without carrying "
-            "NULLS NOT DISTINCT, so it compares the live constraint (which IS "
-            "nulls-not-distinct, per pg_get_constraintdef) against the model as "
-            "if they differed. Removing the flag from the model makes the pair "
+            "Alembic 1.11.2 rebuilds each reflected UNIQUE constraint in "
+            "autogenerate/compare.py::_make_unique_constraint() from column "
+            "names and name alone, discarding the dialect options SQLAlchemy "
+            "2.0.52 did hand it -- measured: get_unique_constraints() returns "
+            "postgresql_nulls_not_distinct=True, and pg_get_constraintdef "
+            "shows 'UNIQUE NULLS NOT DISTINCT (...)'. So the live side of the "
+            "comparison lacks the flag, the model side has it, and the pair is "
+            "permanent. Removing the flag from the model would make the pair "
             "vanish -- which would silently weaken the constraint. Tooling "
-            "artifact, not drift."
+            "artifact, not drift. (Mechanism corrected 2026-10-10; BE-029 "
+            "results §14.6. The original wording blamed reflection.)"
         ),
     ),
     AcceptedDrift(
@@ -69,32 +74,12 @@ ACCEPTED: tuple[AcceptedDrift, ...] = (
         classification="B",
         reason="Second half of the nulls-not-distinct comparison artifact above.",
     ),
-    AcceptedDrift(
-        "remove_index|users|ix_users_email",
-        classification="E",
-        reason=(
-            "B-1: the model declares users.email unique, the schema does not "
-            "enforce it, and pofa_test/pofa_dev both contain rows sharing an "
-            "email. Creating the unique index would fail on existing data, and "
-            "deleting that data is destructive and unapproved. Unresolved by "
-            "decision -- see the BE-028 results document and proposed BE-029."
-        ),
-    ),
-    AcceptedDrift(
-        "add_index|users|ix_users_email",
-        classification="E",
-        reason="Second half of the B-1 email uniqueness blocker.",
-    ),
-    AcceptedDrift(
-        "remove_index|users|ix_users_username",
-        classification="E",
-        reason="B-1: same blocker for username (duplicate rows exist).",
-    ),
-    AcceptedDrift(
-        "add_index|users|ix_users_username",
-        classification="E",
-        reason="Second half of the B-1 username uniqueness blocker.",
-    ),
+    # BE-028's four Category E entries (remove_index/add_index on
+    # users.ix_users_username and users.ix_users_email) are gone, deliberately
+    # and in the change that removed them: BE-029 archived and retired the
+    # synthetic identity residue (r8s9t0u1v028), then recreated both indexes as
+    # UNIQUE (s9t0u1v2w029) so the model's unique=True is now enforced by the
+    # schema. `alembic check` reports no drift for them any more.
 )
 
 ACCEPTED_SIGNATURES = frozenset(d.signature for d in ACCEPTED)

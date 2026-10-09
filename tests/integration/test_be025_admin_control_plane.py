@@ -83,6 +83,32 @@ def create_org(code: str) -> Organization:
         session.close()
 
 
+def walk_organizations(headers: dict, limit: int = 25) -> list[dict]:
+    """Every organization the caller can see, one page at a time.
+
+    ``total`` is the caller-visible count, not the page length, so a test that
+    asks "is X listed?" has to walk the listing. Asserting membership of the
+    first page instead makes the test depend on the database being no larger
+    than the default 50-row page -- and every suite run creates more
+    organizations, so that assumption has a shelf life.
+    """
+    items: list[dict] = []
+    offset = 0
+    while True:
+        response = client.get(
+            f"/api/v1/auth/organizations?limit={limit}&offset={offset}",
+            headers=headers)
+        assert response.status_code == 200
+        page = response.json()
+        items.extend(page["items"])
+        if len(items) >= page["total"]:
+            return items
+        if not page["items"]:
+            raise AssertionError(
+                f"pagination stalled: {len(items)} of {page['total']} at offset {offset}")
+        offset += limit
+
+
 def create_unit(org_id: str, code: str) -> OrganizationalUnit:
     session = get_session()
     try:
@@ -316,6 +342,41 @@ def test_scoped_assignment_lifecycle_via_api():
         cleanup(user_ids=[str(admin.id), str(target.id)], org_ids=[str(org.id)])
 
 
+def test_role_assignment_list_reports_the_visible_total_not_the_page_length():
+    """``total`` counts every visible assignment, not the rows on this page.
+
+    ``list_user_roles`` sliced the list and then reported ``total=len(rows)``,
+    so the total shrank to whatever ``limit`` was asked for and a client walking
+    pages could never tell whether assignments were still waiting.
+    """
+    admin = global_admin()
+    org_a, org_b = create_org("totalA"), create_org("totalB")
+    target = make_user("be025-total")
+    admin_headers = headers_for(str(admin.id))
+    try:
+        for org in (org_a, org_b):
+            created = client.post(
+                f"/api/v1/auth/users/{target.id}/roles",
+                json={"role_name": "REVIEWER", "scope_type": "ORGANIZATION",
+                      "organization_id": str(org.id)}, headers=admin_headers)
+            assert created.status_code == 201
+        page = client.get(f"/api/v1/auth/users/{target.id}/roles?limit=1&offset=0",
+                          headers=admin_headers).json()
+        assert len(page["items"]) == 1
+        assert page["total"] == 2, page
+        collected = []
+        for offset in range(page["total"]):
+            body = client.get(
+                f"/api/v1/auth/users/{target.id}/roles?limit=1&offset={offset}",
+                headers=admin_headers).json()
+            assert body["total"] == 2, body
+            collected += [item["id"] for item in body["items"]]
+        assert len(collected) == len(set(collected)) == 2, collected
+    finally:
+        cleanup(user_ids=[str(admin.id), str(target.id)],
+                org_ids=[str(org_a.id), str(org_b.id)])
+
+
 def test_duplicate_assignment_is_idempotent_and_concurrent_safe():
     admin = global_admin()
     org = create_org("dup")
@@ -528,11 +589,17 @@ def test_organization_lifecycle_noop_audit_and_isolation():
         assert restored.json()["status"] == "ACTIVE"
         assert client.get(f"/api/v1/projects/{project['id']}",
                           headers=headers_for(str(org_user.id))).status_code == 200
-        # Cross-org inference is blocked on the list endpoint too.
+        # Cross-org inference is blocked on the list endpoint too. The endpoint
+        # is paginated (default page 50) and this organization is now named
+        # "Renamed life", which sorts near the end of 94 rows, so "is it listed"
+        # has to be answered by the whole listing rather than page one.
         listed = client.get("/api/v1/auth/organizations", headers=admin_headers)
         assert listed.status_code == 200
-        ids = [item["id"] for item in listed.json()["items"]]
-        assert str(org.id) in ids
+        enumerated = walk_organizations(admin_headers)
+        assert listed.json()["total"] == len(enumerated), (
+            "total must count every visible organization, not the returned page")
+        ids = [item["id"] for item in enumerated]
+        assert ids.count(str(org.id)) == 1
         scoped_list = client.get(
             "/api/v1/auth/organizations",
             headers=headers_for(str(org_user.id)))
@@ -735,6 +802,15 @@ def test_pagination_bounds_and_enumeration():
         again = client.get("/api/v1/auth/organizations?limit=2&offset=0",
                            headers=headers).json()
         assert [item["id"] for item in again["items"]] == first_ids
+        # Enumeration is exact at any page size: the walk collects every visible
+        # organization once and stops there. A missing or repeated row makes
+        # "is X listed?" answer depend on which page was asked for, which is how
+        # the lifecycle test used to fail once the database outgrew one page.
+        snapshot = client.get("/api/v1/auth/organizations?limit=100",
+                              headers=headers).json()
+        enumerated = walk_organizations(headers, limit=7)
+        assert len(enumerated) == snapshot["total"]
+        assert len({item["id"] for item in enumerated}) == len(enumerated)
         # Malformed identifiers never reach the database (BE-024 contract).
         assert client.get("/api/v1/auth/organizations/not-a-uuid",
                           headers=headers).status_code == 422

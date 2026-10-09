@@ -5,6 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
+import logging
 import os
 import sys
 
@@ -12,6 +13,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from backend.core.config import settings
+from backend.db import safety
 from backend.db.models import Base
 from backend.db.schema_drift_policy import include_object
 
@@ -30,9 +32,36 @@ target_metadata = Base.metadata
 # PostGIS installs spatial_ref_sys, which no model describes: without this hook
 # autogenerate proposes dropping it (see backend/db/schema_drift_policy.py).
 
+#: Guards migrations the same way the test suite guards writes (BE-029). Alembic
+#: is the most destructive database entry point in the project, so it states its
+#: target on every run: the name the *server* reports when it can connect, and a
+#: hard refusal before any DDL when an armed context forbids that database.
+_target_logger = logging.getLogger("alembic.env")
+
+
+def declare_target(url: str, bind=None) -> str:
+    """Log the migration target and enforce the armed context; returns the name."""
+    context_name = safety.current_context()
+    if context_name:
+        # Refuse on the configured name first: no connection, no DDL.
+        safety.guard_url(url, context_name)
+    if bind is not None:
+        # confirm_server_database asks the server *and* enforces, so the armed
+        # path needs only this one connection.
+        actual = (
+            safety.confirm_server_database(bind, context_name)
+            if context_name
+            else safety.server_database_name(bind)
+        )
+    else:
+        actual = safety.database_name(url) or url
+    _target_logger.info("Alembic target database: %s", actual)
+    return actual
+
 
 def run_migrations_offline():
     url = config.get_main_option("sqlalchemy.url")
+    declare_target(url, bind=None)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -51,6 +80,8 @@ def run_migrations_online():
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
+
+    declare_target(config.get_main_option("sqlalchemy.url"), bind=connectable)
 
     with connectable.connect() as connection:
         context.configure(

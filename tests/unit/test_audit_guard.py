@@ -57,6 +57,68 @@ def cleanup(session, all_ids, user_ids, project_ids):
     assert "orm_delete" in kinds(scan_source(src, "t.py"))
 
 
+def test_detects_core_construct_delete():
+    """The spelling that used to slip past the guard (BE-029 Phase G).
+
+    A test written as ``delete(AuditLedgerEvent).where(...)`` removes ledger
+    rows exactly as surely as ``query(...).delete()``, but matched none of the
+    original string-and-method patterns, so the violating test passed the
+    guard. Coverage must not depend on which spelling an author picked.
+    """
+    src = """
+from sqlalchemy import delete
+from backend.db.models import AuditLedgerEvent
+def probe(session, row):
+    session.execute(delete(AuditLedgerEvent).where(
+        AuditLedgerEvent.id == row.id))
+"""
+    assert "core_delete" in kinds(scan_source(src, "t.py"))
+
+
+def test_detects_module_qualified_core_delete():
+    src = """
+import sqlalchemy as sa
+from backend.db.models import AuditLedgerEvent
+def probe(session, row):
+    session.execute(sa.delete(AuditLedgerEvent))
+"""
+    assert "core_delete" in kinds(scan_source(src, "t.py"))
+
+
+def test_core_delete_has_no_rollback_exception():
+    """Rolling back does not license removing a row: DELETE is unconditional."""
+    src = """
+from sqlalchemy import delete
+from backend.db.models import AuditLedgerEvent
+def test_tamper_detection_with_rollback(session, row):
+    session.execute(delete(AuditLedgerEvent).where(
+        AuditLedgerEvent.id == row.id))
+    session.rollback()
+"""
+    assert "core_delete" in kinds(scan_source(src, "t.py"))
+
+
+def test_detects_core_construct_update_outside_a_guarded_test():
+    src = """
+from sqlalchemy import update
+from backend.db.models import AuditLedgerEvent
+def sweep(session):
+    session.execute(update(AuditLedgerEvent).values(action='rewritten'))
+"""
+    assert "core_update" in kinds(scan_source(src, "t.py"))
+
+
+def test_core_delete_on_an_unrelated_table_is_not_flagged():
+    """The guard must not over-block: an unrelated table is not the ledger."""
+    src = """
+from sqlalchemy import delete
+from backend.db.models import Project
+def cleanup(session):
+    session.execute(delete(Project))
+"""
+    assert scan_source(src, "t.py") == []
+
+
 def test_detects_raw_sql_delete():
     src = """
 def cleanup(session):

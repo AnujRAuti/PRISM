@@ -120,8 +120,18 @@ def test_a_baseline_entry_that_stops_being_true_also_fails():
     leaves the entry behind, `compare()` must report it as `resolved` and the
     verdict must be unclean. Without this, the baseline could grow into a
     suppression list that quietly tolerates whatever it once described.
+
+    The entry to stale-out is taken from the current baseline rather than
+    hardcoded. BE-029 resolved the previously hardcoded
+    ``add_index|users|ix_users_email`` (duplicate identity retired, then the
+    unique index created), which is exactly how a named example rots: the test
+    stopped proving anything about staleness.
     """
-    stale = "add_index|users|ix_users_email"
+    assert ACCEPTED_SIGNATURES, (
+        "The baseline is empty, so there is nothing to stale out; the "
+        "one-directional check this test exists to prove cannot be exercised."
+    )
+    stale = sorted(ACCEPTED_SIGNATURES)[0]
     observed = sorted(ACCEPTED_SIGNATURES - {stale})
     verdict = compare(observed)
     assert verdict.resolved == (stale,), (

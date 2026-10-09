@@ -27,6 +27,11 @@ It forbids permanently destroying history. So:
 * UPDATE via ``.update({...})`` (a SQLAlchemy bulk UPDATE) is treated as
   destructive, because bulk updates are used for cleanup sweeps and are
   not the controlled single-row pattern the tamper tests use.
+* The same rules apply to the SQLAlchemy **Core construct** forms,
+  ``delete(...)`` and ``update(...)``. They were added in BE-029 Phase G,
+  which found that a test written as ``delete(AuditLedgerEvent).where(...)``
+  slipped past the previous, string-and-method-only patterns. A guard whose
+  coverage depends on which spelling a test happened to use is not a guard.
 """
 
 from __future__ import annotations
@@ -45,6 +50,14 @@ _TABLE_NAME = "audit_ledger_events"
 _ALLOWED_UPDATE_TESTS = frozenset({
     "test_tamper_detection_with_rollback",
     "test_broken_link_detection_with_rollback",
+    # BE-029 Phase G. Qualifies on the stated rule, not on its name: it
+    # rewrites one payload field of a row the same test appended seconds
+    # earlier, calls rollback(), and then re-reads the row from a fresh
+    # session to assert the rewrite never landed. DELETE gets no such entry
+    # -- removing a ledger row is never legitimate here, even rolled back,
+    # so that half of the detection property is proven on a disposable clone
+    # instead (BE-029 results §14.6).
+    "test_rewriting_an_event_is_detected_by_hash_recomputation",
 })
 
 
@@ -114,6 +127,51 @@ def _function_guarantees_rollback(fn: ast.AST) -> bool:
     return False
 
 
+def _construct_name(node: ast.Call) -> str | None:
+    """The callee's name for ``name(...)`` and ``module.name(...)`` calls."""
+    if isinstance(node.func, ast.Name):
+        return node.func.id
+    if isinstance(node.func, ast.Attribute):
+        return node.func.attr
+    return None
+
+
+def _is_ledger_entity(node: ast.AST) -> bool:
+    """True for the mapped class itself, or a string naming its table.
+
+    Deliberately narrower than ``_is_ledger_reference``: ``update(...)`` is
+    also how a dict is merged, and a dict whose keys happen to mention a ledger
+    column is not a statement against the ledger table.
+    """
+    if isinstance(node, ast.Name) and node.id == _MODEL_NAME:
+        return True
+    if isinstance(node, ast.Attribute) and node.attr == _MODEL_NAME:
+        return True
+    return (isinstance(node, ast.Constant) and isinstance(node.value, str)
+            and _TABLE_NAME in node.value.lower())
+
+
+def _core_construct(node: ast.AST) -> str | None:
+    """'delete' | 'update' for a Core DML construct against the ledger.
+
+    Only the construct spellings -- ``delete(Model)``, ``sa.update("table")``.
+    A chained ``session.query(Model).filter(...).update({...})`` is *not* one of
+    them; the existing rules already own those, and this helper must not steal
+    their violation kind.
+    """
+    if not isinstance(node, ast.Call) or not node.args:
+        return None
+    callee = node.func
+    if not (isinstance(callee, ast.Name)
+            or (isinstance(callee, ast.Attribute)
+                and isinstance(callee.value, ast.Name))):
+        return None
+    name = _construct_name(node)
+    if name not in {"delete", "update"}:
+        return None
+    return name if _is_ledger_entity(node.args[0]) else None
+
+
 def scan_source(source: str, filename: str) -> list[Violation]:
     """Scan one Python source string; return every violation found."""
     violations: list[Violation] = []
@@ -126,6 +184,32 @@ def scan_source(source: str, filename: str) -> list[Violation]:
             parents[id(child)] = node
 
     for node in ast.walk(tree):
+        # --- Core DML constructs: delete(AuditLedgerEvent) / update(table)
+        # BE-029 Phase G found these were invisible to the guard: the rule set
+        # covered ``session.query(...).delete()`` and raw SQL strings, but a
+        # statement built as ``delete(AuditLedgerEvent).where(...)`` matched
+        # neither, so a test that deleted ledger rows passed. Detection of the
+        # pattern is the whole point of this guard, so the construct form is
+        # now covered explicitly.
+        construct = _core_construct(node)
+        if construct is not None:
+            enclosing = _enclosing_test_name(parents, node)
+            rollback_ok = (enclosing in _ALLOWED_UPDATE_TESTS
+                           and _function_guarantees_rollback(
+                               _find_enclosing_function(parents, node)))
+            if construct == "delete":
+                violations.append(Violation(
+                    filename, node.lineno, "core_delete",
+                    "SQLAlchemy Core DELETE against the audit ledger",
+                ))
+                continue
+            if not rollback_ok:
+                violations.append(Violation(
+                    filename, node.lineno, "core_update",
+                    "SQLAlchemy Core UPDATE against the audit ledger",
+                ))
+            continue
+
         # --- ORM: session.query(AuditLedgerEvent)...delete()
         if (isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Attribute)

@@ -3431,3 +3431,39 @@ class FieldCaptureOperation(Base):
             postgresql_where=text("status = 'CONFLICT' AND resolution_status = 'UNRESOLVED'"),
         ),
     )
+
+
+# ---------------------------------------------------------------------------
+# BE-029 User Identity Constraint Remediation
+# ---------------------------------------------------------------------------
+
+class IdentityRetirementArchive(Base):
+    """Literal pre-retirement snapshots of rows BE-029 retired (migration
+    ``r8s9t0u1v028``).
+
+    One row per retired row. ``row_json`` is ``to_jsonb(source_table_row)``, so
+    the original primary key and every column value are preserved verbatim and
+    the migration's ``downgrade()`` can restore the row literally rather than
+    reconstructing it. The table is written only by that migration; it is not a
+    general audit mechanism (the audit ledger stays append-only and untouched).
+
+    Declared here because the BE-028 drift gate compares the database against
+    this metadata: a real table no model describes is reported as
+    ``remove_table`` drift.
+    """
+
+    __tablename__ = "identity_retirement_archive"
+
+    source_table = Column(String(32), primary_key=True, nullable=False)
+    source_id = Column(UUID(as_uuid=False), primary_key=True, nullable=False)
+    row_json = Column(JSONB, nullable=False)
+    retired_at = Column(DateTime(timezone=True), server_default=func.now(),
+                        nullable=False)
+
+    __table_args__ = (
+        # Only the three tables in BE-029's retirement order.
+        CheckConstraint(
+            "source_table IN ('users', 'projects', 'evidence')",
+            name="ck_retirement_archive_source_table",
+        ),
+    )

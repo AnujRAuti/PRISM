@@ -13,6 +13,7 @@ permission nothing administrative grants).
 """
 
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -292,6 +293,33 @@ def _audit_admin(
         resource_id=resource_id, actor_id=actor_id, project_id=project_id,
         payload=payload, source="authorization_service",
     )
+
+
+#: The database objects that make an identity attribute unique (BE-029
+#: Option A). A violation of one of these is a conflict the caller can
+#: correct; every other integrity failure is a defect behind the request and
+#: must not be reported to the client as a duplicate identity.
+IDENTITY_UNIQUE_OBJECTS = frozenset({
+    "ix_users_username",
+    "ix_users_email",
+    "uq_user_identity_subject",
+})
+
+
+def identity_conflict(error) -> str | None:
+    """Return the identity object the database refused, or ``None``.
+
+    Keyed on the constraint/index name, not on the exception type:
+    ``IntegrityError`` also wraps NOT NULL, foreign-key and primary-key
+    failures, and a blanket ``IntegrityError`` -> 409 would dress those up as
+    duplicate identities.
+    """
+    orig = getattr(error, "orig", None)
+    name = getattr(getattr(orig, "diag", None), "constraint_name", None)
+    if name is None:
+        match = re.search(r'unique constraint "([^"]+)"', str(orig), re.IGNORECASE)
+        name = match.group(1) if match else None
+    return name if name in IDENTITY_UNIQUE_OBJECTS else None
 
 
 def create_user(

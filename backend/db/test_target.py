@@ -15,6 +15,10 @@ in priority order:
    It must NEVER fall back to ``DATABASE_URL``/``pofa_dev``: a silent
    fallback is precisely the failure mode BE-023 exists to eliminate.
 3. Refusing to run is correct behaviour, not an error to be worked around.
+4. Once resolved, the target is *armed* as the pytest database context
+   (``backend.db.safety``). Configuring the right URL is not the same as
+   reaching the right database, so engine construction now asks the server
+   which database it is on and refuses any other name.
 
 This module deliberately imports nothing from ``backend.db.session`` or
 ``backend.core.config``'s engine machinery, because it has to run *before*
@@ -158,7 +162,7 @@ def resolve_test_database_url(env: dict | None = None) -> TestDatabaseTarget:
 
 
 def apply_test_database_url(env: dict | None = None) -> TestDatabaseTarget:
-    """Validate the test target and publish it as ``DATABASE_URL``.
+    """Validate the test target, publish it, and arm the write guard for it.
 
     Called from ``tests/conftest.py`` *before* ``backend.db.session`` is
     imported, so the engine is constructed against the test database while
@@ -168,7 +172,17 @@ def apply_test_database_url(env: dict | None = None) -> TestDatabaseTarget:
     The original ``DATABASE_URL`` is stashed under
     ``POA_ORIGINAL_DATABASE_URL`` for diagnostics and never used for
     connections during the test run.
+
+    Arming the guard (BE-029) is what turns "we configured the test database"
+    into "we proved we are connected to it": ``backend.db.session.get_engine``
+    asks the server for ``current_database()`` and refuses to hand out an
+    engine that reports any other name.
     """
+    # Imported here rather than at module level: backend.db.safety parses URLs
+    # with a helper that lives in this module, so a top-level import would be
+    # circular, and this module must stay free of engine machinery.
+    from backend.db.safety import arm_pytest
+
     target = resolve_test_database_url(env)
     source = env if env is not None else os.environ
 
@@ -180,4 +194,5 @@ def apply_test_database_url(env: dict | None = None) -> TestDatabaseTarget:
 
     source["DATABASE_URL"] = target.url
     source["POA_TEST_DATABASE_URL"] = target.url
+    arm_pytest(target.database_name, source)
     return target

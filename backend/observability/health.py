@@ -14,7 +14,7 @@ from typing import Any, Dict, Tuple
 from backend.core.config import settings
 
 try:  # pragma: no cover - availability probed once at import
-    from sqlalchemy import create_engine, text
+    from sqlalchemy import text
 
     SQLALCHEMY_AVAILABLE = True
 except ImportError:  # pragma: no cover
@@ -79,11 +79,24 @@ class PostgresHealthCheck(HealthCheck):
             return HealthStatus.UNKNOWN, {
                 "message": "SQLAlchemy not available for PostgreSQL check"
             }
-        engine = None
         try:
-            engine = create_engine(settings.database_url)
-            with engine.connect() as conn:
-                conn.execute(text("SELECT 1"))
+            # Imported here, not at module level: backend.db.session imports
+            # SQLAlchemy unconditionally, and this module degrades gracefully
+            # when SQLAlchemy is absent.
+            from backend.db.session import build_guarded_engine
+
+            # Probed against the DSN configured *now*, not the cached
+            # application engine: readiness has to be able to report a database
+            # the process cannot reach even when the engine pool was opened
+            # before the outage. build_guarded_engine is still the single engine
+            # factory, so the BE-029 armed-context database guard applies here
+            # too, and this check must dispose only the engine it made itself.
+            engine = build_guarded_engine(settings.database_url)
+            try:
+                with engine.connect() as conn:
+                    conn.execute(text("SELECT 1"))
+            finally:
+                engine.dispose()
             return HealthStatus.HEALTHY, {
                 "message": "PostgreSQL connection successful"
             }
@@ -93,12 +106,6 @@ class PostgresHealthCheck(HealthCheck):
                 "message": "PostgreSQL connection failed",
                 "error": str(e) if settings.environment == "development" else "connection_failed",
             }
-        finally:
-            if engine is not None:
-                try:
-                    engine.dispose()
-                except Exception:
-                    pass
 
 
 class RedisHealthCheck(HealthCheck):

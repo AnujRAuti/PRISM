@@ -56,8 +56,12 @@ def test_application_health_check():
 def test_postgres_health_check_success(mock_settings):
     """Test PostgreSQL health check when successful."""
     mock_settings.database_url = "postgresql://test:test@localhost:5432/test"
-    
-    with patch('backend.observability.health.create_engine') as mock_create_engine:
+
+    # The check builds its own engine through the application's single guarded
+    # engine factory (backend.db.session.build_guarded_engine), because that is
+    # the one place the BE-029 database guard can run. Patch that seam rather
+    # than a private create_engine.
+    with patch('backend.db.session.build_guarded_engine') as mock_build:
         # MagicMock (not Mock) so ``engine.connect()`` supports the ``with``
         # statement. Production uses ``with engine.connect() as conn:`` — the
         # SQLAlchemy context-manager contract that both closes and rolls back
@@ -71,7 +75,7 @@ def test_postgres_health_check_success(mock_settings):
         mock_engine.connect.return_value.__enter__.return_value = mock_conn
         mock_engine.connect.return_value.__exit__.return_value = False
         mock_conn.execute.return_value = mock_result
-        mock_create_engine.return_value = mock_engine
+        mock_build.return_value = mock_engine
 
         check = PostgresHealthCheck()
         status, details = check.check()
@@ -85,8 +89,8 @@ def test_postgres_health_check_failure(mock_settings):
     """Test PostgreSQL health check when it fails."""
     mock_settings.database_url = "postgresql://test:test@localhost:5432/test"
     
-    with patch('backend.observability.health.create_engine') as mock_create_engine:
-        mock_create_engine.side_effect = Exception("Connection failed")
+    with patch('backend.db.session.build_guarded_engine') as mock_build:
+        mock_build.side_effect = Exception("Connection failed")
         
         check = PostgresHealthCheck()
         status, details = check.check()
