@@ -4124,6 +4124,7 @@
     "/api/v1/auth/roles": {
       "get": {
         "summary": "List roles (requires role.manage)",
+        "description": "Report-only enumeration. Returns a bare list ordered by name and intentionally carries no {items,limit,offset,total} envelope (unlike /users, /organizations and /units); limit/offset slice the list but a truncated page is not distinguishable from a complete one. Owner decision BE-030 \u00a716: keep the bare-list shape for these fixed vocabulary enumerations.",
         "operationId": "list_roles_api_v1_auth_roles_get",
         "parameters": [
           {
@@ -4187,6 +4188,7 @@
     "/api/v1/auth/permissions": {
       "get": {
         "summary": "List permissions (requires role.manage)",
+        "description": "Report-only enumeration. Returns a bare list ordered by name and, like /roles, intentionally carries no {items,limit,offset,total} envelope; a truncated page is not distinguishable from a complete one. Owner decision BE-030 \u00a716: keep the bare-list shape for these fixed vocabulary enumerations.",
         "operationId": "list_permissions_api_v1_auth_permissions_get",
         "parameters": [
           {

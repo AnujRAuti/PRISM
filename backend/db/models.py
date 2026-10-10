@@ -1126,6 +1126,17 @@ class AuditLedgerEvent(Base):
         Index("ix_audit_ledger_type", "event_type"),
         Index("ix_audit_ledger_resource", "resource_type", "resource_id"),
         Index("ix_audit_ledger_project", "project_id"),
+        # BE-030 §11: the domain vocabulary lives in Python; this pins it in SQL.
+        # The value list is GENERATED from AUDIT_EVENT_TYPES so the model and the
+        # migration never diverge. NOTE (measured BE-030 §2a): Alembic 1.11.2 does
+        # not compare CHECK constraints, so the drift gate cannot see this object --
+        # the migration is authoritative and a catalog-pinned test is the guard.
+        CheckConstraint(
+            "event_type IN ("
+            + ", ".join(f"'{value}'" for value in sorted(AUDIT_EVENT_TYPES))
+            + ")",
+            name="ck_audit_ledger_event_type_domain",
+        ),
     )
 
 

@@ -58,6 +58,15 @@ _ALLOWED_UPDATE_TESTS = frozenset({
     # so that half of the detection property is proven on a disposable clone
     # instead (BE-029 results §14.6).
     "test_rewriting_an_event_is_detected_by_hash_recomputation",
+    # BE-030 §13: enforcement tests that attempt a raw UPDATE to prove the
+    # refusing trigger / audited hatch. Same sanctioned-tamper concept, not a
+    # loosening -- the rule is unchanged (a named function that guarantees
+    # rollback), and DELETE/TRUNCATE stay unconditional violations with no
+    # allowlist, so the refusal of DELETE is proven on a disposable clone.
+    "test_update_without_hatch_is_refused",
+    "test_hatch_permits_and_records_sanctioned_update",
+    "test_append_refused_after_tail_tampering",
+    "test_anchored_verification_catches_mid_chain_tampering",
 })
 
 

@@ -137,6 +137,14 @@ the moment it ships — measured: the writer currently appends into invalid hist
 rejected on measurement, not on taste. Any option other than D changes runtime behaviour of every
 audited write and needs the API/workers stopped during rollout.
 
+> **Measured qualification, 2026-10-10 (feasibility doc §2e).** A is a **one-shot** control, not a
+> standing guard. It refuses only the first append whose *immediate predecessor* is damaged; after
+> that refusal, a later honest write re-bases onto a valid row and everything downstream becomes
+> locally valid, so A never fires again for the original damage. A therefore catches the re-basing
+> attack only if someone is appending; its durability against a tampered middle rests entirely on §9's
+> anchored verification (and, for tail rewrites, D-2-C's checkpoint). The owner should read A as
+> "refuse the next bad write," not "detect that history was broken."
+
 ## 4.1 Do not guess these policies
 
 Do not infer D-1 or D-2 from the code, from a comment, from a prior task document, or from what
@@ -193,6 +201,15 @@ Two rejections must be written down so nobody re-proposes them from a blog post:
   this real requires a dedicated non-owner application role — deployment and credential work far
   outside a migration. Treat it as a separate task if the owner wants defence in depth on top of D-1.
 
+> **New hole, measured 2026-10-10 (feasibility doc §2f).** Even with the `BEFORE ROW` trigger
+> installed, `TRUNCATE audit_ledger_events` succeeds: a `FOR EACH ROW` trigger does not fire on
+> `TRUNCATE`, §7.7 bars a `TRUNCATE` trigger as a fix, and `REVOKE` is inert while the application
+> connects as the table owner. Measured on a disposable clone: truncating the full ledger left the
+> trigger live, and the next three `append_event` calls rebuilt a chain that `verify_chain()` reports
+> `valid=True` with `sequence_number` restarting at 1 — a silently reset ledger is *locally* valid.
+> Choosing D-1-A therefore does **not** close TRUNCATE; the owner must accept it as an open hole until
+> a non-owner role exists, or D-1-C/other is reconsidered with this fact in view.
+
 ---
 
 # 7. TRIGGER DESIGN CONSTRAINTS
@@ -210,6 +227,11 @@ style preference.
    policy refusal from an ordinary SQL error, and so the message is stable for tests to assert on.
 4. **A bare `%` in a `RAISE` format string is a syntax hazard.** One placeholder per argument, and no
    unescaped `%` elsewhere in the literal.
+   > **Corrected 2026-10-10 (feasibility doc §2b).** Measurement located this hazard in
+   > SQLAlchemy's psycopg2 dialect, not in PostgreSQL: the identical function body compiled and
+   > ran fine when sent through raw psycopg2, and only the ORM/`op.execute` connection path
+   > doubled a bare `%` into `%%` and broke it. The reliable fix is a `%`-free `RAISE` body (branch
+   > per `TG_OP`, no placeholders), which removes the dialect entirely as a variable.
 5. **The D-1-A exception path must be narrow and self-documenting**: session-scoped (`SET LOCAL`),
    never role-broad, and its use must itself be recorded (a ledger event or an application log line
    with the same `source` discipline the writer already uses).
@@ -308,6 +330,12 @@ Requirements:
 2. Declare it in **both** the model and the migration. F-14 shows the drift machinery does not see
    triggers or rules; a named `CHECK` on a mapped table is visible, and omitting it from the model
    would make the gate report real drift.
+   > **Corrected 2026-10-10 (feasibility doc §2a).** Measurement falsified the second half of this
+   > sentence: Alembic 1.11.2's `compare_metadata` does not inspect `CHECK` constraints at all, so
+   > installing the event-type `CHECK` moves the drift count by **0** operations and the gate reports
+   > CLEAN with or without it. Declaring it in the model is still correct hygiene, but do **not**
+   > rely on the drift gate to catch an absent `CHECK` — §13.6's catalog-pinned test is the only
+   > protection, exactly as it is for triggers and rules.
 3. A 94-value `IN` list is a maintenance coupling: the Python enum is the source of truth, so the
    migration must be generated from `AUDIT_EVENT_TYPES` and a test must fail if the two diverge
    (§13). Do not hand-copy the list into SQL.

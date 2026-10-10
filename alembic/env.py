@@ -15,7 +15,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from backend.core.config import settings
 from backend.db import safety
 from backend.db.models import Base
-from backend.db.schema_drift_policy import include_object
+from backend.db.schema_drift_policy import (
+    include_object,
+    process_revision_directives,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -29,8 +32,18 @@ config.set_main_option("sqlalchemy.url", settings.database_url)
 
 target_metadata = Base.metadata
 
-# PostGIS installs spatial_ref_sys, which no model describes: without this hook
-# autogenerate proposes dropping it (see backend/db/schema_drift_policy.py).
+# Two exclusions, both owned by backend/db/schema_drift_policy.py so this file and
+# the schema-drift gate cannot disagree about them:
+#
+# * ``include_object`` -- PostGIS installs ``spatial_ref_sys``, which no model
+#   describes; without this hook autogenerate proposes dropping it.
+# * ``process_revision_directives`` -- Alembic 1.11.2 discards the
+#   ``postgresql_nulls_not_distinct`` dialect option when it rebuilds the
+#   reflected ``uq_user_role_scoped`` constraint, so every autogenerate pass
+#   proposes dropping and re-adding a constraint that is already correct. This
+#   hook drops exactly that named pair from revision generation and from
+#   ``alembic check``; it does not touch the model, and the drift gate still
+#   measures the pair because it calls ``compare_metadata()`` directly.
 
 #: Guards migrations the same way the test suite guards writes (BE-029). Alembic
 #: is the most destructive database entry point in the project, so it states its
@@ -68,6 +81,7 @@ def run_migrations_offline():
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         include_object=include_object,
+        process_revision_directives=process_revision_directives,
     )
 
     with context.begin_transaction():
@@ -88,6 +102,7 @@ def run_migrations_online():
             connection=connection,
             target_metadata=target_metadata,
             include_object=include_object,
+            process_revision_directives=process_revision_directives,
         )
 
         with context.begin_transaction():

@@ -21,10 +21,11 @@ import hashlib
 import json
 import logging
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import text
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from backend.db.models import (
@@ -45,6 +46,22 @@ LEDGER_VERSION = AUDIT_LEDGER_VERSION
 GENESIS_HASH = AUDIT_GENESIS_HASH
 
 APPEND_LOCK_KEY = "poa_audit_ledger_append"
+
+
+class LedgerIntegrityError(RuntimeError):
+    """BE-030: the append path refuses to write onto history it cannot trust."""
+
+
+class PredecessorInvalid(LedgerIntegrityError):
+    """BE-030 D-2-A: the immediate predecessor's stored hash fails recomputation.
+
+    This is the re-basing attack (F-5/F-6) caught at the honest write that follows
+    the damage. It is a *one-shot* control — it refuses the first append onto a
+    damaged tail, and after that the writer re-bases onto a valid row — so the
+    durable detection of mid-chain tampering is §9's anchored verification, not
+    this check. A database with gaps but intact rows does NOT trip it: gaps are
+    missing sequences, not corrupted content, so a gapped database stays writable.
+    """
 
 # Payload keys that must never reach the ledger even if a caller passes
 # them (defense in depth; emission sites already pass minimal payloads).
@@ -225,6 +242,15 @@ def append_event(
         sequence_number = 1
         previous_hash = GENESIS_HASH
     else:
+        # D-2-A: recompute the tail's own hash before trusting it as the anchor.
+        # The old code copied ``predecessor.event_hash`` verbatim (F-5), so a row
+        # whose content was edited kept chaining happily — the new event simply
+        # inherited the tampered hash. Refusing here is the one-shot write guard.
+        ok, failure = verify_event(predecessor)
+        if not ok:
+            raise PredecessorInvalid(
+                f"refusing to append onto sequence {predecessor.sequence_number}: "
+                f"{failure}")
         sequence_number = int(predecessor.sequence_number) + 1
         previous_hash = str(predecessor.event_hash)
     event_hash = compute_event_hash(
@@ -355,3 +381,85 @@ def verify_chain(
         "last_sequence": rows[-1].sequence_number,
         "failures": failures,
     }
+
+
+# ---------------------------------------------------------------------------
+# BE-030 §9: anchored verification, checkpoint digest, audited mutation hatch
+# ---------------------------------------------------------------------------
+
+#: Must equal ``HATCH_GUC`` in migration ``t0u1v2w3x030``. A §13 test pins it.
+HATCH_GUC = "poa.ledger_mutation_exception"
+
+
+@contextmanager
+def sanctioned_ledger_mutation(db: Session, reason: str):
+    """Open the D-1-A exception hatch for one sanctioned, rolled-back-safe edit.
+
+    The refusing trigger blocks every ``UPDATE``/``DELETE`` unless the session
+    sets ``poa.ledger_mutation_exception``. That escape is deliberately narrow and
+    observable: it is ``SET LOCAL`` (a plain ``SET`` leaks the hatch for the whole
+    pooled connection — measured §2c), it is scoped to the caller's transaction, and
+    its use is recorded application-side because §7.7 forbids the trigger itself
+    from writing to the ledger. Callers are the sanctioned tamper tests and, if the
+    owner ever approves one, a dedicated repair tool — never ordinary request code.
+    """
+    logger.warning(
+        "AUDIT_LEDGER_HATCH_OPEN reason=%r request_id=%r (SET LOCAL %s)",
+        reason, _request_id(), HATCH_GUC,
+    )
+    db.execute(text(f"SET LOCAL {HATCH_GUC} = 'true'"))
+    try:
+        yield
+    finally:
+        # SET LOCAL is transaction-scoped: commit or rollback discards it. Nothing to
+        # undo mid-transaction; this line only records that the sanctioned scope ended.
+        logger.warning(
+            "AUDIT_LEDGER_HATCH_EXIT reason=%r request_id=%r "
+            "(hatch lives only until the enclosing transaction ends)",
+            reason, _request_id(),
+        )
+
+
+def ledger_checkpoint(db: Session) -> dict:
+    """The chain's current head as a small, loggable digest.
+
+    The point of publishing this *outside* the database (application log / metrics)
+    is the measured TRUNCATE hole (§2f): a ``FOR EACH ROW`` trigger does not fire on
+    ``TRUNCATE``, so a wiped ledger plus a few fresh appends rebuilds a chain that
+    ``verify_chain`` reports ``valid=True`` starting again at sequence 1. A stored
+    digest lets an operator tell a genuine continuation from a silent reset.
+    """
+    head = audit_repo.latest(db)
+    row_count = int(db.query(AuditLedgerEvent).count())
+    if head is None:
+        return {"rows": row_count, "min_sequence": None, "max_sequence": None,
+                "tail_event_hash": None, "tail_previous_hash": None}
+    return {
+        "rows": row_count,
+        "min_sequence": int(
+            db.query(func.min(AuditLedgerEvent.sequence_number)).scalar() or 0),
+        "max_sequence": int(head.sequence_number),
+        "tail_event_hash": str(head.event_hash),
+        "tail_previous_hash": str(head.previous_hash),
+    }
+
+
+def verify_chain_anchored(db: Session) -> dict:
+    """Verify the WHOLE chain from sequence 1 (or its earliest survivor) and publish
+    the checkpoint digest. This is the durable read-path control behind D-2-A.
+
+    A bounded window can say ``valid`` while the full range has gaps (F-6): the
+    immediate-predecessor writer check is one-shot (§2e), so this anchored walk —
+    not a windowed probe — is what an operator or scheduler must run to detect
+    tampering that no longer touches the tail.
+    """
+    result = verify_chain(db)
+    checkpoint = ledger_checkpoint(db)
+    logger.info(
+        "audit ledger anchored verify: valid=%s checked=%d first=%s last=%s "
+        "failures=%d checkpoint=(rows=%d min_seq=%s tail_hash=%s)",
+        result["valid"], result["checked_events"], result["first_sequence"],
+        result["last_sequence"], len(result["failures"]), checkpoint["rows"],
+        checkpoint["min_sequence"], (checkpoint["tail_event_hash"] or "")[:12],
+    )
+    return {**result, "checkpoint": checkpoint}

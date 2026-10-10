@@ -446,6 +446,13 @@ def update_unit(
     "/roles",
     response_model=list[RoleResponse],
     summary="List roles (requires role.manage)",
+    description=(
+        "Report-only enumeration. Returns a bare list ordered by name and intentionally "
+        "carries no {items,limit,offset,total} envelope (unlike /users, /organizations and "
+        "/units); limit/offset slice the list but a truncated page is not distinguishable "
+        "from a complete one. Owner decision BE-030 §16: keep the bare-list shape for these "
+        "fixed vocabulary enumerations."
+    ),
     responses=_error_docs(401, 403),
 )
 def list_roles(
@@ -462,6 +469,12 @@ def list_roles(
     "/permissions",
     response_model=list[PermissionResponse],
     summary="List permissions (requires role.manage)",
+    description=(
+        "Report-only enumeration. Returns a bare list ordered by name and, like /roles, "
+        "intentionally carries no {items,limit,offset,total} envelope; a truncated page is "
+        "not distinguishable from a complete one. Owner decision BE-030 §16: keep the "
+        "bare-list shape for these fixed vocabulary enumerations."
+    ),
     responses=_error_docs(401, 403),
 )
 def list_permissions(

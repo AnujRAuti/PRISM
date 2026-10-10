@@ -239,10 +239,16 @@ def test_tamper_detection_with_rollback():
     row = append_direct()
     session = get_session()
     try:
-        session.execute(
-            text("UPDATE audit_ledger_events SET payload = :p WHERE id = :i"),
-            {"p": '{"probe": "EVIL"}', "i": str(row.id)},
-        )
+        # BE-030 D-1-A: the refusing trigger blocks this UPDATE unless the
+        # session opens the audited SET LOCAL hatch; using the hatch is the
+        # sanctioned, observable tamper-testing path (rolled back below).
+        with audit_service.sanctioned_ledger_mutation(
+            session, "BE-030 tamper-detection proof"
+        ):
+            session.execute(
+                text("UPDATE audit_ledger_events SET payload = :p WHERE id = :i"),
+                {"p": '{"probe": "EVIL"}', "i": str(row.id)},
+            )
         result = audit_service.verify_chain(session)
         assert result["valid"] is False
         assert any("mismatch" in failure for failure in result["failures"])
@@ -258,10 +264,14 @@ def test_broken_link_detection_with_rollback():
     second = append_direct()
     session = get_session()
     try:
-        session.execute(
-            text("UPDATE audit_ledger_events SET previous_hash = :p WHERE id = :i"),
-            {"p": "tampered", "i": str(second.id)},
-        )
+        # BE-030 D-1-A: sanctioned rolled-back tamper proof needs the hatch.
+        with audit_service.sanctioned_ledger_mutation(
+            session, "BE-030 broken-link proof"
+        ):
+            session.execute(
+                text("UPDATE audit_ledger_events SET previous_hash = :p WHERE id = :i"),
+                {"p": "tampered", "i": str(second.id)},
+            )
         result = audit_service.verify_chain(
             session, int(first.sequence_number), int(second.sequence_number))
         assert result["valid"] is False

@@ -50,16 +50,19 @@ VERSIONS_DIR = REPO_ROOT / "alembic" / "versions"
 #: n4o5p6q7r022), then by BE-026 (three field-operations tables, one additive
 #: revision, down_revision o5p6q7r8s025), then by BE-028 (three indexes that
 #: were always declared but never created, down_revision p6q7r8s9t026), then by
-#: BE-029 (two revisions: archive-and-retire the synthetic identity residue, then
-#: the unique username/email indexes it unblocks, down_revision q7r8s9t0u027),
-#: each time after confirming `alembic heads` reports exactly one head.
-EXPECTED_HEAD = "s9t0u1v2w029"
+#: BE-029 (two revisions: archive-and-retire the synthetic identity residue, then the
+#: unique username/email indexes it unblocks, down_revision q7r8s9t0u027), then by
+#: BE-030 (one linear revision: append-only enforcement trigger + event-type CHECK,
+#: down_revision s9t0u1v2w029), each time after confirming `alembic heads` reports
+#: exactly one head.
+EXPECTED_HEAD = "t0u1v2w3x030"
 
 #: BE-023 revision count at the time this test was written (19), advanced by
 #: each milestone that genuinely adds a migration. BE-025 added one: 20.
 #: BE-026 adds one: 21. BE-028 adds one (missing indexes, no data changes): 22.
 #: BE-029 adds two (residue retirement, then identity uniqueness): 24.
-EXPECTED_REVISION_COUNT = 24
+#: BE-030 adds one (append-only enforcement trigger + event-type CHECK): 25.
+EXPECTED_REVISION_COUNT = 25
 
 
 @dataclass(frozen=True)

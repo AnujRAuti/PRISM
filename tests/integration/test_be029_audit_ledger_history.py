@@ -42,7 +42,11 @@ from sqlalchemy import text
 
 from backend.db.models import AuditLedgerEvent
 from backend.db.session import get_session
-from backend.services.audit_ledger import append_event, verify_chain
+from backend.services.audit_ledger import (
+    append_event,
+    sanctioned_ledger_mutation,
+    verify_chain,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -134,10 +138,16 @@ def test_rewriting_an_event_is_detected_by_hash_recomputation(db):
     event = probe_event(db, f"{PROBE}-tamper-target")
     sequence = int(event.sequence_number)
 
-    db.execute(text("UPDATE audit_ledger_events SET payload = '{\"probe\":"
-                    " \"be029-phase-g-history\", \"tampered\": true}'::jsonb"
-                    " WHERE id = :id"), {"id": event.id})
-    db.flush()
+    # BE-030 D-1-A: the refusing trigger permits this sanctioned, rolled-back
+    # rewrite only through the audited SET LOCAL hatch. The edit is still undone
+    # by the fixture's rollback, and the hash recompute still detects it.
+    with sanctioned_ledger_mutation(
+        db, "BE-030 D-1-A sanctioned hash-recompute proof"
+    ):
+        db.execute(text("UPDATE audit_ledger_events SET payload = '{\"probe\":"
+                        " \"be029-phase-g-history\", \"tampered\": true}'::jsonb"
+                        " WHERE id = :id"), {"id": event.id})
+        db.flush()
     db.expire_all()  # the UPDATE went around the ORM; verify against the database
     detected = verify_chain(db, from_sequence=sequence, to_sequence=sequence)
     assert detected["valid"] is False, detected
