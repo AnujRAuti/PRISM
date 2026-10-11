@@ -1,0 +1,60 @@
+# BE-037 Phase A — build-context exclusions for the backend image.
+#
+# The goal is that nothing secret, stateful, or dev-only is ever sent into the
+# build context or baked into the image. Everything the running API and workers
+# need (backend/, alembic/, alembic.ini, requirements.txt) is intentionally NOT
+# listed here.
+
+# --- Secrets and local configuration ---
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+
+# --- Git metadata ---
+.git
+.gitignore
+
+# --- Virtual environments and interpreter caches ---
+.venv/
+venv/
+env/
+backend/.venv*/
+temp_test_env/
+tmp_test_env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Local databases and evidence / model artifacts (runtime state, never image) ---
+*.db
+*.sqlite
+*.sqlite3
+pofa_dev.db
+*.pt
+*.onnx
+*.engine
+test-image.jpg
+
+# --- Logs and scratch verification artifacts ---
+*.log
+stage_d_*.py
+stage_e_*.py
+stage_*_server.log
+diagnostics/
+*.jsonl
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.claude/
+.DS_Store
+
+# --- Local CI/tooling that must not leak into the image ---
+docker-compose.yml
+Dockerfile
+.dockerignore

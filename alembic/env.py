@@ -27,8 +27,12 @@ config = context.config
 # Interpret the config file for Python logging.
 fileConfig(config.config_file_name)
 
-# Set the SQLAlchemy URL from settings
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Set the SQLAlchemy URL from settings. Migrations use the dedicated migration
+# identity (MIGRATION_DATABASE_URL) when one is configured and otherwise fall
+# back to DATABASE_URL, so a production runtime credential (poa_runtime, no DDL
+# rights) is never the identity that runs schema changes. See
+# backend/core/config.py::alembic_database_url.
+config.set_main_option("sqlalchemy.url", settings.alembic_database_url)
 
 target_metadata = Base.metadata
 

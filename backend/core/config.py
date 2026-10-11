@@ -19,6 +19,15 @@ class Settings(BaseSettings):
     # Data stores
     # Use PostgreSQL in development by default (do not use SQLite).
     database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/pofa_dev"
+    # BE-037 Phase A: the identity Alembic connects with. It defaults to
+    # ``database_url`` (see ``migration_database_url`` below) so development,
+    # test and staging setups that provide only DATABASE_URL are unchanged. In a
+    # production deployment the API/workers run as the least-privileged
+    # ``poa_runtime`` role (DATABASE_URL) while migrations run as the owning
+    # ``poa_migrator`` role via this variable, keeping schema DDL off the runtime
+    # credential. ``poa_runtime`` has no DDL rights, so a migration attempted
+    # through it fails loudly rather than silently escalating.
+    migration_database_url: str | None = None
     redis_url: str = "redis://localhost:6379/0"
     analysis_queue_name: str = "pofa:analysis:jobs"
     analysis_max_attempts: int = 3
@@ -75,6 +84,16 @@ class Settings(BaseSettings):
     prometheus_enabled: bool = True
     observability_log_format: str = "json"
     observability_redact_sensitive: bool = True
+
+    @property
+    def alembic_database_url(self) -> str:
+        """The DSN Alembic should connect with.
+
+        Falls back to the runtime ``database_url`` when no dedicated migration
+        identity is configured, so single-credential (dev/test/staging) setups
+        keep working unchanged.
+        """
+        return self.migration_database_url or self.database_url
 
     @property
     def cors_origin_list(self) -> list[str]:
