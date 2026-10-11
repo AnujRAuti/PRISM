@@ -1,6 +1,15 @@
 """Configuration using Pydantic BaseSettings."""
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
+
+#: Values that must never authenticate a real deployment. The placeholder is the
+#: documented development default (``jwt_secret = "changeme"``); the empty string
+#: is what an unset variable collapses to. Rejecting both in production closes the
+#: BE-032 finding that a development default could silently become a production
+#: credential. The minimum length keeps a trivially short hand-set secret out too.
+UNSAFE_JWT_SECRETS = frozenset({"", "changeme"})
+MIN_JWT_SECRET_LENGTH = 32
 
 
 class Settings(BaseSettings):
@@ -72,6 +81,25 @@ class Settings(BaseSettings):
         """The allowlist as a list; an empty or blank value keeps every origin."""
         origins = [o.strip() for o in self.cors_allow_origins.split(",") if o.strip()]
         return origins or ["*"]
+
+    @model_validator(mode="after")
+    def _validate_production_secrets(self):
+        """Refuse a development-default JWT secret in a production deployment.
+
+        Fails at ``Settings()`` construction — i.e. at import time, before any
+        request is served — so a misconfigured production process cannot start.
+        Development, testing and staging keep the permissive default; the value
+        is never echoed into the error.
+        """
+        if self.environment.strip().lower() in {"production", "prod"}:
+            secret = self.jwt_secret or ""
+            if secret in UNSAFE_JWT_SECRETS or len(secret) < MIN_JWT_SECRET_LENGTH:
+                raise ValueError(
+                    "jwt_secret is unsafe for production: set a distinct secret of at "
+                    f"least {MIN_JWT_SECRET_LENGTH} characters (the development default "
+                    "and blank values are rejected). The secret value is not shown here."
+                )
+        return self
 
     class Config:
         env_file = ".env"

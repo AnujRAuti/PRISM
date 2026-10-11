@@ -6,6 +6,13 @@ Executed: 2026-10-08 → 2026-10-09 (scratch proof, then the approved live `pofa
 then the approved follow-up: auth conflict handling + rollback/re-upgrade reversibility proof — §13)
 Branch: `Backend` — **not committed, not pushed** (OQ-6 remains undecided)
 
+> **Corrected by BE-031 (2026-10-10).** The line above records the state *when this results document was
+> first written*. Since then the BE-029 identity work was committed on `Backend` (`22ce7497`), BE-030
+> finalized at HEAD `07cb59a4`, and BE-031 re-verified a clean tree at `07cb59a4`. OQ-6 is therefore
+> **committed**; **it has still not been pushed**, and BE-031 ran no `git fetch`, so the local-vs-remote
+> relationship is not re-established (project memory records the branch as unpushed). OQ-3 remains an
+> open product decision. See the OQ table §1 and `BE-031 Post-BE-030 Operational Readiness Results.md`.
+
 ---
 
 ## 1. Product Decision
@@ -35,10 +42,10 @@ index, and duplicate rows existed in both real databases. That gap is now closed
 | --- | --- | --- | --- |
 | OQ-1 | Option A or B? | **Answered: A** | Unique indexes created by `s9t0u1v2w029`. |
 | OQ-2 | Merge, keep a survivor, or retire the whole duplicate set? | **Answered: retire all** | 19 triples in `pofa_test`, 40 in `pofa_dev` archived and deleted; no survivor was designated, because the owner classified the entire set as synthetic fixture garbage rather than accounts. |
-| OQ-3 | Repair `external_subject` / make it NOT NULL? | **Undecided — not done** | Column left nullable; `uq_user_identity_subject` therefore stays inert for NULL rows (PostgreSQL defaults to NULLS DISTINCT). Covered instead by a test that pins the behaviour: `test_null_external_subject_rows_are_permitted_and_do_not_collide`. |
+| OQ-3 | Repair `external_subject` / make it NOT NULL? | **Undecided — not done (still open per BE-031)** | Column left nullable; `uq_user_identity_subject` therefore stays inert for NULL rows (PostgreSQL defaults to NULLS DISTINCT). Covered instead by a test that pins the behaviour: `test_null_external_subject_rows_are_permitted_and_do_not_collide`. *BE-031 re-verification (2026-10-10): still open.* Re-confirmed in current code that `external_subject` is a **write-only key with no read consumer** (auth resolves on `User.id`); measured `pofa_test` 2,710/2,710 NULL, `pofa_dev` 1,004/1,054 NULL, `identity_provider` distinct = `{local}`. No backfill / NOT NULL done. Four-option decision brief in `BE-031 Post-BE-030 Operational Readiness Results.md` Appendix A. |
 | OQ-4 | Is `pofa_dev` in scope? | **Answered: yes, but last** | `pofa_dev` was verified **untouched** at `n4o5p6q7r022` throughout. All proof work ran on clones. |
 | OQ-5 | Application-level `IntegrityError` handling? | **Answered and done by the follow-up (2026-10-09)** | Was "not done" at the time of the run recorded in §12; it was then established that a *blanket* handler had existed since BE-016 (§13.1). `POST /api/v1/auth/users` now answers 409 only for the three identity objects and lets every other integrity failure stay a 500. |
-| OQ-6 | Commit? | **Undecided — not done** | Working tree holds the change; no `git add`, no commit, no push. |
+| OQ-6 | Commit? | **Committed on `Backend`; not pushed (BE-031 dated reconciliation, 2026-10-10)** | "Not done" was accurate for the run recorded here, but the BE-029 identity work was later committed on `Backend` (`22ce7497` "finalize BE-029 and prepare BE-030"), and BE-030 finalized at HEAD `07cb59a4` "BE-30 Complete". BE-031 verified HEAD `07cb59a4` with a clean tree. **BE-031 performed no `git add`, commit, or push, and ran no `git fetch`, so the local-vs-`origin/Backend` relationship is not re-verified (memory records the branch as unpushed).** Original-run note retained: at that time the working tree held the change uncommitted. |
 
 ---
 

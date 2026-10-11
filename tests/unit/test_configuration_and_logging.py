@@ -7,10 +7,11 @@ while looking perfectly reasonable.
 
 import logging
 
+import pytest
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.main import app
-from backend.core.config import Settings
+from backend.core.config import MIN_JWT_SECRET_LENGTH, Settings
 from backend.core.logging import RequestIdFilter, setup_logging
 
 
@@ -93,3 +94,33 @@ def test_request_id_filter_lives_on_the_handler_not_on_the_root_logger():
         root.handlers[:] = saved_handlers
         root.filters[:] = saved_filters
         root.level = saved_level
+
+
+# ---------------------------------------------------------------------------
+# BE-032R: production JWT-secret guard (config fail-fast, no secret echoed)
+# ---------------------------------------------------------------------------
+
+
+def test_development_and_staging_keep_the_permissive_jwt_default():
+    """Only production is hardened; local workflows must not break."""
+    assert Settings(environment="development").jwt_secret == "changeme"
+    assert Settings(environment="staging").jwt_secret == "changeme"
+
+
+@pytest.mark.parametrize("bad", ["changeme", "", "x" * (MIN_JWT_SECRET_LENGTH - 1)])
+def test_production_rejects_an_unsafe_jwt_secret(bad):
+    with pytest.raises(ValueError):
+        Settings(environment="production", jwt_secret=bad)
+
+
+def test_production_accepts_a_strong_jwt_secret():
+    strong = "k" * MIN_JWT_SECRET_LENGTH
+    assert Settings(environment="production", jwt_secret=strong).jwt_secret == strong
+
+
+def test_production_rejection_does_not_echo_the_secret_value():
+    """The refusal must not leak whatever secret was actually configured."""
+    sentinel = "s" * MIN_JWT_SECRET_LENGTH
+    with pytest.raises(ValueError) as excinfo:
+        Settings(environment="prod", jwt_secret="")  # blank is what fails the length check
+    assert sentinel not in str(excinfo.value)

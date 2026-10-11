@@ -49,3 +49,38 @@ class AuditVerificationResponse(BaseModel):
     first_sequence: int | None = None
     last_sequence: int | None = None
     failures: list[str] = Field(default_factory=list)
+
+
+class AuditLedgerCheckpoint(BaseModel):
+    """The durable head digest published outside the ledger (anti-TRUNCATE)."""
+
+    rows: int
+    min_sequence: int | None = None
+    max_sequence: int | None = None
+    tail_event_hash: str | None = None
+    tail_previous_hash: str | None = None
+
+
+class AuditIntegrityClassification(BaseModel):
+    """BE-032R F-04: findings labelled against a reviewed historical baseline."""
+
+    status: str
+    degraded: bool
+    known_historical_gaps: list[str] = Field(default_factory=list)
+    new_gaps: list[str] = Field(default_factory=list)
+    hard_anomalies: list[str] = Field(default_factory=list)
+    baseline_name: str
+    baseline_version: int
+
+
+class AuditAnchoredVerificationResponse(BaseModel):
+    """BE-032R F-03: the anchored whole-chain walk with checkpoint + classification."""
+
+    valid: bool
+    checked_events: int
+    first_sequence: int | None = None
+    last_sequence: int | None = None
+    failures: list[str] = Field(default_factory=list)
+    checkpoint: AuditLedgerCheckpoint
+    classification: AuditIntegrityClassification
+    writer_policy: str

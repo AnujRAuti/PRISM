@@ -67,6 +67,14 @@ _ALLOWED_UPDATE_TESTS = frozenset({
     "test_hatch_permits_and_records_sanctioned_update",
     "test_append_refused_after_tail_tampering",
     "test_anchored_verification_catches_mid_chain_tampering",
+    # BE-032R: proves the classified/anchored walk reports a mid-chain tamper as
+    # a new_anomaly/degraded, then rolls back. Same sanctioned-tamper concept --
+    # it rewrites one payload field of a row the same test appended seconds
+    # earlier (via the audited hatch), db.rollback() in a finally block, and
+    # re-reads from a fresh session to assert the rewrite never landed. The rule
+    # is unchanged; DELETE/TRUNCATE stay unconditional violations with no
+    # allowlist.
+    "test_midchain_tamper_degrades_and_a_rollback_restores_clean",
 })
 
 

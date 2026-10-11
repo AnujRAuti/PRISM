@@ -36,6 +36,10 @@ from backend.db.models import (
     AuditLedgerEvent,
 )
 from backend.repositories import audit_ledger as audit_repo
+from backend.services.audit_integrity_baseline import (
+    classify_findings,
+    resolve_baseline,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -463,3 +467,73 @@ def verify_chain_anchored(db: Session) -> dict:
         checkpoint["min_sequence"], (checkpoint["tail_event_hash"] or "")[:12],
     )
     return {**result, "checkpoint": checkpoint}
+
+
+# ---------------------------------------------------------------------------
+# BE-032R D-CHAIN: the explicit, documented audit-writer integrity policy.
+# ---------------------------------------------------------------------------
+
+#: Selected policy — controlled, auditable continuation. Chosen over strict
+#: refusal because `pofa_dev` carries seven *preserved* historical gaps (§3.2 bars
+#: repairing them) that must not freeze every audited write on that database; and
+#: over a governed auto-recovery because no such repair is permitted.
+#:
+#: It is safe because the guarantees it rests on are independent of the historical
+#: gaps:
+#:   * D-2-A recomputes the *immediate predecessor's* hash before linking onto it,
+#:     so a cryptographically damaged tail raises `PredecessorInvalid` and the
+#:     append is refused. Historical gaps are *missing rows*, not *edited rows*,
+#:     so they never satisfy that refusal condition.
+#:   * A new gap or a mid-chain edit is caught by the durable anchored walk
+#:     (`verify_chain_anchored` / `verify_chain_classified`), not by the writer,
+#:     because the writer derives its link from `MAX(sequence)` and therefore never
+#:     observes a hole in the middle of history.
+#:   * Under the classification below, "continuation is acceptable" requires the
+#:     ledger to be either clean or `known_historical_only`; any `new_anomaly`
+#:     (unrecognised gap) or `degraded` (hash mismatch / missing predecessor)
+#:     posture is fail-closed for the operator even though the writer itself only
+#:     guards its immediate predecessor.
+#:
+#: No automatic repair, reinsertion, renumbering or deletion of history is
+#: permitted under this policy (§3.2). Historical gaps stay visible as findings.
+LEDGER_WRITER_POLICY = "controlled_continuation"
+
+
+def writer_policy_statement() -> dict:
+    """The D-CHAIN policy in machine- and log-readable form for runbooks."""
+    return {
+        "policy": LEDGER_WRITER_POLICY,
+        "writer_guards": "immediate-predecessor hash recomputation (D-2-A)",
+        "durable_detection": "anchored whole-chain verify_chain_classified",
+        "continuation_allowed_when": [
+            "clean", "known_historical_only",
+        ],
+        "fail_closed_when": ["new_anomaly", "degraded"],
+        "history_repair_permitted": False,
+    }
+
+
+def verify_chain_classified(
+    db: Session, baseline: str | None = None
+) -> dict:
+    """Anchored whole-chain verification plus the historical-gap classification.
+
+    This is the durable read-path control (F-03/F-04): it runs the anchored walk,
+    then labels each finding against a *named, reviewed* baseline. With no baseline
+    it defaults to the safe empty one, so nothing is blessed as historical. Findings
+    are attached, never removed — a `known_historical_only` ledger still reports
+    ``valid=False`` with the gaps listed verbatim.
+    """
+    resolved = resolve_baseline(baseline)
+    anchored = verify_chain_anchored(db)
+    classification = classify_findings(anchored["failures"], resolved)
+    logger.info(
+        "audit ledger classified verify: status=%s degraded=%s known_gaps=%d "
+        "new_gaps=%d hard_anomalies=%d baseline=%s@%d",
+        classification["status"], classification["degraded"],
+        len(classification["known_historical_gaps"]),
+        len(classification["new_gaps"]), len(classification["hard_anomalies"]),
+        resolved.name, resolved.version,
+    )
+    return {**anchored, "classification": classification,
+            "writer_policy": LEDGER_WRITER_POLICY}

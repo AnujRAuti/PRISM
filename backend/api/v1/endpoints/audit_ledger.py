@@ -9,11 +9,13 @@ from sqlalchemy.orm import Session
 from backend.db.session import get_db
 from backend.repositories import audit_ledger as audit_repo
 from backend.schemas.audit_ledger import (
+    AuditAnchoredVerificationResponse,
     AuditEventListResponse,
     AuditEventResponse,
     AuditVerificationResponse,
 )
 from backend.services import audit_ledger as audit_service
+from backend.services.audit_integrity_baseline import BASELINES
 from backend.security.authorization import require_global
 from backend.services.authorization import Principal
 
@@ -99,3 +101,31 @@ def verify_ledger(
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     return AuditVerificationResponse(**result)
+
+
+@router.get(
+    "/verify/anchored",
+    response_model=AuditAnchoredVerificationResponse,
+    summary="Anchored whole-chain verification with checkpoint and gap classification",
+)
+def verify_ledger_anchored(
+    baseline: str | None = Query(
+        default=None,
+        description=(
+            "Name of a reviewed historical-gap baseline to classify findings "
+            "against. Omitting it uses the safe default (nothing is blessed as "
+            "historical); an unknown name is rejected rather than silently "
+            "ignored."
+        ),
+    ),
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require_global("audit.read")),
+) -> AuditAnchoredVerificationResponse:
+    if baseline is not None and baseline not in BASELINES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unknown baseline {baseline!r}; registered baselines: "
+                   f"{sorted(BASELINES)}",
+        )
+    result = audit_service.verify_chain_classified(db, baseline)
+    return AuditAnchoredVerificationResponse(**result)
