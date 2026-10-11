@@ -253,3 +253,43 @@ into BE-036.
 
 **Net:** BE-036 verdict = **BE-035-D1 CLOSED — WORKER VERIFIED**. Production deployment remains **outside
 this milestone** and **NOT CLEARED** (see §8: no production target/secret store yet).
+
+---
+
+## 10. BE-037 final-milestone reconciliation (2026-10-11)
+
+BE-037 is the final planned backend milestone (§20 — no BE-038). It moved beyond assessment: it
+**closed the inherited security finding BE-036-D1 in the actual request path**, extended the
+production configuration fail-fast, independently **re-measured live `pofa_dev`** integrity and
+least-privilege, and ran the full regression. Verdict: **BLOCKED — FINAL ACCEPTANCE NOT GRANTED**.
+Full evidence: `docs/BE-037 Final Backend Production Deployment and Acceptance Report.md`.
+
+**Why blocked (not a defect):** no confirmed production target, host, database, or approved secret
+store exists in this environment (verified by enumeration — `docker-compose.yml` has only
+`db`/`minio`/`redis`; no app/worker service, no Dockerfile, no prod env, no k8s/CI). Per §10.3/§15.A
+this is reported honestly rather than fabricated. Acceptance would require the first checkbox of §19
+("actual production target positively identified"), which cannot be satisfied here.
+
+| ID | BE-037 disposition | Evidence |
+| --- | --- | --- |
+| **BE-036-D1** | **CLOSED** — redirect/SSRF fixed in the real request path. `_NoRedirectHandler.redirect_request` raises `WebhookRedirectError` before a second socket opens; `deliver_webhook` re-validates the URL each attempt and POSTs through `NO_REDIRECT_OPENER`; a rejected redirect is a permanent, non-retried, single-audit `FAILED`. | `services/webhook.py`, `workers/webhook_worker.py`; `tests/unit/test_be037_webhook_redirect_ssrf.py` (24, incl. a control that the unfixed opener *would* follow); `tests/integration/test_be036_webhook_worker.py` (+2). |
+| **Production config** | **CLOSED (config-level)** — `Settings()` in `production`/`prod` now also refuses non-`enforcing` `auth_mode`, enabled `auth_dev_tokens_enabled`, and wildcard `cors_allow_origins` (credentials are on), alongside the BE-032R JWT guard. No secret echoed. | `backend/core/config.py`; `tests/unit/test_configuration_and_logging.py` (+5). |
+| **F-05 / D-PFD / F-03 / F-04 / D-CHAIN** | **CLOSED-for-dev, re-measured live** — `poa_runtime` on `pofa_dev`: SELECT+INSERT only, UPDATE/DELETE/TRUNCATE + `alembic_version` read **denied**, non-superuser; revision `t0u1v2w3x030`; ledger **6023**; `verify_chain_classified` → `known_historical_only`, degraded=false, **7 known / 0 new / 0 hard**, checkpoint 6023 (tail `c1c012687c44`). Production rows: **BLOCKED (no prod target)**. | Read-only probe `Scratch/be037/be037_verify.py`; pinned by BE-030/BE-032R enforcement + anchored-verify tests. |
+| **OQ-3** | **OPEN** — unchanged; identity contract preserved, no speculative change. Product decision only. | `test_be029_identity_contract.py`. |
+| **D-RESTART** | Dev done (BE-035/036). **Production restart BLOCKED** — no host. | BE-037 report §G runbook. |
+| **Worker concurrency / crash-strand (§7.2/7.3)** | **Shown N/A for the deployed one-shot model** (no scheduler/queue/parallel workers); no durable `PROCESSING` strand reachable; state machine deliberately **not** refactored. Reclaim atomicity pinned by test. | `test_interrupted_attempt_is_reclaimable_not_stranded`. |
+
+**Regression:** full `tests/unit tests/integration` on `pofa_test` = **`862 passed / 1 skipped / 0
+failed`, EXIT 0** (877.95s), up from BE-036's `831/1/0` by exactly the 31 BE-037 tests. The lone skip
+is the environment-conditional "ML stack genuinely installed" preflight, not a production gate. No
+test weakened; `pofa_dev` only ever read; `pofa_test` was the sole write target.
+
+**Backup posture unchanged (D-BACKUP):** `archive_mode=off` → snapshot-only, **no PITR**. Latest
+verified recovery point is BE-035's dump (`f9583a51…`), restore-verified into a disposable DB then
+dropped.
+
+**Net:** BE-037 verdict = **SECURITY & INTEGRITY WORK COMPLETE — PRODUCTION DEPLOYMENT BLOCKED**.
+Exact unblock action: a deployment owner must identify an authorized production host + DB, stand up an
+approved secret store (distinct ≥32-char `JWT_SECRET`; separate runtime `poa_runtime` + migration
+credentials), then run the BE-037 report §G runbook and re-execute the §F smoke matrix against that
+target. No commit/push performed (HEAD `6aa618d5`; BE-037 changes staged in the working tree only).

@@ -83,13 +83,16 @@ class Settings(BaseSettings):
         return origins or ["*"]
 
     @model_validator(mode="after")
-    def _validate_production_secrets(self):
-        """Refuse a development-default JWT secret in a production deployment.
+    def _validate_production_settings(self):
+        """Refuse any insecure development default in a production deployment.
 
         Fails at ``Settings()`` construction — i.e. at import time, before any
         request is served — so a misconfigured production process cannot start.
-        Development, testing and staging keep the permissive default; the value
-        is never echoed into the error.
+        These are the settings BE-032R closed for ``jwt_secret`` and BE-037
+        extends to the rest of the security-critical surface: each default is
+        safe for local work but silently dangerous if it reaches production.
+        Development, testing and staging keep the permissive defaults; no secret
+        value is ever echoed into the error.
         """
         if self.environment.strip().lower() in {"production", "prod"}:
             secret = self.jwt_secret or ""
@@ -98,6 +101,30 @@ class Settings(BaseSettings):
                     "jwt_secret is unsafe for production: set a distinct secret of at "
                     f"least {MIN_JWT_SECRET_LENGTH} characters (the development default "
                     "and blank values are rejected). The secret value is not shown here."
+                )
+            # Authentication posture: development mode lets anonymous requests
+            # bypass authorization, so production must be explicitly enforcing.
+            if self.auth_mode.strip().lower() != "enforcing":
+                raise ValueError(
+                    "auth_mode must be 'enforcing' in production (got "
+                    f"{self.auth_mode!r}); the development mode accepts anonymous "
+                    "requests and bypasses authorization."
+                )
+            # Development bearer tokens are non-secret identifiers and must be
+            # disabled alongside enforcing mode for any real deployment.
+            if self.auth_dev_tokens_enabled:
+                raise ValueError(
+                    "auth_dev_tokens_enabled must be false in production: the "
+                    "development tokens are non-secret identifiers."
+                )
+            # With allow_credentials on (see backend/app/main.py), a wildcard
+            # origin makes the middleware echo back any caller's Origin, so every
+            # website could read authenticated responses.
+            if "*" in self.cors_origin_list:
+                raise ValueError(
+                    "cors_allow_origins must be an explicit origin allowlist in "
+                    "production; the wildcard '*' is unsafe because credentials are "
+                    "enabled, so list the real frontend origins instead."
                 )
         return self
 

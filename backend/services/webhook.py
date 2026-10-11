@@ -5,6 +5,8 @@ import hmac
 import ipaddress
 import logging
 import socket
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlparse
@@ -111,6 +113,76 @@ def is_url_safe(url: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+# ---------------------------------------------------------------------------
+# SSRF-safe transport (closes BE-036-D1)
+# ---------------------------------------------------------------------------
+
+#: Hard outbound timeout for a single webhook POST. Kept here so the delivery
+#: path and its tests share one value.
+WEBHOOK_DELIVERY_TIMEOUT_SECONDS = 10
+
+
+class WebhookRedirectError(ValueError):
+    """Raised when a webhook endpoint answers with an HTTP redirect.
+
+    It subclasses ``ValueError`` deliberately: ``validate_webhook_url`` already
+    signals an SSRF rejection with ``ValueError``, and the delivery worker turns
+    any ``ValueError`` into a permanent, non-retried failure. A redirect belongs
+    in that same bucket — following it is exactly the bypass BE-036-D1 reported,
+    because ``urllib``'s default opener transparently follows 3xx responses and
+    would then connect to a destination that never passed SSRF validation.
+    """
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Refuse every redirect instead of following it.
+
+    ``redirect_request`` is what the base handler calls before it opens a second
+    connection; raising here means the socket to the redirect target is never
+    created. ``handler_order`` is set below the default redirect handler's
+    (700) so, when ``build_opener`` installs both, this one is consulted first
+    and short-circuits the follow.
+    """
+
+    handler_order = 699
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D102
+        raise WebhookRedirectError(
+            f"Webhook endpoint returned HTTP {code} redirect to {newurl!r}; "
+            "redirects are rejected so a validated destination cannot "
+            "redirect toward a prohibited address (BE-036-D1)."
+        )
+
+
+#: A dedicated opener. Using a scoped opener (rather than ``install_opener``)
+#: keeps redirect rejection to webhook delivery and never mutates the
+#: process-global ``urlopen`` behaviour other code may rely on.
+NO_REDIRECT_OPENER = urllib.request.build_opener(_NoRedirectHandler())
+
+
+def deliver_webhook(
+    url: str,
+    payload_bytes: bytes,
+    headers: dict[str, str],
+    timeout: int = WEBHOOK_DELIVERY_TIMEOUT_SECONDS,
+) -> int:
+    """Validate then POST a webhook through the redirect-refusing opener.
+
+    The literal endpoint URL is re-validated on every attempt (DNS may have
+    changed since subscription time) and the request is issued through
+    ``NO_REDIRECT_OPENER``, so a 3xx response raises ``WebhookRedirectError``
+    instead of silently connecting to a new, unvalidated destination. Returns
+    the final HTTP status code for a 2xx response; raises ``urllib.error.*`` for
+    transport/HTTP-status outcomes and ``ValueError`` (``WebhookRedirectError``
+    or the SSRF validator) for security rejections — the caller maps those.
+    """
+    validate_webhook_url(url)
+    req = urllib.request.Request(url, data=payload_bytes, headers=headers, method="POST")
+    req.timeout = timeout
+    with NO_REDIRECT_OPENER.open(req) as resp:
+        return resp.status
 
 
 # ---------------------------------------------------------------------------

@@ -13,7 +13,6 @@ import argparse
 import json
 import logging
 import sys
-import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
@@ -23,10 +22,12 @@ from backend.services import audit_ledger as audit_service
 from backend.services.webhook import (
     build_webhook_payload,
     compute_next_webhook_attempt,
+    deliver_webhook,
     is_retryable_status,
     sign_payload,
     utc_now,
-    validate_webhook_url,
+    WebhookRedirectError,
+    WEBHOOK_DELIVERY_TIMEOUT_SECONDS,
     MAX_DELIVERY_ATTEMPTS,
 )
 
@@ -169,20 +170,25 @@ def _attempt_delivery(db, delivery) -> None:
     error_msg = None
 
     try:
-        # Validate URL each delivery (SSRF protection; never follow redirects)
-        validate_webhook_url(sub.endpoint_url)
-        req = urllib.request.Request(sub.endpoint_url, data=payload_bytes, headers=headers,
-                                     method="POST")
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            status_code = resp.status
+        # Re-validate the literal URL each attempt and deliver through the
+        # redirect-refusing opener: a 3xx now raises WebhookRedirectError
+        # instead of silently connecting to an unvalidated destination
+        # (BE-036-D1). deliver_webhook applies the outbound timeout.
+        status_code = deliver_webhook(
+            sub.endpoint_url, payload_bytes, headers,
+            timeout=WEBHOOK_DELIVERY_TIMEOUT_SECONDS,
+        )
     except urllib.error.HTTPError as exc:
         status_code = exc.code
         error_msg = f"HTTP {exc.code}: {exc.reason}"
     except urllib.error.URLError as exc:
         error_msg = f"URLError: {exc.reason}"
     except ValueError as exc:
-        error_msg = f"SSRF blocked: {exc}"
-        # Permanent failure — do not retry
+        # Covers both the SSRF validator and a refused redirect
+        # (WebhookRedirectError is a ValueError). Both are permanent: the
+        # destination is unsafe, so retrying cannot help and must not re-send.
+        kind = "Redirect rejected" if isinstance(exc, WebhookRedirectError) else "SSRF blocked"
+        error_msg = f"{kind}: {exc}"
         integration_repo.update_webhook_delivery(
             db, delivery,
             status="FAILED",

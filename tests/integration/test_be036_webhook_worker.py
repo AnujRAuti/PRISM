@@ -17,13 +17,14 @@ behavior the fix must preserve:
 * every outcome appends exactly one audit event through the real
   ``append_event`` writer, and the append-only ledger is never mutated.
 
-Safety (BE-036 §2 / §7): ``urllib.request.urlopen`` is monkeypatched, so no
-outbound request ever leaves the process; and ``socket.getaddrinfo`` (used by
-the SSRF validator) is stubbed with a deterministic resolver — numeric hosts
-resolve to themselves, named hosts to one public address — so the real SSRF
-blocking logic runs without touching DNS. Rows are written to the explicitly
-configured test database only; the test harness refuses to fall back to
-``pofa_dev``/``pofa_test``.
+Safety (BE-036 §2 / §7): the delivery opener
+(``webhook_service.NO_REDIRECT_OPENER.open``, reached via ``deliver_webhook``) is
+monkeypatched, so no outbound request ever leaves the process; and
+``socket.getaddrinfo`` (used by the SSRF validator) is stubbed with a
+deterministic resolver — numeric hosts resolve to themselves, named hosts to one
+public address — so the real SSRF blocking logic runs without touching DNS.
+Rows are written to the explicitly configured test database only; the test
+harness refuses to fall back to ``pofa_dev``/``pofa_test``.
 
 These are integration tests (they require the BE-030 enforcement migration and
 the webhook/audit tables) and are marked ``integration`` accordingly.
@@ -138,9 +139,10 @@ def recorder(monkeypatch):
     calls: list[urllib.request.Request] = []
     state = SimpleNamespace(calls=calls, result=200)
 
-    def _fake_urlopen(req, timeout=None, *args, **kwargs):
+    def _fake_open(req, *args, **kwargs):
         calls.append(req)
-        assert timeout == 10, "worker must keep an explicit outbound timeout"
+        assert getattr(req, "timeout", None) == 10, \
+            "worker must keep an explicit outbound timeout"
         result = state.result
         if isinstance(result, BaseException):
             raise result
@@ -148,7 +150,7 @@ def recorder(monkeypatch):
             raise result("injected")
         return _FakeResponse(int(result))
 
-    monkeypatch.setattr(urllib.request, "urlopen", _fake_urlopen)
+    monkeypatch.setattr(webhook_service.NO_REDIRECT_OPENER, "open", _fake_open)
     return state
 
 
@@ -291,6 +293,33 @@ def test_ssrf_blocked_fails_permanently_without_egress(db, recorder):
     assert len(recorder.calls) == 0, "a permanently-failed SSRF delivery must not retry"
 
 
+def test_redirect_rejected_fails_permanently_and_is_not_retried(db, recorder):
+    """BE-037/BE-036-D1: a refused redirect is a permanent, audited failure.
+
+    The opener connects to the validated endpoint, receives a 3xx, and raises
+    ``WebhookRedirectError`` (a ``ValueError``) before ever reaching the redirect
+    target. The worker must treat this like an SSRF rejection — FAILED, not
+    RETRYING, one audit event, and no later re-send — because a redirect cannot
+    be made safe by trying again.
+    """
+    _, sub, _, delivery = _seed(db)
+    recorder.result = webhook_service.WebhookRedirectError(
+        "HTTP 302 redirect to 'http://127.0.0.1/admin' rejected")
+
+    webhook_worker.sweep_pending_deliveries(db, limit=50)
+
+    db.refresh(delivery)
+    assert delivery.status == "FAILED", "a refused redirect must not enter RETRYING"
+    assert (delivery.last_error or "").startswith("Redirect rejected")
+    # A security rejection must not be retried: the FAILED row is out of both
+    # the PENDING and RETRYING sweeps, so a follow-up pass sends nothing more.
+    assert webhook_worker.sweep_retries(db, limit=50) == 0
+    assert len(recorder.calls) == 1, "the refused-redirect delivery must be sent once, not retried"
+    assert _audit_count(db, "WEBHOOK_DELIVERY_FAILED", str(delivery.id)) == 1
+    db.refresh(sub)
+    assert sub.status != "DISABLED", "a single permanent rejection is not a failure-streak disable"
+
+
 def test_disabled_subscription_short_circuits(db, recorder):
     """A DISABLED subscription marks the delivery DISABLED without any send."""
     _, _, _, delivery = _seed(db, sub_status="DISABLED")
@@ -329,6 +358,36 @@ def test_completed_delivery_is_not_reprocessed(db, recorder):
     assert processed == 0
     assert len(recorder.calls) == first_call_count
     assert _audit_count(db, "WEBHOOK_DELIVERY_SUCCEEDED", str(delivery.id)) == 1
+
+
+def test_interrupted_attempt_is_reclaimable_not_stranded(db, recorder):
+    """BE-037 §7.2: an interruption before the sweep commit reverts to PENDING.
+
+    ``_attempt_delivery`` flushes ``PROCESSING`` and then the terminal status,
+    but the caller commits only after it returns. A crash (here simulated by a
+    rollback) therefore discards the whole attempt, so the row is reclaimable as
+    ``PENDING`` — a durable ``PROCESSING`` strand is not reachable under this
+    commit design.
+    """
+    _, _, _, delivery = _seed(db)
+    delivery_id = str(delivery.id)
+    recorder.result = 200
+
+    # Run the attempt but do NOT commit (the sweep would commit here).
+    webhook_worker._attempt_delivery(db, delivery)
+
+    # Simulate a worker crash before the transaction is durably written.
+    db.rollback()
+    db.expire_all()
+
+    status = db.execute(
+        text("SELECT status FROM webhook_deliveries WHERE id = :i"),
+        {"i": delivery_id},
+    ).scalar_one()
+    assert status == "PENDING", (
+        "an interrupted attempt must revert the whole PROCESSING->terminal "
+        f"transition, leaving reclaimable work, not a stranded {status!r} row"
+    )
 
 
 def test_fanout_creates_one_delivery_per_subscription(db):

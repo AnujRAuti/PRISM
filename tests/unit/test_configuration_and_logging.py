@@ -97,8 +97,23 @@ def test_request_id_filter_lives_on_the_handler_not_on_the_root_logger():
 
 
 # ---------------------------------------------------------------------------
-# BE-032R: production JWT-secret guard (config fail-fast, no secret echoed)
+# BE-032R / BE-037: production fail-fast guard (config refuses insecure defaults)
 # ---------------------------------------------------------------------------
+
+STRONG_JWT = "k" * MIN_JWT_SECRET_LENGTH
+
+
+def _safe_production(**overrides):
+    """A genuinely safe production ``Settings`` base, overridable per test."""
+    base = dict(
+        environment="production",
+        jwt_secret=STRONG_JWT,
+        auth_mode="enforcing",
+        auth_dev_tokens_enabled=False,
+        cors_allow_origins="https://app.invalid.example",
+    )
+    base.update(overrides)
+    return base
 
 
 def test_development_and_staging_keep_the_permissive_jwt_default():
@@ -114,8 +129,26 @@ def test_production_rejects_an_unsafe_jwt_secret(bad):
 
 
 def test_production_accepts_a_strong_jwt_secret():
-    strong = "k" * MIN_JWT_SECRET_LENGTH
-    assert Settings(environment="production", jwt_secret=strong).jwt_secret == strong
+    s = Settings(**_safe_production())
+    assert s.jwt_secret == STRONG_JWT
+
+
+def test_production_requires_enforcing_auth_mode():
+    """Development auth mode bypasses authorization for anonymous callers."""
+    with pytest.raises(ValueError):
+        Settings(**_safe_production(auth_mode="development"))
+
+
+def test_production_forbids_development_bearer_tokens():
+    with pytest.raises(ValueError):
+        Settings(**_safe_production(auth_dev_tokens_enabled=True))
+
+
+@pytest.mark.parametrize("origins", ["*", "", "https://app.invalid.example,*"])
+def test_production_forbids_wildcard_cors(origins):
+    """With credentials enabled a wildcard origin can read authenticated data."""
+    with pytest.raises(ValueError):
+        Settings(**_safe_production(cors_allow_origins=origins))
 
 
 def test_production_rejection_does_not_echo_the_secret_value():
