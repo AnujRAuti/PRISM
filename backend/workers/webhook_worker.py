@@ -17,7 +17,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
-from backend.db.session import SessionLocal
+from backend.db.session import get_session
 from backend.repositories import integration as integration_repo
 from backend.services import audit_ledger as audit_service
 from backend.services.webhook import (
@@ -266,7 +266,7 @@ def _record_delivery_audit(db, event, sub, delivery, success: bool, error: str |
 
 def run_worker_once(limit: int = 50) -> None:
     """Run one full pass: fanout events, then attempt deliveries."""
-    db = SessionLocal()
+    db = get_session()
     try:
         events_processed = sweep_webhook_events(db, limit=limit)
         deliveries_processed = sweep_pending_deliveries(db, limit=limit * 2)
@@ -291,7 +291,7 @@ if __name__ == "__main__":
     if args.once or (not args.sweep_events and not args.sweep_retries):
         run_worker_once(limit=args.limit)
     else:
-        db = SessionLocal()
+        db = get_session()
         try:
             if args.sweep_events:
                 n = sweep_webhook_events(db, limit=args.limit)
