@@ -1,10 +1,11 @@
 import logging
+import signal
 import sys
 from typing import Any
 
 from backend.core.config import settings
 from backend.db.models import AnalysisJob, AnalysisResult, Evidence
-from backend.db.session import get_session
+from backend.db.session import get_engine, get_session
 from backend.services.analysis_jobs import utc_now
 from backend.services.analysis_queue import AnalysisQueue, QueueMessage
 from backend.services.fingerprinting import process_evidence
@@ -15,6 +16,33 @@ from backend.services.vision_intelligence import analyze_vision
 
 
 logger = logging.getLogger(__name__)
+
+#: Set only by the signal handler; read between queue messages. Checked after a
+#: message has been fully processed, so an in-flight job and its database
+#: transaction are never interrupted (BE-037A-D3).
+_shutdown_requested = False
+
+
+def _request_shutdown(signum: int, frame: Any) -> None:
+    """Signal handler: flip the flag and return immediately.
+
+    Must do no work — the handler can fire while the loop is inside a database
+    transaction, and a blocked ``brpoplpush`` resumes after ``EINTR``. Stopping
+    happens in ``run_worker``'s loop condition, not here.
+    """
+    global _shutdown_requested
+    _shutdown_requested = True
+
+
+def install_shutdown_handlers() -> None:
+    """Handle SIGTERM so the worker stops cleanly under Docker and systemd.
+
+    As container PID 1 the kernel does not act on default-action signals, so an
+    unhandled SIGTERM is ignored until Docker escalates to SIGKILL (exit 137).
+    SIGINT is deliberately left alone: it keeps raising ``KeyboardInterrupt``,
+    which ``__main__`` already maps to a clean exit.
+    """
+    signal.signal(signal.SIGTERM, _request_shutdown)
 
 
 def _complete_reprocessing_hook(db: Any, job: Any) -> None:
@@ -180,14 +208,24 @@ def run_worker() -> None:
         session.close()
     if recovered:
         logger.info("analysis worker recovered %d abandoned job(s)", recovered)
-    while True:
-        message = queue.dequeue(timeout=5)
-        if message is not None:
-            process_message(message, queue)
+    try:
+        while not _shutdown_requested:
+            message = queue.dequeue(timeout=5)
+            if message is not None:
+                process_message(message, queue)
+    finally:
+        # Reached on a SIGTERM-flagged stop and on Ctrl-C alike. Per-message DB
+        # sessions are already closed by process_message; this releases the
+        # queue connection and the pooled DB connections.
+        logger.info("analysis worker stopping; releasing queue and database resources")
+        queue.client.close()
+        get_engine().dispose()
+        logger.info("analysis worker stopped")
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    install_shutdown_handlers()
     try:
         run_worker()
     except KeyboardInterrupt:

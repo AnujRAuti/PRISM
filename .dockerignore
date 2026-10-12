@@ -38,7 +38,10 @@ pofa_dev.db
 *.pt
 *.onnx
 *.engine
-test-image.jpg
+# Docker's ignore syntax needs an explicit `**/` prefix to match at any depth;
+# a bare `test-image.jpg` matched only the context root and let the nested
+# tests/ fixture JPEG be baked into the image (BE-037A-D2).
+**/test-image.jpg
 
 # --- Logs and scratch verification artifacts ---
 *.log
