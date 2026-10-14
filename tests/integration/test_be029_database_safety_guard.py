@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 
 from backend.core.config import settings
 from backend.db import safety
@@ -61,6 +61,45 @@ DEV_URL = "postgresql+psycopg2://postgres:postgres@localhost:5432/pofa_dev"
 #: the DSN it is given instead of reusing a pooled connection to somewhere else.
 UNREACHABLE_URL = ("postgresql+psycopg2://postgres:postgres@127.0.0.1:1"
                    "/there_is_no_server")
+
+#: Opt-in URL of a disposable database that answers with a protected name. Set
+#: it to run the live half of the verification-refusal proof; leave it unset and
+#: that test skips with a reason rather than the suite touching a real pofa_dev.
+PROTECTED_NAME_PROBE_URL_ENV = "POA_PROTECTED_NAME_PROBE_DATABASE_URL"
+
+
+class _StubResult:
+    def __init__(self, name: str) -> None:
+        self._name = name
+
+    def scalar_one(self) -> str:
+        return self._name
+
+
+class _StubConnection:
+    def __init__(self, name: str) -> None:
+        self._name = name
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, _statement):
+        return _StubResult(self._name)
+
+
+class _StubBind:
+    """An engine-shaped object whose ``SELECT current_database()`` is scripted."""
+
+    def __init__(self, name: str) -> None:
+        self._name = name
+        self.connects = 0
+
+    def connect(self):
+        self.connects += 1
+        return _StubConnection(self._name)
 
 
 def _authorized() -> str:
@@ -142,10 +181,58 @@ def test_server_confirmation_refuses_when_the_live_name_contradicts_the_expectat
         safety.confirm_server_database(get_engine(), CONTEXT_PYTEST, env)
 
 
-def test_verification_context_refuses_the_shared_test_database_over_a_real_connection():
-    """A probe mislabelled as verification is stopped by the server's own answer."""
+def test_verification_context_accepts_this_runs_disposable_database():
+    """The verification guard is a protected-name rule, not a "not pofa_test" rule.
+
+    Measured before this test existed: the old assertion only passed when the
+    suite happened to run on a database that is itself protected by name, so on
+    a disposable target it failed for reasons unrelated to the guard.
+    """
+    authorized = _authorized()
+    assert authorized not in safety.PROTECTED_DATABASE_NAMES
+    assert safety.confirm_server_database(get_engine(), CONTEXT_VERIFICATION) == authorized
+
+
+@pytest.mark.parametrize(
+    "protected_name", sorted(safety.PROTECTED_DATABASE_NAMES)
+)
+def test_verification_context_refuses_a_protected_name_the_server_reports(
+    protected_name,
+):
+    """Refusal is decided by the server's answer, proved without dialling it."""
+    bind = _StubBind(protected_name)
     with pytest.raises(ProtectedDatabaseError, match="protected database"):
-        safety.confirm_server_database(get_engine(), CONTEXT_VERIFICATION)
+        safety.confirm_server_database(bind, CONTEXT_VERIFICATION)
+    assert bind.connects == 1
+
+
+def test_verification_refusal_also_holds_over_a_real_connection():
+    """The stubbed identity replaced by a live server, on opt-in disposable infra.
+
+    ``POA_PROTECTED_NAME_PROBE_DATABASE_URL`` points at a database that belongs
+    to the run and is deliberately named like a protected one (a disposable
+    cluster can host that name safely; the protected cluster cannot be touched).
+    Without it the refusal is only proven against a stub, so the run reports the
+    skip rather than claiming the live half.
+    """
+    url = os.environ.get(PROTECTED_NAME_PROBE_URL_ENV, "").strip()
+    if not url:
+        pytest.skip(
+            f"{PROTECTED_NAME_PROBE_URL_ENV} is not set; no disposable database "
+            "that answers with a protected name is available to this run."
+        )
+
+    probe = create_engine(url)
+    try:
+        with get_engine().connect() as own:
+            own_name = own.execute(text("SELECT current_database()")).scalar_one()
+        with pytest.raises(ProtectedDatabaseError, match="protected database"):
+            safety.confirm_server_database(probe, CONTEXT_VERIFICATION)
+        # The probe really is a different database from the suite's own: the
+        # refusal came from its name, not from an alias of the same server.
+        assert server_database_name(probe) != own_name
+    finally:
+        probe.dispose()
 
 
 def test_a_real_write_then_read_still_works_after_the_guard_is_active():

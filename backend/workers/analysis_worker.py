@@ -1,7 +1,11 @@
 import logging
+import random
 import signal
 import sys
+import time
 from typing import Any
+
+import redis
 
 from backend.core.config import settings
 from backend.db.models import AnalysisJob, AnalysisResult, Evidence
@@ -21,6 +25,30 @@ logger = logging.getLogger(__name__)
 #: message has been fully processed, so an in-flight job and its database
 #: transaction are never interrupted (BE-037A-D3).
 _shutdown_requested = False
+
+#: BE-037 I1 / WS-C: the failures treated as a Redis outage.
+#:
+#: Hierarchy measured on the pinned redis-py 4.6.0, not assumed:
+#: ``TimeoutError`` and ``ConnectionError`` are *siblings* under ``RedisError``,
+#: so a read timeout is only waited out if it is listed here explicitly -- the
+#: earlier comment claiming ``ConnectionError`` covered it was wrong, and a
+#: stalled socket would escape the outage handler exactly like the pre-I1 crash.
+#: ``BusyLoadingError`` (Redis reloading its dataset after a restart) really is a
+#: ``ConnectionError`` subclass, so it is covered by that entry.
+#: ``ResponseError`` (e.g. ``WRONGTYPE``) and ``DataError`` stay outside the
+#: tuple: they are programming faults and must propagate.
+#: ``AuthenticationError`` is the trap -- it subclasses ``ConnectionError``, so
+#: the tuple would otherwise wait out bad credentials forever even though no
+#: amount of retrying can fix them; ``_is_configuration_fault`` excludes it.
+TRANSIENT_REDIS_ERRORS = (
+    redis.exceptions.ConnectionError,
+    redis.exceptions.TimeoutError,
+)
+
+
+def _is_configuration_fault(error: BaseException) -> bool:
+    """True for a Redis error the tuple catches but retrying cannot cure."""
+    return isinstance(error, redis.exceptions.AuthenticationError)
 
 
 def _request_shutdown(signum: int, frame: Any) -> None:
@@ -45,19 +73,111 @@ def install_shutdown_handlers() -> None:
     signal.signal(signal.SIGTERM, _request_shutdown)
 
 
+def _backoff_delay(consecutive_failures: int) -> float:
+    """Bounded exponential backoff with equal jitter, in seconds.
+
+    ``min(cap, base * 2 ** (failures - 1))`` halves, plus jitter in the other
+    half: the wait is capped (so a long outage settles at a steady poll rate
+    instead of growing without limit) and de-synchronised (so several workers
+    that lost Redis at the same moment do not all retry in lockstep).
+    """
+    cap = min(
+        settings.analysis_retry_backoff_max_seconds,
+        settings.analysis_retry_backoff_base_seconds * (2 ** (consecutive_failures - 1)),
+    )
+    half = cap / 2
+    return half + random.uniform(0, half)
+
+
+def _interruptible_sleep(seconds: float) -> bool:
+    """Sleep in short slices; True if a shutdown was requested meanwhile.
+
+    A single ``time.sleep(delay)`` could not be interrupted: CPython retries the
+    remaining time after a signal handler returns (PEP 475), so a SIGTERM during
+    a backoff wait would keep the worker blocked until the wait expired.
+    """
+    deadline = time.monotonic() + seconds
+    poll = settings.analysis_shutdown_poll_seconds
+    while True:
+        if _shutdown_requested:
+            return True
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        time.sleep(min(remaining, poll))
+
+
+def _await_redis_retry(consecutive_failures: int) -> bool:
+    """Wait out one backoff period. True when the worker must stop now."""
+    delay = _backoff_delay(consecutive_failures)
+    logger.warning(
+        "redis unavailable; backing off %.1fs (consecutive failures %d)",
+        delay,
+        consecutive_failures,
+    )
+    return _interruptible_sleep(delay)
+
+
+def _recover(queue: AnalysisQueue) -> None:
+    """One idempotent recovery pass over the processing list.
+
+    Run at startup and again after a Redis outage, so payloads a worker could
+    not acknowledge while Redis was down are reclassified once it is reachable:
+    terminal jobs are discarded, genuinely abandoned ones requeued. The
+    recovery itself skips fresh ``running`` jobs, so it never steals live work.
+    """
+    session = get_session()
+    try:
+        recovered = queue.recover_abandoned(session)
+    finally:
+        session.close()
+    if recovered:
+        logger.info("analysis worker recovered %d abandoned job(s)", recovered)
+
+
 def _complete_reprocessing_hook(db: Any, job: Any) -> None:
     """BE-021 §17: when a job that a reprocessing request delegated to
     finishes, mark that request COMPLETED. Failure-isolated — governance
-    bookkeeping must never break the analysis pipeline — and idempotent."""
-    try:
-        from backend.services import governance as governance_service
+    bookkeeping must never break the analysis pipeline — and idempotent.
 
-        governance_service.complete_reprocessing(
-            db, analysis_job_id=str(job.id), completed_by=None
+    The linkage is checked before calling the service because most jobs are
+    created directly by the evidence pipeline and no reprocessing request
+    delegates them; ``complete_reprocessing`` raises ``LookupError`` for those,
+    and catching it here logged an ERROR plus traceback after every completed
+    job, burying real failures in expected noise (BE-037 G5). An unlinked job is
+    therefore a quiet no-op, while a fault in the linkage query or a rejection
+    by the state machine stays observable at ERROR with its traceback. Neither
+    propagates: the job has already committed, and the acknowledgement that
+    follows must not depend on governance bookkeeping.
+    """
+    from backend.repositories import governance as governance_repo
+    from backend.services import governance as governance_service
+
+    try:
+        request = governance_repo.lock_pending_reprocessing_for_job(
+            db, str(job.id)
         )
     except Exception:
         logger.exception(
-            "reprocessing completion hook failed job_id=%s", job.id
+            "reprocessing linkage lookup failed job_id=%s", job.id
+        )
+        return
+    if request is None:
+        logger.debug(
+            "no reprocessing request delegates job_id=%s; governance hook skipped",
+            job.id,
+        )
+        return
+
+    try:
+        governance_service.complete_reprocessing(
+            db, reprocessing_id=str(request.id), completed_by=None
+        )
+    except Exception:
+        logger.exception(
+            "reprocessing completion hook failed job_id=%s reprocessing_id=%s",
+            job.id,
+            request.id,
         )
 
 
@@ -197,22 +317,53 @@ def _complete_vision_job(db, job: Any) -> None:
 def run_worker() -> None:
     queue = AnalysisQueue()
     logger.info("analysis worker started")
-    # Recover at startup: only genuinely abandoned messages (stale/missing
-    # started_at, queued-but-unacknowledged) predate this worker, so no live
-    # job is stolen. Recovery itself skips fresh ``running`` jobs, so it is
-    # also safe to invoke periodically without stealing concurrent work.
-    session = get_session()
-    try:
-        recovered = queue.recover_abandoned(session)
-    finally:
-        session.close()
-    if recovered:
-        logger.info("analysis worker recovered %d abandoned job(s)", recovered)
+    failures = 0
+    # The startup recovery pass runs as the loop's first guarded action rather
+    # than before it: an outage that begins while this process is starting must
+    # be backed off like any other, not raised out of an unprotected call site.
+    # Recovering is safe to repeat: only genuinely abandoned messages (stale or
+    # missing started_at, queued-but-unacknowledged) predate this worker, and
+    # recovery itself skips fresh ``running`` jobs, so no live job is stolen.
+    requeue_needs_recovery = True
     try:
         while not _shutdown_requested:
-            message = queue.dequeue(timeout=5)
-            if message is not None:
+            try:
+                if requeue_needs_recovery:
+                    # Redis just came back after an outage: reclassify whatever
+                    # was left un-acknowledged while it was down.
+                    _recover(queue)
+                    requeue_needs_recovery = False
+                message = queue.dequeue(timeout=settings.analysis_dequeue_block_seconds)
+            except TRANSIENT_REDIS_ERRORS as error:
+                if _is_configuration_fault(error):
+                    # Wrong credentials: retrying cannot fix it, and looping
+                    # quietly would hide a broken deployment.
+                    raise
+                failures += 1
+                requeue_needs_recovery = True
+                if _await_redis_retry(failures):
+                    break
+                continue
+            if message is None:
+                continue
+            try:
                 process_message(message, queue)
+            except TRANSIENT_REDIS_ERRORS as error:
+                if _is_configuration_fault(error):
+                    raise
+                # The acknowledgement (or the retry requeue) could not reach
+                # Redis. The payload is left in the processing list, which is
+                # exactly the state a crashed worker leaves behind: the job is
+                # never acknowledged early, and the next recovery pass either
+                # discards it (terminal) or requeues it (abandoned).
+                failures += 1
+                requeue_needs_recovery = True
+                if _await_redis_retry(failures):
+                    break
+                continue
+            if failures:
+                logger.info("redis reachable again after %d backoff(s)", failures)
+                failures = 0
     finally:
         # Reached on a SIGTERM-flagged stop and on Ctrl-C alike. Per-message DB
         # sessions are already closed by process_message; this releases the

@@ -17,9 +17,41 @@ class QueueMessage:
 
 class AnalysisQueue:
     def __init__(self, client: redis.Redis | None = None) -> None:
-        self.client = client or redis.Redis.from_url(settings.redis_url, decode_responses=True)
+        self.client = client or self._bounded_client()
         self.queue_name = settings.analysis_queue_name
         self.processing_name = f"{self.queue_name}:processing"
+
+    @staticmethod
+    def _bounded_client() -> redis.Redis:
+        """A client whose reads have a deadline.
+
+        Without these bounds redis-py leaves ``socket_timeout`` unset, so a
+        server that stops answering without closing the connection blocks the
+        call forever — and a worker stuck inside ``brpoplpush`` reaches neither
+        the outage handler nor its shutdown check. The timeouts turn that stall
+        into ``TimeoutError``, which the worker treats as an outage.
+
+        ``health_check_interval`` is included because it catches a silently dead
+        connection *between* commands; it cannot help mid-reply, which is why the
+        socket timeout is the load-bearing one.
+        """
+        socket_timeout = settings.analysis_redis_socket_timeout_seconds
+        block = settings.analysis_dequeue_block_seconds
+        if socket_timeout <= block:
+            raise ValueError(
+                "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS "
+                f"({socket_timeout}) must be greater than ANALYSIS_DEQUEUE_BLOCK_SECONDS "
+                f"({block}): a healthy idle poll is supposed to time out on the "
+                "server side and return no message, and a socket deadline at or "
+                "below it reports every idle poll as a Redis outage."
+            )
+        return redis.Redis.from_url(
+            settings.redis_url,
+            decode_responses=True,
+            socket_timeout=socket_timeout,
+            socket_connect_timeout=settings.analysis_redis_socket_connect_timeout_seconds,
+            health_check_interval=settings.analysis_redis_health_check_interval_seconds,
+        )
 
     def enqueue(self, job_id: str) -> None:
         payload = json.dumps({"job_id": job_id}, separators=(",", ":"))

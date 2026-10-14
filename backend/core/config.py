@@ -32,6 +32,31 @@ class Settings(BaseSettings):
     analysis_queue_name: str = "pofa:analysis:jobs"
     analysis_max_attempts: int = 3
     analysis_abandoned_timeout_seconds: int = 300
+    # BE-037 I1: how the analysis worker waits out a Redis outage. The wait is
+    # ``min(max, base * 2 ** failures)``, split half fixed and half jitter so
+    # several workers do not retry in lockstep. Bounded on purpose: a long
+    # outage settles at a steady poll rate rather than a growing one, and the
+    # worker never gives up (queued work is in Redis, so exiting would leave it
+    # stranded). The poll interval is what lets SIGTERM stop a wait early.
+    analysis_retry_backoff_base_seconds: float = 1.0
+    analysis_retry_backoff_max_seconds: float = 60.0
+    analysis_shutdown_poll_seconds: float = 0.5
+    # BE-037 WS-C: finite socket bounds for the queue connection. Measured on a
+    # disposable Redis with the previous settings (redis-py 4.6.0 defaults, all
+    # three ``None``/0): a frozen server left ``ping`` and the blocking
+    # ``brpoplpush`` hanging past a 45-second budget, so the worker could neither
+    # process nor reach its backoff path — a stall with no clean disconnect is
+    # invisible to the outage handler until the read itself has a deadline.
+    # ``socket_timeout`` must exceed the blocking dequeue's own wait, or a healthy
+    # idle poll would look like a failure; that invariant is asserted where the
+    # two values meet (see AnalysisQueue). ``health_check_interval`` is a
+    # complement, not a substitute: redis-py only checks the socket *before* the
+    # next command, never mid-reply.
+    analysis_redis_socket_timeout_seconds: float = 30.0
+    analysis_redis_socket_connect_timeout_seconds: float = 10.0
+    analysis_redis_health_check_interval_seconds: float = 15.0
+    #: How long a blocking dequeue waits for a message before returning nothing.
+    analysis_dequeue_block_seconds: int = 5
     phash_max_hamming_distance: int = 8
     embedding_model_name: str = "openai/clip-vit-base-patch32"
     embedding_dimension: int = 512

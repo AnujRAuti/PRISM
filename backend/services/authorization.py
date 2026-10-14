@@ -1103,6 +1103,16 @@ def resolve_resource_scope(
                 target_resource = governance_target_resource(row.target_type)
                 if target_resource is not None:
                     return resolve_resource_scope(db, target_resource, str(row.target_id))
+        elif resource_type == "analysis_job":
+            # BE-037 G1: an analysis job has no scope columns of its own, so
+            # it is scoped through the evidence it analyses (job -> evidence ->
+            # project -> organization), the same fallback used for corrections
+            # and reprocessing requests.
+            from backend.db.models import AnalysisJob
+
+            row = db.query(AnalysisJob).filter(AnalysisJob.id == resource_id).one_or_none()
+            if row is not None:
+                return resolve_resource_scope(db, "evidence", str(row.evidence_id))
         elif resource_type == "graph_relationship":
             # BE-021: scope a relationship by its endpoint nodes' owning
             # projects (the same resolution the graph list filter uses).
