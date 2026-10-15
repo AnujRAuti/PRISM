@@ -54,9 +54,11 @@ VERSIONS_DIR = REPO_ROOT / "alembic" / "versions"
 #: unique username/email indexes it unblocks, down_revision q7r8s9t0u027), then by
 #: BE-030 (one linear revision: append-only enforcement trigger + event-type CHECK,
 #: down_revision s9t0u1v2w029), then by D2 (one data-only revision: the baseline
-#: authorization catalogue seed, down_revision t0u1v2w3x030), each time after
-#: confirming `alembic heads` reports exactly one head.
-EXPECTED_HEAD = "u1v2w3x4y031"
+#: authorization catalogue seed, down_revision t0u1v2w3x030), then by BE-038 (one
+#: revision: rebuild the event-type CHECK for the analysis lifecycle vocabulary,
+#: down_revision u1v2w3x4y031), each time after confirming `alembic heads`
+#: reports exactly one head.
+EXPECTED_HEAD = "v2w3x4y5z032"
 
 #: BE-023 revision count at the time this test was written (19), advanced by
 #: each milestone that genuinely adds a migration. BE-025 added one: 20.
@@ -64,7 +66,8 @@ EXPECTED_HEAD = "u1v2w3x4y031"
 #: BE-029 adds two (residue retirement, then identity uniqueness): 24.
 #: BE-030 adds one (append-only enforcement trigger + event-type CHECK): 25.
 #: D2 adds one (authorization catalogue seed — data only, no schema change): 26.
-EXPECTED_REVISION_COUNT = 26
+#: BE-038 adds one (event-type CHECK rebuilt for ANALYSIS_QUEUED/ANALYSIS_STARTED): 27.
+EXPECTED_REVISION_COUNT = 27
 
 
 @dataclass(frozen=True)

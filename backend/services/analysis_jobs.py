@@ -19,13 +19,18 @@ def create_analysis_job(
 ) -> AnalysisJob:
     if job_type not in JOB_TYPES:
         raise ValueError(f"Invalid job_type: {job_type!r}")
-    if db.query(Evidence).filter(Evidence.id == evidence_id).one_or_none() is None:
+    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).one_or_none()
+    if evidence is None:
         raise LookupError("Evidence not found")
     job = AnalysisJob(evidence_id=evidence_id, status="queued", attempt_count=0, job_type=job_type)
     db.add(job)
     # The queued state and its audit record share one transaction.  A job is
     # therefore never visible without its lifecycle beginning in the ledger.
-    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).one()
+    # The session does not autoflush, so the row must be INSERTed before its
+    # primary key exists: reading job.id without this flush wrote the audit
+    # event with resource_id NULL, leaving the queued event unjoinable to the
+    # job it describes.
+    db.flush()
     audit_service.append_event(
         db,
         event_type="ANALYSIS_QUEUED",
