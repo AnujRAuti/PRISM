@@ -226,6 +226,57 @@ def test_failure_counter_resets_after_a_clean_message(harness):
     assert waits == [half(1), half(2), half(1)]
 
 
+def test_an_empty_dequeue_ends_the_outage_too(harness):
+    """NEW-1: an idle worker must forget the outage it waited through.
+
+    The reset used to sit after ``process_message``, which the empty-queue
+    ``continue`` skips. A worker with no work therefore never noticed Redis
+    come back: each later outage resumed at the previous outage's step, and the
+    waits compounded (measured on a live idle worker: 151.9 s slept straight
+    through a restore that needed seconds).
+    """
+    queue, _, _, waits = harness([outage(), None, outage(), None, Stop()])
+
+    aw.run_worker()
+
+    assert waits == [half(1), half(1)]
+    # Startup, then one reclassification pass after each failed pass; the two
+    # empty dequeues must not add a pass of their own.
+    assert queue.recover_calls == 3
+
+
+def test_an_empty_dequeue_logs_the_recovery(harness, caplog):
+    """The same reconnect is observable, not just counted.
+
+    Without the line an operator watching logs cannot tell a recovered worker
+    from one that simply has no work, and the growing backoff looks like an
+    idle queue rather than a broken one.
+    """
+    harness([outage(), None, Stop()])
+
+    with caplog.at_level("INFO", logger="backend.workers.analysis_worker"):
+        aw.run_worker()
+
+    recovery = [
+        record.getMessage()
+        for record in caplog.records
+        if "reachable again" in record.getMessage()
+    ]
+    assert recovery == ["redis reachable again after 1 backoff(s)"]
+
+
+def test_an_idle_healthy_loop_logs_no_recovery(harness, caplog):
+    """The recovery line reports a transition, so a quiet queue stays quiet."""
+    harness([None, None, Stop()])
+
+    with caplog.at_level("INFO", logger="backend.workers.analysis_worker"):
+        aw.run_worker()
+
+    assert not [
+        record for record in caplog.records if "reachable again" in record.getMessage()
+    ]
+
+
 def test_healthy_loop_recovers_only_at_startup(harness):
     queue, engine, sessions, waits = harness([None, None, Stop()])
 

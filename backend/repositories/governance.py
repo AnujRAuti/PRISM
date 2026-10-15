@@ -5,7 +5,6 @@ live in ``backend.services.governance``. Marking helpers here are plain
 bulk UPDATEs restricted to explicitly enumerated ids — never open-ended.
 """
 
-from sqlalchemy import false
 from sqlalchemy.orm import Session
 
 from backend.db.models import (

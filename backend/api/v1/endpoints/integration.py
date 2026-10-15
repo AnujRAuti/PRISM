@@ -12,14 +12,13 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
-    Request,
     UploadFile,
     status,
 )
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
-from backend.db.models import Claim, ExternalSystem, Project, WebhookSubscription
+from backend.db.models import Claim, Project
 from backend.db.session import get_db
 from backend.repositories import integration as integration_repo
 from backend.schemas.evidence import EvidenceUploadResponse
@@ -27,8 +26,6 @@ from backend.schemas.integration import (
     ApiClientCreate,
     ApiClientResponse,
     ApiCredentialResponse,
-    ExternalAssertionCreate,
-    ExternalAssertionResponse,
     ExternalClaimImport,
     ExternalReferenceCreate,
     ExternalReferenceResponse,

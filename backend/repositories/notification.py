@@ -2,9 +2,8 @@
 
 from datetime import datetime, timezone
 from typing import Any
-from uuid import UUID
 
-from sqlalchemy import and_, desc, func
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from backend.db.models import (

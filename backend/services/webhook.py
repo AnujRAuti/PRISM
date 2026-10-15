@@ -10,11 +10,10 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlparse
-from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
-from backend.db.models import WEBHOOK_EVENT_TYPES, WebhookDelivery, WebhookEvent
+from backend.db.models import WEBHOOK_EVENT_TYPES, WebhookEvent
 from backend.repositories import integration as integration_repo
 
 

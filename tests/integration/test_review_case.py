@@ -1,6 +1,5 @@
 """BE-013 integration tests against real PostgreSQL infrastructure."""
 
-import json
 import threading
 from io import BytesIO
 from uuid import uuid4

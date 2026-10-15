@@ -2,10 +2,8 @@
 Unit tests for observability logging.
 """
 import json
-import logging
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-import pytest
 
 from backend.observability.logging import (
     setup_logging,

@@ -19,7 +19,6 @@ import pytest
 from pydantic import ValidationError
 
 from backend.schemas.integration import (
-    ApiClientCreate,
     ExternalAssertionCreate,
     ExternalClaimImport,
     ExternalReferenceCreate,

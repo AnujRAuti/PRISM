@@ -1,7 +1,6 @@
 """BE-018 notification endpoints: in-app inbox, read state, preferences, and delivery inspection."""
 
 from datetime import datetime
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
@@ -21,10 +20,10 @@ from backend.schemas.notification import (
     ReadAllResponse,
     UnreadCountResponse,
 )
-from backend.security.authentication import get_current_principal, is_development_bypass
-from backend.security.authorization import enforce, require
+from backend.security.authentication import is_development_bypass
+from backend.security.authorization import require
 from backend.services import audit_ledger as audit_service
-from backend.services.authorization import Principal, Resource
+from backend.services.authorization import Principal
 
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])

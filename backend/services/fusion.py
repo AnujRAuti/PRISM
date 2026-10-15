@@ -45,8 +45,6 @@ from backend.db.models import (
     FUSION_RUN_STATUSES,
     FUSION_SIGNAL_STATES,
     FUSION_TARGETS,
-    AnalysisJob,
-    AnalysisResult,
     Claim,
     DuplicateMatch,
     Evidence,

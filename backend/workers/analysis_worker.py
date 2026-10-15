@@ -344,6 +344,14 @@ def run_worker() -> None:
                 if _await_redis_retry(failures):
                     break
                 continue
+            # A dequeue that returned means Redis answered, with or without a
+            # payload, so the counter is cleared here rather than after
+            # ``process_message``: an idle queue has no message to complete, and
+            # resetting only on completion left an idle worker sleeping through
+            # every later outage at the previous outage's backoff.
+            if failures:
+                logger.info("redis reachable again after %d backoff(s)", failures)
+                failures = 0
             if message is None:
                 continue
             try:
@@ -361,9 +369,6 @@ def run_worker() -> None:
                 if _await_redis_retry(failures):
                     break
                 continue
-            if failures:
-                logger.info("redis reachable again after %d backoff(s)", failures)
-                failures = 0
     finally:
         # Reached on a SIGTERM-flagged stop and on Ctrl-C alike. Per-message DB
         # sessions are already closed by process_message; this releases the

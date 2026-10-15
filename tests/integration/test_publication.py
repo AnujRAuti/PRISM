@@ -21,9 +21,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import app
 from backend.db.models import (
-    Activity,
     AuditLedgerEvent,
-    Claim,
     CorrectionRequest,
     Dispute,
     Evidence,
@@ -31,10 +29,8 @@ from backend.db.models import (
     Project,
     Publication,
     PublicationEvent,
-    PublicationPolicy,
     PublicationPolicyVersion,
     PublicationVersion,
-    PublicIdentifier,
     RetentionHold,
     User,
 )
@@ -56,9 +52,12 @@ def seed_catalogue():
 
     Authentication resolves permissions from the ``role_permissions`` TABLE
     (via ``auth_repo.permissions_for_roles``), not from the
-    ``AUTH_ROLE_PERMISSIONS`` constant. That table is populated only by
-    ``ensure_default_catalogue``, and nothing in the application startup or in
-    any migration calls it.
+    ``AUTH_ROLE_PERMISSIONS`` constant. That table is populated by
+    ``ensure_default_catalogue`` and, in a deployed database, by the baseline
+    seed revision ``u1v2w3x4y031``, which inserts the same rows from the same
+    constants. The fixture still calls the service directly so this module is
+    correct on any test database, whether or not that revision has been
+    applied to it.
 
     Without this fixture, ``assign(..., "FIELD_OFFICER")`` writes a valid
     assignment against a role that has no ``role_permissions`` rows, so

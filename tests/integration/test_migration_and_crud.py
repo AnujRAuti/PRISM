@@ -1,9 +1,6 @@
 import subprocess
 import sys
-import time
 from uuid import uuid4
-from sqlalchemy.orm import Session
-from backend.core.config import settings
 from backend.db.session import get_session
 from backend.db import models
 

@@ -22,26 +22,17 @@ from sqlalchemy.orm import Session
 
 from backend.db.models import (
     RETENTION_ANCHORS,
-    RETENTION_HOLD_SCOPES,
     RETENTION_HOLD_STATUSES,
-    RETENTION_OPERATION_STATUSES,
-    RETENTION_OPERATION_TYPES,
-    RETENTION_POLICY_STATUSES,
     RETENTION_RESOURCE_TYPES,
     RETENTION_STATES,
-    AnalysisJob,
-    AnalysisResult,
     Claim,
     DuplicateMatch,
     Evidence,
     EvidenceMetadata,
-    EvidenceRequest,
     FusionRun,
     Organization,
     OrganizationalUnit,
     Project,
-    ReviewCase,
-    VisionDetection,
 )
 from backend.repositories import retention as retention_repo
 from backend.services import audit_ledger as audit_service

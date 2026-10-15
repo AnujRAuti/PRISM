@@ -1,6 +1,6 @@
 """BE-017 unit tests: policy rules, precedence, expiry, holds (no database)."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest

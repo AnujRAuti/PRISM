@@ -6,12 +6,10 @@ computed here — the engine only marks, records, and delegates.
 """
 
 from enum import Enum
-from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.schemas.dispute import DisputeTargetType
 
 
 class GovernanceTargetType(str, Enum):

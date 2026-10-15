@@ -11,14 +11,13 @@ from backend.observability.health import (
     HealthCheck,
     PostgresHealthCheck,
     RedisHealthCheck,
-    StorageHealthCheck,
     ApplicationHealthCheck,
     HealthChecker,
     get_liveness,
     get_readiness,
     liveness_endpoint,
     readiness_endpoint,
-    health_endpoint
+    health_endpoint,
 )
 
 

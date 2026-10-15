@@ -16,7 +16,6 @@ from backend.db.models import (
     Organization,
     OrganizationalUnit,
     Permission,
-    Project,
     Role,
     User,
     UserRoleAssignment,

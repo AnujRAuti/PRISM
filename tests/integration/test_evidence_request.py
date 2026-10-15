@@ -1,7 +1,6 @@
 """BE-014 integration tests against real PostgreSQL infrastructure."""
 
 import threading
-from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from uuid import uuid4
 
@@ -13,7 +12,6 @@ from backend.db.models import (
     Activity,
     AnalysisJob,
     AnalysisResult,
-    CaseGenerationConfiguration,
     CaseGenerationRun,
     Claim,
     DuplicateMatch,
@@ -32,7 +30,6 @@ from backend.db.models import (
     ReviewCaseEvent,
     ReviewPriority,
     User,
-    VisionDetection,
 )
 from backend.db.session import get_session
 from backend.services.storage import StorageService

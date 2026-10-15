@@ -2,7 +2,7 @@
 Sensitive data redaction for telemetry.
 """
 import re
-from typing import Any, Dict, List, Set, Union
+from typing import Any, Dict, List, Set
 
 
 # Patterns for sensitive data detection

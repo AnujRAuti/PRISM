@@ -14,7 +14,6 @@ import json
 import logging
 import sys
 import urllib.error
-from datetime import datetime, timezone
 
 from backend.db.session import get_session
 from backend.repositories import integration as integration_repo

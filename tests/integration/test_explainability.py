@@ -4,7 +4,6 @@ import json
 from io import BytesIO
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 

@@ -3446,6 +3446,54 @@
         }
       }
     },
+    "/api/v1/audit/verify/anchored": {
+      "get": {
+        "summary": "Anchored whole-chain verification with checkpoint and gap classification",
+        "operationId": "verify_ledger_anchored_api_v1_audit_verify_anchored_get",
+        "parameters": [
+          {
+            "name": "baseline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Name of a reviewed historical-gap baseline to classify findings against. Omitting it uses the safe default (nothing is blessed as historical); an unknown name is rejected rather than silently ignored.",
+              "title": "Baseline"
+            },
+            "description": "Name of a reviewed historical-gap baseline to classify findings against. Omitting it uses the safe default (nothing is blessed as historical); an unknown name is rejected rather than silently ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditAnchoredVerificationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/me": {
       "get": {
         "summary": "Current authenticated principal (401 anonymous in enforcing mode)",
@@ -10216,6 +10264,67 @@
         ],
         "title": "AssessmentValue"
       },
+      "AuditAnchoredVerificationResponse": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "checked_events": {
+            "type": "integer",
+            "title": "Checked Events"
+          },
+          "first_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Sequence"
+          },
+          "last_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sequence"
+          },
+          "failures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Failures"
+          },
+          "checkpoint": {
+            "$ref": "#/components/schemas/AuditLedgerCheckpoint"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/AuditIntegrityClassification"
+          },
+          "writer_policy": {
+            "type": "string",
+            "title": "Writer Policy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "checked_events",
+          "checkpoint",
+          "classification",
+          "writer_policy"
+        ],
+        "title": "AuditAnchoredVerificationResponse",
+        "description": "BE-032R F-03: the anchored whole-chain walk with checkpoint + classification."
+      },
       "AuditEventListResponse": {
         "properties": {
           "items": {
@@ -10352,6 +10461,114 @@
           "created_at"
         ],
         "title": "AuditEventResponse"
+      },
+      "AuditIntegrityClassification": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "degraded": {
+            "type": "boolean",
+            "title": "Degraded"
+          },
+          "known_historical_gaps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Known Historical Gaps"
+          },
+          "new_gaps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "New Gaps"
+          },
+          "hard_anomalies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hard Anomalies"
+          },
+          "baseline_name": {
+            "type": "string",
+            "title": "Baseline Name"
+          },
+          "baseline_version": {
+            "type": "integer",
+            "title": "Baseline Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "degraded",
+          "baseline_name",
+          "baseline_version"
+        ],
+        "title": "AuditIntegrityClassification",
+        "description": "BE-032R F-04: findings labelled against a reviewed historical baseline."
+      },
+      "AuditLedgerCheckpoint": {
+        "properties": {
+          "rows": {
+            "type": "integer",
+            "title": "Rows"
+          },
+          "min_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Sequence"
+          },
+          "max_sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Sequence"
+          },
+          "tail_event_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tail Event Hash"
+          },
+          "tail_previous_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tail Previous Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "title": "AuditLedgerCheckpoint",
+        "description": "The durable head digest published outside the ledger (anti-TRUNCATE)."
       },
       "AuditVerificationResponse": {
         "properties": {

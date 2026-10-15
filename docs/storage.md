@@ -181,9 +181,11 @@ distinguish the cases:
   one counted failure, whatever transient error produced it. Isolated lines that
   reset to `failures 1` are brief blips, which is normal churn.
 - `redis reachable again after <k> backoff(s)` (INFO) — the end of an outage
-  streak; the failure counter and the recovery pass are keyed to this. A worker
-  that logs this repeatedly is losing an established connection, not failing to
-  start one.
+  streak; the failure counter and the recovery pass are keyed to this. Any
+  dequeue that returns ends the streak, including one that returns no payload,
+  so an idle queue proves reachability just as a delivered message does. A
+  worker that logs this repeatedly is losing an established connection, not
+  failing to start one.
 - `analysis worker recovered <n> abandoned job(s)` (INFO) — after reconnecting,
   the first thing the loop does is reclassify processing-list entries using
   PostgreSQL state (terminal or unknown jobs are discarded, `queued`/stale

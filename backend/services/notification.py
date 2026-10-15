@@ -2,33 +2,24 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
-import json
 import logging
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from backend.core.config import settings
 from backend.db.models import (
-    NOTIFICATION_CHANNELS,
-    NOTIFICATION_DELIVERY_STATUSES,
-    NOTIFICATION_SEVERITIES,
-    NOTIFICATION_STATUSES,
     NOTIFICATION_TYPES,
     Notification,
     NotificationDelivery,
     NotificationOutbox,
-    NotificationPreference,
-    Project,
     Role,
     User,
     UserRoleAssignment,
 )
 from backend.repositories import notification as notif_repo
 from backend.services import audit_ledger as audit_service
-from backend.services import authorization as auth_service
-from backend.services.authorization import Principal, Resource, can, resolve_user_principal
+from backend.services.authorization import Resource, can, resolve_user_principal
 
 
 logger = logging.getLogger(__name__)

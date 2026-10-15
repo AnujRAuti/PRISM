@@ -15,7 +15,6 @@ from backend.db.models import (
     Activity,
     AuditLedgerEvent,
     Claim,
-    DuplicateMatch,
     Evidence,
     EvidenceMetadata,
     FusionRun,
@@ -23,7 +22,6 @@ from backend.db.models import (
     GraphRelationship,
     Project,
     ReviewCase,
-    ReviewCaseEvent,
     User,
     UserRoleAssignment,
 )

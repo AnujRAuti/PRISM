@@ -17,7 +17,6 @@ from backend.schemas.retention import (
     OperationListResponse,
     OperationResponse,
     OperationResultResponse,
-    OperationType,
     PolicyCreate,
     PolicyResponse,
     PolicyVersionCreate,

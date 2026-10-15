@@ -7,7 +7,6 @@ import pytest
 
 from backend.db.models import NOTIFICATION_TYPES
 from backend.schemas.notification import (
-    NotificationDeliveryResponse,
     NotificationListResponse,
     NotificationPreferenceItem,
     NotificationResponse,

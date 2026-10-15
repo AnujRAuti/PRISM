@@ -5,8 +5,6 @@ import hmac
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any
-from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session

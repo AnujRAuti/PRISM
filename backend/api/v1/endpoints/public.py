@@ -11,7 +11,7 @@ explicit public projection schemas, which carry no storage key, EXIF,
 internal UUID, reviewer identity, or internal signal values.
 """
 
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session

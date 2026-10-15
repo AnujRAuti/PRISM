@@ -37,7 +37,7 @@ recorded still holds here).
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 #: A "sequence gap before N (expected M)" means the surviving event is at N and
 #: the contiguous run M..N-1 is absent. Both numbers are captured so a match must

@@ -8,7 +8,6 @@ Publication mutations take a row lock (``with_for_update``) so concurrent
 publish attempts serialize rather than racing to produce two live versions.
 """
 
-from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 

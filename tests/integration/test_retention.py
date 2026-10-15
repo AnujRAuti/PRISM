@@ -2,7 +2,7 @@
 
 import hashlib
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from io import BytesIO
 from uuid import uuid4
 
@@ -25,8 +25,6 @@ from backend.db.models import (
     RetentionPolicy,
     RetentionPolicyVersion,
     RetentionState,
-    ReviewCase,
-    ReviewCaseEvent,
     User,
 )
 from backend.db.session import get_session

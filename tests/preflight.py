@@ -29,7 +29,7 @@ import importlib
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Iterable, Sequence
+from typing import Callable, Iterable
 
 # --------------------------------------------------------------------------
 # ML state (BE-023 §8)
