@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.db.models import AnalysisJob, AnalysisResult, Evidence
 from backend.services.analysis_queue import AnalysisQueue
+from backend.services import audit_ledger as audit_service
 
 
 JOB_TYPES = ("fingerprint", "vision")
@@ -22,6 +23,19 @@ def create_analysis_job(
         raise LookupError("Evidence not found")
     job = AnalysisJob(evidence_id=evidence_id, status="queued", attempt_count=0, job_type=job_type)
     db.add(job)
+    # The queued state and its audit record share one transaction.  A job is
+    # therefore never visible without its lifecycle beginning in the ledger.
+    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).one()
+    audit_service.append_event(
+        db,
+        event_type="ANALYSIS_QUEUED",
+        action="queue",
+        resource_type="analysis_jobs",
+        resource_id=job.id,
+        project_id=evidence.project_id,
+        payload={"evidence_id": str(evidence.id), "job_type": job_type, "attempt": 0},
+        source="analysis_jobs",
+    )
     db.commit()
     db.refresh(job)
     queue = queue or AnalysisQueue()
@@ -30,6 +44,16 @@ def create_analysis_job(
     except redis.RedisError as error:
         job.status = "failed"
         job.error = "Unable to enqueue analysis job"
+        audit_service.append_event(
+            db,
+            event_type="ANALYSIS_FAILED",
+            action="enqueue_failed",
+            resource_type="analysis_jobs",
+            resource_id=job.id,
+            project_id=evidence.project_id,
+            payload={"evidence_id": str(evidence.id), "job_type": job_type, "attempt": 0},
+            source="analysis_jobs",
+        )
         db.commit()
         raise RuntimeError("Unable to enqueue analysis job") from error
     return job

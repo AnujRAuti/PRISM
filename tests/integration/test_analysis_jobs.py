@@ -9,7 +9,10 @@ from PIL import Image
 
 from backend.app.main import app
 from backend.core.config import settings
-from backend.db.models import AnalysisJob, AnalysisResult, DuplicateMatch, Evidence, EvidenceMetadata
+from backend.db.models import (
+    AnalysisJob, AnalysisResult, AuditLedgerEvent, DuplicateMatch, Evidence,
+    EvidenceMetadata,
+)
 from backend.db.session import get_session
 from backend.services.analysis_queue import AnalysisQueue
 from backend.services.storage import StorageService
@@ -95,6 +98,15 @@ def test_api_creates_job_and_worker_persists_real_fingerprint_result():
         session = get_session()
         result_count = session.query(AnalysisResult).filter_by(job_id=job_id).count()
         assert result_count == 1
+        events = (
+            session.query(AuditLedgerEvent.event_type)
+            .filter(AuditLedgerEvent.resource_id == job_id)
+            .order_by(AuditLedgerEvent.sequence_number)
+            .all()
+        )
+        assert [event_type for (event_type,) in events] == [
+            "ANALYSIS_QUEUED", "ANALYSIS_STARTED", "ANALYSIS_COMPLETED",
+        ]
         session.close()
     finally:
         queue.clear()
@@ -152,6 +164,17 @@ def test_processing_failure_is_bounded_and_has_no_success_result():
         assert status_response.json()["result"] is None
         session = get_session()
         assert session.query(AnalysisResult).filter_by(job_id=job_id).count() == 0
+        events = (
+            session.query(AuditLedgerEvent.event_type)
+            .filter(AuditLedgerEvent.resource_id == job_id)
+            .order_by(AuditLedgerEvent.sequence_number)
+            .all()
+        )
+        assert [event_type for (event_type,) in events] == [
+            "ANALYSIS_QUEUED",
+            "ANALYSIS_STARTED", "ANALYSIS_STARTED", "ANALYSIS_STARTED",
+            "ANALYSIS_FAILED",
+        ]
         session.close()
     finally:
         queue.clear()

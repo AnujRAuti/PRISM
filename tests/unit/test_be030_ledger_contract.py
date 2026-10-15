@@ -29,8 +29,8 @@ def _load_migration():
     return module
 
 
-def test_event_type_vocabulary_is_exactly_94_members():
-    assert len(AUDIT_EVENT_TYPES) == 94
+def test_event_type_vocabulary_is_exactly_96_members():
+    assert len(AUDIT_EVENT_TYPES) == 96
 
 
 def test_model_and_migration_check_share_the_vocabulary():

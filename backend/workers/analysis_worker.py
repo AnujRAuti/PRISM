@@ -12,6 +12,7 @@ from backend.db.models import AnalysisJob, AnalysisResult, Evidence
 from backend.db.session import get_engine, get_session
 from backend.services.analysis_jobs import utc_now
 from backend.services.analysis_queue import AnalysisQueue, QueueMessage
+from backend.services import audit_ledger as audit_service
 from backend.services.fingerprinting import process_evidence
 from backend.services.duplicate_intelligence import analyze_duplicates
 from backend.services.storage import StorageService
@@ -44,6 +45,26 @@ TRANSIENT_REDIS_ERRORS = (
     redis.exceptions.ConnectionError,
     redis.exceptions.TimeoutError,
 )
+
+
+def _audit_lifecycle(db: Any, job: Any, event_type: str, action: str, **payload: Any) -> None:
+    """Record a worker-owned lifecycle transition in the job transaction."""
+    evidence = db.query(Evidence).filter(Evidence.id == job.evidence_id).one_or_none()
+    audit_service.append_event(
+        db,
+        event_type=event_type,
+        action=action,
+        resource_type="analysis_jobs",
+        resource_id=job.id,
+        project_id=evidence.project_id if evidence is not None else None,
+        payload={
+            "evidence_id": str(job.evidence_id),
+            "job_type": str(getattr(job, "job_type", "fingerprint")),
+            "attempt": int(job.attempt_count),
+            **payload,
+        },
+        source="analysis_worker",
+    )
 
 
 def _is_configuration_fault(error: BaseException) -> bool:
@@ -205,6 +226,7 @@ def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
         job.started_at = utc_now()
         job.attempt_count += 1
         job.error = None
+        _audit_lifecycle(db, job, "ANALYSIS_STARTED", "start")
         db.commit()
 
         if getattr(job, "job_type", "fingerprint") == "vision":
@@ -261,6 +283,7 @@ def process_message(message: QueueMessage, queue: AnalysisQueue) -> str:
             result.result = result_payload
         job.status = "completed"
         job.completed_at = utc_now()
+        _audit_lifecycle(db, job, "ANALYSIS_COMPLETED", "complete")
         db.commit()
         _complete_reprocessing_hook(db, job)
         queue.acknowledge(message)
@@ -292,6 +315,7 @@ def _fail(db, job: Any, message: str) -> None:
     job.status = "failed"
     job.error = message
     job.completed_at = utc_now()
+    _audit_lifecycle(db, job, "ANALYSIS_FAILED", "fail", reason=message)
     db.commit()
 
 
@@ -304,6 +328,7 @@ def _complete_vision_job(db, job: Any) -> None:
     analysis = analyze_vision(job.evidence_id, db, StorageService(), job.id)
     job.status = "completed"
     job.completed_at = utc_now()
+    _audit_lifecycle(db, job, "ANALYSIS_COMPLETED", "complete")
     db.commit()
     _complete_reprocessing_hook(db, job)
     logger.info(
