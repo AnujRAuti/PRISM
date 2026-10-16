@@ -250,3 +250,65 @@ header at all** and post a bare `uuid4()` that names no user, so they pass today
 supplied text — and `review_cases.decided_by` has no foreign key, so the row stores an actor id
 that does not exist. That is a lead for the 1.7 suite-wide re-fixture, not evidence that
 impersonation still works against a real credential.
+
+## 8. Resource scope and ownership — addendum (2026-10-17)
+
+Raised by the owner's review of stage 02, which required that authorization be checked as
+*permission **and* scope*, not permission alone. Full adjudication, including the routes that
+turned out to be already scoped, is in
+[`Authorization Scope Classification — 2026-10-17.md`](Authorization%20Scope%20Classification%20—%202026-10-17.md).
+Nothing in sections 1–7 is altered by this addendum.
+
+The policy these rows are measured against (owner-approved 2026-10-17):
+
+- **P1 Project resources** — access constrained to projects the principal is authorized to access.
+- **P2 Organization resources** — access constrained to the principal's organization unless an
+  explicitly granted platform-wide (GLOBAL) permission permits more.
+- **P3 Global configuration** — globally readable only where the product deliberately defines it as
+  global and the authorization contract says so.
+- **P4 Creation and ownership** — a caller cannot grant ownership or access by supplying another
+  user's id; ownership derives from the authenticated principal, delegation requires explicit
+  authorization.
+
+| # | Requirement | Verdict | Evidence |
+|---|---|---|---|
+| 8.1 | Retention reads are restricted to the caller's scope | **FOUND 2026-10-17 — CRITICAL before real multi-project data** | Five GETs are guarded only by resource-less `require("retention.read")`, which passes for a grant held in *any* scope: `list_policies` (`retention.py:170-171`) is `db.query(RetentionPolicy).order_by(RetentionPolicy.created_at, RetentionPolicy.id).all()` with **no predicate at all**; `get_policy` (`:153`) and `get_hold` (`repositories/retention.py:118-119`) fetch by caller-supplied id with no ownership check; `policy_history` (`:216`) probes existence only, then lists every version of that policy; `list_holds` (`repositories/retention.py:126-132`) filters on `project_id` **only when the caller supplies it**, so omitting the parameter reads every project's holds. Decisive internal evidence: the write paths in the same file already do this correctly — `_enforce_policy_scope` (`retention.py:90-105`) and `_enforce_hold_row` (`:434-446`) load the row and enforce its `project_id`/`organization_id`, and neither is called from any read. Scope columns exist (`RetentionPolicy.organization_id:1675`/`project_id:1679` with `scope_type:1674`; `RetentionHold.project_id:1778`/`organization_id:1781`), except `RetentionPolicyVersion` (`:1702`), which must be scoped by joining its parent policy. **Resolution criteria:** apply the existing per-row scope enforcement to list, individual-resource and history endpoints; a `scope_type='GLOBAL'` row stays globally readable per P3; regression tests prove a project-A reviewer cannot read project B's policy, version history, hold list or hold detail, paired with a same-caller success on project A so no assertion passes vacuously. |
+| 8.2 | Publication-policy configuration has one coherent scope boundary | **FOUND 2026-10-17 — HIGH, owner scope decision required** | The classification answers the "global or per-project?" question from the code: `PublicationPolicy` (`models.py:2753-2770`) has **no** project/organization column, and `services/authorization.py:1090-1093` declares *"policies are administrative configuration, not scoped domain objects … only GLOBAL assignments can manage them."* So they are **global configuration (P3)** — per-project policies are not expressible today. The defect is that three guards on the same rows disagree: `GET /publications/policies/{policy_id}` (`publication.py:351`) resolves to a bare `Resource` and therefore demands a **GLOBAL** grant, while `GET /publications/policies` (`:369-380`) does an inline any-scope `publication.read` check (`:374-377`) and returns the whole catalogue, and `POST /publications/policies` (`:303`) is resource-less `require("publication.policy.manage")`, so a caller holding that permission at *project* scope can create global configuration. A project-scoped reviewer can enumerate policies it is refused by id. **Resolution criteria:** owner picks Option B (recommended — GLOBAL enforcement on list and create, item read as the model) or Option A (reviewer-visible configuration — keep the list open and relax the item read to match). The create route needs GLOBAL under either option. Enforce and test the chosen boundary. |
+| 8.3 | Ownership is derived from the principal and project creation is audited | **FOUND 2026-10-17 — HIGH (P4)** | `ProjectCreate` (`schemas/context.py:1-32`) makes `owner_id` **required and caller-chosen**; `POST /projects` (`context.py:55-63`) validates it with `_require_user` (`:50-53`), which is existence-only — `db.query(User).filter(User.id == str(user_id))` — and then commits `Project(name=..., owner_id=str(request.owner_id))`. Any holder of `project.create` can therefore park a project under another user's id, which is a *grant of ownership by supplied id*, not a forgeable audit actor (row 1.4). The route also appends **no audit event**, so the creation is unrecorded. `PATCH /projects/{id}` changes `name` only, so ownership has no legitimate mutation path today. **Resolution criteria (owner-approved):** owner derives from the authenticated principal by default; delegated ownership, if it is a real product requirement, goes through an explicitly authorized operation with validated target scope; the creation event is recorded. A decision is needed for API-client principals, which have no `users` row (the same constraint that makes `activities.actor_id` record NULL for clients — see 1.4). **Regression tests:** cross-project and cross-organization denial, object-level reads, authorized ownership assignment, and the project-creation audit event. |
+| 8.4 | Integration reads are restricted to the caller's scope | **FOUND 2026-10-17 — HIGH (P1/P2), surfaced by the classification pass** | Five GETs are resource-less `require(...)` guards whose only filters are caller-supplied query parameters, i.e. the caller chooses which project to read: `list_clients` (`repositories/integration.py:77-80` — `db.query(ApiClient)` plus optional `status`), `list_systems` (`:47-51`, `organization_id` only when supplied at `integration.py:96`), `list_webhooks` (`:276-280`), `list_events` (`:423-431`, `project_id` only when supplied at `:716`), `list_references` (`:162-168`, all three filters caller-supplied). Two are **GAP-SCHEMA**: `ExternalReference:2103` has no project/org/client/creator column at all (scope must derive from its `ExternalSystem`), and `IntegrationEvent.project_id:2274` is a plain nullable UUID **with no foreign key**, so filtering it requires an integrity decision first. `ApiClient.project_id:1605` and `ExternalSystem.organization_id:2054` are usable today, and `resolve_resource_scope` already supports `"external_system"` (`:1031`), `"api_client"` (`:1037`) and `"webhook_subscription"` (`:1042`, org via join). The single-object routes show the intended pattern: `integration.py:230` `require("integration.read", "api_client", "client_id")`, `:658` `require("webhook.manage", "webhook_subscription", "subscription_id")`. `revoke_credential_endpoint` (`:276`) is resource-less and should be reviewed in the same pass. Related, already recorded: **2.1** (`POST /integrations/evidence` accepts caller-supplied `project_id` with `require("external_data.write")` only). |
+| 8.5 | Notification delivery records are restricted to the caller's scope | **FOUND 2026-10-17 — MEDIUM (P2)** | `GET /notifications/{id}/deliveries` (`notification.py:222`) is resource-less `require("notification.admin")`; `repositories/notification.py:191` filters only `NotificationDelivery.notification_id == notification_id`, `_user_id()` is never called, and the parent notification is never checked to exist (unknown id → `200 []`). `NotificationDelivery:1937` has no scope column — only `notification_id:1942-1944` — so a predicate requires a join to `Notification`, which does carry `recipient_id:1907`, `organization_id:1908`, `project_id:1909`, and `"notification"` is already supported by `resolve_resource_scope` (`services/authorization.py:1026`). |
+| 8.6 | Every resource-less guard is either scoped or justified | **PARTIAL → adjudicated 2026-10-17** | A scanner over the committed app (`scope_blind_lists.py`) reported **23** GET routes with a permission-only guard. Each was read individually and its final SQLAlchemy filter quoted, so the candidate list was not treated as a finding list. **The arithmetic: 11 of the 23 are already scoped, 1 (`/metrics`) is justified global telemetry, and 11 are gaps — rows 8.1 (5), 8.4 (5) and 8.5 (1).** The 11 already scoped: `/auth/organizations` (`auth.py:311,315` `Organization.id.in_(visible)`), `/auth/users/{user_id}/roles` (rows through `services/authorization.py:698`), the five field routes (`repositories/field_operations.py:128-129, 132-137, 307-310, 352-359` and `services/field_operations.py:373-376`), and four notification routes (`repositories/notification.py:74, 100-102, 250`; `notification.py:175-176`). `/retention/operations` never appeared in the 23 because its guard is `require_global`, a different name; it passes on the GLOBAL requirement rather than a row filter, which is justified because `RetentionOperation` (`models.py:1807-1836`) has no scope columns. `/metrics` is global by design: the `route` label is the template and never the raw path (`main.py:61`, `observability/metrics.py:47-49`) and the governance/publication metric modules both state "never user_id, project_id, evidence_id, claim_id, or dispute_id" — with one recorded constraint: the webhook counters declare an id-bearing `subscription_id` label (`observability/metrics.py:212-215, 218-221, 236-239, 243-246, 249-252`) that **no call site records today** (`record_http_request` at `main.py:63` is the only `get_metrics().record_*` caller in `backend/`), so nothing leaks now and the label must not be wired without a scope-aware surface. Two residual caveats on routes classified as scoped, logged and not yet fixed: `role.manage` in any scope can confirm that an arbitrary foreign user id exists (`auth.py:542`, repository unfiltered), and `notification.admin` in any scope escapes the recipient check on `/notifications/{id}` (`:174`) — correct shape, wrong scope granularity. |
+
+### Reconciliation of the reported test counts
+
+The owner asked that the extra 12 be reconciled before any "+51" figure is used. The two figures
+describe the same work measured at different points; neither is wrong, and the earlier wording was
+ambiguous:
+
+| Tranche | Files | New tests |
+|---|---|---|
+| #214 principal-derived attribution | `tests/unit/test_actor_attribution.py` (6), `tests/integration/test_stage02_actor_attribution.py` (6) | **12** |
+| #213 reviewer identity | `tests/unit/test_stage02_oidc_verification.py` (27), `tests/integration/test_stage02_reviewer_identity.py` (12) | **39** |
+| Combined identity + attribution milestone | | **51** |
+
+Measured ladder, each value re-read from its own log rather than recalled:
+**933** (`armed_suite.log`) → **955** (`fullsuite_stage02_2.log`, +22) → **967** (`suite214.log`,
++12) → **1006 passed / 1 skipped / 0 failed** (`suite213.log`, +39). `1006 − 967 = 39` is the
+identity tranche alone because 967 already contained the 12 attribution tests; `1006 − 933 = 73 =
+22 + 51`. At `61762341`, `armfull.py suite --collect-only -q` collects **1007** = 1006 + the single
+surviving skip (`tests/unit/test_preflight.py::test_ml_missing_never_becomes_available_without_importer`,
+ML weights deferred by owner decision). Correct phrasing going forward: **"+39 since the 967-test
+baseline, +51 for the combined identity and attribution milestone; latest reported result 1006
+passed / 1 skipped / 0 failed."**
+
+### Forward-only correction to sections 1 and 7
+
+Rows **1.2** and **1.4** say the stage 02 identity and attribution work was *"uncommitted — staged at
+the time of writing."* That remains true of the moment they described and is left intact per the
+owner's instruction not to change existing findings retroactively. The forward-only fact: the owner
+committed that staged set as **`61762341 "cleanup#4"`** (parent `6a430c74`) on 2026-10-17 — 28 files,
++1918/−113 — so the work is now in history and `git diff --cached` is empty. No commit was rewritten.
+What row 1.3 already states about the VM is unchanged and still load-bearing: `AUTH_OIDC_*` is unset
+on the deployment, so **it still accepts no human credential**, and enabling OIDC in production is
+gated on verifying the real provider's issuer, audience, JWKS endpoint and access-token flow. All 39
+identity tests serve locally generated key sets and therefore prove none of those four values.
