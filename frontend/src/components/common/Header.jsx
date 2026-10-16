@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserIcon, SearchIcon } from './Icon';
 import PrismLogo from './PrismLogo';
 
-function Header() {
+function Header({ onToggleSidebar }) {
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
@@ -57,13 +57,37 @@ function Header() {
           alignItems: 'center',
           justifyContent: 'space-between',
           height: '64px',
-          padding: '0 1.5rem',
+          padding: '0 1.25rem',
           width: '100%',
           boxSizing: 'border-box',
         }}
       >
-        {/* Left: Animated Multilingual PRISM Brand */}
-        <PrismLogo />
+        {/* Left: Mobile Drawer Trigger + Animated Multilingual PRISM Brand */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {onToggleSidebar && (
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className="mobile-menu-btn"
+              aria-label="Open portal navigation menu"
+              style={{
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.4rem 0.6rem',
+                fontSize: '1.1rem',
+                cursor: 'pointer',
+              }}
+            >
+              ☰
+            </button>
+          )}
+          <PrismLogo />
+        </div>
 
         {/* Right Section: Search & User */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

@@ -476,3 +476,41 @@ textarea:focus-visible {
   }
 }
 
+/* Mobile PWA Responsive Drawer & Shell Rules */
+@media (max-width: 768px) {
+  .app-sidebar {
+    position: fixed !important;
+    top: 64px !important;
+    bottom: 0 !important;
+    left: -270px !important;
+    width: 250px !important;
+    z-index: 1040 !important;
+    transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: var(--shadow-lg) !important;
+  }
+  .app-sidebar.sidebar-open {
+    left: 0 !important;
+  }
+  .sidebar-backdrop {
+    display: block !important;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+  .mobile-sidebar-header {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .sidebar-backdrop {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: none !important;
+  }
+  .mobile-sidebar-header {
+    display: none !important;
+  }
+}
+

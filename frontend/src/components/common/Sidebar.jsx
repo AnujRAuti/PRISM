@@ -37,7 +37,7 @@ const navSections = [
   }
 ];
 
-function Sidebar() {
+function Sidebar({ isOpen = false, onClose }) {
   const [activeItem, setActiveItem] = useState('');
   const location = useLocation();
 
@@ -48,6 +48,7 @@ function Sidebar() {
   return (
     <aside
       aria-label="Portal Navigation"
+      className={`app-sidebar ${isOpen ? 'sidebar-open' : ''}`}
       style={{
         width: '240px',
         backgroundColor: 'var(--govt-white)',
@@ -60,6 +61,42 @@ function Sidebar() {
         boxShadow: 'var(--shadow-xs)',
       }}
     >
+      {/* Mobile Drawer Header with Close Button */}
+      <div
+        className="mobile-sidebar-header"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 1.25rem 1rem 1.25rem',
+          borderBottom: '1px solid var(--govt-gray-medium)',
+          marginBottom: '1rem',
+        }}
+      >
+        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--govt-blue-dark)', letterSpacing: '0.5px' }}>
+          NAVIGATION
+        </span>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close navigation menu"
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.25rem',
+              color: 'var(--govt-gray-dark)',
+              cursor: 'pointer',
+              padding: '0.2rem 0.4rem',
+              borderRadius: '4px',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       <nav aria-label="Main Sections" style={{ flex: 1 }}>
         {navSections.map((sec, secIdx) => (
           <div key={secIdx} style={{ marginBottom: '1.25rem' }}>
@@ -85,6 +122,9 @@ function Sidebar() {
                   <li key={item.path} style={{ margin: '0.15rem 0.75rem' }}>
                     <Link
                       to={item.path}
+                      onClick={() => {
+                        if (onClose) onClose();
+                      }}
                       aria-current={isActive ? 'page' : undefined}
                       style={{
                         display: 'flex',

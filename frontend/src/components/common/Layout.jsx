@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
 import { Outlet } from 'react-router-dom';
 
 function Layout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div style={{
       display: 'flex',
@@ -16,13 +19,29 @@ function Layout() {
         Skip to main content
       </a>
 
-      <Header />
+      <Header onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
       <div style={{
         display: 'flex',
         flex: 1,
         minHeight: 'calc(100vh - 64px)',
+        position: 'relative',
       }}>
-        <Sidebar />
+        {/* Mobile Backdrop Overlay */}
+        {sidebarOpen && (
+          <div
+            className="sidebar-backdrop"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(15, 23, 42, 0.5)',
+              zIndex: 1035,
+              backdropFilter: 'blur(2px)',
+            }}
+          />
+        )}
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main
           id="main-content"
           role="main"
