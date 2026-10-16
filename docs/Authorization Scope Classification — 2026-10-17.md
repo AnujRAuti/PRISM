@@ -188,6 +188,46 @@ empty `200`). `NotificationDelivery` (`models.py:1937`) has **no** scope column 
 `recipient_id:1907`, `organization_id:1908` and `project_id:1909`, and `resolve_resource_scope`
 already supports `"notification"` (`services/authorization.py:1026`).
 
+## 4A. Owner decisions taken 2026-10-17
+
+| Finding | Decision |
+|---|---|
+| 8.1 retention reads | `scope_type='GLOBAL'` policy rows stay readable by any holder of `retention.read`; ORGANIZATION / UNIT / PROJECT rows require the caller's grant to cover that row's scope. |
+| 8.2 publication policies | **Global configuration, administrator-facing.** The list route and the create route require a GLOBAL grant, matching the item read. |
+| 8.3 `POST /projects` | **Principal-derived + delegation only.** `owner_id` becomes optional; omitted → owner is the authenticated human principal; supplied → accepted only through an explicitly authorized delegation with a validated target scope; API clients (which have no `users` row, and `Project.owner_id` is `NOT NULL` with a FK at `models.py:71`) must go through the delegation path or be refused. A creation audit event is appended. |
+| 8.4 integration reads | Scope the three expressible today — clients (project), systems (organization), webhooks (organization via their `ExternalSystem`). `ExternalReference` and `IntegrationEvent` stay recorded as **GAP-SCHEMA**, blocked on a schema decision, and are not silently filtered. |
+
+### The hold constraint, measured before designing
+
+`scope_probe.py` against the armed suite database (`retention_holds`, read-only):
+
+```
+holds total=5  both-scope-NULL=5  by_scope=[('RESOURCE', 5)]
+policies by_scope_type=[]
+api_clients total=0 project_id_NULL=0 | external_systems total=0 org_NULL=0
+```
+
+All five hold rows carry **NULL `project_id` and NULL `organization_id`**, because `create_hold`
+persists the **body** values (`retention.py:405,408`) while enforcement resolves the scope from the
+target (`_enforce_hold_scope`, `:357-383`). So a read filter written as
+`project_id IN (visible) OR organization_id IN (visible)` would hide **every existing hold** — the
+fix would look green while silently removing the whole collection from its owner. `retention_policies`
+is empty on this database, so the policy half of 8.1 carries no data-shape risk today, and both
+integration tables are empty.
+
+Design this forces, in order:
+
+1. **Write path:** persist the *server-resolved* scope on hold creation, so a new row describes its
+   own scope instead of relying on a join to remember it.
+2. **Read path:** rows with scope columns are filtered in SQL by the caller's visible project/org
+   sets; a row with neither resolves its scope through the same target resolver enforcement already
+   uses (`retention_service.resource_scope`), and is **excluded** when the target no longer resolves
+   (fail-closed, never "show it to be safe").
+3. **Pre-existing rows:** after step 1, the five NULL-scope rows remain invisible to scoped callers.
+   Whether to backfill them (and on which databases) is an **owner-gated migration decision**, taken
+   with row counts from `pofa_dev` and `pofa_prod` measured first, exactly as the quarantine backfill
+   in 2.3 will be. Nothing here deletes or rewrites a row.
+
 ## 5. Caveats on routes classified as scoped
 
 1. `GET /auth/users/{user_id}/roles` — the **rows** are scoped but the guard and the existence probe
