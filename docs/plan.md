@@ -1,4 +1,7 @@
-# PRISM (Proof-of-Action): Frontend Development Plan
+# PRISM (Proof-of-Action): Development & PWA Plan
+
+> [!NOTE]
+> Active 48-Hour Release Roadmap: See [pwa-plan.md](file:///home/adarsh/Documents/College%20Things/Prism/docs/pwa-plan.md) for the official PoA Progressive Web App (PWA) Implementation & Reviewer Journey Plan.
 
 ## 🎯 **PROGRESS UPDATE - Stages 1, 2, 3, 4 & 5 Complete** (Production Ready)
 
