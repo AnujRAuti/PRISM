@@ -21,10 +21,7 @@ pnpm-debug.log*
 
 # Test & Browser subagent / Playwright artifacts
 .playwright-mcp/
-/*-clean.png
-/*-fixed.png
-/dashboard-measured-clean.png
-/search-measured-clean.png
+/*.png
 
 # Editor & OS files
 .DS_Store

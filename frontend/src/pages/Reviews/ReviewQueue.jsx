@@ -510,28 +510,21 @@ function ReviewQueue() {
                         </span>
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <Link to={`/evidence/${item.id}`} style={{
-                            backgroundColor: 'transparent',
-                            border: '1px solid var(--govt-blue-primary)',
-                            color: 'var(--govt-blue-primary)',
-                            padding: '0.375rem 0.625rem',
-                            textDecoration: 'none',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.8rem'
-                          }}>
-                            View
-                          </Link>
-                          <Link to={`/review/${item.id}`} style={{
-                            backgroundColor: 'var(--govt-success)',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '0.375rem 0.625rem',
-                            textDecoration: 'none',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.8rem'
-                          }}>
-                            Review
+                        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                          <Link
+                            to={`/review/case?id=${item.case_id || (item.id === 'EVD-003' ? 'case-002-solar' : item.id === 'EVD-004' ? 'case-003-water' : 'case-001-pmgsy')}`}
+                            style={{
+                              backgroundColor: 'var(--govt-blue-primary)',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '0.35rem 0.65rem',
+                              textDecoration: 'none',
+                              borderRadius: 'var(--radius-sm)',
+                              fontSize: '0.78rem',
+                              fontWeight: '600',
+                            }}
+                          >
+                            Case Workspace →
                           </Link>
                         </div>
                       </td>

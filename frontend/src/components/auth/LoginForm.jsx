@@ -87,67 +87,102 @@ function Login() {
         </div>
 
         <div style={{ padding: '2rem' }}>
-              {error && (
-                <div className="alert alert-danger" role="alert">
-                  {error}
-                </div>
-              )}
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label htmlFor="username" className="form-label">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="password" className="form-label">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="mb-3">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="rememberMe"
-                    />
-                    <label className="form-check-label" htmlFor="rememberMe">
-                      Remember me
-                    </label>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner spinner-border-sm me-2"></span>
-                      Signing in...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
-                </button>
-              </form>
+          {error && (
+            <div style={{
+              backgroundColor: 'var(--govt-danger-light)',
+              border: '1px solid var(--govt-danger-border)',
+              color: 'var(--govt-danger-text)',
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              fontSize: '0.85rem',
+              fontWeight: '500',
+              marginBottom: '1.25rem',
+            }} role="alert">
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label htmlFor="username" style={{
+                display: 'block',
+                fontSize: '0.825rem',
+                fontWeight: '600',
+                color: 'var(--govt-gray-title)',
+                marginBottom: '0.4rem',
+              }}>
+                Reviewer Email or Account ID
+              </label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="e.g. reviewer@prism.gov.in"
+                required
+                autoComplete="username"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  fontSize: '0.9rem',
+                  border: '1px solid var(--govt-gray-medium)',
+                  borderRadius: 'var(--radius-md)',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label htmlFor="password" style={{
+                display: 'block',
+                fontSize: '0.825rem',
+                fontWeight: '600',
+                color: 'var(--govt-gray-title)',
+                marginBottom: '0.4rem',
+              }}>
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••••••"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  fontSize: '0.9rem',
+                  border: '1px solid var(--govt-gray-medium)',
+                  borderRadius: 'var(--radius-md)',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: 'var(--govt-blue-primary)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.95rem',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'background-color 0.15s ease',
+              }}
+            >
+              {loading ? 'Authenticating Credentials...' : 'Sign In as Reviewer'}
+            </button>
+          </form>
               <div className="text-center mt-3">
                 <p className="mb-0 small">
                   Need help? Contact support at{' '}

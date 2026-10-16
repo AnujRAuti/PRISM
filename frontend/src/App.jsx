@@ -23,6 +23,7 @@ const EvidenceDetail = lazy(() => import('./pages/Evidence/EvidenceDetail'));
 const EvidenceGraph = lazy(() => import('./pages/Graph/EvidenceGraph'));
 const ReviewQueue = lazy(() => import('./pages/Reviews/ReviewQueue'));
 const ReviewInterface = lazy(() => import('./pages/Reviews/ReviewInterface'));
+const CaseWorkspace = lazy(() => import('./pages/Reviews/CaseWorkspace'));
 const Search = lazy(() => import('./pages/Search'));
 const Profile = lazy(() => import('./pages/Profile'));
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
@@ -124,8 +125,10 @@ function App() {
                 {/* Evidence Graph Route */}
                 <Route path="/graph" element={<EvidenceGraph />} />
 
-                {/* Review Routes */}
+                {/* Review Routes (PoA PWA Specification) */}
+                <Route path="/review" element={<ReviewQueue />} />
                 <Route path="/reviews" element={<ReviewQueue />} />
+                <Route path="/review/case" element={<CaseWorkspace />} />
                 <Route path="/review/:id" element={<ReviewInterface />} />
 
                 {/* Search & Profile Routes */}

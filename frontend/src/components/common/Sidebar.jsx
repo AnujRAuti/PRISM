@@ -24,7 +24,7 @@ const navSections = [
     category: 'INTELLIGENCE & AUDIT',
     items: [
       { path: '/graph', label: 'Evidence Graph', icon: GraphIcon },
-      { path: '/reviews', label: 'Review Queue', icon: ReviewIcon, badge: '24' },
+      { path: '/review', label: 'Review Queue', icon: ReviewIcon, badge: '24' },
       { path: '/search', label: 'Advanced Search', icon: SearchIcon },
     ]
   },
