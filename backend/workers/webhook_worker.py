@@ -15,6 +15,7 @@ import logging
 import sys
 import urllib.error
 
+from backend.core.logging import setup_logging
 from backend.db.session import get_session
 from backend.repositories import integration as integration_repo
 from backend.services import audit_ledger as audit_service
@@ -285,7 +286,7 @@ def run_worker_once(limit: int = 50) -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+    setup_logging(stream=sys.stderr)
     parser = argparse.ArgumentParser(description="BE-019 webhook worker")
     parser.add_argument("--sweep-events", action="store_true", help="Sweep pending events")
     parser.add_argument("--sweep-retries", action="store_true", help="Sweep retrying deliveries")

@@ -1249,6 +1249,11 @@ AUTH_PERMISSIONS = (
     # assignment. Nothing else gains either one.
     "field.sync",
     "field_assignment.manage",
+    # Stage 02 operational telemetry. /metrics discloses route names, request
+    # volumes and process state, so it is no longer anonymous. Deliberately
+    # granted to no baseline role: a scraper must authenticate as an API client
+    # whose scopes include this permission.
+    "metrics.read",
 )
 
 # Baseline role -> permissions mapping (also seeded for tests/dev via the

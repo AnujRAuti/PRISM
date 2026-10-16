@@ -10,6 +10,7 @@ import argparse
 import logging
 import sys
 
+from backend.core.logging import setup_logging
 from backend.db.session import get_session
 from backend.services import retention as retention_service
 from backend.services.authorization import system_principal
@@ -39,7 +40,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="Allow eligible deletions (default: evaluate/archive only)")
     parser.add_argument("--limit", type=int, default=200)
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.INFO)
+    setup_logging()
     stats = run_sweep_once(auto_delete=args.auto_delete, limit=args.limit)
     logger.info("retention sweep finished: %s", stats)
     return 0

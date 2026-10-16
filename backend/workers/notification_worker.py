@@ -8,6 +8,7 @@ import logging
 import sys
 from typing import Any
 
+from backend.core.logging import setup_logging
 from backend.db.session import get_session
 from backend.repositories import notification as notif_repo
 from backend.services import notification as notif_service
@@ -82,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sweep-outbox", action="store_true", help="Only sweep pending outbox")
     parser.add_argument("--sweep-retries", action="store_true", help="Only sweep retrying deliveries")
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.INFO)
+    setup_logging()
 
     if args.sweep_outbox:
         stats = sweep_outbox(limit=args.limit)

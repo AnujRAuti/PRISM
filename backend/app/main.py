@@ -1,7 +1,7 @@
 import logging
 import time
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,6 +14,8 @@ from backend.observability.logging import setup_logging as setup_obs_logging
 from backend.observability.tracing import init_tracing, shutdown_tracing
 from backend.observability.health import liveness_endpoint, readiness_endpoint, health_endpoint
 from backend.observability.metrics import get_metrics
+from backend.security.authorization import require
+from backend.services.authorization import Principal
 
 stdlib_logger = logging.getLogger(__name__)
 
@@ -103,7 +105,9 @@ async def combined_health():
 
 
 @app.get("/metrics", summary="Prometheus-compatible metrics exposition")
-async def prometheus_metrics():
+async def prometheus_metrics(
+    principal: Principal = Depends(require("metrics.read")),
+):
     if not settings.prometheus_enabled:
         return JSONResponse(content={"detail": "metrics disabled"}, status_code=404)
     try:

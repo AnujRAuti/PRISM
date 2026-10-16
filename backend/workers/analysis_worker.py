@@ -8,6 +8,7 @@ from typing import Any
 import redis
 
 from backend.core.config import settings
+from backend.core.logging import setup_logging
 from backend.db.models import AnalysisJob, AnalysisResult, Evidence
 from backend.db.session import get_engine, get_session
 from backend.services.analysis_jobs import utc_now
@@ -405,7 +406,7 @@ def run_worker() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    setup_logging()
     install_shutdown_handlers()
     try:
         run_worker()

@@ -130,8 +130,12 @@ def setup_logging(log_level: str = "INFO", json_format: bool | None = None) -> N
         if not any(
             getattr(h, "_poa_structlog", False) for h in root.handlers
         ):
+            from backend.core.logging import RedactingFormatter
+
             handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(logging.Formatter("%(message)s"))
+            # The event_dict processor above only covers keys structlog saw;
+            # this covers whatever ends up in the rendered line.
+            handler.setFormatter(RedactingFormatter("%(message)s"))
             handler._poa_structlog = True  # type: ignore[attr-defined]
             root.addHandler(handler)
         STRUCTLOG_CONFIGURED = True
