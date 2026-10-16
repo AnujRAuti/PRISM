@@ -30,7 +30,12 @@ class ProjectListResponse(BaseModel):
 
 
 class ActivityCreate(BaseModel):
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated user principal; the actor is derived "
+                    "from the credential. API clients record no actor, because "
+                    "activities.actor_id references users.",
+    )
     verb: str = Field(min_length=1, max_length=128)
     details: dict | None = None
 

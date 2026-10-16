@@ -103,19 +103,31 @@ class CaseAssignmentRequest(BaseModel):
     assigned_to: UUID | None = Field(
         default=None, description="Null unassigns an ASSIGNED case back to OPEN"
     )
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
 
 
 class CaseDecisionRequest(BaseModel):
     decision: CaseDecision
     rationale: str = Field(min_length=1)
-    decided_by: UUID | None = None
+    decided_by: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; decisions are attributed "
+                    "to the credential, never to this field.",
+    )
 
 
 class CaseEscalationRequest(BaseModel):
     escalated_to: UUID
     reason: str = Field(min_length=1)
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
 
 
 class CaseGenerationConfigurationCreate(BaseModel):

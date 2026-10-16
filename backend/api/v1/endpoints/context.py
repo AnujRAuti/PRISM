@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend.db.models import Activity, Claim, Evidence, Project, User
 from backend.db.session import get_db
+from backend.security.attribution import derive_actor
 from backend.security.authentication import get_current_principal, is_development_bypass
 from backend.security.authorization import (
     filter_by_project_scope,
@@ -112,8 +113,13 @@ def create_activity(
     principal: Principal = Depends(require("activity.create", "project", "project_id")),
 ) -> Activity:
     _require_project(project_id, db)
-    _require_user(request.actor_id, db, "Actor")
-    activity = Activity(project_id=str(project_id), actor_id=str(request.actor_id) if request.actor_id else None, verb=request.verb, details=request.details)
+    actor = derive_actor(principal, request.actor_id)
+    if principal.principal_type == "API_CLIENT":
+        # activities.actor_id is a foreign key to users.id, so an API client's
+        # own id may never be written there; the row records no actor instead.
+        actor = None
+    _require_user(actor, db, "Actor")
+    activity = Activity(project_id=str(project_id), actor_id=str(actor) if actor else None, verb=request.verb, details=request.details)
     db.add(activity)
     db.commit()
     db.refresh(activity)

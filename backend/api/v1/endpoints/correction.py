@@ -24,6 +24,7 @@ from backend.schemas.correction import (
     CorrectionResponse,
     CorrectionStatus,
 )
+from backend.security.attribution import derive_actor
 from backend.security.authentication import get_current_principal, is_development_bypass
 from backend.security.authorization import enforce, require, visible_project_ids
 from backend.services import correction as correction_service
@@ -77,10 +78,10 @@ def _event_item(event) -> CorrectionEventItem:
     )
 
 
-def _actor(principal: Principal, request_actor: UUID | None) -> str | None:
-    if request_actor is not None:
-        return str(request_actor)
-    return principal.principal_id
+def _actor(principal: Principal, request_actor: UUID | None, *,
+           field: str = "actor_id") -> str | None:
+    """The authenticated principal is the actor; the body may only restate it."""
+    return derive_actor(principal, request_actor, field=field)
 
 
 @router.post(
@@ -99,7 +100,7 @@ def create_correction(
     if not is_development_bypass(principal):
         resource = resolve_resource_scope(db, "evidence", str(payload.target_id))
         enforce(principal, "correction.create", resource, request)
-    requester = _actor(principal, payload.requester_id)
+    requester = _actor(principal, payload.requester_id, field="requester_id")
     if requester is None:
         raise HTTPException(status_code=401, detail="Authentication required")
     try:
@@ -246,7 +247,7 @@ def approve_correction(
         require("correction.approve", "correction_request", "correction_id")
     ),
 ) -> CorrectionResponse:
-    resolver = _actor(principal, request.resolver_id)
+    resolver = _actor(principal, request.resolver_id, field="resolver_id")
     try:
         return _item(
             correction_service.approve_correction(
@@ -272,7 +273,7 @@ def reject_correction(
         require("correction.approve", "correction_request", "correction_id")
     ),
 ) -> CorrectionResponse:
-    resolver = _actor(principal, request.resolver_id)
+    resolver = _actor(principal, request.resolver_id, field="resolver_id")
     try:
         return _item(
             correction_service.reject_correction(
@@ -298,7 +299,7 @@ def apply_correction(
         require("correction.apply", "correction_request", "correction_id")
     ),
 ) -> CorrectionResponse:
-    applicant = _actor(principal, request.applied_by if request else None)
+    applicant = _actor(principal, request.applied_by if request else None, field="applied_by")
     try:
         correction, _invalidation, _reprocessing = correction_service.apply_correction(
             db, str(correction_id), applied_by=applicant

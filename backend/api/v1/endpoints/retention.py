@@ -26,6 +26,7 @@ from backend.schemas.retention import (
     RetentionResourceType,
     RetentionStateValue,
 )
+from backend.security.attribution import derive_actor
 from backend.security.authentication import get_current_principal
 from backend.security.authorization import enforce, require, require_global
 from backend.services import retention as retention_service
@@ -461,7 +462,7 @@ def release_hold(
     try:
         row = retention_service.release_hold(
             db, str(hold_id), payload.release_reason,
-            released_by=str(payload.released_by) if payload.released_by else _actor(principal))
+            released_by=derive_actor(principal, payload.released_by, field="released_by"))
     except (ValueError, LookupError) as error:
         status_code = 404 if isinstance(error, LookupError) else 422
         raise HTTPException(status_code=status_code, detail=str(error)) from error

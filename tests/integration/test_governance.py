@@ -1573,6 +1573,10 @@ def test_authorization_isolation_across_projects():
     supervisor_a = setup_user()
     owner_b = setup_user()
     supervisor_b = setup_user()
+    # §12 keeps the dispute initiator out of the review, and #214 derives that
+    # initiator from the credential, so project B needs two humans: one to
+    # raise the dispute and one to review it.
+    reviewer_b = setup_user()
     administrator = setup_user()
     project_a = api_create_project(str(owner_a.id), "BE-021 project A")
     project_b = api_create_project(str(owner_b.id), "BE-021 project B")
@@ -1583,9 +1587,11 @@ def test_authorization_isolation_across_projects():
     process(evidence_b["evidence_id"])
     assign(str(supervisor_a.id), "SUPERVISOR", "PROJECT", project_a["id"])
     assign(str(supervisor_b.id), "SUPERVISOR", "PROJECT", project_b["id"])
+    assign(str(reviewer_b.id), "REVIEWER", "PROJECT", project_b["id"])
     assign(str(administrator.id), "ADMINISTRATOR", "GLOBAL", None)
     headers_a = headers_for(str(supervisor_a.id))
     headers_b = headers_for(str(supervisor_b.id))
+    headers_reviewer_b = headers_for(str(reviewer_b.id))
     headers_admin = headers_for(str(administrator.id))
     try:
         dispute_a = client.post(
@@ -1603,13 +1609,13 @@ def test_authorization_isolation_across_projects():
                 "target_type": "EVIDENCE",
                 "target_id": evidence_b["evidence_id"],
                 "reason": "challenge inside project B",
-                # Explicit initiator distinct from the reviewing supervisor:
-                # §12 forbids the dispute initiator from reviewing it, so leaving
-                # this unset would make supervisor_b both requester and reviewer.
-                "initiator_id": str(owner_b.id),
+                # No initiator_id: §12 forbids the dispute initiator from
+                # reviewing it, and #214 derives the initiator from the
+                # credential, so reviewer_b raises it and supervisor_b reviews.
             },
-            headers=headers_b,
+            headers=headers_reviewer_b,
         ).json()
+        assert dispute_b["initiator_id"] == str(reviewer_b.id)
 
         # Out-of-scope resources are indistinguishable from absent (404).
         assert (
@@ -1695,7 +1701,7 @@ def test_authorization_isolation_across_projects():
     finally:
         cleanup(
             [str(owner_a.id), str(supervisor_a.id), str(owner_b.id),
-             str(supervisor_b.id), str(administrator.id)],
+             str(supervisor_b.id), str(reviewer_b.id), str(administrator.id)],
             [project_a["id"], project_b["id"]],
             [evidence_a["evidence_id"], evidence_b["evidence_id"]],
         )

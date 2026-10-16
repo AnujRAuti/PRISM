@@ -39,7 +39,8 @@ class InvalidationRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=20000)
     invalidated_by: UUID | None = Field(
         default=None,
-        description="Actor; defaults to the authenticated principal",
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
     )
     reprocess: bool = Field(
         default=True,
@@ -100,7 +101,8 @@ class ReprocessRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=20000)
     requested_by: UUID | None = Field(
         default=None,
-        description="Requester; defaults to the authenticated principal",
+        description="Must equal the authenticated principal; the requester is derived "
+                    "from the credential and a conflicting value is refused.",
     )
 
 

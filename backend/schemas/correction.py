@@ -50,7 +50,8 @@ class CorrectionCreateRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=20000)
     requester_id: UUID | None = Field(
         default=None,
-        description="Requester; defaults to the authenticated principal",
+        description="Must equal the authenticated principal; the requester is derived "
+                    "from the credential and a conflicting value is refused.",
     )
 
 
@@ -59,19 +60,27 @@ class CorrectionDecisionRequest(BaseModel):
 
     rationale: str = Field(min_length=1, max_length=20000)
     resolver_id: UUID | None = Field(
-        default=None, description="Resolver; defaults to the authenticated principal"
+        default=None,
+        description="Must equal the authenticated principal; the resolver is derived "
+                    "from the credential and a conflicting value is refused.",
     )
 
 
 class CorrectionApplyRequest(BaseModel):
     applied_by: UUID | None = Field(
-        default=None, description="Applicant; defaults to the authenticated principal"
+        default=None,
+        description="Must equal the authenticated principal; who applied the correction "
+                    "is derived from the credential, never from this field.",
     )
 
 
 class CorrectionCancelRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=20000)
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
 
 
 class CorrectionResponse(BaseModel):

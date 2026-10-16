@@ -27,6 +27,7 @@ from backend.schemas.dispute import (
     DisputeTargetType,
     DisputeWithdrawRequest,
 )
+from backend.security.attribution import derive_actor
 from backend.security.authentication import get_current_principal, is_development_bypass
 from backend.security.authorization import enforce, require, visible_project_ids
 from backend.services import dispute as dispute_service
@@ -88,11 +89,10 @@ def _event_item(event) -> DisputeEventItem:
     )
 
 
-def _actor(principal: Principal, request_actor: UUID | None) -> str | None:
-    """Explicit actor wins; otherwise the authenticated principal."""
-    if request_actor is not None:
-        return str(request_actor)
-    return principal.principal_id
+def _actor(principal: Principal, request_actor: UUID | None, *,
+           field: str = "actor_id") -> str | None:
+    """The authenticated principal is the actor; the body may only restate it."""
+    return derive_actor(principal, request_actor, field=field)
 
 
 def _enforce_target_scope(
@@ -124,7 +124,7 @@ def create_dispute(
     _enforce_target_scope(
         db, principal, request, payload.target_type.value, payload.target_id
     )
-    initiator = _actor(principal, payload.initiator_id)
+    initiator = _actor(principal, payload.initiator_id, field="initiator_id")
     if initiator is None:
         raise HTTPException(status_code=401, detail="Authentication required")
     try:
@@ -317,7 +317,7 @@ def resolve_dispute(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("dispute.resolve", "dispute", "dispute_id")),
 ) -> DisputeResponse:
-    resolved_by = _actor(principal, request.resolved_by)
+    resolved_by = _actor(principal, request.resolved_by, field="resolved_by")
     if resolved_by is None:
         raise HTTPException(status_code=401, detail="Authentication required")
     try:

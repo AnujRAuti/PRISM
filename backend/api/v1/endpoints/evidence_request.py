@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend.core.config import settings
 from backend.db.session import get_db
+from backend.security.attribution import derive_actor
 from backend.schemas.evidence_request import (
     EvidenceRequestCreate,
     EvidenceRequestDeclineRequest,
@@ -74,7 +75,8 @@ def create_request(
             recipient_id=str(payload.recipient_id),
             instructions=payload.instructions,
             items=[item.model_dump() for item in payload.items],
-            requester_id=str(payload.requester_id) if payload.requester_id else None,
+            requester_id=derive_actor(
+                principal, payload.requester_id, field="requester_id"),
             due_at=payload.due_at,
             priority=payload.priority.value,
             project_id=str(payload.project_id) if payload.project_id else None,
@@ -197,7 +199,8 @@ def issue_request(
         require("evidence_request.issue", "evidence_request", "request_id")),
 ):
     try:
-        request = request_service.issue_request(db, str(request_id))
+        request = request_service.issue_request(
+            db, str(request_id), derive_actor(principal))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
@@ -219,7 +222,7 @@ def acknowledge_request(
     try:
         request = request_service.acknowledge_request(
             db, str(request_id),
-            str(payload.actor_id) if payload and payload.actor_id else None,
+            derive_actor(principal, payload.actor_id if payload else None),
         )
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
@@ -241,7 +244,7 @@ def link_evidence(
 ):
     try:
         item, created = request_service.link_evidence(
-            db, str(request_id), str(evidence_id), None,
+            db, str(request_id), str(evidence_id), derive_actor(principal),
             str(item_id) if item_id else None,
         )
         request = request_service.get_request(db, str(request_id))
@@ -270,7 +273,8 @@ async def submit_evidence(
     data = await file.read(settings.max_upload_size + 1)
     try:
         evidence, item, created = request_service.submit_evidence(
-            db, str(request_id), data, file.filename or "unnamed", declared_type, None,
+            db, str(request_id), data, file.filename or "unnamed", declared_type,
+            derive_actor(principal),
         )
         request = request_service.get_request(db, str(request_id))
     except ValueError as error:
@@ -295,7 +299,8 @@ def accept_item(
         require("evidence_request.respond", "evidence_request", "request_id")),
 ):
     try:
-        return _item(request_service.accept_item(db, str(request_id), str(item_id)))
+        return _item(request_service.accept_item(
+            db, str(request_id), str(item_id), derive_actor(principal)))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
@@ -315,7 +320,8 @@ def reject_item(
         require("evidence_request.respond", "evidence_request", "request_id")),
 ):
     try:
-        return _item(request_service.reject_item(db, str(request_id), str(item_id)))
+        return _item(request_service.reject_item(
+            db, str(request_id), str(item_id), derive_actor(principal)))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
@@ -335,7 +341,9 @@ def decline_request(
         require("evidence_request.respond", "evidence_request", "request_id")),
 ):
     try:
-        request = request_service.decline_request(db, str(request_id), payload.reason)
+        request = request_service.decline_request(
+            db, str(request_id), payload.reason,
+            derive_actor(principal, payload.actor_id))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
@@ -355,7 +363,8 @@ def cancel_request(
         require("evidence_request.issue", "evidence_request", "request_id")),
 ):
     try:
-        request = request_service.cancel_request(db, str(request_id))
+        request = request_service.cancel_request(
+            db, str(request_id), derive_actor(principal))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
@@ -375,7 +384,8 @@ def expire_request(
         require("evidence_request.issue", "evidence_request", "request_id")),
 ):
     try:
-        request = request_service.expire_request(db, str(request_id))
+        request = request_service.expire_request(
+            db, str(request_id), derive_actor(principal))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:

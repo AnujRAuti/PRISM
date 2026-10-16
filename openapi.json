@@ -4172,7 +4172,7 @@
     "/api/v1/auth/roles": {
       "get": {
         "summary": "List roles (requires role.manage)",
-        "description": "Report-only enumeration. Returns a bare list ordered by name and intentionally carries no {items,limit,offset,total} envelope (unlike /users, /organizations and /units); limit/offset slice the list but a truncated page is not distinguishable from a complete one. Owner decision BE-030 \u00a716: keep the bare-list shape for these fixed vocabulary enumerations.",
+        "description": "Report-only enumeration. Returns a bare list ordered by name and intentionally carries no {items,limit,offset,total} envelope (unlike /users, /organizations and /units); limit/offset slice the list but a truncated page is not distinguishable from a complete one. Owner decision BE-030 §16: keep the bare-list shape for these fixed vocabulary enumerations.",
         "operationId": "list_roles_api_v1_auth_roles_get",
         "parameters": [
           {
@@ -4236,7 +4236,7 @@
     "/api/v1/auth/permissions": {
       "get": {
         "summary": "List permissions (requires role.manage)",
-        "description": "Report-only enumeration. Returns a bare list ordered by name and, like /roles, intentionally carries no {items,limit,offset,total} envelope; a truncated page is not distinguishable from a complete one. Owner decision BE-030 \u00a716: keep the bare-list shape for these fixed vocabulary enumerations.",
+        "description": "Report-only enumeration. Returns a bare list ordered by name and, like /roles, intentionally carries no {items,limit,offset,total} envelope; a truncated page is not distinguishable from a complete one. Owner decision BE-030 §16: keep the bare-list shape for these fixed vocabulary enumerations.",
         "operationId": "list_permissions_api_v1_auth_permissions_get",
         "parameters": [
           {
@@ -9870,7 +9870,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated user principal; the actor is derived from the credential. API clients record no actor, because activities.actor_id references users."
           },
           "verb": {
             "type": "string",
@@ -10738,7 +10739,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -10774,7 +10776,8 @@
                 "type": "null"
               }
             ],
-            "title": "Decided By"
+            "title": "Decided By",
+            "description": "Must equal the authenticated principal; decisions are attributed to the credential, never to this field."
           }
         },
         "type": "object",
@@ -10806,7 +10809,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -11205,7 +11209,7 @@
               }
             ],
             "title": "Applied By",
-            "description": "Applicant; defaults to the authenticated principal"
+            "description": "Must equal the authenticated principal; who applied the correction is derived from the credential, never from this field."
           }
         },
         "type": "object",
@@ -11229,7 +11233,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -11287,7 +11292,7 @@
               }
             ],
             "title": "Requester Id",
-            "description": "Requester; defaults to the authenticated principal"
+            "description": "Must equal the authenticated principal; the requester is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -11317,7 +11322,7 @@
               }
             ],
             "title": "Resolver Id",
-            "description": "Resolver; defaults to the authenticated principal"
+            "description": "Must equal the authenticated principal; the resolver is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -11735,7 +11740,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -11783,7 +11789,7 @@
               }
             ],
             "title": "Initiator Id",
-            "description": "Initiator; defaults to the authenticated principal"
+            "description": "Must equal the authenticated principal; the initiator is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -11817,7 +11823,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -11968,7 +11975,7 @@
               }
             ],
             "title": "Actor Id",
-            "description": "Actor; defaults to the authenticated principal"
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -12010,7 +12017,7 @@
               }
             ],
             "title": "Resolved By",
-            "description": "Resolver; defaults to the authenticated principal"
+            "description": "Must equal the authenticated principal; resolutions are attributed to the credential, never to this field."
           }
         },
         "type": "object",
@@ -12244,7 +12251,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -12468,7 +12476,8 @@
                 "type": "null"
               }
             ],
-            "title": "Requester Id"
+            "title": "Requester Id",
+            "description": "Must equal the authenticated principal; the requester is derived from the credential and a conflicting value is refused."
           },
           "due_at": {
             "anyOf": [
@@ -12569,7 +12578,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -12954,7 +12964,8 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -15793,7 +15804,8 @@
                 "type": "null"
               }
             ],
-            "title": "Released By"
+            "title": "Released By",
+            "description": "Must equal the authenticated principal; the releaser is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",
@@ -16118,7 +16130,7 @@
               }
             ],
             "title": "Invalidated By",
-            "description": "Actor; defaults to the authenticated principal"
+            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
           },
           "reprocess": {
             "type": "boolean",
@@ -17899,7 +17911,7 @@
           "status"
         ],
         "title": "PublicClaimResponse",
-        "description": "\u00a723: public claims expose the approved statement and safe dates only."
+        "description": "§23: public claims expose the approved statement and safe dates only."
       },
       "PublicEvidenceDetailResponse": {
         "properties": {
@@ -18073,7 +18085,7 @@
           "derivative_type"
         ],
         "title": "PublicMediaResponse",
-        "description": "\u00a719: media is served by public ID; the storage key is never exposed."
+        "description": "§19: media is served by public ID; the storage key is never exposed."
       },
       "PublicProjectDetailResponse": {
         "properties": {
@@ -18223,7 +18235,7 @@
           "publication_version"
         ],
         "title": "PublicProvenance",
-        "description": "\u00a725 public-safe provenance: no credentials, workers, or audit payloads."
+        "description": "§25 public-safe provenance: no credentials, workers, or audit payloads."
       },
       "PublicPublicationResponse": {
         "properties": {
@@ -18279,7 +18291,7 @@
           "status"
         ],
         "title": "PublicPublicationResponse",
-        "description": "\u00a717: the PUBLISHED version snapshot is the source of truth."
+        "description": "§17: the PUBLISHED version snapshot is the source of truth."
       },
       "PublicationAuthorizationLevel": {
         "type": "string",
@@ -18306,7 +18318,7 @@
           "UNAVAILABLE_PUBLIC_DERIVATIVE"
         ],
         "title": "PublicationBlocker",
-        "description": "\u00a711 structured releasability blockers (never collapsed to NOT_ALLOWED)."
+        "description": "§11 structured releasability blockers (never collapsed to NOT_ALLOWED)."
       },
       "PublicationCreateRequest": {
         "properties": {
@@ -19121,7 +19133,7 @@
               }
             ],
             "title": "Requested By",
-            "description": "Requester; defaults to the authenticated principal"
+            "description": "Must equal the authenticated principal; the requester is derived from the credential and a conflicting value is refused."
           }
         },
         "type": "object",

@@ -40,6 +40,17 @@ x-app-environment: &app-environment
   CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
   AUTH_MODE: ${AUTH_MODE:-development}
   AUTH_DEV_TOKENS_ENABLED: ${AUTH_DEV_TOKENS_ENABLED:-true}
+  # Stage 02 human identity (backend/security/oidc.py). Disabled by default; the
+  # defaults below are the same as backend/core/config.py, so a stack that sets
+  # nothing behaves exactly as before. These are public provider metadata, not
+  # secrets - see .env.example for what each one must point at.
+  AUTH_OIDC_ENABLED: ${AUTH_OIDC_ENABLED:-false}
+  AUTH_OIDC_ISSUER: ${AUTH_OIDC_ISSUER:-}
+  AUTH_OIDC_JWKS_URI: ${AUTH_OIDC_JWKS_URI:-}
+  AUTH_OIDC_AUDIENCE: ${AUTH_OIDC_AUDIENCE:-authenticated}
+  AUTH_OIDC_IDENTITY_PROVIDER: ${AUTH_OIDC_IDENTITY_PROVIDER:-supabase}
+  AUTH_OIDC_ALGORITHMS: ${AUTH_OIDC_ALGORITHMS:-RS256}
+  AUTH_OIDC_JWKS_TTL_SECONDS: ${AUTH_OIDC_JWKS_TTL_SECONDS:-300}
 
 services:
   db:

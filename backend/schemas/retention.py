@@ -174,7 +174,11 @@ class HoldCreate(BaseModel):
 
 class HoldRelease(BaseModel):
     release_reason: str = Field(min_length=1, max_length=4000)
-    released_by: UUID | None = None
+    released_by: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the releaser is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
 
 
 class HoldResponse(BaseModel):

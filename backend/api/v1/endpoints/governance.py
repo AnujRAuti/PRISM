@@ -21,6 +21,7 @@ from backend.schemas.governance import (
     ReprocessRequest,
     ReprocessResponse,
 )
+from backend.security.attribution import derive_actor
 from backend.security.authentication import get_current_principal, is_development_bypass
 from backend.security.authorization import enforce, require
 from backend.services import governance as governance_service
@@ -64,10 +65,10 @@ def _require_target_scope(action: str):
     return dependency
 
 
-def _actor(principal: Principal, request_actor: UUID | None) -> str | None:
-    if request_actor is not None:
-        return str(request_actor)
-    return principal.principal_id
+def _actor(principal: Principal, request_actor: UUID | None, *,
+           field: str = "actor_id") -> str | None:
+    """The authenticated principal is the actor; the body may only restate it."""
+    return derive_actor(principal, request_actor, field=field)
 
 
 def _invalidation_item(invalidation) -> InvalidationResponse:
@@ -153,7 +154,7 @@ def invalidate(
     db: Session = Depends(get_db),
     principal: Principal = Depends(_require_target_scope("intelligence.invalidate")),
 ) -> InvalidationResponse:
-    actor = _actor(principal, request.invalidated_by)
+    actor = _actor(principal, request.invalidated_by, field="invalidated_by")
     if actor is None:
         raise HTTPException(status_code=401, detail="Authentication required")
     try:
@@ -215,7 +216,7 @@ def reprocess(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Only evidence targets can be reprocessed",
         )
-    requester = _actor(principal, request.requested_by)
+    requester = _actor(principal, request.requested_by, field="requested_by")
     if requester is None:
         raise HTTPException(status_code=401, detail="Authentication required")
     try:

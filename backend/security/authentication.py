@@ -3,9 +3,11 @@
 Development bearer tokens (``dev-user-<uuid>``, ``dev-client-<uuid>``) are
 non-secret identifiers accepted only when explicitly enabled for
 development/testing. They must never be treated as production
-authentication; production OIDC/OAuth2 plugs into ``resolve_principal``
-later. Anonymous requests are permitted only in development mode;
-enforcing mode rejects them (401) and never falls back silently.
+authentication. Production has two real paths: an integration uses its
+API-client credential, and a human signs in with an identity-provider token that
+``backend/security/oidc.py`` verifies locally over JWKS (stage 02) and maps onto
+a provisioned ``users`` row. Anonymous requests are permitted only in development
+mode; enforcing mode rejects them (401) and never falls back silently.
 """
 
 import logging
@@ -26,6 +28,7 @@ from backend.services.authorization import (
     resolve_user_principal,
     system_principal,
 )
+from backend.security.oidc import OIDCError, looks_like_jwt, resolve_oidc_principal
 
 
 logger = logging.getLogger(__name__)
@@ -65,6 +68,18 @@ def resolve_principal(request: Request, db: Session) -> Principal:
             pass
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Invalid credentials")
+
+    if settings.auth_oidc_enabled and looks_like_jwt(token):
+        try:
+            return resolve_oidc_principal(db, token)
+        except OIDCError as error:
+            if error.reason == "NO_LINKED_USER":
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="No account is linked to this sign-in; ask an "
+                           "administrator to grant your user a role.") from error
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Invalid credentials") from error
 
     if not settings.auth_dev_tokens_enabled:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,

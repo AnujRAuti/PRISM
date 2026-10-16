@@ -101,6 +101,21 @@ class Settings(BaseSettings):
     # Production OIDC/OAuth2 integration must disable this.
     auth_dev_tokens_enabled: bool = True
 
+    # Stage 02 — trusted human identity (Supabase Auth, verified locally over
+    # JWKS). Off by default so an unconfigured deployment keeps the existing
+    # service-credential-only posture; enabling it is what lets a browser send
+    # the reviewer's own sign-in token instead of a service secret.
+    auth_oidc_enabled: bool = False
+    auth_oidc_issuer: str = ""
+    auth_oidc_jwks_uri: str = ""
+    auth_oidc_audience: str = "authenticated"
+    # The users.identity_provider value a verified token's `sub` is looked up under.
+    auth_oidc_identity_provider: str = "supabase"
+    # Only asymmetric algorithms are accepted; a JWKS entry using any other
+    # `alg` is refused, which is what blocks key-type confusion attacks.
+    auth_oidc_algorithms: str = "RS256"
+    auth_oidc_jwks_ttl_seconds: int = 300
+
     # BE-020 Observability Configuration
     otel_enabled: bool = False
     otel_service_name: str = "poa-backend"
@@ -170,6 +185,41 @@ class Settings(BaseSettings):
                     "production; the wildcard '*' is unsafe because credentials are "
                     "enabled, so list the real frontend origins instead."
                 )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_oidc_settings(self):
+        """A switched-on but half-configured identity verifier must not start.
+
+        ``AUTH_OIDC_ENABLED=true`` with a blank issuer or JWKS address would
+        accept nothing while looking like it accepts something, which is worse
+        than leaving it off. Checked in every environment, not only production:
+        the failure mode is identical. No configured value is echoed in full.
+        """
+        if not self.auth_oidc_enabled:
+            return self
+        for field, label in ((self.auth_oidc_issuer, "auth_oidc_issuer"),
+                             (self.auth_oidc_jwks_uri, "auth_oidc_jwks_uri")):
+            value = (field or "").strip()
+            if not value:
+                raise ValueError(f"{label} must be set when auth_oidc_enabled is true")
+            if not value.lower().startswith("https://"):
+                raise ValueError(
+                    f"{label} must be an https:// address when auth_oidc_enabled is true"
+                )
+        if not (self.auth_oidc_audience or "").strip():
+            raise ValueError("auth_oidc_audience must not be blank when OIDC is enabled")
+        algorithms = [a.strip() for a in (self.auth_oidc_algorithms or "").split(",") if a.strip()]
+        if not algorithms:
+            raise ValueError("auth_oidc_algorithms must list at least one algorithm")
+        # Only asymmetric signing families are accepted; "none" and the HMAC
+        # family would let a key material forged from the public JWKS pass.
+        if any(not a[:2] in {"RS", "ES", "PS"} for a in algorithms):
+            raise ValueError(
+                "auth_oidc_algorithms may only contain asymmetric algorithms "
+                f"(RS*/ES*/PS*); {sum(1 for a in algorithms if not a[:2] in {'RS', 'ES', 'PS'})} "
+                "refused entry(ies) are not accepted."
+            )
         return self
 
     class Config:

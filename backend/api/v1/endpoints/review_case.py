@@ -22,6 +22,7 @@ from backend.schemas.review_case import (
     ReviewCaseResponse,
 )
 from backend.services import review_case as case_service
+from backend.security.attribution import derive_actor
 from backend.security.authentication import get_current_principal, is_development_bypass
 from backend.security.authorization import require, visible_project_ids
 from backend.services.authorization import Principal
@@ -180,7 +181,7 @@ def assign_case(
                 db,
                 str(case_id),
                 str(request.assigned_to) if request.assigned_to else None,
-                str(request.actor_id) if request.actor_id else None,
+                derive_actor(principal, request.actor_id),
             )
         )
     except ValueError as error:
@@ -201,7 +202,8 @@ def investigate_case(
         require("review_case.investigate", "review_case", "case_id")),
 ) -> ReviewCaseResponse:
     try:
-        return _case_item(case_service.start_investigation(db, str(case_id)))
+        return _case_item(case_service.start_investigation(
+            db, str(case_id), derive_actor(principal)))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
@@ -226,7 +228,7 @@ def record_decision(
                 str(case_id),
                 request.decision.value,
                 request.rationale,
-                str(request.decided_by) if request.decided_by else None,
+                derive_actor(principal, request.decided_by, field="decided_by"),
             )
         )
     except ValueError as error:
@@ -253,7 +255,7 @@ def escalate_case(
                 str(case_id),
                 str(request.escalated_to),
                 request.reason,
-                str(request.actor_id) if request.actor_id else None,
+                derive_actor(principal, request.actor_id),
             )
         )
     except ValueError as error:
@@ -273,7 +275,8 @@ def resolve_case(
     principal: Principal = Depends(require("review_case.resolve", "review_case", "case_id")),
 ) -> ReviewCaseResponse:
     try:
-        return _case_item(case_service.resolve_case(db, str(case_id)))
+        return _case_item(case_service.resolve_case(
+            db, str(case_id), derive_actor(principal)))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
@@ -291,7 +294,8 @@ def reopen_case(
     principal: Principal = Depends(require("review_case.reopen", "review_case", "case_id")),
 ) -> ReviewCaseResponse:
     try:
-        return _case_item(case_service.reopen_case(db, str(case_id)))
+        return _case_item(case_service.reopen_case(
+            db, str(case_id), derive_actor(principal)))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:

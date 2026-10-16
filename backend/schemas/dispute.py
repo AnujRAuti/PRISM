@@ -44,19 +44,28 @@ class DisputeCreateRequest(BaseModel):
     description: str | None = Field(default=None, max_length=20000)
     initiator_id: UUID | None = Field(
         default=None,
-        description="Initiator; defaults to the authenticated principal",
+        description="Must equal the authenticated principal; the initiator is derived "
+                    "from the credential and a conflicting value is refused.",
     )
 
 
 class DisputeAssignRequest(BaseModel):
     assigned_to: UUID
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
 
 
 class DisputeEscalateRequest(BaseModel):
     escalated_to: UUID
     reason: str = Field(min_length=1, max_length=20000)
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
 
 
 class DisputeResolveRequest(BaseModel):
@@ -64,7 +73,8 @@ class DisputeResolveRequest(BaseModel):
     rationale: str = Field(min_length=1, max_length=20000)
     resolved_by: UUID | None = Field(
         default=None,
-        description="Resolver; defaults to the authenticated principal",
+        description="Must equal the authenticated principal; resolutions are attributed "
+                    "to the credential, never to this field.",
     )
 
 
@@ -73,12 +83,18 @@ class DisputeRejectRequest(BaseModel):
 
     rationale: str = Field(min_length=1, max_length=20000)
     actor_id: UUID | None = Field(
-        default=None, description="Actor; defaults to the authenticated principal"
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
     )
 
 
 class DisputeWithdrawRequest(BaseModel):
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
 
 
 class DisputeResponse(BaseModel):

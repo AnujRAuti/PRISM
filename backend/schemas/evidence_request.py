@@ -47,7 +47,11 @@ class EvidenceRequestCreate(BaseModel):
     recipient_id: UUID
     instructions: str = Field(min_length=1, max_length=8000)
     items: list[EvidenceRequestItemCreate] = Field(min_length=1, max_length=50)
-    requester_id: UUID | None = None
+    requester_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the requester is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
     due_at: AwareDatetime | None = Field(
         default=None, description="Timezone-aware deadline; naive timestamps rejected"
     )
@@ -115,7 +119,11 @@ class EvidenceRequestHistoryResponse(BaseModel):
 
 class EvidenceRequestDeclineRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=2000)
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
 
 
 class EvidenceRequestLinkResponse(BaseModel):
@@ -125,4 +133,8 @@ class EvidenceRequestLinkResponse(BaseModel):
 
 
 class EvidenceRequestResponseAction(BaseModel):
-    actor_id: UUID | None = None
+    actor_id: UUID | None = Field(
+        default=None,
+        description="Must equal the authenticated principal; the actor is derived "
+                    "from the credential and a conflicting value is refused.",
+    )
