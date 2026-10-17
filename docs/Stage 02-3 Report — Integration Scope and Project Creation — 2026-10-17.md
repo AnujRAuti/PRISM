@@ -33,9 +33,9 @@ All code and test changes are committed and pushed on branch `Backend` at commit
 
 ## 3. Family B — BE-039 Project Creation Identity & Audit
 
-1. **Service Separation**: Creation logic moved to `auth_service.create_project` (`backend/services/authorization.py:807`) using transactional lock, single commit, and atomic event emission.
+1. **Service Separation**: Creation logic moved to `auth_service.create_project` (`backend/services/authorization.py:807`). Atomicity comes from a single `db.commit()` after `append_event` flushes without committing, so the project row and its `PROJECT_CREATED` event commit or roll back together (`test_creation_and_audit_roll_back_together`). No row lock is taken — creating a new row has nothing to lock.
 2. **Owner Derivation**: `owner_id` defaults to the authenticated human user principal.
-3. **Delegated Ownership (D-2 Option A)**: Naming another user as `owner_id` requires holding `project.create` at `GLOBAL` scope. Non-GLOBAL callers are refused (403/404) and leave the database unchanged.
+3. **Delegated Ownership (D-2 Option A)**: Naming another user as `owner_id` requires holding `project.create` at `GLOBAL` scope. The guard runs before any user lookup, so a non-GLOBAL caller is always refused `403` (never a `404` that would confirm the id exists) and leaves the database unchanged.
 4. **Actor Attribution**: `actor_id` in the audit row is always the caller principal (`created_by`), while `owner_id` captures ownership.
 5. **Audit Event**: Emits `PROJECT_CREATED` with full payload in the same database transaction.
 6. **Birth Scope Resolution (D-3)**: `_birth_scope` (`backend/services/authorization.py:779`) server-derives scope from the creator's active grant, resolving the §1.1 defect.

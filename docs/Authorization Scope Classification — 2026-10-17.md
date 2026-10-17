@@ -293,7 +293,7 @@ scope inheritance, and audit closure.
 - **§1.1 Defect (Measured)**: An organization-scoped supervisor calling `POST /projects` for themselves
   received `201 Created`, but subsequent `GET /projects/{project_id}` returned `404 Not Found` and `GET /projects`
   returned `total=0` (`project_scope_probe.log`). Cause: the creation route took no scope field, resulting in
-  `organization_id IS NULL`, which `_scope_covers` (`backend/services/authorization.py:1199-1204`) refuses
+  `organization_id IS NULL`, which `_scope_covers` (`backend/services/authorization.py:1283`) refuses
   under an ORGANIZATION grant.
 - **FIXED**: `_birth_scope` (`backend/services/authorization.py:779`) resolves birth scope server-side from
   the creator's own active `project.create` grant. If the creator holds an unambiguous single ORGANIZATION (or unit)
@@ -308,9 +308,9 @@ scope inheritance, and audit closure.
 | Decision | Area | Outcome & Implementation |
 |---|---|---|
 | **D-1** | Revision id / task label | Implemented as revision `w3x4y5z6a033` under label **BE-039** (`alembic/versions/w3x4y5z6a033_be039_project_created_event.py`). Rebuilds `ck_audit_ledger_event_type_domain` with vocabulary 96 → 97 (`PROJECT_CREATED`). Test pins bumped in `tests/unit/test_be030_ledger_contract.py` (97) and `tests/unit/test_migrations.py` (28 revisions). Downgrade refused (append-only ledger). |
-| **D-2** | Delegated ownership | **Option A adopted.** A caller may supply an `owner_id` differing from the authenticated principal only when holding `project.create` at `GLOBAL` scope. Non-GLOBAL callers naming another user are refused (403/404), with project table count proven flat across refusal. Default owner is the authenticated user principal. |
+| **D-2** | Delegated ownership | **Option A adopted.** A caller may supply an `owner_id` differing from the authenticated principal only when holding `project.create` at `GLOBAL` scope. The delegation guard runs **before** any user lookup, so a non-GLOBAL caller naming another user is always refused `403` — never `404`, which would confirm the id exists. `test_owner_must_exist_and_be_active` exercises both halves on the same unknown id: `403` for the organization-scoped caller, `404 Owner not found` only for a GLOBAL one. Refusal is proven by asserting the unique project name is absent from `projects`, not by a table count. Default owner is the authenticated user principal. |
 | **D-3** | Born-unscoped defect | **Fixed in this pass via `_birth_scope`** (see §1.1 chain above). Derived server-side from creator's active grant; never caller-supplied. |
-| **D-4** | API-client principals | API clients have no row in `users` and cannot default ownership. They must supply an explicit `owner_id` **and** hold `GLOBAL` `project.create` (delegation authority); otherwise refused with 422 (`"owner_id is required for non-user principals"`). |
+| **D-4** | API-client principals | API clients have no row in `users` and cannot default ownership. Two distinct refusals, both measured: omitting `owner_id` is `422` with `"owner_id is required: the caller has no user identity to own the project"` (`backend/services/authorization.py:829`); supplying one without GLOBAL `project.create` — e.g. a project-bound client — is `403`. A client that does hold it succeeds, and its client id becomes the audit `actor_id` and `payload["created_by"]` (`audit_ledger_events.actor_id` carries no `users` FK, so a machine caller is still accountable). |
 | **D-5** | Ownership transfer hole | `change_project_owner` (`backend/services/authorization.py:859`) and `POST /projects/{project_id}/ownership` require `GLOBAL` `organization.manage` for the destination user as well, eliminating cross-scope handoffs. |
 | **D-6** | Migration application | **Owner-gated.** `pofa_dev` (at `t0u1v2w3x030`) and `pofa_test` (at `v2w3x4y5z032`) both reject `PROJECT_CREATED` until migrated. `pofa_dev` requires a fresh backup taken before applying `w3x4y5z6a033`. No live migration without explicit approval. |
 
