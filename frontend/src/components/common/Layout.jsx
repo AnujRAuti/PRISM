@@ -3,6 +3,9 @@ import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
 import { Outlet } from 'react-router-dom';
+import CommandPalette from '../ui/CommandPalette';
+import KeyboardShortcutsModal from '../ui/KeyboardShortcutsModal';
+import ToastContainer from '../ui/ToastContainer';
 
 function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -18,6 +21,11 @@ function Layout() {
       <a href="#main-content" className="skip-to-content">
         Skip to main content
       </a>
+
+      {/* Global Overlays: Command Palette, Keyboard Shortcuts, and Toasts */}
+      <CommandPalette />
+      <KeyboardShortcutsModal />
+      <ToastContainer />
 
       <Header onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
       <div style={{

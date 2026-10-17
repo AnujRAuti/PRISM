@@ -1,580 +1,886 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { formatDate } from '../../utils/helpers';
-import { ReviewIcon, SearchIcon, CheckIcon, AlertIcon, ClockIcon } from '../../components/common/Icon';
-import { reviewApi } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
+import { IntegrityArc } from '../../components/ui/IntegrityArc';
+import {
+  Inbox,
+  Filter,
+  CheckSquare,
+  Square,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  ArrowUpDown,
+  SlidersHorizontal,
+  Download,
+  Eye,
+  Info,
+  MapPin,
+  Sparkles,
+  Layers,
+  Check,
+  Search,
+} from 'lucide-react';
 
-function ReviewQueue() {
-  const [cases, setCases] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+export default function ReviewQueue() {
+  const navigate = useNavigate();
+  const {
+    evidenceList,
+    density,
+    setDensity,
+    selectedEvidenceIds,
+    toggleSelectEvidence,
+    selectAllEvidence,
+    clearSelection,
+    approveEvidence,
+    rejectEvidence,
+    flagEvidence,
+    batchApprove,
+    batchFlag,
+    addToast,
+  } = useApp();
 
-  // Authoritative Review Cases Seed Data (ADR §2.3, §14.1, PWA Plan §3)
-  const defaultCases = [
-    {
-      id: 'case-001-pmgsy',
-      title: 'Rural Road Sub-base & Bitumen Pouring Compliance',
-      project_id: 'PRJ-001',
-      project_name: 'PMGSY Phase 1 Road Works',
-      scheme: 'Pradhan Mantri Gram Sadak Yojana',
-      claim_statement: 'Completion of 12.4 km all-weather rural road connectivity milestone.',
-      priority: 'HIGH',
-      priority_reason: 'Milestone disbursement deadline in 48 hours; geofence bounds pending confirmation',
-      status: 'PENDING_REVIEW',
-      evidence_count: 2,
-      assigned_to: 'Ramesh Sharma (Reviewer)',
-      intake_timestamp: '2024-02-15T16:00:00Z',
-      department: 'Ministry of Rural Development',
-      jurisdiction: 'Pune District, Maharashtra',
-      integrity_signals: {
-        hash_status: 'COMPUTED',
-        geofence_status: 'COMPLIANT',
-        temporal_status: 'NORMAL',
-        cross_duplicate: 'NONE_DETECTED'
-      }
-    },
-    {
-      id: 'case-002-solar',
-      title: 'Surat Ward 4 Solar Street Luminaire Installation',
-      project_id: 'PRJ-002',
-      project_name: 'Solar Street Light Installation',
-      scheme: 'Solar Energy Programme',
-      claim_statement: 'Installation of 48 standalone 12W LED solar PV luminaire units along rural arterial routes.',
-      priority: 'HIGH',
-      priority_reason: 'Cross-evidence perceptual duplicate detected with PMGSY roadbed imagery; geofence 12.4 km out-of-bounds',
-      status: 'INVESTIGATING',
-      evidence_count: 2,
-      assigned_to: 'Sunita Patel (Supervisor)',
-      intake_timestamp: '2024-02-20T10:15:00Z',
-      department: 'Ministry of New & Renewable Energy',
-      jurisdiction: 'Surat District, Gujarat',
-      integrity_signals: {
-        hash_status: 'COMPUTED',
-        geofence_status: 'OUT_OF_BOUNDS',
-        temporal_status: 'INVERSION_WARNING',
-        cross_duplicate: 'DUPLICATE_FLAGGED'
-      }
-    },
-    {
-      id: 'case-003-water',
-      title: 'RCC Rural Drinking Water Storage Tank Construction',
-      project_id: 'PRJ-003',
-      project_name: 'Community Water Tank Construction',
-      scheme: 'Jal Jeevan Mission',
-      claim_statement: 'Construction and curing of 50,000 litre capacity reinforced concrete community water tank.',
-      priority: 'MEDIUM',
-      priority_reason: 'Sequential progress verification; milestone 2 completion report',
-      status: 'OPEN',
-      evidence_count: 1,
-      assigned_to: 'Unassigned',
-      intake_timestamp: '2024-02-22T16:30:00Z',
-      department: 'Department of Drinking Water & Sanitation',
-      jurisdiction: 'Jaipur District, Rajasthan',
-      integrity_signals: {
-        hash_status: 'COMPUTED',
-        geofence_status: 'COMPLIANT',
-        temporal_status: 'NORMAL',
-        cross_duplicate: 'NONE_DETECTED'
-      }
-    },
-    {
-      id: 'case-004-school',
-      title: 'Primary School Structural Roof & Masonry Renovation',
-      project_id: 'PRJ-004',
-      project_name: 'School Building Renovation',
-      scheme: 'Samagra Shiksha Abhiyan',
-      claim_statement: 'Structural earthquake-resistant retrofitting and roof slab casting for 4 classrooms.',
-      priority: 'LOW',
-      priority_reason: 'Routine quarterly verification tranche',
-      status: 'RESOLVED',
-      decision: 'SUPPORTED',
-      decision_rationale: 'All photographic and temporal submissions match drone survey records and structural audit engineer sign-offs.',
-      evidence_count: 3,
-      assigned_to: 'Ramesh Sharma (Reviewer)',
-      intake_timestamp: '2024-02-28T11:00:00Z',
-      department: 'Department of School Education & Literacy',
-      jurisdiction: 'Mysuru District, Karnataka',
-      integrity_signals: {
-        hash_status: 'COMPUTED',
-        geofence_status: 'COMPLIANT',
-        temporal_status: 'NORMAL',
-        cross_duplicate: 'NONE_DETECTED'
-      }
-    },
-    {
-      id: 'case-005-health',
-      title: 'Primary Health Sub-center Boundary Foundation',
-      project_id: 'PRJ-005',
-      project_name: 'Community Health Center',
-      scheme: 'National Health Mission',
-      claim_statement: 'Perimeter foundation excavation and plinth beam beam casting for sub-center block.',
-      priority: 'HIGH',
-      priority_reason: 'Capture EXIF metadata missing camera serial number; inconclusive temporal consistency',
-      status: 'DECISION_PENDING',
-      evidence_count: 1,
-      assigned_to: 'Rajesh Kulkarni (Reviewer)',
-      intake_timestamp: '2024-02-26T09:00:00Z',
-      department: 'Ministry of Health & Family Welfare',
-      jurisdiction: 'Lucknow District, Uttar Pradesh',
-      integrity_signals: {
-        hash_status: 'COMPUTED',
-        geofence_status: 'UNVERIFIED',
-        temporal_status: 'INCONCLUSIVE',
-        cross_duplicate: 'NONE_DETECTED'
-      }
+  const [activeTab, setActiveTab] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRiskFilter, setSelectedRiskFilter] = useState('ALL');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
+  const [activeRowIndex, setActiveRowIndex] = useState(0);
+
+  // Decision Modal State (for 20-character rationale requirement)
+  const [decisionModal, setDecisionModal] = useState(null); // { id, action: 'REJECT' | 'FLAG', item }
+  const [decisionRationale, setDecisionRationale] = useState('');
+
+  // Filter pipeline
+  const filteredList = (evidenceList || []).filter((item) => {
+    if (activeTab === 'PENDING' && item.auditStatus !== 'PENDING' && item.auditStatus !== 'FLAGGED') return false;
+    if (activeTab === 'CRITICAL' && item.riskLevel !== 'CRITICAL' && item.riskLevel !== 'HIGH') return false;
+    if (activeTab === 'DUPLICATES' && !item.detectedAnomalies?.some((a) => a.type?.includes('DUPLICATE'))) return false;
+    if (
+      activeTab === 'GEOFENCE' &&
+      !item.detectedAnomalies?.some((a) => a.type?.includes('LOCATION') || a.type?.includes('IMPOSSIBLE'))
+    )
+      return false;
+    if (activeTab === 'PMGSY' && !item.scheme?.includes('PMGSY')) return false;
+    if (activeTab === 'JJM' && !item.scheme?.includes('Jal Jeevan')) return false;
+
+    if (selectedRiskFilter !== 'ALL' && item.riskLevel !== selectedRiskFilter) return false;
+    if (selectedStatusFilter !== 'ALL' && item.auditStatus !== selectedStatusFilter) return false;
+
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      const match =
+        item.id?.toLowerCase().includes(q) ||
+        item.title?.toLowerCase().includes(q) ||
+        item.projectName?.toLowerCase().includes(q) ||
+        item.scheme?.toLowerCase().includes(q) ||
+        item.location?.district?.toLowerCase().includes(q) ||
+        item.location?.state?.toLowerCase().includes(q) ||
+        item.sha256?.toLowerCase().includes(q);
+      if (!match) return false;
     }
-  ];
 
-  useEffect(() => {
-    // Attempt to load live review cases from FastAPI /api/v1/review-cases
-    reviewApi.getQueue()
-      .then(res => {
-        if (res.data && Array.isArray(res.data.items)) {
-          setCases(res.data.items);
-        } else if (Array.isArray(res.data)) {
-          setCases(res.data);
-        } else {
-          setCases(defaultCases);
-        }
-      })
-      .catch(() => {
-        // Safe offline / standalone fallback per ADR §22.1 & PWA spec
-        setCases(defaultCases);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  const filteredCases = cases.filter(item => {
-    const q = searchTerm.toLowerCase();
-    const matchesSearch =
-      item.id.toLowerCase().includes(q) ||
-      (item.title && item.title.toLowerCase().includes(q)) ||
-      (item.project_name && item.project_name.toLowerCase().includes(q)) ||
-      (item.claim_statement && item.claim_statement.toLowerCase().includes(q)) ||
-      (item.jurisdiction && item.jurisdiction.toLowerCase().includes(q));
-
-    const matchesPriority = priorityFilter === 'all' || item.priority === priorityFilter;
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    return matchesSearch && matchesPriority && matchesStatus;
+    return true;
   });
 
-  const getPriorityBadge = (priority) => {
-    switch (priority) {
-      case 'HIGH':
-        return {
-          bg: 'var(--govt-danger-light)',
-          color: 'var(--govt-danger-text)',
-          border: '1px solid var(--govt-danger-border)',
-          label: 'Priority: HIGH'
-        };
-      case 'MEDIUM':
-        return {
-          bg: 'var(--govt-warning-light)',
-          color: 'var(--govt-warning-text)',
-          border: '1px solid var(--govt-warning-border)',
-          label: 'Priority: MEDIUM'
-        };
-      default:
-        return {
-          bg: 'var(--govt-blue-light)',
-          color: 'var(--govt-blue-primary)',
-          border: '1px solid var(--govt-blue-medium)',
-          label: 'Priority: LOW'
-        };
+  useEffect(() => {
+    setActiveRowIndex((prev) => Math.min(prev, Math.max(filteredList.length - 1, 0)));
+  }, [filteredList.length]);
+
+  // Keyboard navigation & hotkeys
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
+      if (filteredList.length === 0) return;
+
+      const currentItem = filteredList[activeRowIndex];
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveRowIndex((prev) => Math.min(prev + 1, filteredList.length - 1));
+      } else if (e.key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveRowIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter' && currentItem) {
+        e.preventDefault();
+        navigate(`/evidence/${currentItem.id}`);
+      } else if (e.key === 'a' && currentItem) {
+        e.preventDefault();
+        approveEvidence(currentItem.id, 'Keyboard shortcut approval upon visual check');
+      } else if (e.key === 'r' && currentItem) {
+        e.preventDefault();
+        setDecisionModal({ id: currentItem.id, action: 'REJECT', item: currentItem });
+        setDecisionRationale('');
+      } else if (e.key === 'f' && currentItem) {
+        e.preventDefault();
+        setDecisionModal({ id: currentItem.id, action: 'FLAG', item: currentItem });
+        setDecisionRationale('');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeRowIndex, filteredList, approveEvidence, navigate]);
+
+  const isAllSelected =
+    filteredList.length > 0 && filteredList.every((item) => selectedEvidenceIds.includes(item.id));
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      clearSelection();
+    } else {
+      selectAllEvidence(filteredList.map((item) => item.id));
     }
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'RESOLVED':
-        return { bg: 'var(--govt-success-light)', color: 'var(--govt-success-text)', label: 'RESOLVED' };
-      case 'INVESTIGATING':
-        return { bg: 'var(--govt-warning-light)', color: 'var(--govt-warning-text)', label: 'INVESTIGATING' };
-      case 'DECISION_PENDING':
-        return { bg: 'var(--govt-warning-light)', color: 'var(--govt-warning-text)', label: 'DECISION PENDING' };
-      case 'ESCALATED':
-        return { bg: 'var(--govt-danger-light)', color: 'var(--govt-danger-text)', label: 'ESCALATED' };
-      default:
-        return { bg: 'var(--govt-gray-light)', color: 'var(--govt-gray-dark)', label: 'PENDING REVIEW' };
-    }
+  const handleExportCsv = () => {
+    const headers = ['Evidence ID', 'Project ID', 'Scheme', 'State', 'District', 'Integrity Score', 'Risk Level', 'Audit Status', 'SHA256'];
+    const rows = filteredList.map((e) => [
+      e.id,
+      e.projectId,
+      `"${e.scheme}"`,
+      `"${e.location?.state}"`,
+      `"${e.location?.district}"`,
+      e.integrityScore,
+      e.riskLevel,
+      e.auditStatus,
+      e.sha256,
+    ]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `PRISM_Review_Queue_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    addToast({
+      title: 'Review Queue Exported',
+      description: `CSV file with ${filteredList.length} evidence records generated.`,
+      type: 'success',
+    });
   };
 
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '350px',
-        flexDirection: 'column',
-        gap: '1rem'
-      }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', borderWidth: '3px' }}></div>
-        <p style={{ margin: 0, color: 'var(--govt-gray-dark)', fontSize: '0.9rem' }}>
-          Loading authorized review queue...
-        </p>
-      </div>
-    );
-  }
+  const submitDecision = () => {
+    if (!decisionModal) return;
+    if (decisionRationale.trim().length < 20) {
+      addToast({
+        title: 'Rationale Required',
+        description: 'Statutory rules require minimum 20 characters explanation.',
+        type: 'error',
+      });
+      return;
+    }
+
+    if (decisionModal.action === 'REJECT') {
+      rejectEvidence(decisionModal.id, decisionRationale);
+    } else if (decisionModal.action === 'FLAG') {
+      flagEvidence(decisionModal.id, decisionRationale);
+    }
+    setDecisionModal(null);
+    setDecisionRationale('');
+  };
 
   return (
-    <div style={{
-      padding: '1.75rem 2rem',
-      width: '100%',
-      boxSizing: 'border-box',
-      backgroundColor: 'var(--govt-gray-off-white)',
-    }}>
-      {/* Header & Core Principles Notice */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '1.75rem',
-        flexWrap: 'wrap',
-        gap: '1rem'
-      }}>
+    <div style={{ padding: '1.5rem 2rem', maxWidth: '1440px', margin: '0 auto' }}>
+      {/* Top Header & Fast Filter Strip */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          paddingBottom: '1rem',
+          borderBottom: '1px solid var(--govt-gray-medium, #e2e8f0)',
+          marginBottom: '1.25rem',
+        }}
+      >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span style={{ color: 'var(--govt-blue-primary)' }}><ReviewIcon /></span>
-            <h1 style={{
-              margin: 0,
-              color: 'var(--govt-blue-dark)',
-              fontSize: '1.65rem',
-              fontWeight: 700,
-              letterSpacing: '-0.02em'
-            }}>
-              Reviewer Investigation Queue
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: '1.5rem',
+                fontWeight: 800,
+                color: 'var(--govt-blue-dark, #0f172a)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Evidence Review Queue
             </h1>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '4px',
+                backgroundColor: 'var(--govt-gray-light)',
+                border: '1px solid var(--govt-gray-medium)',
+                color: 'var(--govt-gray-title)',
+                fontWeight: 700,
+                fontFamily: 'monospace',
+              }}
+            >
+              {filteredList.length} records
+            </span>
           </div>
-          <p style={{
-            margin: '0.4rem 0 0 0',
-            color: 'var(--govt-gray-dark)',
-            fontSize: '0.875rem'
-          }}>
-            Authorized review triage. Evidence intelligence supports human judgment; it does not replace it.
+          <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--govt-gray-dark)' }}>
+            Keyboard-first triage queue: Use <kbd style={{ padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--govt-gray-light)', border: '1px solid var(--govt-gray-medium)', fontFamily: 'monospace' }}>j</kbd>/<kbd style={{ padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--govt-gray-light)', border: '1px solid var(--govt-gray-medium)', fontFamily: 'monospace' }}>k</kbd> to move, <kbd style={{ padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--govt-gray-light)', border: '1px solid var(--govt-gray-medium)', fontFamily: 'monospace' }}>a</kbd> approve, <kbd style={{ padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--govt-gray-light)', border: '1px solid var(--govt-gray-medium)', fontFamily: 'monospace' }}>r</kbd> reject, <kbd style={{ padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--govt-gray-light)', border: '1px solid var(--govt-gray-medium)', fontFamily: 'monospace' }}>f</kbd> flag, <kbd style={{ padding: '0.1rem 0.35rem', borderRadius: '3px', backgroundColor: 'var(--govt-gray-light)', border: '1px solid var(--govt-gray-medium)', fontFamily: 'monospace' }}>Enter</kbd> inspect.
           </p>
         </div>
 
-        {/* Priority Counts */}
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{
-            backgroundColor: 'var(--govt-danger-light)',
-            borderLeft: '4px solid var(--govt-danger)',
-            padding: '0.5rem 0.85rem',
-            borderRadius: 'var(--radius-sm)'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--govt-danger-text)', fontWeight: 600 }}>
-              High Attention: {cases.filter(c => c.priority === 'HIGH').length} cases
-            </p>
+        {/* View Controls & Density Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              backgroundColor: 'var(--govt-gray-light)',
+              borderRadius: '6px',
+              padding: '2px',
+              border: '1px solid var(--govt-gray-medium)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setDensity('comfortable')}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '4px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: density === 'comfortable' ? 700 : 500,
+                backgroundColor: density === 'comfortable' ? '#ffffff' : 'transparent',
+                color: density === 'comfortable' ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
+                boxShadow: density === 'comfortable' ? 'var(--shadow-xs)' : 'none',
+              }}
+            >
+              Comfortable
+            </button>
+            <button
+              type="button"
+              onClick={() => setDensity('compact')}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '4px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: density === 'compact' ? 700 : 500,
+                backgroundColor: density === 'compact' ? '#ffffff' : 'transparent',
+                color: density === 'compact' ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
+                boxShadow: density === 'compact' ? 'var(--shadow-xs)' : 'none',
+              }}
+            >
+              Compact
+            </button>
           </div>
-          <div style={{
-            backgroundColor: 'var(--govt-white)',
-            border: '1px solid var(--govt-gray-medium)',
-            padding: '0.5rem 0.85rem',
-            borderRadius: 'var(--radius-sm)'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--govt-gray-text)', fontWeight: 600 }}>
-              Total Cases: {cases.length}
-            </p>
-          </div>
+
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.45rem 0.85rem',
+              borderRadius: '6px',
+              backgroundColor: '#ffffff',
+              border: '1px solid var(--govt-gray-medium)',
+              fontSize: '0.775rem',
+              fontWeight: 600,
+              color: 'var(--govt-gray-title)',
+              cursor: 'pointer',
+            }}
+          >
+            <Download size={14} />
+            <span>Export CSV</span>
+          </button>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div style={{
-        backgroundColor: 'var(--govt-white)',
-        padding: '1.25rem 1.5rem',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--govt-gray-medium)',
-        marginBottom: '1.5rem',
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        alignItems: 'center'
-      }}>
-        <div style={{ flex: '1 1 280px', position: 'relative' }}>
+      {/* Tabs Row */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '0.5rem',
+          borderBottom: '1px solid var(--govt-gray-medium)',
+          paddingBottom: '0.5rem',
+          marginBottom: '1rem',
+        }}
+      >
+        {[
+          { id: 'ALL', label: 'All Submissions' },
+          { id: 'PENDING', label: 'Pending Action' },
+          { id: 'CRITICAL', label: 'Critical Risk' },
+          { id: 'DUPLICATES', label: 'Duplicate Warnings' },
+          { id: 'GEOFENCE', label: 'Geofence / Travel' },
+          { id: 'PMGSY', label: 'PMGSY Roads' },
+          { id: 'JJM', label: 'Jal Jeevan Water' },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '0.4rem 0.85rem',
+                borderRadius: '6px',
+                border: 'none',
+                fontSize: '0.8rem',
+                fontWeight: isActive ? 700 : 500,
+                backgroundColor: isActive ? 'var(--govt-blue-primary)' : 'transparent',
+                color: isActive ? '#ffffff' : 'var(--govt-gray-dark)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Filters Toolbar */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid var(--govt-gray-medium)',
+          borderRadius: '8px',
+          padding: '0.75rem 1rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          marginBottom: '1rem',
+          fontSize: '0.8rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '220px' }}>
+          <Search size={15} color="var(--govt-gray-dark)" />
           <input
             type="text"
-            placeholder="Search by Case ID, claim statement, scheme, jurisdiction..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by ID, scheme, district, SHA-256..."
             style={{
               width: '100%',
-              padding: '0.625rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--govt-gray-medium)',
-              fontSize: '0.875rem',
-              boxSizing: 'border-box',
+              maxWidth: '320px',
+              border: 'none',
               outline: 'none',
+              fontSize: '0.8rem',
+              color: 'var(--govt-gray-title)',
             }}
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            style={{
-              padding: '0.625rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--govt-gray-medium)',
-              fontSize: '0.85rem',
-              backgroundColor: 'var(--govt-white)',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="all">All Priorities</option>
-            <option value="HIGH">High Priority</option>
-            <option value="MEDIUM">Medium Priority</option>
-            <option value="LOW">Low Priority</option>
-          </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ color: 'var(--govt-gray-dark)', fontWeight: 600 }}>Risk:</span>
+            <select
+              value={selectedRiskFilter}
+              onChange={(e) => setSelectedRiskFilter(e.target.value)}
+              style={{
+                padding: '0.35rem 0.65rem',
+                borderRadius: '4px',
+                border: '1px solid var(--govt-gray-medium)',
+                backgroundColor: '#ffffff',
+                fontSize: '0.775rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <option value="ALL">All Risk Levels</option>
+              <option value="LOW">Low Risk</option>
+              <option value="MEDIUM">Medium Risk</option>
+              <option value="HIGH">High Risk</option>
+              <option value="CRITICAL">Critical Flag</option>
+            </select>
+          </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '0.625rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--govt-gray-medium)',
-              fontSize: '0.85rem',
-              backgroundColor: 'var(--govt-white)',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="all">All Statuses</option>
-            <option value="PENDING_REVIEW">Pending Review</option>
-            <option value="INVESTIGATING">Investigating</option>
-            <option value="DECISION_PENDING">Decision Pending</option>
-            <option value="RESOLVED">Resolved</option>
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ color: 'var(--govt-gray-dark)', fontWeight: 600 }}>Status:</span>
+            <select
+              value={selectedStatusFilter}
+              onChange={(e) => setSelectedStatusFilter(e.target.value)}
+              style={{
+                padding: '0.35rem 0.65rem',
+                borderRadius: '4px',
+                border: '1px solid var(--govt-gray-medium)',
+                backgroundColor: '#ffffff',
+                fontSize: '0.775rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="FLAGGED">Flagged</option>
+              <option value="OVERRIDDEN">Overridden</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-          {(searchTerm || priorityFilter !== 'all' || statusFilter !== 'all') && (
+      {/* Batch Operations Bar */}
+      {selectedEvidenceIds.length > 0 && (
+        <div
+          style={{
+            backgroundColor: 'var(--govt-blue-light, #eff6ff)',
+            border: '1px solid var(--govt-blue-accent, #2563eb)',
+            borderRadius: '8px',
+            padding: '0.65rem 1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '1rem',
+            fontSize: '0.8rem',
+            animation: 'fadeIn 0.15s ease',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CheckSquare size={16} color="var(--govt-blue-primary)" />
+            <span style={{ fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+              {selectedEvidenceIds.length} item(s) selected
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <button
               type="button"
-              onClick={() => { setSearchTerm(''); setPriorityFilter('all'); setStatusFilter('all'); }}
+              onClick={() => batchApprove(selectedEvidenceIds)}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '4px',
+                backgroundColor: 'var(--govt-success)',
+                color: '#ffffff',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Batch Approve
+            </button>
+            <button
+              type="button"
+              onClick={() => batchFlag(selectedEvidenceIds)}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '4px',
+                backgroundColor: 'var(--govt-warning)',
+                color: '#ffffff',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Batch Flag
+            </button>
+            <button
+              type="button"
+              onClick={clearSelection}
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--govt-blue-primary)',
-                fontSize: '0.85rem',
+                color: 'var(--govt-gray-dark)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
                 cursor: 'pointer',
-                fontWeight: 600
               }}
             >
-              Reset Filters
+              Clear
             </button>
-          )}
-        </div>
-      </div>
-
-      {/* Case Table / Card List */}
-      <div style={{
-        backgroundColor: 'var(--govt-white)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--govt-gray-medium)',
-        overflow: 'hidden'
-      }}>
-        {filteredCases.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--govt-gray-dark)' }}>
-            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>No review cases match the selected filters.</p>
-            <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem' }}>Adjust your search terms or filter selection.</p>
           </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-              <thead>
-                <tr style={{
-                  backgroundColor: 'var(--govt-gray-light)',
-                  borderBottom: '2px solid var(--govt-gray-medium)',
+        </div>
+      )}
+
+      {/* Evidence Table */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid var(--govt-gray-medium)',
+          borderRadius: 'var(--radius-lg, 12px)',
+          boxShadow: 'var(--shadow-sm)',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+            <thead>
+              <tr
+                style={{
+                  backgroundColor: 'var(--govt-gray-off-white)',
+                  borderBottom: '1px solid var(--govt-gray-medium)',
                   color: 'var(--govt-gray-dark)',
-                  fontSize: '0.75rem',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}>
-                  <th style={{ padding: '0.85rem 1.25rem' }}>Case Details</th>
-                  <th style={{ padding: '0.85rem 1rem' }}>Scheme & Department</th>
-                  <th style={{ padding: '0.85rem 1rem' }}>Priority & Reason</th>
-                  <th style={{ padding: '0.85rem 1rem' }}>Integrity Signals</th>
-                  <th style={{ padding: '0.85rem 1rem' }}>Status</th>
-                  <th style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>Action</th>
+                  fontSize: '0.725rem',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                <th style={{ padding: '0.75rem 1rem', width: '40px' }}>
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={toggleSelectAll}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </th>
+                <th style={{ padding: '0.75rem 1rem' }}>Evidence ID</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Photo & Description</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Project & Location</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Integrity</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Detected Signals</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Status</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredList.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--govt-gray-dark)' }}>
+                    No evidence submissions match the selected filters.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredCases.map((c) => {
-                  const pBadge = getPriorityBadge(c.priority);
-                  const sBadge = getStatusBadge(c.status);
+              ) : (
+                filteredList.map((item, idx) => {
+                  const isRowActive = idx === activeRowIndex;
+                  const isChecked = selectedEvidenceIds.includes(item.id);
 
                   return (
                     <tr
-                      key={c.id}
+                      key={item.id}
+                      onClick={() => setActiveRowIndex(idx)}
                       style={{
-                        borderBottom: '1px solid var(--govt-gray-medium)',
-                        transition: 'background-color 0.15s ease'
+                        borderBottom: '1px solid var(--govt-gray-light)',
+                        backgroundColor: isRowActive ? 'var(--govt-blue-light, #eff6ff)' : isChecked ? '#f8fafc' : '#ffffff',
+                        transition: 'background-color 0.1s ease',
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--govt-gray-off-white)'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      {/* Case Details */}
-                      <td style={{ padding: '1rem 1.25rem', maxWidth: '300px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--govt-blue-primary)', fontFamily: 'monospace' }}>
-                            {c.id}
-                          </span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--govt-gray-dark)' }}>
-                            • {c.evidence_count} evidence item{c.evidence_count === 1 ? '' : 's'}
-                          </span>
-                        </div>
-                        <div style={{ fontWeight: 600, color: 'var(--govt-blue-dark)', fontSize: '0.9rem', marginBottom: '0.2rem' }}>
-                          {c.title}
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--govt-gray-text)', lineHeight: 1.4 }}>
-                          {c.claim_statement}
-                        </div>
+                      <td style={{ padding: density === 'compact' ? '0.4rem 1rem' : '0.85rem 1rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSelectEvidence(item.id)}
+                          style={{ cursor: 'pointer' }}
+                        />
                       </td>
 
-                      {/* Scheme & Dept */}
-                      <td style={{ padding: '1rem', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--govt-gray-text)', fontSize: '0.82rem' }}>
-                          {c.scheme}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--govt-gray-dark)', marginTop: '0.2rem' }}>
-                          {c.jurisdiction}
-                        </div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--govt-gray-dark)', marginTop: '0.15rem' }}>
-                          {c.department}
-                        </div>
-                      </td>
-
-                      {/* Priority & Reason */}
-                      <td style={{ padding: '1rem', verticalAlign: 'top', maxWidth: '240px' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '0.18rem 0.5rem',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          backgroundColor: pBadge.bg,
-                          color: pBadge.color,
-                          border: pBadge.border,
-                          marginBottom: '0.35rem'
-                        }}>
-                          {pBadge.label}
-                        </span>
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--govt-gray-text)', lineHeight: 1.35 }}>
-                          {c.priority_reason}
-                        </p>
-                      </td>
-
-                      {/* Integrity Signals */}
-                      <td style={{ padding: '1rem', verticalAlign: 'top' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.72rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span style={{ color: 'var(--govt-success)' }}>✓</span>
-                            <span>SHA-256 Digest: <strong>{c.integrity_signals.hash_status}</strong></span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span style={{ color: c.integrity_signals.geofence_status === 'COMPLIANT' ? 'var(--govt-success)' : 'var(--govt-danger)' }}>
-                              {c.integrity_signals.geofence_status === 'COMPLIANT' ? '✓' : '⚠'}
-                            </span>
-                            <span>Geofence: <strong>{c.integrity_signals.geofence_status}</strong></span>
-                          </div>
-                          {c.integrity_signals.cross_duplicate !== 'NONE_DETECTED' && (
-                            <div style={{ color: 'var(--govt-danger-text)', fontWeight: 600 }}>
-                              ⚠ Cross-Scheme Duplicate
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td style={{ padding: '1rem', verticalAlign: 'top' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: '9999px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          backgroundColor: sBadge.bg,
-                          color: sBadge.color,
-                        }}>
-                          {sBadge.label}
-                        </span>
-                        {c.decision && (
-                          <div style={{ fontSize: '0.72rem', color: 'var(--govt-blue-primary)', fontWeight: 600, marginTop: '0.35rem' }}>
-                            Outcome: {c.decision}
+                      <td style={{ padding: density === 'compact' ? '0.4rem 1rem' : '0.85rem 1rem' }}>
+                        <Link
+                          to={`/evidence/${item.id}`}
+                          style={{
+                            fontFamily: 'monospace',
+                            fontWeight: 700,
+                            color: 'var(--govt-blue-primary)',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          {item.id}
+                        </Link>
+                        {density !== 'compact' && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--govt-gray-dark)', marginTop: '2px' }}>
+                            {new Date(item.capturedAt).toLocaleDateString()}
                           </div>
                         )}
-                        <div style={{ fontSize: '0.7rem', color: 'var(--govt-gray-dark)', marginTop: '0.35rem' }}>
-                          Intake: {formatDate(c.intake_timestamp)}
+                      </td>
+
+                      <td style={{ padding: density === 'compact' ? '0.4rem 1rem' : '0.85rem 1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <img
+                            src={item.imageUrl}
+                            alt=""
+                            style={{
+                              width: density === 'compact' ? '32px' : '44px',
+                              height: density === 'compact' ? '32px' : '44px',
+                              borderRadius: '4px',
+                              objectFit: 'cover',
+                              backgroundColor: '#0f172a',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontWeight: 600,
+                                color: 'var(--govt-gray-title)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: '240px',
+                              }}
+                            >
+                              {item.title}
+                            </div>
+                            {density !== 'compact' && (
+                              <div style={{ fontSize: '0.725rem', color: 'var(--govt-gray-dark)', fontStyle: 'italic' }}>
+                                "{item.claimText?.substring(0, 48)}..."
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
 
-                      {/* Action */}
-                      <td style={{ padding: '1rem 1.25rem', verticalAlign: 'middle', textAlign: 'right' }}>
-                        <Link
-                          to={`/review/case?id=${c.id}`}
+                      <td style={{ padding: density === 'compact' ? '0.4rem 1rem' : '0.85rem 1rem' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--govt-blue-dark)' }}>{item.scheme}</div>
+                        <div style={{ fontSize: '0.725rem', color: 'var(--govt-gray-dark)' }}>
+                          {item.location?.district}, {item.location?.state}
+                        </div>
+                      </td>
+
+                      <td style={{ padding: density === 'compact' ? '0.4rem 1rem' : '0.85rem 1rem' }}>
+                        <IntegrityArc score={item.integrityScore} size="sm" showLabel />
+                      </td>
+
+                      <td style={{ padding: density === 'compact' ? '0.4rem 1rem' : '0.85rem 1rem' }}>
+                        {item.detectedAnomalies && item.detectedAnomalies.length > 0 ? (
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                              color: 'var(--govt-danger)',
+                            }}
+                          >
+                            ⚠ {item.detectedAnomalies[0].title?.substring(0, 32)}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.725rem', color: 'var(--govt-success)', fontWeight: 600 }}>
+                            ✓ 7 Signals Pass
+                          </span>
+                        )}
+                      </td>
+
+                      <td style={{ padding: density === 'compact' ? '0.4rem 1rem' : '0.85rem 1rem' }}>
+                        <span
                           style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '0.55rem 0.95rem',
-                            borderRadius: 'var(--radius-md)',
-                            backgroundColor: 'var(--govt-blue-primary)',
-                            color: '#ffffff',
-                            textDecoration: 'none',
-                            fontSize: '0.82rem',
-                            fontWeight: 600,
-                            boxShadow: 'var(--shadow-xs)',
-                            transition: 'background-color 0.15s ease'
+                            padding: '0.15rem 0.5rem',
+                            borderRadius: '4px',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            backgroundColor:
+                              item.auditStatus === 'APPROVED'
+                                ? 'rgba(5, 150, 105, 0.12)'
+                                : item.auditStatus === 'REJECTED' || item.auditStatus === 'FLAGGED'
+                                ? 'rgba(220, 38, 38, 0.12)'
+                                : 'var(--govt-gray-light)',
+                            color:
+                              item.auditStatus === 'APPROVED'
+                                ? 'var(--govt-success)'
+                                : item.auditStatus === 'REJECTED' || item.auditStatus === 'FLAGGED'
+                                ? 'var(--govt-danger)'
+                                : 'var(--govt-gray-title)',
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--govt-blue-dark)'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--govt-blue-primary)'}
                         >
-                          Open Workspace →
-                        </Link>
+                          {item.auditStatus}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: density === 'compact' ? '0.4rem 1rem' : '0.85rem 1rem', textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => approveEvidence(item.id)}
+                            title="Quick Approve"
+                            style={{
+                              padding: '0.3rem 0.6rem',
+                              borderRadius: '4px',
+                              backgroundColor: 'var(--govt-success)',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDecisionModal({ id: item.id, action: 'FLAG', item });
+                              setDecisionRationale('');
+                            }}
+                            title="Flag for Inspection"
+                            style={{
+                              padding: '0.3rem 0.6rem',
+                              borderRadius: '4px',
+                              backgroundColor: 'var(--govt-warning)',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Flag
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDecisionModal({ id: item.id, action: 'REJECT', item });
+                              setDecisionRationale('');
+                            }}
+                            title="Reject Evidence"
+                            style={{
+                              padding: '0.3rem 0.6rem',
+                              borderRadius: '4px',
+                              backgroundColor: 'var(--govt-danger)',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Reject
+                          </button>
+                          <Link
+                            to={`/evidence/${item.id}`}
+                            title="Deep Inspect"
+                            style={{
+                              padding: '0.3rem 0.5rem',
+                              borderRadius: '4px',
+                              backgroundColor: 'var(--govt-gray-light)',
+                              border: '1px solid var(--govt-gray-medium)',
+                              color: 'var(--govt-blue-primary)',
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              textDecoration: 'none',
+                            }}
+                          >
+                            Inspect
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Reviewer Operating Principles Banner (ADR §2.2) */}
-      <div style={{
-        marginTop: '1.75rem',
-        padding: '1rem 1.25rem',
-        backgroundColor: 'var(--govt-white)',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--govt-gray-medium)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '0.85rem'
-      }}>
-        <div style={{ color: 'var(--govt-blue-primary)', marginTop: '0.1rem' }}>
-          <AlertIcon />
+      {/* Decision Rationale Modal (Mandating >= 20 characters as required by doc) */}
+      {decisionModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: '#ffffff',
+              borderRadius: 'var(--radius-lg, 12px)',
+              padding: '1.5rem',
+              boxShadow: 'var(--shadow-xl)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+              {decisionModal.action === 'REJECT' ? 'Record Evidence Rejection' : 'Flag for Physical Inspection'}
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--govt-gray-dark)' }}>
+              Statutory regulations mandate entering a detailed justification (minimum 20 characters) for item{' '}
+              <strong>{decisionModal.id}</strong>.
+            </p>
+
+            <div>
+              <textarea
+                rows={4}
+                value={decisionRationale}
+                onChange={(e) => setDecisionRationale(e.target.value)}
+                placeholder="Enter mandatory audit rationale (minimum 20 characters)..."
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--govt-gray-medium)',
+                  fontSize: '0.825rem',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.725rem',
+                  marginTop: '0.25rem',
+                  color: decisionRationale.trim().length >= 20 ? 'var(--govt-success)' : 'var(--govt-danger)',
+                }}
+              >
+                <span>{decisionRationale.trim().length}/20 characters minimum</span>
+                {decisionRationale.trim().length >= 20 && <span>✓ Requirement satisfied</span>}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setDecisionModal(null)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--govt-gray-light)',
+                  border: '1px solid var(--govt-gray-medium)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitDecision}
+                disabled={decisionRationale.trim().length < 20}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  backgroundColor:
+                    decisionModal.action === 'REJECT' ? 'var(--govt-danger)' : 'var(--govt-warning)',
+                  color: '#ffffff',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: decisionRationale.trim().length < 20 ? 'not-allowed' : 'pointer',
+                  opacity: decisionRationale.trim().length < 20 ? 0.5 : 1,
+                }}
+              >
+                Confirm {decisionModal.action === 'REJECT' ? 'Rejection' : 'Flag'}
+              </button>
+            </div>
+          </div>
         </div>
-        <div>
-          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
-            Reviewer Governance Contract (ADR Section 14)
-          </h4>
-          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--govt-gray-dark)', lineHeight: 1.45 }}>
-            Decisions must be recorded with an explainable rationale of at least 20 characters. Approved outcomes are strictly limited to
-            <strong> SUPPORTED</strong>, <strong>CONTRADICTED</strong>, <strong>INCONCLUSIVE</strong>, and <strong>INSUFFICIENT EVIDENCE</strong>.
-            A failed integrity signal or missing metadata does not constitute automatic fraud.
-          </p>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
-
-export default ReviewQueue;

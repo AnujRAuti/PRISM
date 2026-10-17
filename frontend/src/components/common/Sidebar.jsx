@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 import {
   DashboardIcon,
   ProjectIcon,
@@ -16,22 +17,26 @@ const navSections = [
     category: 'OPERATIONS',
     items: [
       { path: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
+      { path: '/reviews', label: 'Review Queue', icon: ReviewIcon, badgeKey: 'pending' },
       { path: '/projects', label: 'Projects', icon: ProjectIcon },
-      { path: '/evidence', label: 'Evidence', icon: EvidenceIcon },
+      { path: '/ingest', label: 'Live Sandbox', icon: EvidenceIcon },
+      { path: '/field', label: 'Field Companion', icon: UserIcon },
     ]
   },
   {
     category: 'INTELLIGENCE & AUDIT',
     items: [
-      { path: '/graph', label: 'Evidence Graph', icon: GraphIcon },
-      { path: '/review', label: 'Review Queue', icon: ReviewIcon, badge: '24' },
-      { path: '/search', label: 'Advanced Search', icon: SearchIcon },
+      { path: '/compare', label: 'Visual Comparator', icon: GraphIcon },
+      { path: '/map', label: 'Geospatial Map', icon: ProjectIcon },
+      { path: '/audit', label: 'Audit Ledger', icon: SearchIcon },
+      { path: '/analytics', label: 'Analytics & Certs', icon: AdminIcon },
     ]
   },
   {
     category: 'GOVERNANCE',
     items: [
-      { path: '/admin', label: 'Admin Portal', icon: AdminIcon },
+      { path: '/settings', label: 'System Settings', icon: AdminIcon },
+      { path: '/about', label: 'About Platform', icon: EvidenceIcon },
       { path: '/profile', label: 'Operator Profile', icon: UserIcon },
     ]
   }
@@ -40,6 +45,11 @@ const navSections = [
 function Sidebar({ isOpen = false, onClose }) {
   const [activeItem, setActiveItem] = useState('');
   const location = useLocation();
+  const { evidenceList } = useApp();
+
+  const pendingCount = (evidenceList || []).filter(
+    (e) => e.auditStatus === 'PENDING' || e.auditStatus === 'FLAGGED'
+  ).length;
 
   useEffect(() => {
     setActiveItem(location.pathname);
@@ -98,88 +108,66 @@ function Sidebar({ isOpen = false, onClose }) {
       </div>
 
       <nav aria-label="Main Sections" style={{ flex: 1 }}>
-        {navSections.map((sec, secIdx) => (
-          <div key={secIdx} style={{ marginBottom: '1.25rem' }}>
+        {navSections.map((section, idx) => (
+          <div key={section.category} style={{ marginBottom: '1.25rem' }}>
             <div
               style={{
-                padding: '0 1.25rem 0.5rem 1.25rem',
-                fontSize: '0.68rem',
-                fontWeight: '700',
+                fontSize: '0.675rem',
+                fontWeight: 700,
                 color: 'var(--govt-gray-dark)',
-                letterSpacing: '1px',
+                padding: '0 1.25rem 0.4rem 1.25rem',
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase',
               }}
             >
-              {sec.category}
+              {section.category}
             </div>
 
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {sec.items.map((item) => {
+              {section.items.map((item) => {
                 const Icon = item.icon;
-                const isActive = activeItem === item.path || (item.path !== '/' && activeItem.startsWith(item.path + '/'));
+                const isActive = activeItem === item.path || (item.path !== '/dashboard' && activeItem.startsWith(item.path));
+                const badgeValue = item.badgeKey === 'pending' ? pendingCount : item.badge;
 
                 return (
-                  <li key={item.path} style={{ margin: '0.15rem 0.75rem' }}>
+                  <li key={item.path} style={{ margin: '1px 0' }}>
                     <Link
                       to={item.path}
                       onClick={() => {
                         if (onClose) onClose();
                       }}
-                      aria-current={isActive ? 'page' : undefined}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0.625rem 0.85rem',
+                        padding: '0.55rem 1.25rem',
+                        fontSize: '0.825rem',
+                        fontWeight: isActive ? '700' : '500',
                         color: isActive ? 'var(--govt-blue-primary)' : 'var(--govt-gray-text)',
                         backgroundColor: isActive ? 'var(--govt-blue-light)' : 'transparent',
+                        borderLeft: isActive ? '3.5px solid var(--govt-blue-primary)' : '3.5px solid transparent',
                         textDecoration: 'none',
-                        borderRadius: 'var(--radius-md)',
-                        transition: 'all 0.18s ease',
-                        fontSize: '0.875rem',
-                        fontWeight: isActive ? '700' : '500',
-                        borderLeft: isActive ? '3px solid var(--govt-blue-primary)' : '3px solid transparent',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.backgroundColor = 'var(--govt-gray-light)';
-                          e.currentTarget.style.color = 'var(--govt-blue-dark)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = 'var(--govt-gray-text)';
-                        }
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{
-                          flexShrink: 0,
-                          color: isActive ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}>
-                          <Icon />
-                        </span>
-                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {item.label}
-                        </span>
+                        <Icon active={isActive} />
+                        <span>{item.label}</span>
                       </div>
 
-                      {item.badge && (
+                      {badgeValue && (
                         <span
                           style={{
-                            fontSize: '0.7rem',
-                            fontWeight: '600',
+                            fontSize: '0.675rem',
+                            fontWeight: 700,
                             padding: '0.1rem 0.45rem',
-                            borderRadius: '9999px',
-                            backgroundColor: 'var(--govt-gray-light)',
-                            color: 'var(--govt-gray-dark)',
-                            border: '1px solid var(--govt-gray-medium)',
+                            borderRadius: '999px',
+                            backgroundColor: isActive ? 'var(--govt-blue-primary)' : 'var(--govt-gray-light)',
+                            color: isActive ? '#ffffff' : 'var(--govt-gray-title)',
+                            fontFamily: 'var(--font-family-mono)',
                           }}
                         >
-                          {item.badge}
+                          {badgeValue}
                         </span>
                       )}
                     </Link>
@@ -191,18 +179,23 @@ function Sidebar({ isOpen = false, onClose }) {
         ))}
       </nav>
 
-      {/* Sidebar System Footer */}
+      {/* Trust & Cryptographic Integrity Strip at Bottom */}
       <div
         style={{
-          padding: '1rem 1.25rem',
+          padding: '0.85rem 1.25rem',
           borderTop: '1px solid var(--govt-gray-medium)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          backgroundColor: 'var(--govt-gray-off-white)',
         }}
       >
-        <span style={{ fontSize: '0.75rem', color: 'var(--govt-gray-dark)' }}>PRISM Engine</span>
-        <span style={{ fontSize: '0.72rem', color: 'var(--govt-gray-dark)', fontWeight: 500 }}>v1.0.0</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--govt-success)' }} />
+          <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+            EIIL Node Verified
+          </span>
+        </div>
+        <p style={{ margin: 0, fontSize: '0.675rem', color: 'var(--govt-gray-dark)', lineHeight: 1.3 }}>
+          Statutory Public Works Provenance pursuant to Section 86
+        </p>
       </div>
     </aside>
   );

@@ -1,264 +1,582 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { ProjectIcon, EvidenceIcon, ReviewIcon, SearchIcon, PlusIcon, CheckIcon, AlertIcon } from '../components/common/Icon';
-import { formatDate } from '../utils/helpers';
+import { useApp } from '../context/AppContext';
+import { IntegrityArc } from '../components/ui/IntegrityArc';
+import {
+  ShieldAlert,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  ArrowRight,
+  TrendingUp,
+  MapPin,
+  FileText,
+  ExternalLink,
+  Layers,
+  ChevronRight,
+  Sparkles,
+  SplitSquareVertical,
+  Cpu,
+} from 'lucide-react';
 
-function Dashboard() {
-  const [user, setUser] = useState(null);
+export default function Dashboard() {
+  const { evidenceList, projects, currentUser } = useApp();
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        setUser(null);
-      }
-    }
-  }, []);
+  const totalAudited = 1428;
+  const flaggedItems = (evidenceList || []).filter(
+    (e) => e.riskLevel === 'CRITICAL' || e.riskLevel === 'HIGH'
+  );
+  const pendingItems = (evidenceList || []).filter(
+    (e) => e.auditStatus === 'PENDING' || e.auditStatus === 'FLAGGED'
+  );
 
-  // Operational Metrics aligned with ADR §2.1 & §2.2
-  const stats = [
-    { label: 'Monitored Infrastructure Projects', value: '12', subtitle: '5 Schemes across 4 States', type: 'primary', link: '/projects' },
-    { label: 'Cryptographic Evidence Registry', value: '348', subtitle: 'SHA-256 Ingested & Quarantined', type: 'info', link: '/evidence' },
-    { label: 'Active Reviewer Queue', value: '5', subtitle: '3 High Priority Attention Cases', type: 'warning', link: '/review' },
-    { label: 'Tamper-Evident Ledger Blocks', value: '101', subtitle: '100% Hash-Chain Intact (BE-030)', type: 'success', link: '/admin' },
-  ];
-
-  // Real Multi-Signal Audit Events (BE-015/BE-030)
-  const recentAuditEvents = [
-    { id: 'evt-101', type: 'REVIEW_DECISION', actor: 'Dr. Ramesh Sharma (Reviewer)', description: 'Human decision recorded for case-004-school: SUPPORTED', time: '1 hour ago', status: 'SUCCESS' },
-    { id: 'evt-100', type: 'RETENTION_HOLD', actor: 'Sunita Patel (Supervisor)', description: 'Applied active retention hold HOLD-042 on Project PRJ-002', time: '4 hours ago', status: 'WARNING' },
-    { id: 'evt-099', type: 'FUSION_SIGNAL', actor: 'EIIL Fusion Pipeline Worker', description: 'Flagged 89% pHash duplicate between PRJ-002 and PRJ-001', time: 'Yesterday', status: 'ALERT' },
-    { id: 'evt-098', type: 'EVIDENCE_INGEST', actor: 'John Doe (Field Inspector)', description: 'SHA-256 digest c3ab8ff1 registered into quarantine for PRJ-001', time: 'Yesterday', status: 'SUCCESS' },
-    { id: 'evt-097', type: 'PROJECT_CREATED', actor: 'Dr. Ramesh Sharma', description: 'Project PRJ-001 registered with PostGIS geofence boundary', time: '2 days ago', status: 'SUCCESS' },
-  ];
-
-  const quickActions = [
-    { label: 'Reviewer Queue', icon: ReviewIcon, path: '/review', desc: 'Inspect pending cases & record decisions', color: 'var(--govt-blue-primary)' },
-    { label: 'Evidence Registry', icon: EvidenceIcon, path: '/evidence', desc: 'Browse SHA-256 hashes & quarantine status', color: 'var(--govt-info)' },
-    { label: 'Register Project', icon: ProjectIcon, path: '/projects/create', desc: 'Add project baseline & geofence polygon', color: 'var(--govt-success)' },
-    { label: 'Audit & Governance', icon: SearchIcon, path: '/admin', desc: 'Verify append-only hash-chain integrity', color: 'var(--govt-gray-dark)' },
-  ];
+  const avgIntegrity =
+    evidenceList && evidenceList.length > 0
+      ? Math.round(evidenceList.reduce((acc, curr) => acc + curr.integrityScore, 0) / evidenceList.length)
+      : 78;
 
   return (
-    <div style={{
-      padding: '1.75rem 2rem',
-      width: '100%',
-      boxSizing: 'border-box',
-      backgroundColor: 'var(--govt-gray-off-white)',
-    }}>
-      {/* Header */}
-      <div style={{ marginBottom: '1.75rem' }}>
-        <h1 style={{
-          margin: 0,
-          color: 'var(--govt-blue-dark)',
-          fontSize: '1.65rem',
-          fontWeight: 700,
-          letterSpacing: '-0.02em'
-        }}>
-          Evidence Integrity & Intelligence Layer (EIIL)
-        </h1>
-        <p style={{
-          margin: '0.35rem 0 0 0',
-          color: 'var(--govt-gray-dark)',
-          fontSize: '0.875rem'
-        }}>
-          Operational Overview — Operator: <strong>{user?.name || 'Authorized Reviewer'}</strong> ({user?.role || 'REVIEWER'})
-        </p>
-      </div>
-
-      {/* Core Operational Metrics */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-        gap: '1.25rem',
-        marginBottom: '2rem'
-      }}>
-        {stats.map((stat, idx) => (
-          <Link
-            key={idx}
-            to={stat.link}
-            style={{
-              backgroundColor: 'var(--govt-white)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '1.25rem 1.5rem',
-              boxShadow: 'var(--shadow-sm)',
-              border: '1px solid var(--govt-gray-medium)',
-              textDecoration: 'none',
-              display: 'block',
-              transition: 'transform 0.15s ease, box-shadow 0.15s ease'
-            }}
-          >
-            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--govt-gray-dark)' }}>
-              {stat.label}
-            </p>
-            <div style={{
-              fontSize: '2rem',
-              fontWeight: 800,
-              color: 'var(--govt-blue-dark)',
-              letterSpacing: '-0.03em',
-              margin: '0.4rem 0 0.2rem'
-            }}>
-              {stat.value}
-            </div>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: stat.type === 'warning' ? 'var(--govt-warning-text)' : stat.type === 'success' ? 'var(--govt-success-text)' : 'var(--govt-blue-primary)', fontWeight: 600 }}>
-              {stat.subtitle}
-            </p>
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick Action Navigation Cards */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
-          Operational Workspaces
-        </h3>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1.25rem'
-        }}>
-          {quickActions.map((act, i) => {
-            const Icon = act.icon;
-            return (
-              <Link
-                key={i}
-                to={act.path}
-                style={{
-                  backgroundColor: 'var(--govt-white)',
-                  padding: '1.25rem',
-                  borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--govt-gray-medium)',
-                  boxShadow: 'var(--shadow-sm)',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '1rem',
-                  transition: 'background-color 0.15s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--govt-gray-off-white)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--govt-white)'}
-              >
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--govt-gray-light)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: act.color,
-                  flexShrink: 0
-                }}>
-                  <Icon />
-                </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
-                    {act.label}
-                  </h4>
-                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--govt-gray-dark)', lineHeight: 1.35 }}>
-                    {act.desc}
-                  </p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Recent Cryptographic Audit Ledger Feed (BE-015/BE-030) */}
-      <div style={{
-        backgroundColor: 'var(--govt-white)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--govt-gray-medium)',
-        overflow: 'hidden',
-        marginBottom: '2rem'
-      }}>
-        <div style={{
-          padding: '1rem 1.25rem',
-          backgroundColor: 'var(--govt-gray-light)',
-          borderBottom: '1px solid var(--govt-gray-medium)',
+    <div style={{ padding: '1.5rem 2rem', maxWidth: '1440px', margin: '0 auto' }}>
+      {/* Top Welcome & Institutional Status Strip */}
+      <div
+        style={{
           display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
           justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
-            Recent Tamper-Evident Audit Ledger Events (BE-030)
-          </h3>
-          <Link to="/admin" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--govt-blue-primary)', textDecoration: 'none' }}>
-            Verify Full Ledger →
-          </Link>
-        </div>
-        <div style={{ padding: '0.5rem 1.25rem' }}>
-          {recentAuditEvents.map((evt) => (
-            <div
-              key={evt.id}
+          gap: '1rem',
+          paddingBottom: '1.25rem',
+          borderBottom: '1px solid var(--govt-gray-medium, #e2e8f0)',
+          marginBottom: '1.5rem',
+        }}
+      >
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h1
               style={{
-                padding: '0.85rem 0',
-                borderBottom: '1px solid var(--govt-gray-medium)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '0.5rem'
+                margin: 0,
+                fontSize: '1.65rem',
+                fontWeight: 800,
+                color: 'var(--govt-blue-dark, #0f172a)',
+                letterSpacing: '-0.02em',
               }}
             >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-                  <span style={{
-                    padding: '0.15rem 0.45rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    backgroundColor: 'var(--govt-blue-light)',
-                    color: 'var(--govt-blue-primary)',
-                    fontFamily: 'monospace'
-                  }}>
-                    {evt.type}
-                  </span>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--govt-blue-dark)' }}>
-                    {evt.actor}
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--govt-gray-text)' }}>
-                  {evt.description}
-                </p>
-              </div>
-              <span style={{ fontSize: '0.72rem', color: 'var(--govt-gray-dark)' }}>
-                {evt.time}
-              </span>
-            </div>
-          ))}
+              Reviewer Operations Hub
+            </h1>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                color: 'var(--govt-success, #059669)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+              }}
+            >
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--govt-success)',
+                  display: 'inline-block',
+                }}
+              />
+              Live Audit Engine
+            </span>
+          </div>
+          <p
+            style={{
+              margin: '0.35rem 0 0',
+              fontSize: '0.85rem',
+              color: 'var(--govt-gray-dark, #64748b)',
+            }}
+          >
+            Multi-signal consistency audit for public-works evidence across geospatial, temporal, visual, and cross-project vector corpora. Operator: <strong>{currentUser?.name || 'Lead Reviewer'}</strong>
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <Link
+            to="/reviews"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.55rem 1.15rem',
+              borderRadius: '6px',
+              backgroundColor: 'var(--govt-blue-primary, #1d4ed8)',
+              color: '#ffffff',
+              fontSize: '0.825rem',
+              fontWeight: 700,
+              textDecoration: 'none',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <span>Open Review Queue</span>
+            <span
+              style={{
+                padding: '0.1rem 0.45rem',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                fontSize: '0.7rem',
+                fontFamily: 'monospace',
+              }}
+            >
+              {pendingItems.length}
+            </span>
+            <ArrowRight size={14} />
+          </Link>
+          <Link
+            to="/ingest"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.55rem 1rem',
+              borderRadius: '6px',
+              backgroundColor: '#ffffff',
+              border: '1px solid var(--govt-gray-medium, #e2e8f0)',
+              color: 'var(--govt-blue-dark)',
+              fontSize: '0.825rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            <Sparkles size={15} color="var(--govt-blue-primary)" />
+            <span>Live Pipeline Sandbox</span>
+          </Link>
         </div>
       </div>
 
-      {/* Governing Principles Notice (ADR Section 2) */}
-      <div style={{
-        padding: '1rem 1.25rem',
-        backgroundColor: 'var(--govt-white)',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--govt-gray-medium)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '0.85rem'
-      }}>
-        <div style={{ color: 'var(--govt-blue-primary)', marginTop: '0.1rem' }}>
-          <AlertIcon />
+      {/* 4 Core Metric Tiles */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '1rem',
+          marginBottom: '1.75rem',
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--govt-gray-medium)',
+            borderRadius: 'var(--radius-md, 8px)',
+            padding: '1.25rem',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)' }}>
+              Total Audited Submissions
+            </span>
+            <FileText size={16} color="var(--govt-blue-primary)" />
+          </div>
+          <div style={{ margin: '0.5rem 0 0.25rem' }}>
+            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--govt-blue-dark)', fontFamily: 'monospace' }}>
+              {totalAudited}
+            </span>
+          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--govt-success)', fontWeight: 600 }}>
+            +142 this week across 6 state projects
+          </span>
         </div>
-        <div>
-          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
-            Proof-of-Action Governing Principle (ADR Section 2)
-          </h4>
-          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--govt-gray-dark)', lineHeight: 1.45 }}>
-            <strong>“We don't collect more evidence; we make existing evidence trustworthy.”</strong> Evidence intelligence supports human judgment;
-            it does not replace human judgment. An algorithmic score, a matching hash, or a geofence discrepancy is an analytical signal, not an automated verdict.
-          </p>
+
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--govt-gray-medium)',
+            borderRadius: 'var(--radius-md, 8px)',
+            padding: '1.25rem',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)' }}>
+              Flagged Anomaly Rate
+            </span>
+            <ShieldAlert size={16} color="var(--govt-danger)" />
+          </div>
+          <div style={{ margin: '0.5rem 0 0.25rem' }}>
+            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--govt-danger)', fontFamily: 'monospace' }}>
+              18.4%
+            </span>
+          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--govt-danger)', fontWeight: 600 }}>
+            {flaggedItems.length} active critical holds requiring inspection
+          </span>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--govt-gray-medium)',
+            borderRadius: 'var(--radius-md, 8px)',
+            padding: '1.25rem',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)' }}>
+              Pending Review Queue
+            </span>
+            <Clock size={16} color="var(--govt-warning)" />
+          </div>
+          <div style={{ margin: '0.5rem 0 0.25rem' }}>
+            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--govt-warning)', fontFamily: 'monospace' }}>
+              {pendingItems.length}
+            </span>
+          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--govt-gray-dark)' }}>
+            Average turnaround time 4.2 hours
+          </span>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--govt-gray-medium)',
+            borderRadius: 'var(--radius-md, 8px)',
+            padding: '1.25rem',
+            boxShadow: 'var(--shadow-sm)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)', display: 'block' }}>
+              Mean Evidence Health Index
+            </span>
+            <div style={{ margin: '0.35rem 0 0.15rem' }}>
+              <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--govt-blue-dark)', fontFamily: 'monospace' }}>
+                {avgIntegrity}%
+              </span>
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--govt-success)', fontWeight: 600 }}>
+              National Baseline Met
+            </span>
+          </div>
+          <IntegrityArc score={avgIntegrity} size="md" />
+        </div>
+      </div>
+
+      {/* Main Content Grid: Schemes Health Overview + Critical Flagged Stream */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
+        {/* Left 7 Cols: Urgent Flagged Queue Stream */}
+        <div style={{ gridColumn: 'span 7' }}>
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid var(--govt-gray-medium)',
+              borderRadius: 'var(--radius-lg, 12px)',
+              boxShadow: 'var(--shadow-sm)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                padding: '1rem 1.25rem',
+                backgroundColor: 'var(--govt-gray-off-white)',
+                borderBottom: '1px solid var(--govt-gray-medium)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AlertTriangle size={16} color="var(--govt-danger)" />
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+                  Urgent Anomalies & Multi-Signal Flags
+                </h3>
+              </div>
+              <Link
+                to="/reviews"
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: 'var(--govt-blue-primary)',
+                  textDecoration: 'none',
+                }}
+              >
+                View Complete Queue ({pendingItems.length}) →
+              </Link>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {flaggedItems.slice(0, 4).map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    padding: '1rem 1.25rem',
+                    borderBottom: '1px solid var(--govt-gray-light)',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '0.85rem' }}>
+                    <div
+                      style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        backgroundColor: '#0f172a',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+                          {item.id}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            padding: '0.1rem 0.4rem',
+                            borderRadius: '3px',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            color: 'var(--govt-danger)',
+                          }}
+                        >
+                          {item.riskLevel}
+                        </span>
+                      </div>
+                      <h4
+                        style={{
+                          margin: '0 0 0.25rem',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: 'var(--govt-gray-title)',
+                        }}
+                      >
+                        {item.title}
+                      </h4>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--govt-gray-dark)' }}>
+                        {item.scheme} • {item.location?.district}, {item.location?.state}
+                      </div>
+
+                      {item.detectedAnomalies?.[0] && (
+                        <div
+                          style={{
+                            marginTop: '0.4rem',
+                            padding: '0.35rem 0.6rem',
+                            borderRadius: '4px',
+                            backgroundColor: 'var(--govt-danger-light)',
+                            border: '1px solid var(--govt-danger-border)',
+                            fontSize: '0.725rem',
+                            color: 'var(--govt-danger-text)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          ⚠ {item.detectedAnomalies[0].title}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
+                    <IntegrityArc score={item.integrityScore} size="sm" showLabel />
+                    <Link
+                      to={`/evidence/${item.id}`}
+                      style={{
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '4px',
+                        backgroundColor: 'var(--govt-gray-light)',
+                        border: '1px solid var(--govt-gray-medium)',
+                        color: 'var(--govt-blue-primary)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Inspect →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right 5 Cols: Schemes Health Index & Quick Tools */}
+        <div style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Schemes Health Distribution */}
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid var(--govt-gray-medium)',
+              borderRadius: 'var(--radius-lg, 12px)',
+              padding: '1.25rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 0.85rem', fontSize: '0.95rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+              Scheme-wise Evidence Integrity
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {(projects || []).slice(0, 4).map((p) => {
+                const color =
+                  p.evidenceHealthScore >= 80
+                    ? 'var(--govt-success)'
+                    : p.evidenceHealthScore >= 50
+                    ? 'var(--govt-warning)'
+                    : 'var(--govt-danger)';
+
+                return (
+                  <div key={p.id}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--govt-gray-title)' }}>
+                        {p.scheme}
+                      </span>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color }}>
+                        {p.evidenceHealthScore}%
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '6px',
+                        backgroundColor: 'var(--govt-gray-light)',
+                        borderRadius: '999px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${p.evidenceHealthScore}%`,
+                          height: '100%',
+                          backgroundColor: color,
+                          borderRadius: '999px',
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Forensic Quick Actions Card */}
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid var(--govt-gray-medium)',
+              borderRadius: 'var(--radius-lg, 12px)',
+              padding: '1.25rem',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+              Evidence Intelligence Modules
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <Link
+                to="/compare"
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--govt-gray-off-white)',
+                  border: '1px solid var(--govt-gray-medium)',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                }}
+              >
+                <SplitSquareVertical size={18} color="var(--govt-blue-primary)" />
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--govt-gray-title)' }}>
+                  Before / After
+                </span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--govt-gray-dark)' }}>
+                  Pixel-registered diff slider
+                </span>
+              </Link>
+
+              <Link
+                to="/map"
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--govt-gray-off-white)',
+                  border: '1px solid var(--govt-gray-medium)',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                }}
+              >
+                <MapPin size={18} color="var(--govt-success)" />
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--govt-gray-title)' }}>
+                  Geospatial GIS
+                </span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--govt-gray-dark)' }}>
+                  Nationwide boundary map
+                </span>
+              </Link>
+
+              <Link
+                to="/audit"
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--govt-gray-off-white)',
+                  border: '1px solid var(--govt-gray-medium)',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                }}
+              >
+                <FileText size={18} color="var(--govt-warning)" />
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--govt-gray-title)' }}>
+                  Audit Ledger
+                </span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--govt-gray-dark)' }}>
+                  Immutable SHA-256 trail
+                </span>
+              </Link>
+
+              <Link
+                to="/field"
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--govt-gray-off-white)',
+                  border: '1px solid var(--govt-gray-medium)',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                }}
+              >
+                <Cpu size={18} color="var(--govt-blue-primary)" />
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--govt-gray-title)' }}>
+                  Field Companion
+                </span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--govt-gray-dark)' }}>
+                  Offline capture wizard
+                </span>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-export default Dashboard;

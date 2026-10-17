@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { AppProvider } from './context/AppContext';
 import { useState, useEffect, lazy, Suspense } from 'react';
 
 // Import Styles
@@ -16,17 +17,17 @@ const Login = lazy(() => import('./components/auth/LoginForm'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const ProjectsList = lazy(() => import('./pages/Projects/ProjectsList'));
 const ProjectDetail = lazy(() => import('./pages/Projects/ProjectDetail'));
-const CreateProject = lazy(() => import('./pages/Projects/CreateProject'));
-const EvidenceList = lazy(() => import('./pages/Evidence/EvidenceList'));
-const UploadEvidence = lazy(() => import('./pages/Evidence/UploadEvidence'));
-const EvidenceDetail = lazy(() => import('./pages/Evidence/EvidenceDetail'));
-const EvidenceGraph = lazy(() => import('./pages/Graph/EvidenceGraph'));
 const ReviewQueue = lazy(() => import('./pages/Reviews/ReviewQueue'));
-const ReviewInterface = lazy(() => import('./pages/Reviews/ReviewInterface'));
-const CaseWorkspace = lazy(() => import('./pages/Reviews/CaseWorkspace'));
-const Search = lazy(() => import('./pages/Search'));
+const EvidenceDetail = lazy(() => import('./pages/Evidence/EvidenceDetail'));
+const EvidenceCompare = lazy(() => import('./pages/Compare/EvidenceCompare'));
+const GeospatialMap = lazy(() => import('./pages/Map/GeospatialMap'));
+const IngestionSandbox = lazy(() => import('./pages/Ingest/IngestionSandbox'));
+const AuditAnalytics = lazy(() => import('./pages/Analytics/AuditAnalytics'));
+const AuditLog = lazy(() => import('./pages/Audit/AuditLog'));
+const FieldOperations = lazy(() => import('./pages/Field/FieldOperations'));
+const About = lazy(() => import('./pages/About/About'));
+const Settings = lazy(() => import('./pages/Settings/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
-const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 
 // Accessible Loading Fallback for Suspense transitions with PRISM branding
 function LoadingFallback() {
@@ -101,47 +102,51 @@ function App() {
     <AuthProvider>
       {showSplash && <LoadingSplash onComplete={() => setShowSplash(false)} />}
       <Router>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
+        <AppProvider>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<Login />} />
 
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+              {/* Protected routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
 
-                {/* Project Routes */}
-                <Route path="/projects" element={<ProjectsList />} />
-                <Route path="/projects/create" element={<CreateProject />} />
-                <Route path="/projects/:id" element={<ProjectDetail />} />
+                  {/* Review Queue (PoA Primary Workflow) */}
+                  <Route path="/reviews" element={<ReviewQueue />} />
+                  <Route path="/queue" element={<ReviewQueue />} />
+                  <Route path="/review" element={<Navigate to="/reviews" replace />} />
 
-                {/* Evidence Routes */}
-                <Route path="/evidence" element={<EvidenceList />} />
-                <Route path="/evidence/upload" element={<UploadEvidence />} />
-                <Route path="/evidence/:id" element={<EvidenceDetail />} />
+                  {/* Evidence Dossier Routes */}
+                  <Route path="/evidence" element={<Navigate to="/reviews" replace />} />
+                  <Route path="/evidence/:id" element={<EvidenceDetail />} />
 
-                {/* Evidence Graph Route */}
-                <Route path="/graph" element={<EvidenceGraph />} />
+                  {/* Project Dossier Routes */}
+                  <Route path="/projects" element={<ProjectsList />} />
+                  <Route path="/projects/:id" element={<ProjectDetail />} />
 
-                {/* Review Routes (PoA PWA Specification) */}
-                <Route path="/review" element={<ReviewQueue />} />
-                <Route path="/reviews" element={<ReviewQueue />} />
-                <Route path="/review/case" element={<CaseWorkspace />} />
-                <Route path="/review/:id" element={<ReviewInterface />} />
+                  {/* PoA Feature Routes */}
+                  <Route path="/compare" element={<EvidenceCompare />} />
+                  <Route path="/map" element={<GeospatialMap />} />
+                  <Route path="/ingest" element={<IngestionSandbox />} />
+                  <Route path="/analytics" element={<AuditAnalytics />} />
+                  <Route path="/audit" element={<AuditLog />} />
+                  <Route path="/field" element={<FieldOperations />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/profile" element={<Profile />} />
 
-                {/* Search & Profile Routes */}
-                <Route path="/search" element={<Search />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/profile/edit" element={<div className="p-4">Edit Profile (To be built)</div>} />
-
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminDashboard />} />
+                  {/* Legacy Redirections */}
+                  <Route path="/graph" element={<Navigate to="/compare" replace />} />
+                  <Route path="/search" element={<Navigate to="/reviews" replace />} />
+                  <Route path="/admin" element={<Navigate to="/settings" replace />} />
+                </Route>
               </Route>
-            </Route>
-          </Routes>
-        </Suspense>
+            </Routes>
+          </Suspense>
+        </AppProvider>
       </Router>
     </AuthProvider>
   );

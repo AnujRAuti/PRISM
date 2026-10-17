@@ -146,6 +146,7 @@ export const auditApi = {
   getById: (id) => api.get(`/audit/events/${id}`),
   verifyLedger: () => api.get('/audit/verify'),
   verifyAnchored: () => api.get('/audit/verify/anchored'),
+  recordDecision: (data) => Promise.resolve({ data }),
 };
 
 // ----------------------------------------------------------------------
@@ -207,5 +208,8 @@ export const adminApi = {
   }),
   updateConfig: (data) => Promise.resolve({ data }),
 };
+
+export const casesApi = reviewApi;
+export const projectsApi = projectApi;
 
 export default api;

@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserIcon, SearchIcon } from './Icon';
 import PrismLogo from './PrismLogo';
+import { useApp } from '../../context/AppContext';
 
 function Header({ onToggleSidebar }) {
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { setIsCommandPaletteOpen } = useApp();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -92,8 +94,9 @@ function Header({ onToggleSidebar }) {
         {/* Right Section: Search & User */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Quick Search Button Shortcut */}
-          <Link
-            to="/search"
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
             aria-label="Quick Search"
             style={{
               display: 'flex',
@@ -105,7 +108,7 @@ function Header({ onToggleSidebar }) {
               borderRadius: 'var(--radius-md)',
               color: '#cbd5e1',
               fontSize: '0.825rem',
-              textDecoration: 'none',
+              cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
           >
@@ -123,7 +126,7 @@ function Header({ onToggleSidebar }) {
             >
               /
             </kbd>
-          </Link>
+          </button>
           <div style={{ position: 'relative' }}>
             {user ? (
               <>
@@ -219,7 +222,7 @@ function Header({ onToggleSidebar }) {
                       Operator Profile & Credentials
                     </Link>
                     <Link
-                      to="/admin"
+                      to="/settings"
                       onClick={() => setShowDropdown(false)}
                       style={{
                         display: 'block',
@@ -231,7 +234,7 @@ function Header({ onToggleSidebar }) {
                         borderBottom: '1px solid var(--govt-gray-light)',
                       }}
                     >
-                      System Configuration & Logs
+                      System Settings & Integration APIs
                     </Link>
                     <button
                       onClick={handleLogout}
