@@ -4592,7 +4592,7 @@
     },
     "/api/v1/auth/projects/{project_id}/ownership": {
       "post": {
-        "summary": "Transfer project ownership to an active user (organization.manage must cover the project)",
+        "summary": "Transfer project ownership to an active user (organization.manage must cover the project; the new owner needs GLOBAL authority)",
         "operationId": "transfer_project_ownership_api_v1_auth_projects__project_id__ownership_post",
         "parameters": [
           {
@@ -5855,6 +5855,7 @@
           "integrations"
         ],
         "summary": "List registered external systems (requires integration.read)",
+        "description": "List external systems the caller's ``integration.read`` grant covers.\n\nOrganization-level rows: a non-GLOBAL grant sees its own organizations (unit\ngrants include the parent), and a project-scoped grant sees none. The\ncaller-supplied ``organization_id`` can only narrow this set, never widen it.",
         "operationId": "list_systems_api_v1_integrations_systems_get",
         "parameters": [
           {
@@ -5943,6 +5944,7 @@
           "integrations"
         ],
         "summary": "Register an external system (requires integration.manage)",
+        "description": "Register an external system inside a scope the caller already holds.\n\nNaming an organization does not grant authority over it: ``integration.manage``\nmust cover ``body.organization_id`` (an organization or unit grant, or GLOBAL).\nA system with no organization is platform-wide configuration, so it requires\nthe GLOBAL grant — the bare resource resolves to nothing else.",
         "operationId": "create_system_api_v1_integrations_systems_post",
         "parameters": [
           {
@@ -6002,6 +6004,7 @@
           "integrations"
         ],
         "summary": "List API clients (requires integration.read)",
+        "description": "List API clients the caller's ``integration.read`` grant covers.\n\nProject-level rows: a non-GLOBAL grant sees the clients bound to its own\nprojects (organization and unit grants expand to their projects). A client\nwith no project acts platform-wide and stays GLOBAL-only.",
         "operationId": "list_clients_api_v1_integrations_clients_get",
         "parameters": [
           {
@@ -6073,6 +6076,7 @@
           "integrations"
         ],
         "summary": "Create API client with initial credential (requires api_client.manage)",
+        "description": "Create an API client bound to a project the caller already manages.\n\nNaming a project does not grant authority over it: ``api_client.manage`` must\ncover ``body.project_id``. A client with no project is platform-wide, so it\nrequires the GLOBAL grant — and the initial credential this route returns is\nthen usable against every project.",
         "operationId": "create_client_api_v1_integrations_clients_post",
         "parameters": [
           {
@@ -6279,6 +6283,7 @@
           "integrations"
         ],
         "summary": "Query external references (requires external_data.read)",
+        "description": "List external references the caller's ``external_data.read`` grant covers.\n\nReferences carry no scope column of their own, so ownership resolves through\nthe NOT NULL ``external_system_id`` foreign key — the same derivation used for\nwebhook subscriptions. A non-GLOBAL grant sees the references under its own\norganizations (unit grants include the parent); references under an\norganization-less, platform-wide system stay GLOBAL-only, so the join cannot\nleak them. The polymorphic ``resource_id`` has no foreign key and is still not\nvalidated against a project — that is the write-side mapping gap, not the read\nscope closed here.",
         "operationId": "list_references_api_v1_integrations_references_get",
         "parameters": [
           {
@@ -6563,6 +6568,7 @@
           "integrations"
         ],
         "summary": "List webhook subscriptions (requires webhook.read)",
+        "description": "List webhook subscriptions the caller's ``webhook.read`` grant covers.\n\nA subscription inherits its external system's organization, the same\nresolution the single-object ``PATCH /webhooks/{id}`` guard already uses, so\nthe collection and the item agree. Systems with no organization are\nGLOBAL-only rows.",
         "operationId": "list_webhooks_api_v1_integrations_webhooks_get",
         "parameters": [
           {
@@ -6745,6 +6751,7 @@
           "integrations"
         ],
         "summary": "Query durable integration events (requires integration.read)",
+        "description": "GAP-SCHEMA: permission-gated only, with no row filter.\n\n``IntegrationEvent.project_id`` is a nullable UUID with **no** foreign key to\n``projects``, so nothing guarantees the value names a real project: filtering\na caller's project set against it would authorize rows through an unvalidated\ncolumn, and a ``NULL`` project would be invisible to every non-GLOBAL caller.\nThe scope predicate waits on the FK/validity decision recorded in the scope\nclassification.",
         "operationId": "list_events_api_v1_integrations_events_get",
         "parameters": [
           {
@@ -8329,6 +8336,62 @@
         }
       }
     },
+    "/api/v1/publications/policies": {
+      "get": {
+        "summary": "List publication policies",
+        "description": "List publication policies (GLOBAL-scope holders only).",
+        "operationId": "list_publication_policies_api_v1_publications_policies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicationPolicyListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a publication policy",
+        "description": "Create a new publication policy.",
+        "operationId": "create_publication_policy_api_v1_publications_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicationPolicyCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicationPolicyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/publications/{publication_id}": {
       "get": {
         "summary": "Get a publication request by ID",
@@ -8592,62 +8655,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EligibilityResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/publications/policies": {
-      "get": {
-        "summary": "List publication policies",
-        "description": "List publication policies.",
-        "operationId": "list_publication_policies_api_v1_publications_policies_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublicationPolicyListResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a publication policy",
-        "description": "Create a new publication policy.",
-        "operationId": "create_publication_policy_api_v1_publications_policies_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublicationPolicyCreateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublicationPolicyResponse"
                 }
               }
             }
@@ -17631,15 +17638,22 @@
             "title": "Name"
           },
           "owner_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Owner Id"
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Id",
+            "description": "Defaults to the authenticated user principal. A different id is a delegation of ownership and is accepted only from a caller holding project.create at GLOBAL scope; a user id in the body is not a permission. The creator recorded in the audit event is always the caller, never this value."
           }
         },
         "type": "object",
         "required": [
-          "name",
-          "owner_id"
+          "name"
         ],
         "title": "ProjectCreate"
       },
