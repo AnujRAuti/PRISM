@@ -56,9 +56,10 @@ VERSIONS_DIR = REPO_ROOT / "alembic" / "versions"
 #: down_revision s9t0u1v2w029), then by D2 (one data-only revision: the baseline
 #: authorization catalogue seed, down_revision t0u1v2w3x030), then by BE-038 (one
 #: revision: rebuild the event-type CHECK for the analysis lifecycle vocabulary,
-#: down_revision u1v2w3x4y031), each time after confirming `alembic heads`
-#: reports exactly one head.
-EXPECTED_HEAD = "v2w3x4y5z032"
+#: down_revision u1v2w3x4y031), then by BE-039 (one revision: rebuild the same CHECK to
+#: admit PROJECT_CREATED, down_revision v2w3x4y5z032), each time after confirming
+#: `alembic heads` reports exactly one head.
+EXPECTED_HEAD = "w3x4y5z6a033"
 
 #: BE-023 revision count at the time this test was written (19), advanced by
 #: each milestone that genuinely adds a migration. BE-025 added one: 20.
@@ -67,7 +68,8 @@ EXPECTED_HEAD = "v2w3x4y5z032"
 #: BE-030 adds one (append-only enforcement trigger + event-type CHECK): 25.
 #: D2 adds one (authorization catalogue seed — data only, no schema change): 26.
 #: BE-038 adds one (event-type CHECK rebuilt for ANALYSIS_QUEUED/ANALYSIS_STARTED): 27.
-EXPECTED_REVISION_COUNT = 27
+#: BE-039 adds one (the same CHECK rebuilt for PROJECT_CREATED): 28.
+EXPECTED_REVISION_COUNT = 28
 
 
 @dataclass(frozen=True)

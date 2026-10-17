@@ -768,3 +768,183 @@ def test_fusion_history_preserved_and_audit_chain_intact():
         finally:
             session.close()
         cleanup([admin_id], project_ids, evidence_ids, policy_ids)
+
+
+# ---------------------------------------------------------------------------
+# Read-scope enforcement (acceptance register §8.1)
+#
+# The retention read endpoints checked only that the caller held
+# ``retention.read`` in *some* scope, then queried every row. A project-scoped
+# administrator could therefore enumerate and open other projects' policies and
+# legal holds. These tests fix the replacement contract: each row is judged
+# against its own scope, GLOBAL policies are readable by anyone holding the
+# permission (owner decision), and a hold whose project is only derivable from
+# its target is resolved rather than hidden.
+# ---------------------------------------------------------------------------
+
+
+def make_project_admin(username: str, project_id: str):
+    """A user who is ADMINISTRATOR for exactly one project and nothing else."""
+    session = get_session()
+    try:
+        auth_service.ensure_default_catalogue(session)
+        user = User(username=f"{username}-{uuid4().hex[:8]}",
+                    email=f"{uuid4().hex[:8]}@example.com")
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        auth_service.assign_role(session, user_id=str(user.id),
+                                 role_name="ADMINISTRATOR",
+                                 scope_type="PROJECT", project_id=project_id)
+        session.commit()
+        uid = str(user.id)
+    finally:
+        session.close()
+    return uid, {"Authorization": f"Bearer dev-user-{uid}"}
+
+
+def make_claim(project_id: str, title: str) -> str:
+    session = get_session()
+    try:
+        claim = Claim(project_id=project_id, title=title)
+        session.add(claim)
+        session.commit()
+        session.refresh(claim)
+        return str(claim.id)
+    finally:
+        session.close()
+
+
+def test_policy_reads_are_scoped_to_the_policies_own_project():
+    admin_id, admin_headers = make_admin("retention-scope-owner")
+    policy_ids, project_ids, reader_ids = [], [], []
+    try:
+        project_a = make_project(admin_id, "scope A")
+        project_b = make_project(admin_id, "scope B")
+        project_ids.extend([project_a["id"], project_b["id"]])
+        policy_a, _ = make_policy(admin_headers, scope="PROJECT",
+                                  scope_id=project_a["id"], activate=False)
+        policy_ids.append(policy_a["id"])
+
+        reader_a_id, reader_a = make_project_admin("scope-a-reader", project_a["id"])
+        reader_b_id, reader_b = make_project_admin("scope-b-reader", project_b["id"])
+        reader_ids.extend([reader_a_id, reader_b_id])
+        session = get_session()
+        try:
+            principal = auth_service.resolve_user_principal(session, reader_b_id)
+        finally:
+            session.close()
+        assert "retention.read" in principal.permissions, (
+            "precondition failed: the PROJECT grant produced no retention.read, "
+            "so the refusals below would prove nothing"
+        )
+
+        # The row exists and is listable -- otherwise "not in the list" is a
+        # zero-row match, not a refusal.
+        own = client.get(f"/api/v1/retention/policies/{policy_a['id']}", headers=reader_a)
+        assert own.status_code == 200, own.text
+        listed = client.get("/api/v1/retention/policies", headers=reader_a).json()
+        assert policy_a["id"] in {row["id"] for row in listed}
+
+        foreign = client.get(f"/api/v1/retention/policies/{policy_a['id']}", headers=reader_b)
+        assert foreign.status_code == 404, (
+            f"a Project-B admin read a Project-A policy: {foreign.status_code}")
+        listed_b = client.get("/api/v1/retention/policies", headers=reader_b).json()
+        assert policy_a["id"] not in {row["id"] for row in listed_b}
+
+        # Owner decision (§8.1): a GLOBAL policy is readable by any holder.
+        global_policy, _ = make_policy(admin_headers, resource_type="FUSION_RUN",
+                                      scope="GLOBAL", activate=False)
+        policy_ids.append(global_policy["id"])
+        assert client.get(f"/api/v1/retention/policies/{global_policy['id']}",
+                          headers=reader_b).status_code == 200
+        assert global_policy["id"] in {row["id"]
+                                       for row in client.get(
+                                           "/api/v1/retention/policies",
+                                           headers=reader_b).json()}
+    finally:
+        cleanup([admin_id, *reader_ids], project_ids, [], policy_ids)
+
+
+def test_hold_list_and_item_reads_are_scoped_to_the_holds_project():
+    admin_id, admin_headers = make_admin("retention-hold-owner")
+    project_ids, reader_ids, hold_ids = [], [], []
+    try:
+        project_a = make_project(admin_id, "hold A")
+        project_b = make_project(admin_id, "hold B")
+        project_ids.extend([project_a["id"], project_b["id"]])
+        hold_a = client.post("/api/v1/retention/holds", json={
+            "scope": "PROJECT", "project_id": project_a["id"],
+            "reason": "cross-scope read test"}, headers=admin_headers)
+        assert hold_a.status_code == 201, hold_a.text
+        hold_ids.append(hold_a.json()["id"])
+
+        reader_b_id, reader_b = make_project_admin("hold-b-reader", project_b["id"])
+        reader_ids.append(reader_b_id)
+
+        item = client.get(f"/api/v1/retention/holds/{hold_a.json()['id']}", headers=reader_b)
+        assert item.status_code == 404, (
+            f"a Project-B admin read a Project-A hold: {item.status_code}")
+        listed_b = client.get("/api/v1/retention/holds", headers=reader_b).json()
+        assert hold_a.json()["id"] not in {row["id"] for row in listed_b["items"]}, (
+            "the hold list leaked across projects")
+        listed_admin = client.get("/api/v1/retention/holds", headers=admin_headers).json()
+        assert hold_a.json()["id"] in {row["id"] for row in listed_admin["items"]}, (
+            "the hold was not even visible to its own administrator; the empty "
+            "cross-scope list above would then have measured nothing")
+    finally:
+        cleanup([admin_id, *reader_ids], project_ids, [], [], hold_ids=hold_ids)
+
+
+def test_claim_hold_persists_the_resolved_project_and_legacy_null_rows_stay_answerable():
+    """Derive the scope on write, and resolve it on read for rows that lack it."""
+    admin_id, admin_headers = make_admin("retention-claim-hold")
+    project_ids, reader_ids, hold_ids = [], [], []
+    try:
+        project_a = make_project(admin_id, "claim hold A")
+        project_b = make_project(admin_id, "claim hold B")
+        project_ids.extend([project_a["id"], project_b["id"]])
+        claim_id = make_claim(project_a["id"], "claim in A")
+
+        hold = client.post("/api/v1/retention/holds", json={
+            "scope": "CLAIM", "claim_id": claim_id, "reason": "derived scope"},
+            headers=admin_headers)
+        assert hold.status_code == 201, hold.text
+        hold_id = hold.json()["id"]
+        hold_ids.append(hold_id)
+        session = get_session()
+        try:
+            row = session.query(RetentionHold).filter(
+                RetentionHold.id == hold_id).one()
+            assert str(row.project_id) == project_a["id"], (
+                "the hold stored the body's identifiers instead of the scope the "
+                "guard authorized against, so no read filter could answer for it")
+        finally:
+            session.close()
+
+        # A pre-existing row (project_id NULL, only a target) must still be
+        # answerable rather than silently disappearing from the collection.
+        legacy_id = str(uuid4())
+        session = get_session()
+        try:
+            session.add(RetentionHold(id=legacy_id, scope="CLAIM", claim_id=claim_id,
+                                      project_id=None, reason="legacy row",
+                                      status="ACTIVE"))
+            session.commit()
+        finally:
+            session.close()
+        hold_ids.append(legacy_id)
+
+        reader_a_id, reader_a = make_project_admin("claim-hold-a-reader", project_a["id"])
+        reader_b_id, reader_b = make_project_admin("claim-hold-b-reader", project_b["id"])
+        reader_ids.extend([reader_a_id, reader_b_id])
+
+        assert client.get(f"/api/v1/retention/holds/{legacy_id}",
+                          headers=reader_a).status_code == 200
+        assert client.get(f"/api/v1/retention/holds/{legacy_id}",
+                          headers=reader_b).status_code == 404
+        readable = {row["id"] for row in
+                    client.get("/api/v1/retention/holds", headers=reader_a).json()["items"]}
+        assert {hold_id, legacy_id} <= readable
+    finally:
+        cleanup([admin_id, *reader_ids], project_ids, [], [], hold_ids=hold_ids)

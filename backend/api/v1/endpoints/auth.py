@@ -650,7 +650,7 @@ def update_project_scope(
     "/projects/{project_id}/ownership",
     response_model=AdminProjectResponse,
     summary="Transfer project ownership to an active user (organization.manage must "
-            "cover the project)",
+            "cover the project; the new owner needs GLOBAL authority)",
     responses=_error_docs(401, 403, 404),
 )
 def transfer_project_ownership(
@@ -663,7 +663,7 @@ def transfer_project_ownership(
     try:
         project = auth_service.change_project_owner(
             db, project_id=str(project_id), owner_id=str(payload.owner_id),
-            actor_id=_actor(principal))
+            actor_id=_actor(principal), actor=principal)
     except AdminOperationError as error:
         raise _admin_error(error) from error
     except LookupError as error:

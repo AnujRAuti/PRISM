@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from backend.db.session import get_db
 from backend.schemas import publication as publication_schemas
 from backend.security.authentication import get_current_principal, is_development_bypass
-from backend.security.authorization import require, visible_project_ids
+from backend.security.authorization import require, require_global, visible_project_ids
 from backend.services import publication as publication_service
 from backend.services.authorization import Principal
 
@@ -80,6 +80,32 @@ def create_publication(
         status.HTTP_201_CREATED if created else status.HTTP_200_OK
     )
     return publication_schemas.PublicationResponse.model_validate(publication)
+
+
+# Literal single-segment paths must be declared before ``/{publication_id}``:
+# routing matches in declaration order, so a path registered after it is
+# unreachable (the shadowed ``GET /policies`` returned 422 for publication_id
+# = "policies").
+@router.get(
+    "/policies",
+    response_model=publication_schemas.PublicationPolicyListResponse,
+    summary="List publication policies",
+)
+def list_publication_policies(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(require_global("publication.read")),
+) -> publication_schemas.PublicationPolicyListResponse:
+    """List publication policies (GLOBAL-scope holders only)."""
+    try:
+        rows, total = publication_service.list_publication_policies(db)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    return publication_schemas.PublicationPolicyListResponse(
+        items=[publication_schemas.PublicationPolicyResponse.model_validate(row) for row in rows],
+        limit=len(rows),
+        offset=0,
+        total=total,
+    )
 
 
 @router.get(
@@ -300,7 +326,7 @@ def create_publication_policy(
     payload: publication_schemas.PublicationPolicyCreateRequest,
     response: Response,
     db: Session = Depends(get_db),
-    principal: Principal = Depends(require("publication.policy.manage")),
+    principal: Principal = Depends(require_global("publication.policy.manage")),
 ) -> publication_schemas.PublicationPolicyResponse:
     """Create a new publication policy."""
     # PublicationPolicyVersion.created_by is a NULLABLE UUID column, so an
@@ -359,31 +385,6 @@ def get_publication_policy(
         raise HTTPException(status_code=422, detail=str(error)) from error
     except LookupError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.get(
-    "/policies",
-    response_model=publication_schemas.PublicationPolicyListResponse,
-    summary="List publication policies",
-)
-def list_publication_policies(
-    db: Session = Depends(get_db),
-    principal: Principal = Depends(get_current_principal),
-) -> publication_schemas.PublicationPolicyListResponse:
-    """List publication policies."""
-    if not is_development_bypass(principal):
-        if "publication.read" not in principal.permissions:
-            raise HTTPException(status_code=403, detail="Forbidden")
-    try:
-        rows, total = publication_service.list_publication_policies(db)
-    except ValueError as error:
-        raise HTTPException(status_code=422, detail=str(error)) from error
-    return publication_schemas.PublicationPolicyListResponse(
-        items=[publication_schemas.PublicationPolicyResponse.model_validate(row) for row in rows],
-        limit=len(rows),
-        offset=0,
-        total=total,
-    )
 
 
 # NOTE: PublicationVersion endpoints are intentionally omitted as versions

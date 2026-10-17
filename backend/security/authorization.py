@@ -141,6 +141,41 @@ def visible_project_ids(
     return project_ids
 
 
+def visible_organization_ids(
+    db: Session, principal: Principal, permission: str
+) -> set[str] | None:
+    """Organizations a principal may read for a permission (None = all).
+
+    The listing-side counterpart of ``visible_project_ids`` for organisation
+    level resources (external systems and their webhook subscriptions). Not the
+    same thing as ``services.authorization.visible_organization_ids``, which is
+    the admin-plane helper pinned to ``organization.manage``.
+
+    A PROJECT grant contributes nothing here: a project-scoped holder cannot
+    name an organisation, so those callers see no organisation-level rows
+    rather than silently gaining read access to their whole organisation.
+    """
+    if is_development_bypass(principal):
+        return None
+    from backend.db.models import OrganizationalUnit
+
+    ids: set[str] = set()
+    for scope in principal.permissions.get(permission, ()):
+        if scope.scope_type == "GLOBAL":
+            return None
+        if scope.scope_type == "ORGANIZATION" and scope.organization_id:
+            ids.add(scope.organization_id)
+        elif scope.scope_type == "ORGANIZATIONAL_UNIT" and scope.organizational_unit_id:
+            unit = (
+                db.query(OrganizationalUnit)
+                .filter(OrganizationalUnit.id == scope.organizational_unit_id)
+                .one_or_none()
+            )
+            if unit is not None:
+                ids.add(str(unit.organization_id))
+    return ids
+
+
 def permission_description(action: str) -> str:
     """Human-readable required permission for OpenAPI documentation."""
     return f"Requires permission: {ACTION_PERMISSIONS.get(action, action)}"

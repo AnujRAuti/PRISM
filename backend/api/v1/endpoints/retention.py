@@ -105,6 +105,36 @@ def _enforce_policy_scope(
     )
 
 
+def _policy_readable(principal: Principal, policy) -> bool:
+    """Whether this caller may read one retention policy row.
+
+    A policy's own scope columns are the only authority on this: GLOBAL
+    configuration is readable by anyone who holds ``retention.read`` at all
+    (owner decision, acceptance register §8.1), and every other row is judged
+    against its project / organization / organizational-unit scope by the
+    central ``can()`` so a reviewer authorized for one project cannot read
+    another project's retention rules.
+    """
+    from backend.security.authentication import is_development_bypass
+    from backend.services.authorization import can
+
+    if is_development_bypass(principal):
+        return True
+    if policy.scope_type == "GLOBAL":
+        return "retention.read" in principal.permissions
+    return can(
+        principal,
+        "retention.read",
+        Resource(
+            "retention",
+            project_id=str(policy.project_id) if policy.project_id else None,
+            organization_id=str(policy.organization_id) if policy.organization_id else None,
+            organizational_unit_id=str(policy.organizational_unit_id)
+            if policy.organizational_unit_id else None,
+        ),
+    ).allowed
+
+
 @router.post(
     "/policies",
     response_model=PolicyResponse,
@@ -151,7 +181,7 @@ def get_policy(
     principal: Principal = Depends(require("retention.read")),
 ) -> PolicyResponse:
     row = retention_repo.get_policy(db, str(policy_id))
-    if row is None:
+    if row is None or not _policy_readable(principal, row):
         raise HTTPException(status_code=404, detail="Retention policy not found")
     return PolicyResponse.model_validate(row)
 
@@ -169,7 +199,8 @@ def list_policies(
 
     rows = db.query(RetentionPolicy).order_by(
         RetentionPolicy.created_at, RetentionPolicy.id).all()
-    return [PolicyResponse.model_validate(row) for row in rows]
+    return [PolicyResponse.model_validate(row)
+            for row in rows if _policy_readable(principal, row)]
 
 
 @router.post(
@@ -213,7 +244,8 @@ def policy_history(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("retention.read")),
 ) -> list[PolicyVersionResponse]:
-    if retention_repo.get_policy(db, str(policy_id)) is None:
+    policy = retention_repo.get_policy(db, str(policy_id))
+    if policy is None or not _policy_readable(principal, policy):
         raise HTTPException(status_code=404, detail="Retention policy not found")
     rows = retention_repo.versions_for_policy(db, str(policy_id))
     return [PolicyVersionResponse.model_validate(row) for row in rows]
@@ -330,58 +362,124 @@ def list_holds(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("retention.read")),
 ) -> HoldListResponse:
-    try:
-        rows, total = retention_service.list_holds(
-            db, status=status,
-            project_id=str(project_id) if project_id else None,
-            limit=limit, offset=offset,
-        )
-    except ValueError as error:
-        raise HTTPException(status_code=422, detail=str(error)) from error
     from backend.schemas.retention import HoldResponse
 
+    if status is not None and status not in retention_service.HOLD_STATUSES:
+        raise HTTPException(status_code=422, detail=f"Unknown hold status: {status!r}")
+    # Authorized before paginated: a hold's project can only be known by
+    # resolving its target, so slicing in SQL first would let a page come back
+    # empty while readable rows sit beyond the offset.
+    candidates = retention_repo.list_holds_query(
+        db, status=status,
+        project_id=str(project_id) if project_id else None,
+    ).all()
+    readable = [row for row in candidates if _hold_readable(db, principal, row)]
     return HoldListResponse(
-        items=[HoldResponse.model_validate(row) for row in rows],
-        limit=limit, offset=offset, total=total)
+        items=[HoldResponse.model_validate(row)
+               for row in readable[offset:offset + limit]],
+        limit=limit, offset=offset, total=len(readable))
+
+
+def _resolve_hold_scope(
+    db: Session,
+    *,
+    scope: str,
+    resource_type: str | None = None,
+    resource_id: str | None = None,
+    project_id: str | None = None,
+    claim_id: str | None = None,
+    case_id: str | None = None,
+    organization_id: str | None = None,
+) -> dict:
+    """Server-resolved scope for a hold, from its own target when not stated.
+
+    A hold whose ``scope`` is CASE/CLAIM/RESOURCE names a target, not a project,
+    so the project it belongs to has to be looked up. Both the write guard and
+    the read filter use this one resolver: persisting what the guard authorized
+    is what makes the row answerable to a scope check later.
+    """
+    resolved: dict[str, str | None] = {
+        "project_id": project_id,
+        "organization_id": organization_id,
+        "organizational_unit_id": None,
+    }
+    if resolved["project_id"] is None:
+        if scope == HoldScope.PROJECT.value and project_id:
+            resolved["project_id"] = project_id
+        elif scope == HoldScope.RESOURCE.value and resource_id:
+            try:
+                target = retention_service.resource_scope(
+                    db, resource_type or "EVIDENCE", resource_id)
+                resolved.update({key: target.get(key) for key in resolved})
+            except (ValueError, LookupError):
+                pass
+        elif scope == HoldScope.CASE.value and case_id:
+            from backend.db.models import ReviewCase
+
+            case = db.query(ReviewCase).filter(
+                ReviewCase.id == case_id).one_or_none()
+            if case is not None and case.project_id:
+                resolved["project_id"] = str(case.project_id)
+        elif scope == HoldScope.CLAIM.value and claim_id:
+            from backend.db.models import Claim
+
+            claim = db.query(Claim).filter(
+                Claim.id == claim_id).one_or_none()
+            if claim is not None:
+                resolved["project_id"] = str(claim.project_id)
+        elif scope == HoldScope.ORGANIZATION.value and organization_id:
+            resolved["organization_id"] = organization_id
+    return resolved
+
+
+def _hold_scope_for_row(db: Session, row) -> dict:
+    """Resolve one persisted hold's scope, filling NULL columns from its target."""
+    return _resolve_hold_scope(
+        db,
+        scope=row.scope,
+        resource_type=row.resource_type,
+        resource_id=row.resource_id,
+        project_id=str(row.project_id) if row.project_id else None,
+        claim_id=str(row.claim_id) if row.claim_id else None,
+        case_id=str(row.case_id) if row.case_id else None,
+        organization_id=str(row.organization_id) if row.organization_id else None,
+    )
+
+
+def _hold_readable(db: Session, principal: Principal, row) -> bool:
+    """Whether this caller may read one hold row (fail closed when unresolvable)."""
+    from backend.security.authentication import is_development_bypass
+    from backend.services.authorization import can
+
+    if is_development_bypass(principal):
+        return True
+    scope = _hold_scope_for_row(db, row)
+    if not any(scope.values()):
+        return False
+    return can(principal, "retention.read", Resource(
+        "retention",
+        project_id=scope["project_id"],
+        organization_id=scope["organization_id"],
+        organizational_unit_id=scope["organizational_unit_id"],
+    )).allowed
 
 
 def _enforce_hold_scope(
     db: Session, request: Request, principal: Principal, payload: HoldCreate,
-) -> None:
+) -> dict:
     """Enforce hold creation against the hold's own scope (server-resolved)."""
-    scope: dict[str, str | None] = {
-        "project_id": str(payload.project_id) if payload.project_id else None,
-        "organization_id": str(payload.organization_id) if payload.organization_id else None,
-        "organizational_unit_id": None,
-    }
-    if scope["project_id"] is None:
-        if payload.scope == HoldScope.PROJECT and payload.project_id:
-            scope["project_id"] = str(payload.project_id)
-        elif payload.scope == HoldScope.RESOURCE and payload.resource_id:
-            try:
-                resolved = retention_service.resource_scope(
-                    db, payload.resource_type.value if payload.resource_type else "EVIDENCE",
-                    str(payload.resource_id))
-                scope.update({key: resolved.get(key) for key in scope})
-            except (ValueError, LookupError):
-                pass
-        elif payload.scope == HoldScope.CASE and payload.case_id:
-            from backend.db.models import ReviewCase
-
-            case = db.query(ReviewCase).filter(
-                ReviewCase.id == str(payload.case_id)).one_or_none()
-            if case is not None and case.project_id:
-                scope["project_id"] = str(case.project_id)
-        elif payload.scope == HoldScope.CLAIM and payload.claim_id:
-            from backend.db.models import Claim
-
-            claim = db.query(Claim).filter(
-                Claim.id == str(payload.claim_id)).one_or_none()
-            if claim is not None:
-                scope["project_id"] = str(claim.project_id)
-        elif payload.scope == HoldScope.ORGANIZATION and payload.organization_id:
-            scope["organization_id"] = str(payload.organization_id)
+    scope = _resolve_hold_scope(
+        db,
+        scope=payload.scope.value,
+        resource_type=payload.resource_type.value if payload.resource_type else None,
+        resource_id=str(payload.resource_id) if payload.resource_id else None,
+        project_id=str(payload.project_id) if payload.project_id else None,
+        claim_id=str(payload.claim_id) if payload.claim_id else None,
+        case_id=str(payload.case_id) if payload.case_id else None,
+        organization_id=str(payload.organization_id) if payload.organization_id else None,
+    )
     _enforce_scope(db, request, principal, "retention.manage_hold", scope)
+    return scope
 
 
 @router.post(
@@ -396,16 +494,16 @@ def create_hold(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ) -> HoldResponse:
-    _enforce_hold_scope(db, request, principal, payload)
+    scope = _enforce_hold_scope(db, request, principal, payload)
     try:
         row = retention_service.create_hold(
             db, scope=payload.scope.value, reason=payload.reason,
             resource_type=payload.resource_type.value if payload.resource_type else None,
             resource_id=str(payload.resource_id) if payload.resource_id else None,
-            project_id=str(payload.project_id) if payload.project_id else None,
+            project_id=scope["project_id"],
             claim_id=str(payload.claim_id) if payload.claim_id else None,
             case_id=str(payload.case_id) if payload.case_id else None,
-            organization_id=str(payload.organization_id) if payload.organization_id else None,
+            organization_id=scope["organization_id"],
             authority=payload.authority, expires_at=payload.expires_at,
             created_by=_actor(principal),
         )
@@ -426,7 +524,7 @@ def get_hold(
     principal: Principal = Depends(require("retention.read")),
 ) -> HoldResponse:
     row = retention_repo.get_hold(db, str(hold_id))
-    if row is None:
+    if row is None or not _hold_readable(db, principal, row):
         raise HTTPException(status_code=404, detail="Retention hold not found")
     return HoldResponse.model_validate(row)
 
@@ -440,9 +538,7 @@ def _enforce_hold_row(
         raise HTTPException(status_code=404, detail="Retention hold not found")
     _enforce_scope(
         db, request, principal, "retention.manage_hold",
-        {"project_id": str(row.project_id) if row.project_id else None,
-         "organization_id": str(row.organization_id) if row.organization_id else None,
-         "organizational_unit_id": None},
+        _hold_scope_for_row(db, row),
     )
 
 

@@ -12,13 +12,14 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
+    Request,
     UploadFile,
     status,
 )
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
-from backend.db.models import Claim, Project
+from backend.db.models import ApiCredential, Claim, Project
 from backend.db.session import get_db
 from backend.repositories import integration as integration_repo
 from backend.schemas.evidence import EvidenceUploadResponse
@@ -36,11 +37,17 @@ from backend.schemas.integration import (
     WebhookSubscriptionResponse,
     WebhookSubscriptionUpdate,
 )
-from backend.security.authorization import require
+from backend.security.authentication import is_development_bypass
+from backend.security.authorization import (
+    enforce,
+    require,
+    visible_organization_ids,
+    visible_project_ids,
+)
 from backend.services import audit_ledger as audit_service
 from backend.services import integration as integration_service
 from backend.services import webhook as webhook_service
-from backend.services.authorization import Principal
+from backend.services.authorization import Principal, Resource, resolve_resource_scope
 from backend.services.evidence_ingestion import ingest_evidence
 from backend.services.integration import (
     check_idempotency,
@@ -91,12 +98,19 @@ def list_systems(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("integration.read")),
 ) -> list[ExternalSystemResponse]:
+    """List external systems the caller's ``integration.read`` grant covers.
+
+    Organization-level rows: a non-GLOBAL grant sees its own organizations (unit
+    grants include the parent), and a project-scoped grant sees none. The
+    caller-supplied ``organization_id`` can only narrow this set, never widen it.
+    """
     systems = integration_repo.list_external_systems(
         db,
         organization_id=str(organization_id) if organization_id else None,
         status=status,
         limit=min(limit, 100),
         offset=offset,
+        allowed_organization_ids=visible_organization_ids(db, principal, "integration.read"),
     )
     return [ExternalSystemResponse.model_validate(s) for s in systems]
 
@@ -109,10 +123,30 @@ def list_systems(
 )
 def create_system(
     body: ExternalSystemCreate,
+    request: Request,
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("integration.manage")),
 ) -> ExternalSystemResponse:
+    """Register an external system inside a scope the caller already holds.
+
+    Naming an organization does not grant authority over it: ``integration.manage``
+    must cover ``body.organization_id`` (an organization or unit grant, or GLOBAL).
+    A system with no organization is platform-wide configuration, so it requires
+    the GLOBAL grant — the bare resource resolves to nothing else.
+    """
+    if not is_development_bypass(principal):
+        enforce(
+            principal,
+            "integration.manage",
+            (
+                resolve_resource_scope(db, "organization", str(body.organization_id))
+                if body.organization_id
+                else Resource("organization")
+            ),
+            request,
+        )
+
     idem_key, req_hash, replay_data = _check_idempotency(
         db, principal, idempotency_key, body.model_dump(mode="json")
     )
@@ -164,8 +198,18 @@ def list_clients(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("integration.read")),
 ) -> list[ApiClientResponse]:
+    """List API clients the caller's ``integration.read`` grant covers.
+
+    Project-level rows: a non-GLOBAL grant sees the clients bound to its own
+    projects (organization and unit grants expand to their projects). A client
+    with no project acts platform-wide and stays GLOBAL-only.
+    """
     clients = integration_repo.list_api_clients(
-        db, status=status, limit=min(limit, 100), offset=offset
+        db,
+        status=status,
+        limit=min(limit, 100),
+        offset=offset,
+        allowed_project_ids=visible_project_ids(db, principal, "integration.read"),
     )
     return [ApiClientResponse.model_validate(c) for c in clients]
 
@@ -182,10 +226,30 @@ class ApiClientCreateResponse(BaseModel_resp := ApiClientResponse):
 )
 def create_client(
     body: ApiClientCreate,
+    request: Request,
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("api_client.manage")),
 ) -> Any:
+    """Create an API client bound to a project the caller already manages.
+
+    Naming a project does not grant authority over it: ``api_client.manage`` must
+    cover ``body.project_id``. A client with no project is platform-wide, so it
+    requires the GLOBAL grant — and the initial credential this route returns is
+    then usable against every project.
+    """
+    if not is_development_bypass(principal):
+        enforce(
+            principal,
+            "api_client.manage",
+            (
+                resolve_resource_scope(db, "project", str(body.project_id))
+                if body.project_id
+                else Resource("project")
+            ),
+            request,
+        )
+
     idem_key, req_hash, replay_data = _check_idempotency(
         db, principal, idempotency_key, body.model_dump(mode="json")
     )
@@ -272,9 +336,26 @@ def create_credential(
 )
 def revoke_credential_endpoint(
     credential_id: UUID,
+    request: Request,
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("credential.manage")),
 ) -> dict[str, Any]:
+    row = db.query(ApiCredential).filter(ApiCredential.id == str(credential_id)).one_or_none()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Credential not found or already revoked",
+        )
+    if not is_development_bypass(principal):
+        # A credential carries no scope column of its own: it inherits its
+        # client's project, which is what the sibling issue route enforces.
+        enforce(
+            principal,
+            "credential.manage",
+            resolve_resource_scope(db, "api_client", str(row.client_id)),
+            request,
+        )
+
     success = integration_service.revoke_credential(
         db, str(credential_id), actor_id=principal.principal_id
     )
@@ -306,6 +387,17 @@ def list_references(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("external_data.read")),
 ) -> list[ExternalReferenceResponse]:
+    """List external references the caller's ``external_data.read`` grant covers.
+
+    References carry no scope column of their own, so ownership resolves through
+    the NOT NULL ``external_system_id`` foreign key — the same derivation used for
+    webhook subscriptions. A non-GLOBAL grant sees the references under its own
+    organizations (unit grants include the parent); references under an
+    organization-less, platform-wide system stay GLOBAL-only, so the join cannot
+    leak them. The polymorphic ``resource_id`` has no foreign key and is still not
+    validated against a project — that is the write-side mapping gap, not the read
+    scope closed here.
+    """
     refs = integration_repo.list_external_references(
         db,
         external_system_id=str(external_system_id) if external_system_id else None,
@@ -313,6 +405,7 @@ def list_references(
         resource_id=str(resource_id) if resource_id else None,
         limit=min(limit, 100),
         offset=offset,
+        allowed_organization_ids=visible_organization_ids(db, principal, "external_data.read"),
     )
     return [ExternalReferenceResponse.model_validate(r) for r in refs]
 
@@ -575,12 +668,20 @@ def list_webhooks(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("webhook.read")),
 ) -> list[WebhookSubscriptionResponse]:
+    """List webhook subscriptions the caller's ``webhook.read`` grant covers.
+
+    A subscription inherits its external system's organization, the same
+    resolution the single-object ``PATCH /webhooks/{id}`` guard already uses, so
+    the collection and the item agree. Systems with no organization are
+    GLOBAL-only rows.
+    """
     subs = integration_repo.list_webhook_subscriptions(
         db,
         external_system_id=str(external_system_id) if external_system_id else None,
         status=status,
         limit=min(limit, 100),
         offset=offset,
+        allowed_organization_ids=visible_organization_ids(db, principal, "webhook.read"),
     )
     return [WebhookSubscriptionResponse.model_validate(s) for s in subs]
 
@@ -709,6 +810,15 @@ def list_events(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("integration.read")),
 ) -> list[IntegrationEventResponse]:
+    """GAP-SCHEMA: permission-gated only, with no row filter.
+
+    ``IntegrationEvent.project_id`` is a nullable UUID with **no** foreign key to
+    ``projects``, so nothing guarantees the value names a real project: filtering
+    a caller's project set against it would authorize rows through an unvalidated
+    column, and a ``NULL`` project would be invisible to every non-GLOBAL caller.
+    The scope predicate waits on the FK/validity decision recorded in the scope
+    classification.
+    """
     events = integration_repo.list_integration_events(
         db,
         event_type=event_type,

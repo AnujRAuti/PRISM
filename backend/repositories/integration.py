@@ -4,6 +4,7 @@ assertions, idempotency keys, webhooks, integration events."""
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy import false
 from sqlalchemy.orm import Session
 
 from backend.db.models import (
@@ -43,12 +44,21 @@ def list_external_systems(
     status: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    allowed_organization_ids: set[str] | None = None,
 ) -> list[ExternalSystem]:
     q = db.query(ExternalSystem)
     if organization_id:
         q = q.filter(ExternalSystem.organization_id == organization_id)
     if status:
         q = q.filter(ExternalSystem.status == status)
+    if allowed_organization_ids is not None:
+        # Systems with no organization are platform-wide configuration, so only
+        # a GLOBAL grant (allowed_organization_ids is None) reaches them.
+        q = q.filter(
+            ExternalSystem.organization_id.in_(allowed_organization_ids)
+            if allowed_organization_ids
+            else false()
+        )
     return q.order_by(ExternalSystem.created_at.desc()).offset(offset).limit(limit).all()
 
 
@@ -73,10 +83,16 @@ def list_api_clients(
     status: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    allowed_project_ids: set[str] | None = None,
 ) -> list[ApiClient]:
     q = db.query(ApiClient)
     if status:
         q = q.filter(ApiClient.status == status)
+    if allowed_project_ids is not None:
+        # Project-less clients act platform-wide, so they stay GLOBAL-only rows.
+        q = q.filter(
+            ApiClient.project_id.in_(allowed_project_ids) if allowed_project_ids else false()
+        )
     return q.order_by(ApiClient.created_at.desc()).offset(offset).limit(limit).all()
 
 
@@ -158,6 +174,7 @@ def list_external_references(
     resource_id: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    allowed_organization_ids: set[str] | None = None,
 ) -> list[ExternalReference]:
     q = db.query(ExternalReference)
     if external_system_id:
@@ -166,6 +183,18 @@ def list_external_references(
         q = q.filter(ExternalReference.resource_type == resource_type)
     if resource_id:
         q = q.filter(ExternalReference.resource_id == resource_id)
+    if allowed_organization_ids is not None:
+        # References carry no scope column, so they inherit their external
+        # system's organisation. The FK is NOT NULL, so the join cannot drop a
+        # legitimate row or produce duplicates (one system per reference).
+        # References under an organisation-less system are platform-wide and
+        # stay reachable only when this parameter is None (a GLOBAL grant).
+        q = q.join(ExternalSystem, ExternalReference.external_system_id == ExternalSystem.id)
+        q = q.filter(
+            ExternalSystem.organization_id.in_(allowed_organization_ids)
+            if allowed_organization_ids
+            else false()
+        )
     return q.order_by(ExternalReference.first_seen_at.desc()).offset(offset).limit(limit).all()
 
 
@@ -272,12 +301,23 @@ def list_webhook_subscriptions(
     status: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    allowed_organization_ids: set[str] | None = None,
 ) -> list[WebhookSubscription]:
     q = db.query(WebhookSubscription)
     if external_system_id:
         q = q.filter(WebhookSubscription.external_system_id == external_system_id)
     if status:
         q = q.filter(WebhookSubscription.status == status)
+    if allowed_organization_ids is not None:
+        # Subscriptions carry no scope column, so they inherit their external
+        # system's organisation. The FK is NOT NULL, so the join cannot drop a
+        # legitimate row or produce duplicates (one system per subscription).
+        q = q.join(ExternalSystem, WebhookSubscription.external_system_id == ExternalSystem.id)
+        q = q.filter(
+            ExternalSystem.organization_id.in_(allowed_organization_ids)
+            if allowed_organization_ids
+            else false()
+        )
     return q.order_by(WebhookSubscription.created_at.desc()).offset(offset).limit(limit).all()
 
 

@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from backend.core.config import settings
 from backend.db.models import (
     AUTH_PERMISSIONS,
     AUTH_ROLE_PERMISSIONS,
@@ -775,9 +776,97 @@ def change_project_scope(db: Session, *, project_id: str,
     return project
 
 
+def _birth_scope(db: Session, actor: Principal | None) -> tuple[str | None, str | None]:
+    """Scope a new project from the caller's own grant, never from the body.
+
+    A row with ``organization_id IS NULL`` is not covered by an ORGANIZATION or
+    PROJECT grant, so without this the creator cannot read the project it just
+    created. A GLOBAL grant, several grants, or none leaves the project
+    platform-wide, which is what an unscoped row has always meant.
+    """
+    scopes = actor.permissions.get("project.create", ()) if actor is not None else ()
+    if not scopes or any(scope.scope_type == "GLOBAL" for scope in scopes):
+        return None, None
+    organizations = {scope.organization_id for scope in scopes
+                     if scope.scope_type == "ORGANIZATION" and scope.organization_id}
+    units = {scope.organizational_unit_id for scope in scopes
+             if scope.scope_type == "ORGANIZATIONAL_UNIT" and scope.organizational_unit_id}
+    if units and not organizations and len(units) == 1:
+        unit = auth_repo.get_unit(db, str(units.pop()))
+        if unit is None or unit.status != "ACTIVE":
+            return None, None
+        return str(unit.organization_id), str(unit.id)
+    if organizations and not units and len(organizations) == 1:
+        organization = auth_repo.get_organization(db, str(organizations.pop()))
+        if organization is None or organization.status != "ACTIVE":
+            return None, None
+        return str(organization.id), None
+    return None, None
+
+
+def create_project(db: Session, *, name: str, actor: Principal | None = None,
+                   owner_id: str | None = None):
+    """Create a project whose owner and creator are both derived (audited).
+
+    Naming a different owner hands authority over the new project to that user,
+    so it is a delegation and needs a GLOBAL grant; an id in the body is not a
+    permission. The creator recorded in the audit event is always the caller,
+    because "for whom" and "by whom" are different facts.
+    """
+    development = (actor is not None and not actor.authenticated
+                   and actor.principal_type == "ANONYMOUS"
+                   and settings.auth_mode == "development")
+    owner_user_id = (str(actor.principal_id)
+                     if actor is not None and actor.authenticated
+                     and actor.principal_type == "USER" else None)
+    creator_id = (str(actor.principal_id)
+                  if actor is not None and actor.authenticated
+                  and actor.principal_type in ("USER", "API_CLIENT") else None)
+
+    if owner_id is None:
+        if owner_user_id is None:
+            raise ValueError(
+                "owner_id is required: the caller has no user identity to own the project")
+        owner = owner_user_id
+    else:
+        owner = _require_uuid(owner_id, "owner_id")
+        if owner != owner_user_id and not development:
+            if actor is not None and not _holds_global(actor, "project.create"):
+                raise AdminOperationError(
+                    403, "Naming another project owner requires GLOBAL project.create authority")
+
+    target = db.query(User).filter(User.id == owner).one_or_none()
+    if target is None:
+        raise LookupError("Owner not found")
+    if target.status != "ACTIVE" or not target.is_active:
+        raise ValueError("Project owner must be an active user")
+
+    organization_id, unit_id = (None, None) if development else _birth_scope(db, actor)
+    project = Project(name=name, owner_id=owner, organization_id=organization_id,
+                      organizational_unit_id=unit_id)
+    db.add(project)
+    db.flush()
+    _audit_admin(db, "PROJECT_CREATED", "create", "projects", str(project.id),
+                 creator_id, str(project.id),
+                 {"project_id": str(project.id), "name": name, "owner_id": owner,
+                  "created_by": creator_id, "organization_id": organization_id,
+                  "organizational_unit_id": unit_id})
+    db.commit()
+    db.refresh(project)
+    return project
+
+
 def change_project_owner(db: Session, *, project_id: str, owner_id: str,
-                         actor_id: str | None = None):
-    """Transfer project ownership to an active user (audited)."""
+                         actor_id: str | None = None,
+                         actor: Principal | None = None):
+    """Transfer project ownership to an active user (audited).
+
+    Destination authority: the endpoint guard already pins authority over the
+    project's *current* scope, but a transfer also grants a *new* person, so it
+    requires a GLOBAL grant. A user id in the request body is not a permission,
+    and a project-scoped administrator must not be able to install themselves
+    or anyone else over projects outside their scope.
+    """
     from backend.db.models import User
 
     project = _lock_row(db, Project, project_id)
@@ -792,6 +881,9 @@ def change_project_owner(db: Session, *, project_id: str, owner_id: str,
     current_owner = str(project.owner_id)
     if current_owner == owner_id:
         return project
+    if actor is not None and not _holds_global(actor, "organization.manage"):
+        raise AdminOperationError(
+            403, "Transferring a project to another user requires GLOBAL authority")
     project.owner_id = owner_id
     _audit_admin(db, "PROJECT_OWNERSHIP_CHANGED", "update", "projects", project_id,
                  actor_id, project_id,

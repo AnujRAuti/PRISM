@@ -6,7 +6,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=256)
-    owner_id: UUID
+    owner_id: UUID | None = Field(
+        default=None,
+        description="Defaults to the authenticated user principal. A different id is a "
+                    "delegation of ownership and is accepted only from a caller holding "
+                    "project.create at GLOBAL scope; a user id in the body is not a "
+                    "permission. The creator recorded in the audit event is always the "
+                    "caller, never this value.",
+    )
 
 
 class ProjectUpdate(BaseModel):

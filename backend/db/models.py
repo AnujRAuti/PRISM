@@ -1074,6 +1074,9 @@ AUDIT_EVENT_TYPES = frozenset(
         "ORGANIZATION_UPDATED",
         "ORGANIZATIONAL_UNIT_UPDATED",
         "USER_STATUS_CHANGED",
+        # Project creation records the derived owner and the deriving actor in
+        # one event, committed with the row or not at all.
+        "PROJECT_CREATED",
         "PROJECT_SCOPE_CHANGED",
         "PROJECT_OWNERSHIP_CHANGED",
         # BE-026 field operations and offline synchronization. Security

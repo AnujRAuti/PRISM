@@ -196,6 +196,8 @@ already supports `"notification"` (`services/authorization.py:1026`).
 | 8.2 publication policies | **Global configuration, administrator-facing.** The list route and the create route require a GLOBAL grant, matching the item read. |
 | 8.3 `POST /projects` | **Principal-derived + delegation only.** `owner_id` becomes optional; omitted → owner is the authenticated human principal; supplied → accepted only through an explicitly authorized delegation with a validated target scope; API clients (which have no `users` row, and `Project.owner_id` is `NOT NULL` with a FK at `models.py:71`) must go through the delegation path or be refused. A creation audit event is appended. |
 | 8.4 integration reads | Scope the three expressible today — clients (project), systems (organization), webhooks (organization via their `ExternalSystem`). `ExternalReference` and `IntegrationEvent` stay recorded as **GAP-SCHEMA**, blocked on a schema decision, and are not silently filtered. |
+| 8.4b integration writes (approved later the same day) | Apply the same invariant on the way in to `POST /integrations/clients` and `POST /integrations/systems`: a caller cannot acquire authority over a resource's scope just by supplying that scope's id in the body. A project-scoped administrator cannot create a client under another project; an organization-scoped administrator cannot create a system under another organization; a platform-wide (id-less) create requires the GLOBAL grant — "not merely because a resource ID exists". The authenticated actor **and** the target scope go into the audit event. Tests cover the unauthorized cross-scope attempts, the authorized creations, and that denied requests leave the database unchanged. |
+| 8.4c `GET /integrations/references` (approved later the same day) | Join the read family using the same ownership resolution as webhooks (the NOT NULL `external_system_id` foreign key). Tests cover own-organization, another-organization and platform-wide-system references: the join must not expose global rows, and must not silently redefine their intended visibility either. |
 
 ### The hold constraint, measured before designing
 
@@ -227,6 +229,59 @@ Design this forces, in order:
    Whether to backfill them (and on which databases) is an **owner-gated migration decision**, taken
    with row counts from `pofa_dev` and `pofa_prod` measured first, exactly as the quarantine backfill
    in 2.3 will be. Nothing here deletes or rewrites a row.
+
+## 4B. Closure status after the 2026-10-17 integration pass (forward-only)
+
+The §4.2 finding text above is left as written; this records what was changed against it.
+
+**Reads — four of the five collections are now scoped in SQL** (so `limit`/`offset` stays
+correct, unlike the retention family where rows had to be resolved per row before slicing):
+
+| Route | Guard now applied | Where |
+|---|---|---|
+| `GET /integrations/systems` | `visible_organization_ids(db, principal, "integration.read")` | `endpoints/integration.py:113` → `repositories/integration.py:47` |
+| `GET /integrations/clients` | `visible_project_ids(db, principal, "integration.read")` | `endpoints/integration.py:212` → `repositories/integration.py:86` |
+| `GET /integrations/webhooks` | org via join to `ExternalSystem` | `endpoints/integration.py:684` → `repositories/integration.py:304` |
+| `GET /integrations/references` | org via join to `ExternalSystem` (8.4c) | `endpoints/integration.py:408` → `repositories/integration.py:177` |
+| `POST /credentials/{id}/revoke` | `enforce(credential.manage, api_client scope)` after loading the row | `endpoints/integration.py:352` |
+
+`visible_organization_ids` is new at `security/authorization.py:144`. A PROJECT grant contributes
+nothing at organization level (fail-closed, no silent escalation), and organization-less /
+project-less rows remain GLOBAL-only in every one of the five.
+
+`GET /integrations/events` stays **GAP-SCHEMA** as decided: `IntegrationEvent.project_id` is a plain
+nullable UUID with no foreign key, so filtering on it would authorize through an unvalidated column
+and every NULL row would vanish for non-GLOBAL callers.
+
+**Writes (8.4b).** `create_system` (`endpoints/integration.py:139`) enforces `integration.manage`
+against `resolve_resource_scope("organization", body.organization_id)`, and `create_client`
+(`:242`) enforces `api_client.manage` against `resolve_resource_scope("project", body.project_id)`;
+both resolve a bare `Resource` when the id is omitted, which only a GLOBAL grant covers. Guards run
+before the insert, so a nonexistent id 404s instead of reaching the foreign key. The guard precedes
+the code-uniqueness probe too, so a refused caller learns nothing about which codes exist.
+`EXTERNAL_SYSTEM_CREATED` now carries `organization_id` in its payload
+(`services/integration.py:93`) because the ledger has no organization column;
+`API_CLIENT_CREATED` already stored the target project in the `project_id` column. **No new audit
+event type was needed, so decisions A and B required no migration.**
+
+**Measured.** HEAD vs fixed, `tests/integration/test_be019_integration_scope.py` (8 tests). The
+HEAD-proof run of the three tests added by A and B failed all three (the five from §4.2 were proven
+failing on HEAD in the earlier pass): the two write tests returned **201** where 404 was required and
+actually wrote the row (`api_clients` `be019-denied-8f962a1a` in another project, `external_systems`
+`be019d87412e81` in another organization), and the references listing leaked `8a430fd0-…` (another
+organization's reference) plus the platform-wide row. Restored tree: **8 passed**, exit 0. Denied
+creates are proved inert by scoped row counters held flat across the refusal, and the same counter is
+proved non-inert by the authorized create moving it by exactly one. Logs:
+`Scratch/deploy1/be019/{head_proof,restored_run,focused_regression}.log`; focused set (integration
+family + authorization + admin control plane + webhook worker + audit ledger + actor attribution +
+both unit files) = **156 passed, 0 failed**.
+
+**Not touched, same class, needs a decision.** Four further integration writes still take a scope
+id from the body with only a resource-less `require(...)`: `POST /references`
+(`:423` `external_data.write`), `POST /integrations/evidence/external` (`:484`), `POST /claims`
+(`:567`), `POST /webhooks` (`:698`). Each lets a caller write into a system (or attach evidence to a
+project) it can name but does not manage. They were outside the approved scope, so they stay as
+found.
 
 ## 5. Caveats on routes classified as scoped
 

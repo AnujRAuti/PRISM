@@ -84,7 +84,14 @@ def create_external_system(
         resource_id=str(system.id),
         actor_id=actor_id,
         project_id=None,
-        payload={"name": name, "code": code, "system_type": system_type},
+        # The ledger has no organization column, so the authorized target scope
+        # is recorded here; an organization-less row is platform-wide.
+        payload={
+            "name": name,
+            "code": code,
+            "system_type": system_type,
+            "organization_id": organization_id,
+        },
         source="integration_service",
     )
     return system

@@ -361,6 +361,12 @@ def test_concurrent_appends_keep_valid_chain():
 def test_failed_domain_operation_leaves_no_audit_row():
     user = setup_user()
     project_ids, evidence_ids = [], []
+    # Created outside the measured window: a successful creation audits by
+    # design, and only the refusals below are under test.
+    project = client.post(
+        "/api/v1/projects", json={"name": "BE-015 t", "owner_id": str(user.id)}
+    ).json()
+    project_ids.append(project["id"])
     try:
         session = get_session()
         try:
@@ -372,11 +378,6 @@ def test_failed_domain_operation_leaves_no_audit_row():
             "/api/v1/evidence", files={"file": ("bad.jpg", b"not an image", "image/jpeg")}
         )
         assert bad.status_code == 415
-        # Invalid case transition: rejected without mutation.
-        project = client.post(
-            "/api/v1/projects", json={"name": "BE-015 t", "owner_id": str(user.id)}
-        ).json()
-        project_ids.append(project["id"])
         session = get_session()
         try:
             after = session.query(AuditLedgerEvent).count()

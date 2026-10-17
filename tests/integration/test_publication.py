@@ -550,6 +550,101 @@ def test_policy_manage_requires_permission():
 
 
 # ---------------------------------------------------------------------------
+# Publication-policy scope boundary (acceptance register §8.2)
+#
+# ``PublicationPolicy`` has no project or organization column, so there is no
+# per-project instance to authorize against: every policy is organization-wide
+# configuration. The single-item read already resolved to a scope-less
+# ``Resource("publication_policy")``, which only a GLOBAL assignment can cover,
+# but the LIST checked only ``"publication.read" in principal.permissions`` and
+# the CREATE used a resource-less ``require(...)`` — both of which a caller who
+# holds the permission in one project satisfies. That asymmetry let a
+# project-scoped officer enumerate every policy and let a project-scoped
+# administrator write new ones. All three guards now demand GLOBAL scope.
+# ---------------------------------------------------------------------------
+
+
+def test_project_scoped_publication_read_cannot_list_policies():
+    """Holding publication.read for ONE project must not enumerate all policies."""
+    user = setup_user()
+    project = api_create_project(str(user.id))
+    assign(str(user.id), "FIELD_OFFICER", scope="PROJECT", scope_id=project["id"])
+    session = get_session()
+    try:
+        principal = auth_service.resolve_user_principal(session, str(user.id))
+    finally:
+        session.close()
+    assert "publication.read" in principal.permissions, (
+        "precondition failed: the PROJECT-scope grant did not produce the "
+        "permission, so the refusal below would prove nothing"
+    )
+    assert all(scope.scope_type != "GLOBAL"
+               for scope in principal.permissions["publication.read"])
+
+    response = client.get("/api/v1/publications/policies",
+                          headers=headers_for(str(user.id)))
+    assert response.status_code == 403, (
+        f"project-scoped publication.read was allowed to list organization-wide "
+        f"policies: {response.status_code} {response.text}"
+    )
+
+
+def test_global_publication_read_lists_the_policies_that_exist():
+    """The GLOBAL holder still works, and the list is not silently empty."""
+    user = setup_user()
+    assign(str(user.id), "ADMINISTRATOR")  # scope defaults to GLOBAL
+    policy = create_policy()
+
+    response = client.get("/api/v1/publications/policies",
+                          headers=headers_for(str(user.id)))
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert policy["id"] in {row["id"] for row in body["items"]}, (
+        "the authorized listing came back without the policy that was just "
+        "created; an empty result would make the refusal test vacuous"
+    )
+
+
+def test_project_scoped_policy_manage_cannot_create_policy():
+    """Writing policy configuration requires GLOBAL policy authority."""
+    user = setup_user()
+    project = api_create_project(str(user.id))
+    assign(str(user.id), "ADMINISTRATOR", scope="PROJECT", scope_id=project["id"])
+    session = get_session()
+    try:
+        principal = auth_service.resolve_user_principal(session, str(user.id))
+    finally:
+        session.close()
+    assert "publication.policy.manage" in principal.permissions, (
+        "precondition failed: the PROJECT-scope grant did not produce "
+        "publication.policy.manage, so the refusal below would prove nothing"
+    )
+
+    response = client.post(
+        "/api/v1/publications/policies",
+        json={"name": f"cross-scope-{uuid4()}", "version": "1.0",
+              "allowed_target_types": ["PROJECT"]},
+        headers=headers_for(str(user.id)),
+    )
+    assert response.status_code == 403, (
+        f"project-scoped publication.policy.manage was allowed to create an "
+        f"organization-wide policy: {response.status_code} {response.text}"
+    )
+
+
+def test_global_policy_manage_can_create_policy():
+    user = setup_user()
+    assign(str(user.id), "ADMINISTRATOR")
+    response = client.post(
+        "/api/v1/publications/policies",
+        json={"name": f"global-{uuid4()}", "version": "1.0",
+              "allowed_target_types": ["PROJECT"]},
+        headers=headers_for(str(user.id)),
+    )
+    assert response.status_code in (200, 201), response.text
+
+
+# ---------------------------------------------------------------------------
 # Lifecycle (§6, §7)
 # ---------------------------------------------------------------------------
 

@@ -15,7 +15,8 @@ from backend.security.authorization import (
     require,
     visible_project_ids,
 )
-from backend.services.authorization import Principal
+from backend.services import authorization as auth_service
+from backend.services.authorization import AdminOperationError, Principal
 from backend.schemas.context import (
     ActivityCreate,
     ActivityListResponse,
@@ -58,12 +59,16 @@ def create_project(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("project.create")),
 ) -> Project:
-    _require_user(request.owner_id, db, "Owner")
-    project = Project(name=request.name, owner_id=str(request.owner_id))
-    db.add(project)
-    db.commit()
-    db.refresh(project)
-    return project
+    try:
+        return auth_service.create_project(
+            db, name=request.name, actor=principal,
+            owner_id=str(request.owner_id) if request.owner_id else None)
+    except AdminOperationError as error:
+        raise HTTPException(status_code=error.status_code, detail=error.detail) from error
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @router.get("/projects", response_model=ProjectListResponse)
