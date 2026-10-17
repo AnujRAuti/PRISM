@@ -206,6 +206,19 @@ services:
         condition: service_healthy
     networks: [pofa]
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pofa_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [pofa]
+
   migrate:
     # Explicit, operator-invoked schema migration. Not started by `up`: it sits
     # behind the `tools` profile. Uses the separate migration identity so the
