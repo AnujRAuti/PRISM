@@ -283,6 +283,37 @@ id from the body with only a resource-less `require(...)`: `POST /references`
 project) it can name but does not manage. They were outside the approved scope, so they stay as
 found.
 
+## 4C. Closure status for BE-039 project creation (decisions D-1..D-6, 2026-10-17)
+
+This records the implementation and verification of the owner-approved BE-039 project creation identity,
+scope inheritance, and audit closure.
+
+### The §1.1 → FIXED → VERIFIED chain (404-on-own-project defect)
+
+- **§1.1 Defect (Measured)**: An organization-scoped supervisor calling `POST /projects` for themselves
+  received `201 Created`, but subsequent `GET /projects/{project_id}` returned `404 Not Found` and `GET /projects`
+  returned `total=0` (`project_scope_probe.log`). Cause: the creation route took no scope field, resulting in
+  `organization_id IS NULL`, which `_scope_covers` (`backend/services/authorization.py:1199-1204`) refuses
+  under an ORGANIZATION grant.
+- **FIXED**: `_birth_scope` (`backend/services/authorization.py:779`) resolves birth scope server-side from
+  the creator's own active `project.create` grant. If the creator holds an unambiguous single ORGANIZATION (or unit)
+  grant, the project is born inside that scope (`organization_id` and optional `organizational_unit_id` populated).
+  No body input is trusted.
+- **VERIFIED**: Proven in `tests/integration/test_be039_project_creation_identity.py::test_owner_defaults_to_the_principal_and_stays_visible`
+  and `test_unit_scoped_creator_is_born_inside_the_unit`. Post-creation read returns `200` with the project visible
+  and listed (`listed == True`).
+
+### Decisions D-1 through D-6 outcomes
+
+| Decision | Area | Outcome & Implementation |
+|---|---|---|
+| **D-1** | Revision id / task label | Implemented as revision `w3x4y5z6a033` under label **BE-039** (`alembic/versions/w3x4y5z6a033_be039_project_created_event.py`). Rebuilds `ck_audit_ledger_event_type_domain` with vocabulary 96 → 97 (`PROJECT_CREATED`). Test pins bumped in `tests/unit/test_be030_ledger_contract.py` (97) and `tests/unit/test_migrations.py` (28 revisions). Downgrade refused (append-only ledger). |
+| **D-2** | Delegated ownership | **Option A adopted.** A caller may supply an `owner_id` differing from the authenticated principal only when holding `project.create` at `GLOBAL` scope. Non-GLOBAL callers naming another user are refused (403/404), with project table count proven flat across refusal. Default owner is the authenticated user principal. |
+| **D-3** | Born-unscoped defect | **Fixed in this pass via `_birth_scope`** (see §1.1 chain above). Derived server-side from creator's active grant; never caller-supplied. |
+| **D-4** | API-client principals | API clients have no row in `users` and cannot default ownership. They must supply an explicit `owner_id` **and** hold `GLOBAL` `project.create` (delegation authority); otherwise refused with 422 (`"owner_id is required for non-user principals"`). |
+| **D-5** | Ownership transfer hole | `change_project_owner` (`backend/services/authorization.py:859`) and `POST /projects/{project_id}/ownership` require `GLOBAL` `organization.manage` for the destination user as well, eliminating cross-scope handoffs. |
+| **D-6** | Migration application | **Owner-gated.** `pofa_dev` (at `t0u1v2w3x030`) and `pofa_test` (at `v2w3x4y5z032`) both reject `PROJECT_CREATED` until migrated. `pofa_dev` requires a fresh backup taken before applying `w3x4y5z6a033`. No live migration without explicit approval. |
+
 ## 5. Caveats on routes classified as scoped
 
 1. `GET /auth/users/{user_id}/roles` — the **rows** are scoped but the guard and the existence probe
