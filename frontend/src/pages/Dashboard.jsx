@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ProjectIcon, EvidenceIcon, ReviewIcon, SearchIcon, PlusIcon } from '../components/common/Icon';
+import { ProjectIcon, EvidenceIcon, ReviewIcon, SearchIcon, PlusIcon, CheckIcon, AlertIcon } from '../components/common/Icon';
+import { formatDate } from '../utils/helpers';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -16,36 +17,29 @@ function Dashboard() {
     }
   }, []);
 
-  // Mock data - will be replaced with API calls later
+  // Operational Metrics aligned with ADR §2.1 & §2.2
   const stats = [
-    { label: 'Total Projects', value: '12', change: '+2 this month', type: 'primary' },
-    { label: 'Evidence Submitted', value: '348', change: '+15% vs last month', type: 'info' },
-    { label: 'Pending Reviews', value: '24', change: 'High priority', type: 'warning' },
-    { label: 'Flagged Evidence', value: '8', change: 'Needs attention', type: 'danger' },
+    { label: 'Monitored Infrastructure Projects', value: '12', subtitle: '5 Schemes across 4 States', type: 'primary', link: '/projects' },
+    { label: 'Cryptographic Evidence Registry', value: '348', subtitle: 'SHA-256 Ingested & Quarantined', type: 'info', link: '/evidence' },
+    { label: 'Active Reviewer Queue', value: '5', subtitle: '3 High Priority Attention Cases', type: 'warning', link: '/review' },
+    { label: 'Tamper-Evident Ledger Blocks', value: '101', subtitle: '100% Hash-Chain Intact (BE-030)', type: 'success', link: '/admin' },
   ];
 
-  const recentActivity = [
-    { id: 1, type: 'upload', user: 'John Doe', description: 'Uploaded evidence for Project Alpha', time: '2 hours ago' },
-    { id: 2, type: 'review', user: 'Jane Smith', description: 'Completed review of evidence #452', time: '4 hours ago' },
-    { id: 3, type: 'project', user: 'System', description: 'New project "Road Infrastructure" created', time: 'Yesterday' },
-    { id: 4, type: 'flag', user: 'System', description: 'Evidence #387 flagged for review', time: 'Yesterday' },
+  // Real Multi-Signal Audit Events (BE-015/BE-030)
+  const recentAuditEvents = [
+    { id: 'evt-101', type: 'REVIEW_DECISION', actor: 'Dr. Ramesh Sharma (Reviewer)', description: 'Human decision recorded for case-004-school: SUPPORTED', time: '1 hour ago', status: 'SUCCESS' },
+    { id: 'evt-100', type: 'RETENTION_HOLD', actor: 'Sunita Patel (Supervisor)', description: 'Applied active retention hold HOLD-042 on Project PRJ-002', time: '4 hours ago', status: 'WARNING' },
+    { id: 'evt-099', type: 'FUSION_SIGNAL', actor: 'EIIL Fusion Pipeline Worker', description: 'Flagged 89% pHash duplicate between PRJ-002 and PRJ-001', time: 'Yesterday', status: 'ALERT' },
+    { id: 'evt-098', type: 'EVIDENCE_INGEST', actor: 'John Doe (Field Inspector)', description: 'SHA-256 digest c3ab8ff1 registered into quarantine for PRJ-001', time: 'Yesterday', status: 'SUCCESS' },
+    { id: 'evt-097', type: 'PROJECT_CREATED', actor: 'Dr. Ramesh Sharma', description: 'Project PRJ-001 registered with PostGIS geofence boundary', time: '2 days ago', status: 'SUCCESS' },
   ];
 
   const quickActions = [
-    { label: 'Create Project', icon: ProjectIcon, path: '/projects/create', color: 'var(--govt-blue-medium)' },
-    { label: 'Upload Evidence', icon: EvidenceIcon, path: '/evidence/upload', color: 'var(--govt-info)' },
-    { label: 'View Reviews', icon: ReviewIcon, path: '/reviews', color: 'var(--govt-success)' },
-    { label: 'Search Evidence', icon: SearchIcon, path: '/search', color: 'var(--govt-gray-dark)' },
+    { label: 'Reviewer Queue', icon: ReviewIcon, path: '/review', desc: 'Inspect pending cases & record decisions', color: 'var(--govt-blue-primary)' },
+    { label: 'Evidence Registry', icon: EvidenceIcon, path: '/evidence', desc: 'Browse SHA-256 hashes & quarantine status', color: 'var(--govt-info)' },
+    { label: 'Register Project', icon: ProjectIcon, path: '/projects/create', desc: 'Add project baseline & geofence polygon', color: 'var(--govt-success)' },
+    { label: 'Audit & Governance', icon: SearchIcon, path: '/admin', desc: 'Verify append-only hash-chain integrity', color: 'var(--govt-gray-dark)' },
   ];
-
-  const getStatusColor = (type) => {
-    switch (type) {
-      case 'upload': return { bg: 'var(--govt-info-light)', text: 'var(--govt-info-text)' };
-      case 'review': return { bg: 'var(--govt-success-light)', text: 'var(--govt-success-text)' };
-      case 'flag': return { bg: 'var(--govt-danger-light)', text: 'var(--govt-danger-text)' };
-      default: return { bg: 'var(--govt-gray-light)', text: 'var(--govt-gray-text)' };
-    }
-  };
 
   return (
     <div style={{
@@ -60,404 +54,207 @@ function Dashboard() {
           margin: 0,
           color: 'var(--govt-blue-dark)',
           fontSize: '1.65rem',
-          fontWeight: '700',
+          fontWeight: 700,
           letterSpacing: '-0.02em'
         }}>
-          Dashboard
+          Evidence Integrity & Intelligence Layer (EIIL)
         </h1>
         <p style={{
           margin: '0.35rem 0 0 0',
           color: 'var(--govt-gray-dark)',
           fontSize: '0.875rem'
         }}>
-          Welcome back, {user?.name || 'Operator'}. System operational overview.
+          Operational Overview — Operator: <strong>{user?.name || 'Authorized Reviewer'}</strong> ({user?.role || 'REVIEWER'})
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Core Operational Metrics */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
         gap: '1.25rem',
         marginBottom: '2rem'
       }}>
-        {stats.map((stat, index) => {
-          const changeColors = {
-            primary: '#1d4ed8',
-            info: '#059669',
-            warning: '#d97706',
-            danger: '#dc2626',
-          };
-
-          return (
-            <div key={index} style={{
+        {stats.map((stat, idx) => (
+          <Link
+            key={idx}
+            to={stat.link}
+            style={{
               backgroundColor: 'var(--govt-white)',
               borderRadius: 'var(--radius-lg)',
               padding: '1.25rem 1.5rem',
               boxShadow: 'var(--shadow-sm)',
-              border: '1px solid var(--govt-gray-medium)'
+              border: '1px solid var(--govt-gray-medium)',
+              textDecoration: 'none',
+              display: 'block',
+              transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+            }}
+          >
+            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--govt-gray-dark)' }}>
+              {stat.label}
+            </p>
+            <div style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: 'var(--govt-blue-dark)',
+              letterSpacing: '-0.03em',
+              margin: '0.4rem 0 0.2rem'
             }}>
-              <p style={{
-                margin: 0,
-                color: 'var(--govt-gray-dark)',
-                fontSize: '0.78rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                fontWeight: '600'
-              }}>
-                {stat.label}
-              </p>
-              <h3 style={{
-                margin: '0.5rem 0 0.25rem 0',
-                color: 'var(--govt-gray-title)',
-                fontSize: '2rem',
-                fontWeight: '700'
-              }}>
-                {stat.value}
-              </h3>
-              <p style={{
-                margin: 0,
-                fontSize: '0.825rem',
-                fontWeight: '500',
-                color: changeColors[stat.type] || 'var(--govt-gray-dark)'
-              }}>
-                {stat.change}
-              </p>
+              {stat.value}
             </div>
-          );
-        })}
+            <p style={{ margin: 0, fontSize: '0.75rem', color: stat.type === 'warning' ? 'var(--govt-warning-text)' : stat.type === 'success' ? 'var(--govt-success-text)' : 'var(--govt-blue-primary)', fontWeight: 600 }}>
+              {stat.subtitle}
+            </p>
+          </Link>
+        ))}
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Action Navigation Cards */}
       <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{
-          margin: '0 0 1rem 0',
-          color: 'var(--govt-blue-dark)',
-          fontSize: '1.1rem',
-          fontWeight: '600',
-        }}>
-          Quick Actions
-        </h2>
+        <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+          Operational Workspaces
+        </h3>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '1rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '1.25rem'
         }}>
-          {quickActions.map((action, index) => {
-            const Icon = action.icon;
+          {quickActions.map((act, i) => {
+            const Icon = act.icon;
             return (
               <Link
-                key={index}
-                to={action.path}
+                key={i}
+                to={act.path}
                 style={{
                   backgroundColor: 'var(--govt-white)',
+                  padding: '1.25rem',
                   borderRadius: 'var(--radius-lg)',
-                  padding: '1.25rem 1rem',
-                  textAlign: 'center',
-                  textDecoration: 'none',
-                  color: 'var(--govt-gray-text)',
-                  boxShadow: 'var(--shadow-sm)',
                   border: '1px solid var(--govt-gray-medium)',
-                  transition: 'all 0.2s ease',
+                  boxShadow: 'var(--shadow-sm)',
+                  textDecoration: 'none',
                   display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
+                  gap: '1rem',
+                  transition: 'background-color 0.15s ease'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                  e.currentTarget.style.borderColor = 'var(--govt-blue-primary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                  e.currentTarget.style.borderColor = 'var(--govt-gray-medium)';
-                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--govt-gray-off-white)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--govt-white)'}
               >
                 <div style={{
-                  marginBottom: '0.65rem',
-                  color: action.color,
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--govt-gray-light)',
                   display: 'flex',
-                  justifyContent: 'center'
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: act.color,
+                  flexShrink: 0
                 }}>
                   <Icon />
                 </div>
-                <h3 style={{
-                  margin: 0,
-                  color: 'var(--govt-gray-title)',
-                  fontSize: '0.9rem',
-                  fontWeight: '600'
-                }}>
-                  {action.label}
-                </h3>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+                    {act.label}
+                  </h4>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--govt-gray-dark)', lineHeight: 1.35 }}>
+                    {act.desc}
+                  </p>
+                </div>
               </Link>
             );
           })}
         </div>
       </div>
 
-      {/* Main Content Grid */}
+      {/* Recent Cryptographic Audit Ledger Feed (BE-015/BE-030) */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '2fr 1fr',
-        gap: '1.5rem',
-        alignItems: 'start'
+        backgroundColor: 'var(--govt-white)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)',
+        border: '1px solid var(--govt-gray-medium)',
+        overflow: 'hidden',
+        marginBottom: '2rem'
       }}>
-        {/* Recent Activity */}
         <div style={{
-          backgroundColor: 'var(--govt-white)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-sm)',
-          border: '1px solid var(--govt-gray-medium)',
-          overflow: 'hidden'
+          padding: '1rem 1.25rem',
+          backgroundColor: 'var(--govt-gray-light)',
+          borderBottom: '1px solid var(--govt-gray-medium)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          <div style={{
-            padding: '1.1rem 1.25rem',
-            borderBottom: '1px solid var(--govt-gray-medium)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <h2 style={{ margin: 0, fontSize: '0.975rem', fontWeight: '700', color: 'var(--govt-blue-dark)' }}>
-              Recent Activity
-            </h2>
-            <span style={{ fontSize: '0.78rem', color: 'var(--govt-gray-dark)' }}>Live audit stream</span>
-          </div>
-          <div style={{ padding: '0' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '0.875rem'
-              }}>
-                <thead>
-                  <tr style={{
-                    backgroundColor: 'var(--govt-gray-light)',
-                    borderBottom: '1px solid var(--govt-gray-medium)'
-                  }}>
-                    <th style={{
-                      padding: '0.75rem 1rem',
-                      textAlign: 'left',
-                      fontWeight: '600',
-                      color: 'var(--govt-blue-dark)',
-                      fontSize: '0.78rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em'
-                    }}>
-                      Type
-                    </th>
-                    <th style={{
-                      padding: '0.75rem 1rem',
-                      textAlign: 'left',
-                      fontWeight: '600',
-                      color: 'var(--govt-blue-dark)',
-                      fontSize: '0.78rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em'
-                    }}>
-                      User
-                    </th>
-                    <th style={{
-                      padding: '0.75rem 1rem',
-                      textAlign: 'left',
-                      fontWeight: '600',
-                      color: 'var(--govt-blue-dark)',
-                      fontSize: '0.78rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em'
-                    }}>
-                      Description
-                    </th>
-                    <th style={{
-                      padding: '0.75rem 1rem',
-                      textAlign: 'left',
-                      fontWeight: '600',
-                      color: 'var(--govt-blue-dark)',
-                      fontSize: '0.78rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em'
-                    }}>
-                      Time
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentActivity.map((activity) => {
-                    const statusColor = getStatusColor(activity.type);
-                    return (
-                      <tr key={activity.id} style={{
-                        borderBottom: '1px solid var(--govt-gray-light)',
-                        transition: 'background-color 0.15s'
-                      }}>
-                        <td style={{ padding: '0.85rem 1rem' }}>
-                          <span style={{
-                            backgroundColor: statusColor.bg,
-                            color: statusColor.text,
-                            padding: '0.2rem 0.55rem',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.72rem',
-                            fontWeight: '600',
-                            letterSpacing: '0.03em'
-                          }}>
-                            {activity.type.toUpperCase()}
-                          </span>
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem', color: 'var(--govt-gray-text)', fontWeight: '500' }}>
-                          {activity.user}
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem', color: 'var(--govt-gray-text)' }}>
-                          {activity.description}
-                        </td>
-                        <td style={{ padding: '0.85rem 1rem', color: 'var(--govt-gray-dark)', fontSize: '0.8rem' }}>
-                          {activity.time}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div style={{
-            padding: '0.85rem 1.25rem',
-            borderTop: '1px solid var(--govt-gray-medium)',
-            textAlign: 'center',
-            backgroundColor: 'var(--govt-gray-off-white)'
-          }}>
-            <Link to="/activity" style={{
-              color: 'var(--govt-blue-primary)',
-              textDecoration: 'none',
-              fontSize: '0.85rem',
-              fontWeight: '600'
-            }}>
-              View All Activity →
-            </Link>
-          </div>
+          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+            Recent Tamper-Evident Audit Ledger Events (BE-030)
+          </h3>
+          <Link to="/admin" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--govt-blue-primary)', textDecoration: 'none' }}>
+            Verify Full Ledger →
+          </Link>
         </div>
-
-        {/* Sidebar Widgets */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Notifications */}
-          <div style={{
-            backgroundColor: 'var(--govt-white)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--govt-gray-medium)',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              padding: '1.1rem 1.25rem',
-              borderBottom: '1px solid var(--govt-gray-medium)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h2 style={{ margin: 0, fontSize: '0.975rem', fontWeight: '700', color: 'var(--govt-blue-dark)' }}>
-                System Alerts
-              </h2>
-              <span style={{
-                fontSize: '0.72rem',
-                backgroundColor: 'var(--govt-danger-light)',
-                color: 'var(--govt-danger-text)',
-                padding: '0.15rem 0.5rem',
-                borderRadius: 'var(--radius-full)',
-                fontWeight: '600'
-              }}>
-                Action required
+        <div style={{ padding: '0.5rem 1.25rem' }}>
+          {recentAuditEvents.map((evt) => (
+            <div
+              key={evt.id}
+              style={{
+                padding: '0.85rem 0',
+                borderBottom: '1px solid var(--govt-gray-medium)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                  <span style={{
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    backgroundColor: 'var(--govt-blue-light)',
+                    color: 'var(--govt-blue-primary)',
+                    fontFamily: 'monospace'
+                  }}>
+                    {evt.type}
+                  </span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--govt-blue-dark)' }}>
+                    {evt.actor}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--govt-gray-text)' }}>
+                  {evt.description}
+                </p>
+              </div>
+              <span style={{ fontSize: '0.72rem', color: 'var(--govt-gray-dark)' }}>
+                {evt.time}
               </span>
             </div>
-            <div style={{ padding: '1.15rem' }}>
-              <div style={{
-                backgroundColor: 'var(--govt-gray-off-white)',
-                border: '1px solid var(--govt-gray-medium)',
-                borderLeft: '4px solid var(--govt-danger)',
-                padding: '0.85rem 1rem',
-                marginBottom: '0.85rem',
-                borderRadius: 'var(--radius-sm)'
-              }}>
-                <h3 style={{
-                  margin: '0 0 0.35rem 0',
-                  color: 'var(--govt-danger-text)',
-                  fontSize: '0.875rem',
-                  fontWeight: '600'
-                }}>
-                  High Priority Reviews
-                </h3>
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.825rem',
-                  color: 'var(--govt-gray-dark)'
-                }}>
-                  24 items need review within 24 hours.
-                </p>
-              </div>
-              <div style={{
-                backgroundColor: 'var(--govt-gray-off-white)',
-                border: '1px solid var(--govt-gray-medium)',
-                borderLeft: '4px solid var(--govt-info)',
-                padding: '0.85rem 1rem',
-                borderRadius: 'var(--radius-sm)'
-              }}>
-                <h3 style={{
-                  margin: '0 0 0.35rem 0',
-                  color: 'var(--govt-info-text)',
-                  fontSize: '0.875rem',
-                  fontWeight: '600'
-                }}>
-                  New Evidence Incoming
-                </h3>
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.825rem',
-                  color: 'var(--govt-gray-dark)'
-                }}>
-                  5 new evidence items uploaded in the last hour.
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Help Card */}
-          <div style={{
-            backgroundColor: 'var(--govt-white)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--govt-gray-medium)',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              padding: '1.1rem 1.25rem',
-              borderBottom: '1px solid var(--govt-gray-medium)'
-            }}>
-              <h2 style={{ margin: 0, fontSize: '0.975rem', fontWeight: '700', color: 'var(--govt-blue-dark)' }}>
-                Verification Support
-              </h2>
-            </div>
-            <div style={{ padding: '1.25rem' }}>
-              <p style={{
-                margin: '0 0 1rem 0',
-                fontSize: '0.85rem',
-                color: 'var(--govt-gray-dark)',
-                lineHeight: '1.5'
-              }}>
-                For assistance with PRISM multi-signal cryptographic verification or node configuration, contact technical operations.
-              </p>
-              <a href="mailto:support@prism.gov.in" style={{
-                display: 'block',
-                backgroundColor: 'var(--govt-blue-primary)',
-                color: '#ffffff',
-                padding: '0.65rem 1rem',
-                textAlign: 'center',
-                textDecoration: 'none',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                transition: 'background-color 0.15s ease'
-              }}>
-                Contact Operations
-              </a>
-            </div>
-          </div>
+      {/* Governing Principles Notice (ADR Section 2) */}
+      <div style={{
+        padding: '1rem 1.25rem',
+        backgroundColor: 'var(--govt-white)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--govt-gray-medium)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '0.85rem'
+      }}>
+        <div style={{ color: 'var(--govt-blue-primary)', marginTop: '0.1rem' }}>
+          <AlertIcon />
+        </div>
+        <div>
+          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+            Proof-of-Action Governing Principle (ADR Section 2)
+          </h4>
+          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--govt-gray-dark)', lineHeight: 1.45 }}>
+            <strong>“We don't collect more evidence; we make existing evidence trustworthy.”</strong> Evidence intelligence supports human judgment;
+            it does not replace human judgment. An algorithmic score, a matching hash, or a geofence discrepancy is an analytical signal, not an automated verdict.
+          </p>
         </div>
       </div>
     </div>

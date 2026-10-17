@@ -27,10 +27,10 @@ function EvidenceGraph() {
     { id: 'ACT-003', type: 'activity', label: 'Curing & Sealing', sub: 'PRJ-003 Milestone 3', x: 920, y: 240, status: 'completed' },
 
     // Evidence
-    { id: 'EVD-001', type: 'evidence', label: 'EVD-001 (Road Base Photo)', sub: 'Integrity: 92% | Risk: 15%', x: 110, y: 390, status: 'approved', integrity: 92, risk: 15, date: '2024-02-15T10:30:00Z', project: 'PRJ-001' },
-    { id: 'EVD-002', type: 'evidence', label: 'EVD-002 (Compaction Audit)', sub: 'Integrity: 88% | Risk: 22%', x: 280, y: 390, status: 'approved', integrity: 88, risk: 22, date: '2024-02-18T14:20:00Z', project: 'PRJ-001' },
-    { id: 'EVD-003', type: 'evidence', label: 'EVD-003 (Pole Photo)', sub: 'Integrity: 45% | Risk: 78%', x: 580, y: 390, status: 'flagged', integrity: 45, risk: 78, date: '2024-02-20T09:45:00Z', project: 'PRJ-002', anomaly: 'Cross-Project Duplicate of EVD-001 & Geofence violation' },
-    { id: 'EVD-004', type: 'evidence', label: 'EVD-004 (Structure Completion)', sub: 'Integrity: 75% | Risk: 30%', x: 920, y: 390, status: 'pending', integrity: 75, risk: 30, date: '2024-02-22T16:10:00Z', project: 'PRJ-003' },
+    { id: 'EVD-001', type: 'evidence', label: 'EVD-001 (Road Base Photo)', sub: 'SHA-256 Validated | Geofence Compliant', x: 110, y: 390, status: 'approved', date: '2024-02-15T10:30:00Z', project: 'PRJ-001' },
+    { id: 'EVD-002', type: 'evidence', label: 'EVD-002 (Compaction Audit)', sub: 'SHA-256 Validated | Geofence Compliant', x: 280, y: 390, status: 'approved', date: '2024-02-18T14:20:00Z', project: 'PRJ-001' },
+    { id: 'EVD-003', type: 'evidence', label: 'EVD-003 (Pole Photo)', sub: 'Quarantine Flagged | Duplicate Detected', x: 580, y: 390, status: 'flagged', date: '2024-02-20T09:45:00Z', project: 'PRJ-002', anomaly: 'Cross-Project pHash Duplicate of EVD-001 & Geofence 12.4 km variance' },
+    { id: 'EVD-004', type: 'evidence', label: 'EVD-004 (Structure Completion)', sub: 'In Quarantine | Processing', x: 920, y: 390, status: 'pending', date: '2024-02-22T16:10:00Z', project: 'PRJ-003' },
 
     // Locations
     { id: 'LOC-PUN', type: 'location', label: 'Pune Geofence', sub: '18.5204 N, 73.8567 E', x: 180, y: 510 },
@@ -129,10 +129,10 @@ function EvidenceGraph() {
       project: 'PRJ-001 (Maharashtra)',
       activity: 'Road Base Layer Inspection',
       location: 'Pune District (18.5204 N, 73.8567 E)',
-      status: 'approved',
-      integrity: 92,
-      risk: 15,
-      note: 'Normal sequential baseline evidence.'
+      status: 'validated',
+      hash_status: 'COMPUTED (c3ab8ff1...)',
+      geofence: 'COMPLIANT',
+      note: 'Cryptographically registered intake evidence.'
     },
     {
       id: 'EVD-002',
@@ -140,10 +140,10 @@ function EvidenceGraph() {
       project: 'PRJ-001 (Maharashtra)',
       activity: 'Road Compaction Validation',
       location: 'Pune District (18.5204 N, 73.8567 E)',
-      status: 'approved',
-      integrity: 88,
-      risk: 22,
-      note: 'Corroborates EVD-001 progress.'
+      status: 'validated',
+      hash_status: 'COMPUTED (7b2a9e40...)',
+      geofence: 'COMPLIANT',
+      note: 'Corroborates EVD-001 milestone progress.'
     },
     {
       id: 'EVD-003',
@@ -151,10 +151,10 @@ function EvidenceGraph() {
       project: 'PRJ-002 (Gujarat)',
       activity: 'Solar Panel Installation',
       location: 'Surat District (21.1702 N, 72.8311 E)',
-      status: 'flagged',
-      integrity: 45,
-      risk: 78,
-      anomaly: 'CRITICAL: Image perceptual hash duplicate with EVD-001 in PRJ-001. Location is 12.4 km outside project geofence polygon.'
+      status: 'quarantine_flagged',
+      hash_status: 'COMPUTED (8f43a992...)',
+      geofence: 'OUT_OF_BOUNDS (12.4 km variance)',
+      anomaly: 'CRITICAL SIGNAL: Image perceptual hash duplicate (89%) with EVD-001 in PRJ-001. Location is 12.4 km outside project geofence polygon.'
     },
     {
       id: 'EVD-004',
@@ -162,10 +162,10 @@ function EvidenceGraph() {
       project: 'PRJ-003 (Rajasthan)',
       activity: 'Water Tank Construction',
       location: 'Jaipur District (26.9124 N, 75.7873 E)',
-      status: 'pending',
-      integrity: 75,
-      risk: 30,
-      note: 'Scheduled for supervisory review.'
+      status: 'uploaded_quarantine',
+      hash_status: 'PROCESSING',
+      geofence: 'COMPLIANT',
+      note: 'In quarantine isolation awaiting pipeline completion.'
     }
   ];
 

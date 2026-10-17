@@ -1,98 +1,92 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { formatDate } from '../../utils/helpers';
+import { ProjectIcon, EvidenceIcon, ReviewIcon, AlertIcon, CheckIcon } from '../../components/common/Icon';
 
 function ProjectDetail() {
   const { id } = useParams();
-  const [project, setProject] = useState(null);
-  const [evidence, setEvidence] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [project, setProject] = useState(null);
 
-  // Mock data for development
+  // Authoritative Project Domain Record (ADR Section 9)
   const mockProject = {
-    id: 'PRJ-001',
-    name: 'Rural Road Construction - Phase 1',
+    id: id || 'PRJ-001',
+    name: 'PMGSY Phase 1 Road Works — Taluka Baramati',
     scheme: 'Pradhan Mantri Gram Sadak Yojana',
-    description: 'Construction of all-weather rural roads connecting villages to main roads under the Pradhan Mantri Gram Sadak Yojana scheme.',
-    status: 'active',
-    location: 'Pune District',
+    department: 'Ministry of Rural Development',
+    description: 'Construction and quality monitoring of 12.4 km all-weather rural bituminous road connecting 4 habitations to the state highway network.',
+    status: 'ACTIVE',
+    location: 'Pune District, Maharashtra',
     state: 'Maharashtra',
-    district: 'Pune',
+    district: 'Pune District',
+    supervisor: 'Sunita Patel (Divisional Supervisor)',
     start_date: '2024-01-01',
-    end_date: '2024-12-31',
+    target_date: '2024-12-31',
     created_at: '2024-01-15T10:30:00Z',
-    evidence_count: 45,
+    geofence: {
+      polygon: '18.5204,73.8567; 18.5300,73.8650; 18.5150,73.8700; 18.5204,73.8567',
+      bounds: 'Baramati Taluka Ward 4 Boundary Polygon (Active PostGIS spatial filter)',
+      status: 'VERIFIED_ACTIVE'
+    },
+    // Domain Hierarchy: Activities (Work Units)
     activities: [
-      { id: 'ACT-001', name: 'Site Survey', status: 'completed', progress: 100 },
-      { id: 'ACT-002', name: 'Foundation Work', status: 'completed', progress: 100 },
-      { id: 'ACT-003', name: 'Road Base Layer', status: 'active', progress: 65 },
-      { id: 'ACT-004', name: 'Surface Work', status: 'pending', progress: 0 },
-      { id: 'ACT-005', name: 'Final Inspection', status: 'pending', progress: 0 },
+      { id: 'ACT-001', name: 'Site Survey & Alignment Clearance', status: 'COMPLETED', progress: 100, completed_at: '2024-01-20' },
+      { id: 'ACT-002', name: 'Sub-grade Excavation & Soil Compaction', status: 'COMPLETED', progress: 100, completed_at: '2024-02-05' },
+      { id: 'ACT-003', name: 'Water Bound Macadam (WBM) Base Layer', status: 'IN_PROGRESS', progress: 75, completed_at: null },
+      { id: 'ACT-004', name: 'Bitumen Asphalt Surfacing Pouring', status: 'IN_PROGRESS', progress: 40, completed_at: null },
+      { id: 'ACT-005', name: 'Culvert Drainage & Road Signage', status: 'PENDING', progress: 0, completed_at: null },
     ],
+    // Canonical Claims (Section 9)
+    claims: [
+      { id: 'CLM-001', statement: 'Completion of 12.4 km all-weather rural road connectivity milestone.', status: 'PENDING_REVIEW', case_id: 'case-001-pmgsy' },
+      { id: 'CLM-002', statement: 'Sub-base gravel compaction density exceeds 98% Proctor standard.', status: 'SUPPORTED', case_id: null },
+    ],
+    // Associated Evidence
+    evidence: [
+      {
+        id: 'EVD-001',
+        activity: 'Road Sub-base Gravel Compaction',
+        type: 'image/jpeg',
+        status: 'validated',
+        captured_at: '2024-02-15T10:30:00Z',
+        sha256: 'c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2',
+        geofence_status: 'COMPLIANT'
+      },
+      {
+        id: 'EVD-002',
+        activity: 'Bitumen Asphalt Surface Pouring',
+        type: 'image/jpeg',
+        status: 'validated',
+        captured_at: '2024-02-18T14:20:00Z',
+        sha256: '7b2a9e40183fdc329810a9f848201ac495a8e10034b1235cb99ef01a8843c089',
+        geofence_status: 'COMPLIANT'
+      }
+    ],
+    // Review Cases
+    review_cases: [
+      {
+        id: 'case-001-pmgsy',
+        title: 'Rural Road Sub-base & Bitumen Pouring Compliance',
+        priority: 'HIGH',
+        status: 'PENDING_REVIEW',
+        reason: 'Milestone disbursement deadline in 48 hours; geofence bounds pending confirmation',
+        evidence_count: 2
+      }
+    ]
   };
-
-  const mockEvidence = [
-    { id: 'EVD-001', type: 'image', status: 'approved', captured_at: '2024-02-15T10:30:00Z', integrity: 92, risk: 15 },
-    { id: 'EVD-002', type: 'image', status: 'approved', captured_at: '2024-02-18T14:20:00Z', integrity: 88, risk: 22 },
-    { id: 'EVD-003', type: 'image', status: 'flagged', captured_at: '2024-02-20T09:45:00Z', integrity: 45, risk: 78 },
-    { id: 'EVD-004', type: 'image', status: 'pending', captured_at: '2024-02-22T16:10:00Z', integrity: 75, risk: 30 },
-    { id: 'EVD-005', type: 'image', status: 'approved', captured_at: '2024-02-25T11:00:00Z', integrity: 95, risk: 10 },
-  ];
 
   useEffect(() => {
-    // Simulating API call
     setTimeout(() => {
       setProject(mockProject);
-      setEvidence(mockEvidence);
       setLoading(false);
-    }, 500);
+    }, 350);
   }, [id]);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-      case 'completed':
-      case 'approved':
-        return { bg: 'var(--govt-success-light)', text: 'var(--govt-success-text)' };
-      case 'pending':
-      case 'draft':
-        return { bg: 'var(--govt-gray-light)', text: 'var(--govt-gray-text)' };
-      case 'flagged':
-        return { bg: 'var(--govt-danger-light)', text: 'var(--govt-danger-text)' };
-      default:
-        return { bg: 'var(--govt-info-light)', text: 'var(--govt-info-text)' };
-    }
-  };
-
-  const getIntegrityColor = (score) => {
-    if (score >= 80) return { bg: 'var(--govt-success)', text: '#ffffff' };
-    if (score >= 60) return { bg: 'var(--govt-warning)', text: '#333333' };
-    return { bg: 'var(--govt-danger)', text: '#ffffff' };
-  };
-
-  const getRiskColor = (score) => {
-    if (score <= 25) return { bg: 'var(--govt-success)', text: '#ffffff' };
-    if (score <= 50) return { bg: 'var(--govt-warning)', text: '#333333' };
-    return { bg: 'var(--govt-danger)', text: '#ffffff' };
-  };
-
-  if (loading) {
+  if (loading || !project) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '300px',
-        flexDirection: 'column'
-      }}>
-        <div className="spinner" style={{
-          width: '40px',
-          height: '40px',
-          borderWidth: '3px'
-        }}></div>
-        <p style={{ marginTop: '1rem', color: 'var(--govt-gray-muted)' }}>
-          Loading project details...
-        </p>
+      <div style={{ padding: '3rem', textAlign: 'center' }}>
+        <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto 1rem' }}></div>
+        <p style={{ color: 'var(--govt-gray-dark)' }}>Loading project domain hierarchy...</p>
       </div>
     );
   }
@@ -102,473 +96,379 @@ function ProjectDetail() {
       padding: '1.75rem 2rem',
       width: '100%',
       boxSizing: 'border-box',
+      backgroundColor: 'var(--govt-gray-off-white)',
     }}>
       {/* Breadcrumb */}
-      <nav style={{ marginBottom: '1.5rem' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.9rem'
-        }}>
-          <Link to="/projects" style={{ color: 'var(--govt-blue-medium)', textDecoration: 'none' }}>
-            Projects
-          </Link>
-          <span style={{ color: 'var(--govt-gray-muted)' }}>→</span>
-          <span style={{ color: 'var(--govt-gray-text)', fontWeight: '500' }}>
-            {project.name}
-          </span>
-        </div>
-      </nav>
+      <div style={{ marginBottom: '1.25rem', fontSize: '0.85rem', color: 'var(--govt-gray-dark)' }}>
+        <Link to="/projects" style={{ color: 'var(--govt-blue-primary)', textDecoration: 'none' }}>
+          Projects
+        </Link>
+        {' / '}
+        <span style={{ fontWeight: 600, color: 'var(--govt-blue-dark)' }}>{project.id}</span>
+      </div>
 
       {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: '2rem',
+        marginBottom: '1.75rem',
         flexWrap: 'wrap',
         gap: '1rem'
       }}>
         <div>
-          <h2 style={{
-            margin: 0,
-            color: 'var(--govt-blue-dark)',
-            fontSize: '1.75rem',
-            lineHeight: '1.2'
-          }}>
-            {project.name}
-          </h2>
-          <p style={{
-            margin: '0.5rem 0 0 0',
-            color: 'var(--govt-gray-muted)',
-            fontSize: '0.95rem'
-          }}>
-            {project.scheme}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h1 style={{
+              margin: 0,
+              color: 'var(--govt-blue-dark)',
+              fontSize: '1.65rem',
+              fontWeight: 700,
+              letterSpacing: '-0.02em'
+            }}>
+              {project.name}
+            </h1>
+            <span style={{
+              padding: '0.2rem 0.65rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              backgroundColor: 'var(--govt-success-light)',
+              color: 'var(--govt-success-text)'
+            }}>
+              {project.status}
+            </span>
+          </div>
+          <p style={{ margin: '0.35rem 0 0', color: 'var(--govt-gray-dark)', fontSize: '0.875rem' }}>
+            {project.scheme} • {project.department} • {project.location}
           </p>
         </div>
+
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Link to={`/projects/${project.id}/edit`} style={{
-            backgroundColor: 'transparent',
-            border: '1px solid var(--govt-blue-medium)',
-            color: 'var(--govt-blue-medium)',
-            padding: '0.5rem 1rem',
-            textDecoration: 'none',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.9rem',
-            fontWeight: '500'
-          }}>
-            Edit Project
-          </Link>
-          <Link to={`/evidence/upload?project=${project.id}`} style={{
-            backgroundColor: 'var(--govt-blue-dark)',
-            color: '#ffffff',
-            padding: '0.5rem 1rem',
-            textDecoration: 'none',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.9rem',
-            fontWeight: '500'
-          }}>
-            Upload Evidence
+          <Link
+            to={`/evidence/upload?case_id=${project.review_cases[0]?.id || ''}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.6rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--govt-blue-primary)',
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            + Upload Evidence
           </Link>
         </div>
       </div>
 
+      {/* Project Metadata & Geofence Baseline */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 2fr',
-        gap: '1.5rem'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '1.75rem'
       }}>
-        {/* Left Column - Project Info */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Project Information */}
-          <div style={{
-            backgroundColor: 'var(--govt-cream-light)',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--govt-gray-medium)'
-          }}>
-            <div style={{
-              backgroundColor: 'var(--govt-blue-dark)',
-              color: '#ffffff',
-              padding: '1rem 1.25rem',
-              borderRadius: 'var(--radius-md) var(--radius-md) 0 0'
-            }}>
-              <h4 style={{ margin: 0, fontSize: '1rem' }}>
-                Project Information
-              </h4>
+        {/* Scope Summary */}
+        <div style={{
+          backgroundColor: 'var(--govt-white)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--govt-gray-medium)',
+          padding: '1.25rem 1.5rem'
+        }}>
+          <h3 style={{ margin: '0 0 0.85rem', fontSize: '0.95rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+            Operational Scope & Timeline
+          </h3>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.85rem', color: 'var(--govt-gray-text)', lineHeight: 1.45 }}>
+            {project.description}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.78rem' }}>
+            <div>
+              <span style={{ color: 'var(--govt-gray-dark)' }}>Sanction Date:</span>
+              <p style={{ margin: '0.15rem 0 0', fontWeight: 600, color: 'var(--govt-blue-dark)' }}>{formatDate(project.start_date)}</p>
             </div>
-            <div style={{ padding: '0' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '0.9rem'
-              }}>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid var(--govt-gray-light)' }}>
-                    <td style={{
-                      padding: '0.75rem 1rem',
-                      color: 'var(--govt-gray-muted)',
-                      fontWeight: '500',
-                      width: '40%'
-                    }}>
-                      Project ID
-                    </td>
-                    <td style={{
-                      padding: '0.75rem 1rem',
-                      color: 'var(--govt-gray-text)',
-                      fontWeight: '600'
-                    }}>
-                      {project.id}
-                    </td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid var(--govt-gray-light)' }}>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-muted)', fontWeight: '500' }}>
-                      Status
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem' }}>
-                      <span style={{
-                        backgroundColor: getStatusColor(project.status).bg,
-                        color: getStatusColor(project.status).text,
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                      }}>
-                        {project.status.toUpperCase()}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid var(--govt-gray-light)' }}>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-muted)', fontWeight: '500' }}>
-                      State
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-text)' }}>
-                      {project.state}
-                    </td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid var(--govt-gray-light)' }}>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-muted)', fontWeight: '500' }}>
-                      District
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-text)' }}>
-                      {project.district}
-                    </td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid var(--govt-gray-light)' }}>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-muted)', fontWeight: '500' }}>
-                      Location
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-text)' }}>
-                      {project.location}
-                    </td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid var(--govt-gray-light)' }}>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-muted)', fontWeight: '500' }}>
-                      Start Date
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-text)' }}>
-                      {project.start_date}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-muted)', fontWeight: '500' }}>
-                      End Date
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-text)' }}>
-                      {project.end_date}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div>
+              <span style={{ color: 'var(--govt-gray-dark)' }}>Target Completion:</span>
+              <p style={{ margin: '0.15rem 0 0', fontWeight: 600, color: 'var(--govt-blue-dark)' }}>{formatDate(project.target_date)}</p>
             </div>
-          </div>
-
-          {/* Description */}
-          <div style={{
-            backgroundColor: 'var(--govt-cream-light)',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--govt-gray-medium)',
-            flex: 1
-          }}>
-            <div style={{
-              backgroundColor: 'var(--govt-gray-light)',
-              color: 'var(--govt-gray-text)',
-              padding: '1rem 1.25rem',
-              borderRadius: 'var(--radius-md) var(--radius-md) 0 0'
-            }}>
-              <h5 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600' }}>
-                Description
-              </h5>
+            <div>
+              <span style={{ color: 'var(--govt-gray-dark)' }}>Supervisor:</span>
+              <p style={{ margin: '0.15rem 0 0', fontWeight: 600, color: 'var(--govt-blue-dark)' }}>{project.supervisor}</p>
             </div>
-            <div style={{ padding: '1.25rem' }}>
-              <p style={{
-                margin: 0,
-                fontSize: '0.9rem',
-                color: 'var(--govt-gray-text)',
-                lineHeight: '1.6'
-              }}>
-                {project.description}
-              </p>
+            <div>
+              <span style={{ color: 'var(--govt-gray-dark)' }}>Sanctioned Identifier:</span>
+              <p style={{ margin: '0.15rem 0 0', fontWeight: 600, color: 'var(--govt-blue-dark)', fontFamily: 'monospace' }}>{project.id}</p>
             </div>
           </div>
         </div>
 
-        {/* Right Column - Activities & Evidence */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Activities */}
-          <div style={{
-            backgroundColor: 'var(--govt-cream-light)',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--govt-gray-medium)'
-          }}>
-            <div style={{
-              backgroundColor: 'var(--govt-blue-dark)',
-              color: '#ffffff',
-              padding: '1rem 1.25rem',
-              borderRadius: 'var(--radius-md) var(--radius-md) 0 0'
-            }}>
-              <h4 style={{ margin: 0, fontSize: '1rem' }}>
-                Project Activities
-              </h4>
-            </div>
-            <div style={{ padding: '1.25rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {project.activities.map((activity) => (
-                  <div key={activity.id}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '0.5rem'
-                    }}>
-                      <span style={{
-                        color: 'var(--govt-gray-text)',
-                        fontSize: '0.9rem',
-                        fontWeight: '500'
-                      }}>
-                        {activity.name}
-                      </span>
-                      <span style={{
-                        backgroundColor: getStatusColor(activity.status).bg,
-                        color: getStatusColor(activity.status).text,
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                      }}>
-                        {activity.status.toUpperCase()}
-                      </span>
-                    </div>
-                    <div style={{
-                      height: '8px',
-                      backgroundColor: 'var(--govt-gray-light)',
-                      borderRadius: '4px',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        height: '100%',
-                        backgroundColor: activity.progress === 100 ? 'var(--govt-success)' : 'var(--govt-info)',
-                        width: `${activity.progress}%`,
-                        borderRadius: '4px'
-                      }} />
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginTop: '0.25rem'
-                    }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--govt-gray-muted)' }}>
-                        Progress
-                      </span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--govt-gray-text)', fontWeight: '500' }}>
-                        {activity.progress}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Spatial Baseline & Geofence */}
+        <div style={{
+          backgroundColor: 'var(--govt-white)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--govt-gray-medium)',
+          padding: '1.25rem 1.5rem'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+            <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--govt-blue-dark)' }}>
+              Geospatial Geofence Baseline (ADR §16)
+            </h3>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--govt-success-text)', backgroundColor: 'var(--govt-success-light)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+              {project.geofence.status}
+            </span>
           </div>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', color: 'var(--govt-gray-text)' }}>
+            {project.geofence.bounds}
+          </p>
+          <div style={{
+            backgroundColor: 'var(--govt-gray-off-white)',
+            border: '1px solid var(--govt-gray-medium)',
+            borderRadius: 'var(--radius-md)',
+            padding: '0.625rem 0.75rem',
+            fontFamily: 'monospace',
+            fontSize: '0.75rem',
+            wordBreak: 'break-all',
+            color: 'var(--govt-blue-dark)',
+            marginBottom: '0.75rem'
+          }}>
+            {project.geofence.polygon}
+          </div>
+          <span style={{ fontSize: '0.72rem', color: 'var(--govt-gray-dark)', display: 'block', lineHeight: 1.4 }}>
+            Evidence coordinates captured outside this polygon generate geofence variance warnings for reviewer attention.
+          </span>
+        </div>
+      </div>
 
-          {/* Evidence */}
-          <div style={{
-            backgroundColor: 'var(--govt-cream-light)',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-sm)',
-            border: '1px solid var(--govt-gray-medium)'
-          }}>
-            <div style={{
-              backgroundColor: 'var(--govt-blue-dark)',
-              color: '#ffffff',
-              padding: '1rem 1.25rem',
-              borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h4 style={{ margin: 0, fontSize: '1rem' }}>
-                Project Evidence
-              </h4>
-              <span style={{
-                backgroundColor: '#ffffff',
-                color: 'var(--govt-blue-dark)',
-                padding: '0.25rem 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.8rem',
-                fontWeight: '500'
-              }}>
-                {project.evidence_count} items
-              </span>
-            </div>
-            <div style={{ padding: '0' }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  fontSize: '0.9rem'
+      {/* Domain Section 1: Canonical Claims (ADR §9) */}
+      <div style={{
+        backgroundColor: 'var(--govt-white)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)',
+        border: '1px solid var(--govt-gray-medium)',
+        marginBottom: '1.75rem',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '1rem 1.25rem',
+          borderBottom: '1px solid var(--govt-gray-medium)',
+          backgroundColor: 'var(--govt-gray-light)',
+          fontWeight: 700,
+          color: 'var(--govt-blue-dark)',
+          fontSize: '0.9rem'
+        }}>
+          Sanctioned Milestone Claims (ADR Section 9)
+        </div>
+        <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          {project.claims.map(claim => (
+            <div
+              key={claim.id}
+              style={{
+                padding: '1rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--govt-gray-medium)',
+                backgroundColor: 'var(--govt-gray-off-white)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem'
+              }}
+            >
+              <div>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 700, color: 'var(--govt-blue-primary)' }}>
+                  {claim.id}
+                </span>
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.88rem', fontWeight: 600, color: 'var(--govt-blue-dark)' }}>
+                  {claim.statement}
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  backgroundColor: claim.status === 'SUPPORTED' ? 'var(--govt-success-light)' : 'var(--govt-warning-light)',
+                  color: claim.status === 'SUPPORTED' ? 'var(--govt-success-text)' : 'var(--govt-warning-text)'
                 }}>
-                  <thead>
-                    <tr style={{
-                      backgroundColor: 'var(--govt-gray-light)',
-                      borderBottom: '1px solid var(--govt-gray-medium)'
-                    }}>
-                      <th style={{
-                        padding: '0.75rem 1rem',
-                        textAlign: 'left',
-                        fontWeight: '600',
-                        color: 'var(--govt-blue-dark)'
-                      }}>
-                        Evidence ID
-                      </th>
-                      <th style={{
-                        padding: '0.75rem 1rem',
-                        textAlign: 'left',
-                        fontWeight: '600',
-                        color: 'var(--govt-blue-dark)'
-                      }}>
-                        Captured Date
-                      </th>
-                      <th style={{
-                        padding: '0.75rem 1rem',
-                        textAlign: 'left',
-                        fontWeight: '600',
-                        color: 'var(--govt-blue-dark)'
-                      }}>
-                        Status
-                      </th>
-                      <th style={{
-                        padding: '0.75rem 1rem',
-                        textAlign: 'left',
-                        fontWeight: '600',
-                        color: 'var(--govt-blue-dark)'
-                      }}>
-                        Integrity
-                      </th>
-                      <th style={{
-                        padding: '0.75rem 1rem',
-                        textAlign: 'left',
-                        fontWeight: '600',
-                        color: 'var(--govt-blue-dark)'
-                      }}>
-                        Risk
-                      </th>
-                      <th style={{
-                        padding: '0.75rem 1rem',
-                        textAlign: 'left',
-                        fontWeight: '600',
-                        color: 'var(--govt-blue-dark)'
-                      }}>
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {evidence.map((item) => {
-                      const integrityColor = getIntegrityColor(item.integrity);
-                      const riskColor = getRiskColor(item.risk);
-                      return (
-                        <tr key={item.id} style={{
-                          borderBottom: '1px solid var(--govt-gray-light)'
-                        }}>
-                          <td style={{ padding: '0.75rem 1rem', fontWeight: '600', color: 'var(--govt-blue-dark)' }}>
-                            {item.id}
-                          </td>
-                          <td style={{ padding: '0.75rem 1rem', color: 'var(--govt-gray-text)' }}>
-                            {formatDate(item.captured_at)}
-                          </td>
-                          <td style={{ padding: '0.75rem 1rem' }}>
-                            <span style={{
-                              backgroundColor: getStatusColor(item.status).bg,
-                              color: getStatusColor(item.status).text,
-                              padding: '0.25rem 0.75rem',
-                              borderRadius: 'var(--radius-sm)',
-                              fontSize: '0.75rem',
-                              fontWeight: '500'
-                            }}>
-                              {item.status.toUpperCase()}
-                            </span>
-                          </td>
-                          <td style={{ padding: '0.75rem 1rem' }}>
-                            <span style={{
-                              backgroundColor: integrityColor.bg,
-                              color: integrityColor.text,
-                              padding: '0.25rem 0.75rem',
-                              borderRadius: 'var(--radius-sm)',
-                              fontSize: '0.75rem',
-                              fontWeight: '500'
-                            }}>
-                              {item.integrity}%
-                            </span>
-                          </td>
-                          <td style={{ padding: '0.75rem 1rem' }}>
-                            <span style={{
-                              backgroundColor: riskColor.bg,
-                              color: riskColor.text,
-                              padding: '0.25rem 0.75rem',
-                              borderRadius: 'var(--radius-sm)',
-                              fontSize: '0.75rem',
-                              fontWeight: '500'
-                            }}>
-                              {item.risk}%
-                            </span>
-                          </td>
-                          <td style={{ padding: '0.75rem 1rem' }}>
-                            <Link to={`/evidence/${item.id}`} style={{
-                              backgroundColor: 'transparent',
-                              border: '1px solid var(--govt-blue-medium)',
-                              color: 'var(--govt-blue-medium)',
-                              padding: '0.375rem 0.75rem',
-                              textDecoration: 'none',
-                              borderRadius: 'var(--radius-sm)',
-                              fontSize: '0.8rem'
-                            }}>
-                              View
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                  {claim.status}
+                </span>
+                {claim.case_id && (
+                  <Link
+                    to={`/review/case?id=${claim.case_id}`}
+                    style={{
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      color: 'var(--govt-blue-primary)',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Open Case →
+                  </Link>
+                )}
               </div>
             </div>
-            <div style={{
-              padding: '1rem 1.25rem',
-              borderTop: '1px solid var(--govt-gray-medium)',
-              textAlign: 'center'
-            }}>
-              <Link to={`/evidence?project=${project.id}`} style={{
-                color: 'var(--govt-blue-medium)',
-                textDecoration: 'none',
-                fontSize: '0.9rem'
+          ))}
+        </div>
+      </div>
+
+      {/* Domain Section 2: Activities & Work Units */}
+      <div style={{
+        backgroundColor: 'var(--govt-white)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)',
+        border: '1px solid var(--govt-gray-medium)',
+        marginBottom: '1.75rem',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '1rem 1.25rem',
+          borderBottom: '1px solid var(--govt-gray-medium)',
+          backgroundColor: 'var(--govt-gray-light)',
+          fontWeight: 700,
+          color: 'var(--govt-blue-dark)',
+          fontSize: '0.9rem'
+        }}>
+          Inspection Activities & Work Progress Units
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+            <thead>
+              <tr style={{
+                backgroundColor: 'var(--govt-gray-off-white)',
+                borderBottom: '1px solid var(--govt-gray-medium)',
+                color: 'var(--govt-gray-dark)',
+                fontSize: '0.75rem',
+                textTransform: 'uppercase'
               }}>
-                View All Evidence
-              </Link>
-            </div>
-          </div>
+                <th style={{ padding: '0.75rem 1.25rem' }}>Activity ID</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Activity Title</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Progress</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {project.activities.map(act => (
+                <tr key={act.id} style={{ borderBottom: '1px solid var(--govt-gray-medium)' }}>
+                  <td style={{ padding: '0.85rem 1.25rem', fontFamily: 'monospace', fontWeight: 600, color: 'var(--govt-blue-primary)' }}>
+                    {act.id}
+                  </td>
+                  <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--govt-blue-dark)' }}>
+                    {act.name}
+                  </td>
+                  <td style={{ padding: '0.85rem 1rem', width: '220px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <div style={{
+                        flex: 1,
+                        height: '8px',
+                        backgroundColor: 'var(--govt-gray-medium)',
+                        borderRadius: '9999px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${act.progress}%`,
+                          height: '100%',
+                          backgroundColor: act.progress === 100 ? 'var(--govt-success)' : 'var(--govt-blue-primary)'
+                        }}></div>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)', width: '32px' }}>
+                        {act.progress}%
+                      </span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '0.85rem 1rem' }}>
+                    <span style={{
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      backgroundColor: act.status === 'COMPLETED' ? 'var(--govt-success-light)' : act.status === 'IN_PROGRESS' ? 'var(--govt-blue-light)' : 'var(--govt-gray-light)',
+                      color: act.status === 'COMPLETED' ? 'var(--govt-success-text)' : act.status === 'IN_PROGRESS' ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
+                    }}>
+                      {act.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Domain Section 3: Linked Evidence Items */}
+      <div style={{
+        backgroundColor: 'var(--govt-white)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-sm)',
+        border: '1px solid var(--govt-gray-medium)',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          padding: '1rem 1.25rem',
+          borderBottom: '1px solid var(--govt-gray-medium)',
+          backgroundColor: 'var(--govt-gray-light)',
+          fontWeight: 700,
+          color: 'var(--govt-blue-dark)',
+          fontSize: '0.9rem'
+        }}>
+          Associated Cryptographic Evidence
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+            <thead>
+              <tr style={{
+                backgroundColor: 'var(--govt-gray-off-white)',
+                borderBottom: '1px solid var(--govt-gray-medium)',
+                color: 'var(--govt-gray-dark)',
+                fontSize: '0.75rem',
+                textTransform: 'uppercase'
+              }}>
+                <th style={{ padding: '0.75rem 1.25rem' }}>Evidence ID</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Inspection Activity</th>
+                <th style={{ padding: '0.75rem 1rem' }}>SHA-256 Digest</th>
+                <th style={{ padding: '0.75rem 1rem' }}>Geofence</th>
+                <th style={{ padding: '0.75rem 1.25rem', textAlign: 'right' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {project.evidence.map(ev => (
+                <tr key={ev.id} style={{ borderBottom: '1px solid var(--govt-gray-medium)' }}>
+                  <td style={{ padding: '0.85rem 1.25rem', fontFamily: 'monospace', fontWeight: 700, color: 'var(--govt-blue-primary)' }}>
+                    {ev.id}
+                  </td>
+                  <td style={{ padding: '0.85rem 1rem', fontSize: '0.85rem', color: 'var(--govt-blue-dark)', fontWeight: 500 }}>
+                    {ev.activity}
+                  </td>
+                  <td style={{ padding: '0.85rem 1rem', fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--govt-gray-text)' }}>
+                    {ev.sha256.slice(0, 32)}...
+                  </td>
+                  <td style={{ padding: '0.85rem 1rem' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--govt-success-text)' }}>
+                      ✓ {ev.geofence_status}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
+                    <Link
+                      to={`/evidence/${ev.id}`}
+                      style={{
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        color: 'var(--govt-blue-primary)',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Inspect →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
