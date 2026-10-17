@@ -12,47 +12,136 @@ import {
   AdminIcon,
 } from './Icon';
 
-const navSections = [
-  {
-    category: 'OPERATIONS',
-    items: [
-      { path: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
-      { path: '/reviews', label: 'Review Queue', icon: ReviewIcon, badgeKey: 'pending' },
-      { path: '/projects', label: 'Projects', icon: ProjectIcon },
-      { path: '/ingest', label: 'Live Sandbox', icon: EvidenceIcon },
-      { path: '/field', label: 'Field Companion', icon: UserIcon },
-    ]
-  },
-  {
-    category: 'INTELLIGENCE & AUDIT',
-    items: [
-      { path: '/compare', label: 'Visual Comparator', icon: GraphIcon },
-      { path: '/map', label: 'Geospatial Map', icon: ProjectIcon },
-      { path: '/audit', label: 'Audit Ledger', icon: SearchIcon },
-      { path: '/analytics', label: 'Analytics & Certs', icon: AdminIcon },
-    ]
-  },
-  {
-    category: 'GOVERNANCE',
-    items: [
-      { path: '/settings', label: 'System Settings', icon: AdminIcon },
-      { path: '/about', label: 'About Platform', icon: EvidenceIcon },
-      { path: '/profile', label: 'Operator Profile', icon: UserIcon },
-    ]
+function getNavSectionsForRole(role, pendingCount, complaintsCount) {
+  const normalized = (role || 'REVIEWER').toUpperCase();
+
+  if (normalized === 'CITIZEN') {
+    return [
+      {
+        category: 'CITIZEN CIVIC PORTAL',
+        items: [
+          { path: '/citizen?tab=discover', label: '1. Discover Projects', icon: ProjectIcon },
+          { path: '/citizen?tab=report', label: '2. Report Civic Issue', icon: EvidenceIcon },
+          { path: '/citizen?tab=track', label: '3. Track Reports', icon: SearchIcon, badge: complaintsCount },
+        ]
+      },
+      {
+        category: 'PUBLIC TRANSPARENCY',
+        items: [
+          { path: '/projects', label: 'Projects Registry', icon: ProjectIcon },
+          { path: '/about', label: 'About Platform (DPI)', icon: DashboardIcon },
+          { path: '/profile', label: 'Citizen Profile', icon: UserIcon },
+        ]
+      }
+    ];
   }
-];
+
+  if (normalized === 'AUDITOR') {
+    return [
+      {
+        category: 'STATUTORY AUDIT & OVERSIGHT',
+        items: [
+          { path: '/auditor?tab=compliance', label: 'Auditor Overview', icon: DashboardIcon },
+          { path: '/auditor?tab=certificates', label: 'Section 86 Certificates', icon: AdminIcon },
+          { path: '/auditor?tab=verifier', label: 'Section 58 Hash Verifier', icon: SearchIcon },
+          { path: '/audit', label: 'Immutable Audit Ledger', icon: ReviewIcon },
+        ]
+      },
+      {
+        category: 'SCHEME ANOMALY AUDIT',
+        items: [
+          { path: '/auditor?tab=anomalies', label: 'Anomaly Registry', icon: EvidenceIcon },
+          { path: '/map', label: 'Geospatial Anomaly Map', icon: ProjectIcon },
+          { path: '/projects', label: 'Projects Registry', icon: ProjectIcon },
+        ]
+      },
+      {
+        category: 'GOVERNANCE',
+        items: [
+          { path: '/about', label: 'DPI Governance', icon: DashboardIcon },
+          { path: '/settings', label: 'System Settings', icon: AdminIcon },
+          { path: '/profile', label: 'Auditor Profile', icon: UserIcon },
+        ]
+      }
+    ];
+  }
+
+  if (normalized === 'ADMIN' || normalized === 'ADMINISTRATOR') {
+    return [
+      {
+        category: 'PLATFORM ADMINISTRATION',
+        items: [
+          { path: '/admin', label: 'Control Plane', icon: AdminIcon },
+          { path: '/admin?tab=users', label: 'User RBAC Table', icon: UserIcon },
+          { path: '/admin?tab=retention', label: 'Legal Holds & Retention', icon: SearchIcon },
+          { path: '/admin?tab=telemetry', label: 'System Rule Tuning', icon: DashboardIcon },
+        ]
+      },
+      {
+        category: 'INTEGRATIONS & SYSTEM LOGS',
+        items: [
+          { path: '/settings', label: 'API Platform & Webhooks', icon: AdminIcon },
+          { path: '/audit', label: 'System Audit Ledger', icon: ReviewIcon },
+          { path: '/ingest', label: 'Ingestion Pipeline', icon: EvidenceIcon },
+          { path: '/map', label: 'Geospatial GIS Map', icon: ProjectIcon },
+        ]
+      },
+      {
+        category: 'GOVERNANCE',
+        items: [
+          { path: '/about', label: 'About Platform', icon: DashboardIcon },
+          { path: '/profile', label: 'Admin Profile', icon: UserIcon },
+        ]
+      }
+    ];
+  }
+
+  // Default: REVIEWER
+  return [
+    {
+      category: 'OPERATIONS',
+      items: [
+        { path: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
+        { path: '/reviews', label: 'Review Queue', icon: ReviewIcon, badgeKey: 'pending' },
+        { path: '/projects', label: 'Projects', icon: ProjectIcon },
+        { path: '/ingest', label: 'Live Sandbox', icon: EvidenceIcon },
+        { path: '/field', label: 'Field Companion', icon: UserIcon },
+      ]
+    },
+    {
+      category: 'INTELLIGENCE & AUDIT',
+      items: [
+        { path: '/compare', label: 'Visual Comparator', icon: GraphIcon },
+        { path: '/map', label: 'Geospatial Map', icon: ProjectIcon },
+        { path: '/audit', label: 'Audit Ledger', icon: SearchIcon },
+        { path: '/analytics', label: 'Analytics & Certs', icon: AdminIcon },
+      ]
+    },
+    {
+      category: 'GOVERNANCE',
+      items: [
+        { path: '/settings', label: 'System Settings', icon: AdminIcon },
+        { path: '/about', label: 'About Platform', icon: EvidenceIcon },
+        { path: '/profile', label: 'Operator Profile', icon: UserIcon },
+      ]
+    }
+  ];
+}
 
 function Sidebar({ isOpen = false, onClose }) {
   const [activeItem, setActiveItem] = useState('');
   const location = useLocation();
-  const { evidenceList } = useApp();
+  const { role, evidenceList, complaints } = useApp();
 
   const pendingCount = (evidenceList || []).filter(
     (e) => e.auditStatus === 'PENDING' || e.auditStatus === 'FLAGGED'
   ).length;
 
+  const complaintsCount = (complaints || []).length;
+  const navSections = getNavSectionsForRole(role, pendingCount, complaintsCount);
+
   useEffect(() => {
-    setActiveItem(location.pathname);
+    setActiveItem(location.pathname + location.search);
   }, [location]);
 
   return (

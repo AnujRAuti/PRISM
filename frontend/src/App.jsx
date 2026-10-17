@@ -25,6 +25,9 @@ const IngestionSandbox = lazy(() => import('./pages/Ingest/IngestionSandbox'));
 const AuditAnalytics = lazy(() => import('./pages/Analytics/AuditAnalytics'));
 const AuditLog = lazy(() => import('./pages/Audit/AuditLog'));
 const FieldOperations = lazy(() => import('./pages/Field/FieldOperations'));
+const CitizenPortal = lazy(() => import('./pages/Citizen/CitizenPortal'));
+const AuditorPortal = lazy(() => import('./pages/Auditor/AuditorPortal'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 const About = lazy(() => import('./pages/About/About'));
 const Settings = lazy(() => import('./pages/Settings/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -138,10 +141,15 @@ function App() {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/profile" element={<Profile />} />
 
+                  {/* Role Specific Landing Routes */}
+                  <Route path="/citizen" element={<CitizenPortal />} />
+                  <Route path="/discover" element={<Navigate to="/citizen?tab=discover" replace />} />
+                  <Route path="/auditor" element={<AuditorPortal />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+
                   {/* Legacy Redirections */}
                   <Route path="/graph" element={<Navigate to="/compare" replace />} />
                   <Route path="/search" element={<Navigate to="/reviews" replace />} />
-                  <Route path="/admin" element={<Navigate to="/settings" replace />} />
                 </Route>
               </Route>
             </Routes>

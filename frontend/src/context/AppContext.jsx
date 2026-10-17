@@ -228,52 +228,182 @@ export function AppProvider({ children }) {
 
   const loginUser = (newRole, customUser = {}) => {
     let mockProfile;
-    if (newRole === 'CITIZEN') {
+    const normalizedRole = (newRole || 'REVIEWER').toUpperCase();
+
+    if (normalizedRole === 'CITIZEN') {
       mockProfile = {
         id: 'USR-CITIZEN-01',
         name: 'Ramesh Sharma',
         role: 'CITIZEN',
+        roleTitle: 'Citizen / Resident Whistleblower',
         phone: '+91 98230 11223',
+        email: 'ramesh.sharma@citizen.in',
         district: 'Pune',
         state: 'Maharashtra',
         pincode: '412301',
         isAadhaarVerified: true,
+        permissions: ['public.projects.discover', 'citizen.report.create', 'citizen.report.track', 'citizen.evidence.upload'],
         ...customUser,
       };
-    } else if (newRole === 'SUPERVISOR') {
+    } else if (normalizedRole === 'AUDITOR') {
+      mockProfile = {
+        id: 'USR-AUDIT-01',
+        name: 'Dr. Anand Swaroop',
+        role: 'AUDITOR',
+        roleTitle: 'Principal Statutory Auditor (CAG / Vigilance)',
+        email: 'anand.swaroop@cag.gov.in',
+        district: 'New Delhi',
+        state: 'Central Jurisdiction',
+        department: 'Statutory Infrastructure Audit & Section 86 Directorate',
+        permissions: ['audit.read', 'analytics.read', 'certificates.generate', 'certificates.verify', 'ledger.verify', 'hash.nonrepudiation', 'map.read', 'projects.read'],
+        ...customUser,
+      };
+    } else if (normalizedRole === 'ADMIN' || normalizedRole === 'ADMINISTRATOR') {
+      mockProfile = {
+        id: 'USR-ADMIN-01',
+        name: 'Vikram Malhotra',
+        role: 'ADMIN',
+        roleTitle: 'Security & Platform Administrator (NIC / MeitY)',
+        email: 'secadmin@prism.gov.in',
+        district: 'National Data Centre',
+        state: 'Central Operations',
+        department: 'National Informatics Centre / MeitY Security Operations',
+        permissions: ['users.manage', 'rbac.manage', 'retention.manage', 'holds.manage', 'config.manage', 'integrations.manage', 'webhooks.manage', 'audit.read', 'projects.read'],
+        ...customUser,
+      };
+    } else if (normalizedRole === 'SUPERVISOR') {
       mockProfile = {
         id: 'USR-SUP-01',
         name: 'Suresh Patil (Junior Engineer)',
         role: 'SUPERVISOR',
+        roleTitle: 'Field Supervisor & Junior Engineer',
         phone: '+91 98450 33441',
         email: 'suresh.patil@field.gov.in',
         district: 'Pune',
         state: 'Maharashtra',
         department: 'PMGSY Rural Roads Division',
+        permissions: ['field.read', 'field.upload', 'assignments.update', 'projects.read'],
         ...customUser,
       };
     } else {
+      // Default: REVIEWER
       mockProfile = {
         id: 'USR-REV-01',
-        name: 'Rajesh Kulkarni (SE & Lead Auditor)',
+        name: 'Rajesh Kulkarni',
         role: 'REVIEWER',
+        roleTitle: 'Senior Reviewer (Quality & Audit)',
         email: 'r.kulkarni@pwd.maharashtra.gov.in',
         district: 'Pune',
         state: 'Maharashtra',
-        department: 'State Quality Audit Division',
+        department: 'State Quality Audit Division (SE Office)',
+        permissions: ['cases.read', 'evidence.read', 'evidence.upload', 'decisions.create', 'decisions.override', 'comparator.read', 'map.read', 'projects.read'],
         ...customUser,
       };
     }
 
     setCurrentUser(mockProfile);
-    setRoleState(newRole);
+    setRoleState(mockProfile.role);
     localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(mockProfile));
 
     addToast({
-      title: `Welcome, ${mockProfile.name}`,
-      description: `Authenticated as ${newRole}. Operations hub updated.`,
+      title: `Operating as ${mockProfile.role}`,
+      description: `Authenticated: ${mockProfile.name} (${mockProfile.roleTitle}).`,
       type: 'success',
     });
+  };
+
+  const fileCitizenReport = ({
+    projectId,
+    projectName,
+    category,
+    description,
+    photoUrl = '/images/projects/road-pothole.jpg',
+    location = 'Detected via GPS: 18.2814° N, 74.0156° E (Purandar Block)',
+    isPrivate = true
+  }) => {
+    const reportNum = Math.floor(1000 + Math.random() * 9000);
+    const trackingId = `GRV-2026-${reportNum}`;
+    const newReport = {
+      id: `CMP-${Date.now().toString().slice(-4)}`,
+      trackingId,
+      projectId: projectId || 'PRJ-PMGSY-MH-401',
+      projectName: projectName || 'Purandar Taluka Rural Bitumen Road Reconstruction',
+      category: category || 'Pavement & Quality Defect',
+      description,
+      photoUrl,
+      location,
+      status: 'RECEIVED',
+      statusLabel: 'Received by Department (शिकायत प्राप्त हुई)',
+      filedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      departmentResponse: 'Report ingested into PRISM Citizen Grievance Registry. Forwarded to Executive Engineer for inspection scheduling.',
+      filedBy: isPrivate ? 'Anonymous / Citizen (Privacy Protected per BE-022)' : (currentUser?.name || 'Verified Citizen'),
+      isVerifiedCitizen: currentUser?.isAadhaarVerified || false,
+      isPrivate
+    };
+
+    setComplaints((prev) => [newReport, ...prev]);
+
+    // Append to audit ledger
+    const auditEntry = {
+      id: `AUD-CTZ-${Date.now().toString().slice(-6)}`,
+      evidenceId: trackingId,
+      projectId: newReport.projectId,
+      actorName: newReport.filedBy,
+      actorRole: 'CITIZEN',
+      action: 'CITIZEN_REPORT_SUBMITTED',
+      previousState: 'NONE',
+      newState: 'RECEIVED',
+      reason: `Citizen filed grievance: ${category} - "${description.slice(0, 60)}..."`,
+      sha256Hash: 'a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8',
+      timestamp: new Date().toISOString()
+    };
+    setAuditEvents((prev) => [auditEntry, ...prev]);
+
+    addToast({
+      title: 'Citizen Report Filed Successfully',
+      description: `Tracking ID: ${trackingId}. Status: Received by Department.`,
+      type: 'success',
+    });
+
+    return newReport;
+  };
+
+  const verifyHashInLedger = (inputHashOrId) => {
+    if (!inputHashOrId) return null;
+    const clean = inputHashOrId.trim();
+
+    // Check in evidence list
+    const matchedEvidence = evidenceList.find(
+      (e) => e.sha256?.toLowerCase() === clean.toLowerCase() || e.id?.toLowerCase() === clean.toLowerCase()
+    );
+
+    // Check in audit events
+    const matchedEvent = auditEvents.find(
+      (ev) => ev.sha256Hash?.toLowerCase() === clean.toLowerCase() ||
+              ev.evidenceId?.toLowerCase() === clean.toLowerCase() ||
+              ev.id?.toLowerCase() === clean.toLowerCase()
+    );
+
+    if (matchedEvidence || matchedEvent) {
+      return {
+        verified: true,
+        hash: matchedEvidence?.sha256 || matchedEvent?.sha256Hash || clean,
+        evidenceId: matchedEvidence?.id || matchedEvent?.evidenceId || 'N/A',
+        projectName: matchedEvidence?.projectName || 'State Infrastructure Project',
+        timestamp: matchedEvidence?.captureDate || matchedEvent?.timestamp || new Date().toISOString(),
+        actor: matchedEvent?.actorName || 'Cryptographic Pipeline Worker',
+        status: 'TAMPER_FREE_VERIFIED',
+        merkleRoot: '0x9f83a48e71b29d8164bc77f202e88a014902cd51772183e89f8a31362e08c491',
+        blockIndex: 1428
+      };
+    }
+
+    return {
+      verified: false,
+      hash: clean,
+      status: 'NOT_FOUND_IN_BLOCK_CHAIN'
+    };
   };
 
   const logoutUser = () => {
@@ -514,6 +644,8 @@ export function AppProvider({ children }) {
         overrideEvidence,
         batchApprove,
         batchFlag,
+        fileCitizenReport,
+        verifyHashInLedger,
         toasts,
         addToast,
         removeToast,

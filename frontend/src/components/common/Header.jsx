@@ -9,7 +9,7 @@ function Header({ onToggleSidebar }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { setIsCommandPaletteOpen } = useApp();
+  const { setIsCommandPaletteOpen, role, currentUser, loginUser } = useApp();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -163,14 +163,14 @@ function Header({ onToggleSidebar }) {
                       fontSize: '0.8rem',
                     }}
                   >
-                    {(user.name || user.username || 'U').charAt(0).toUpperCase()}
+                    {(currentUser?.name || user?.name || 'O').charAt(0).toUpperCase()}
                   </div>
                   <div style={{ textAlign: 'left', lineHeight: 1.2 }}>
                     <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>
-                      {user.name || user.username || 'Operator'}
+                      {currentUser?.name || user?.name || 'Operator'}
                     </div>
                     <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'capitalize' }}>
-                      {user.role || 'Reviewer'}
+                      {role || currentUser?.role || 'Reviewer'}
                     </div>
                   </div>
                   <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginLeft: '0.2rem' }}>▼</span>
@@ -199,10 +199,78 @@ function Header({ onToggleSidebar }) {
                       }}
                     >
                       <div style={{ fontWeight: '700', color: 'var(--govt-gray-title)', fontSize: '0.875rem' }}>
-                        {user.name || 'Demo Operator'}
+                        {currentUser?.name || user.name || 'Demo Operator'}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--govt-gray-dark)' }}>
-                        {user.email || 'operator@poa.gov.in'}
+                        {currentUser?.email || user.email || 'operator@poa.gov.in'}
+                      </div>
+                      <div style={{ marginTop: '0.4rem' }}>
+                        <span
+                          style={{
+                            fontSize: '0.675rem',
+                            fontWeight: 800,
+                            padding: '0.15rem 0.5rem',
+                            borderRadius: '999px',
+                            backgroundColor:
+                              (role || 'REVIEWER') === 'CITIZEN'
+                                ? 'rgba(22, 101, 52, 0.15)'
+                                : (role || 'REVIEWER') === 'AUDITOR'
+                                ? 'rgba(126, 34, 206, 0.15)'
+                                : (role || 'REVIEWER') === 'ADMIN'
+                                ? 'rgba(180, 83, 9, 0.15)'
+                                : 'rgba(29, 78, 216, 0.15)',
+                            color:
+                              (role || 'REVIEWER') === 'CITIZEN'
+                                ? 'var(--govt-success)'
+                                : (role || 'REVIEWER') === 'AUDITOR'
+                                ? '#7e22ce'
+                                : (role || 'REVIEWER') === 'ADMIN'
+                                ? '#b45309'
+                                : 'var(--govt-blue-primary)',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Role: {role || 'REVIEWER'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Quick Role Switcher */}
+                    <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--govt-gray-medium)', backgroundColor: '#fff' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--govt-gray-dark)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                        Switch Operational Role
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                        {[
+                          { key: 'REVIEWER', label: '🛡️ Reviewer', path: '/dashboard' },
+                          { key: 'AUDITOR', label: '⚖️ Auditor', path: '/auditor' },
+                          { key: 'CITIZEN', label: '👥 Citizen', path: '/citizen' },
+                          { key: 'ADMIN', label: '⚙️ Admin', path: '/admin' },
+                        ].map((r) => (
+                          <button
+                            key={r.key}
+                            type="button"
+                            onClick={() => {
+                              loginUser(r.key);
+                              setShowDropdown(false);
+                              navigate(r.path);
+                            }}
+                            style={{
+                              padding: '0.4rem 0.5rem',
+                              borderRadius: '4px',
+                              border: '1px solid',
+                              borderColor: (role || 'REVIEWER') === r.key ? 'var(--govt-blue-primary)' : 'var(--govt-gray-medium)',
+                              backgroundColor: (role || 'REVIEWER') === r.key ? 'var(--govt-blue-light)' : 'transparent',
+                              color: (role || 'REVIEWER') === r.key ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
+                              fontSize: '0.725rem',
+                              fontWeight: (role || 'REVIEWER') === r.key ? 700 : 500,
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                            }}
+                          >
+                            {r.label}
+                          </button>
+                        ))}
                       </div>
                     </div>
 

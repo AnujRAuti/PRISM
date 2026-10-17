@@ -141,11 +141,12 @@ export default function Settings() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
             {[
-              { id: 'REVIEWER', name: 'Evidence Reviewer (Lead)', desc: 'Full review queue, audit overrides, certificates' },
-              { id: 'SUPERVISOR', name: 'Field Supervisor / JE', desc: 'Inspection assignments, photo re-takes' },
-              { id: 'CITIZEN', name: 'Citizen / Resident', desc: 'Civic grievance filing & transparency status' },
+              { id: 'REVIEWER', name: '🛡️ Evidence Reviewer (Lead)', desc: 'High-velocity review queue, CV inspection, formal overrides' },
+              { id: 'AUDITOR', name: '⚖️ Statutory Auditor (CAG)', desc: 'Section 86 compliance, EIIL certificates, non-repudiation ledger verifier' },
+              { id: 'CITIZEN', name: '👥 Citizen / Resident', desc: 'Discover state projects, file civic grievances, track inspection status' },
+              { id: 'ADMIN', name: '⚙️ Platform Administrator', desc: 'RBAC user management, legal retention holds, system rule tuning' },
             ].map((r) => {
-              const isSelected = role === r.id;
+              const isSelected = (role || 'REVIEWER') === r.id;
               return (
                 <button
                   key={r.id}
