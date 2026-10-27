@@ -30,7 +30,8 @@ async def upload_evidence(
     # Bounded read: one byte past the limit proves oversize without
     # loading arbitrarily large uploads into memory.
     data = await file.read(settings.max_upload_size + 1)
-    evidence = ingest_evidence(data, file.filename or "unnamed", declared_type, db)
+    evidence = ingest_evidence(data, file.filename or "unnamed", declared_type, db,
+                               actor_id=principal.principal_id)
     return EvidenceUploadResponse(
         evidence_id=evidence.id,
         status="uploaded",

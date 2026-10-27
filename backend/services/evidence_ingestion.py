@@ -77,12 +77,16 @@ def ingest_evidence(
     declared_type: str | None,
     db: Session,
     storage: StorageService | None = None,
+    actor_id: str | None = None,
 ) -> Evidence:
     """Validate, quarantine-store, and persist one evidence image.
 
     Raises HTTPException (400/413/415) for invalid uploads and propagates
     storage/database failures without claiming success. Returns the
     persisted ``Evidence`` row (committed).
+
+    ``actor_id`` is the verified caller's principal id, never a request-body
+    field; it stays NULL only where the caller genuinely holds no credential.
     """
     if declared_type and declared_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(status_code=415, detail="Unsupported image content type")
@@ -121,7 +125,7 @@ def ingest_evidence(
             action="upload",
             resource_type="evidence",
             resource_id=evidence_id,
-            actor_id=None,
+            actor_id=actor_id,
             project_id=None,
             payload={"evidence_id": evidence_id, "filename": evidence.filename,
                      "content_type": actual_type, "file_size": len(data)},

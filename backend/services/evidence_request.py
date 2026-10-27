@@ -710,7 +710,7 @@ def submit_evidence(
     request = get_request(db, request_id)
     if request.status not in LINKABLE_STATUSES:
         raise ValueError(f"Request in status {request.status} cannot accept evidence")
-    evidence = ingest_evidence(data, filename, content_type, db)
+    evidence = ingest_evidence(data, filename, content_type, db, actor_id=actor_id)
     # Ingestion already committed: if linking below fails, the evidence
     # remains valid quarantined evidence (never deleted silently).
     item, created = link_evidence(db, request.id, evidence.id, actor_id)

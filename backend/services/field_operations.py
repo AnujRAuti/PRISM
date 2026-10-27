@@ -1733,7 +1733,8 @@ def _execute(
     """Ingest through the reused BE-003 pipeline, then associate and finalize."""
     try:
         evidence = ingest_evidence(
-            req.data, req.filename or "unnamed", req.declared_content_type, db
+            req.data, req.filename or "unnamed", req.declared_content_type, db,
+            actor_id=req.principal_id,
         )
     except HTTPException as error:
         # 400/413/415 from the existing validator, which raises before it stores

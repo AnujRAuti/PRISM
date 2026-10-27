@@ -1,5 +1,6 @@
 """BE-019 External Integrations & API Client Platform endpoints."""
 
+import hashlib
 import json
 from datetime import datetime
 from typing import Any
@@ -509,7 +510,51 @@ async def submit_external_evidence(
                 detail=f"Invalid source_timestamp: {err}",
             )
 
-    evidence = ingest_evidence(data, file.filename or "unnamed", declared_type, db)
+    # Scope-escalation guard (audit register 2.1): naming a project does not
+    # grant authority over it. `external_data.write` must cover the target, so
+    # a grant held in one project cannot drop external evidence into another
+    # organization's. An unreachable target answers 404, never a code that
+    # confirms the project exists.
+    if project_id is not None and not is_development_bypass(principal):
+        visible = visible_project_ids(db, principal, "external_data.write")
+        if visible is not None and str(project_id) not in visible:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+
+    # Idempotency (audit register 2.6): this route has always advertised
+    # `Idempotency-Key` but never read it, so a retry after a lost response
+    # created a second Evidence row and a second quarantine object. The key
+    # store is keyed by api_clients.id, so only an API-client credential can
+    # hold one; for anyone else the header is refused rather than quietly
+    # dropped, because a caller that believes it sent a guard must not be
+    # misled into thinking a retry is safe.
+    if idempotency_key and principal.principal_type != "API_CLIENT":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Idempotency-Key requires an API-client credential",
+        )
+    idem_key, req_hash, replay_data = None, None, None
+    if idempotency_key:
+        # The file bytes are part of the request hash, so the same key reused
+        # with different bytes is a conflict, not a silent second ingestion.
+        idem_key, req_hash, replay_data = _check_idempotency(
+            db,
+            principal,
+            idempotency_key,
+            {
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "external_system_id": str(external_system_id),
+                "external_evidence_id": external_evidence_id,
+                "project_id": str(project_id) if project_id else None,
+                "source_timestamp": source_timestamp,
+                "filename": file.filename,
+                "declared_type": declared_type,
+            },
+        )
+    if replay_data is not None:
+        return EvidenceUploadResponse.model_validate(replay_data)
+
+    evidence = ingest_evidence(data, file.filename or "unnamed", declared_type, db,
+                               actor_id=principal.principal_id)
     if project_id:
         evidence.project_id = str(project_id)
         db.flush()
@@ -541,13 +586,18 @@ async def submit_external_evidence(
 
     db.commit()
 
-    return EvidenceUploadResponse(
+    resp = EvidenceUploadResponse(
         evidence_id=evidence.id,
         status="uploaded",
         storage_key=evidence.storage_key,
         content_type=evidence.content_type,
         size=evidence.file_size,
     )
+    if idem_key and req_hash:
+        record_idempotency(db, principal.principal_id, idem_key, req_hash,
+                           resp.model_dump(mode="json"))
+        db.commit()
+    return resp
 
 
 # ---------------------------------------------------------------------------
