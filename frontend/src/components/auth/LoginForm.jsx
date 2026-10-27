@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { supabaseConfigError } from '../../services/supabaseClient';
 import PrismLogo from '../common/PrismLogo';
 
 function Login() {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -13,6 +14,7 @@ function Login() {
 
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const configError = supabaseConfigError();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -30,11 +32,15 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (configError) {
+      setError(configError);
+      return;
+    }
     setLoading(true);
     setError('');
 
     try {
-      const result = await login(formData.username, formData.password);
+      const result = await login(formData.email, formData.password);
       if (result.success) {
         navigate('/dashboard');
       } else {
@@ -92,18 +98,24 @@ function Login() {
                   {error}
                 </div>
               )}
+              {configError && (
+                <div className="alert alert-warning" role="alert">
+                  {configError}
+                </div>
+              )}
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <label htmlFor="username" className="form-label">
-                    Username
+                  <label htmlFor="email" className="form-label">
+                    Email
                   </label>
                   <input
-                    type="text"
+                    type="email"
                     className="form-control"
-                    id="username"
-                    name="username"
-                    value={formData.username}
+                    id="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
+                    autoComplete="username"
                     required
                   />
                 </div>
@@ -118,20 +130,9 @@ function Login() {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
+                    autoComplete="current-password"
                     required
                   />
-                </div>
-                <div className="mb-3">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="rememberMe"
-                    />
-                    <label className="form-check-label" htmlFor="rememberMe">
-                      Remember me
-                    </label>
-                  </div>
                 </div>
                 <button
                   type="submit"

@@ -1,6 +1,8 @@
 // API Service for PRISM / Proof-of-Action Frontend
 // Handles all backend API communication with FastAPI backend
 import axios from 'axios';
+import { getSupabaseClient } from './supabaseClient';
+import { currentAccessToken, signIn, signOut } from './authSession';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
@@ -11,10 +13,12 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for adding auth token
+// Request interceptor: the caller's own access token from the identity provider,
+// refreshed when it is close to expiring. No token means no Authorization header —
+// the backend then refuses the request, which is the intended behaviour.
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth_token');
+  async (config) => {
+    const token = await currentAccessToken(getSupabaseClient());
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,14 +27,13 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for handling errors
+// Response interceptor: a 401 is the provider's or the backend's refusal, so the
+// session is ended rather than quietly retried with a stand-in identity.
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401 && window.location.pathname !== '/login') {
-      // Token expired or unauthorized
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
+      await signOut(getSupabaseClient());
     }
     return Promise.reject(error);
   }
@@ -47,16 +50,30 @@ export const authApi = {
   getRoles: (params = {}) => api.get('/auth/roles', { params }),
   getPermissions: (params = {}) => api.get('/auth/permissions', { params }),
   getOrganizations: (params = {}) => api.get('/auth/organizations', { params }),
-  // Mock login helper that registers dev bearer token or mock credentials
-  login: async (username) => {
-    const token = `dev-user-${username}`;
-    localStorage.setItem('auth_token', token);
-    return { data: { success: true, token } };
+  // Real sign-in: the provider issues the token, then this service proves the
+  // backend maps it to a linked PoA account before anyone is called signed in.
+  login: async (email, password) => {
+    const supabase = getSupabaseClient();
+    const result = await signIn(supabase, email, password);
+    if (!result.ok) {
+      return { success: false, message: result.message };
+    }
+    try {
+      const me = await api.get('/auth/me');
+      return { success: true, principal: me.data, email: result.session?.user?.email || null };
+    } catch (error) {
+      const refused = error.response?.status === 401;
+      const message = refused
+        ? (error.response?.data?.detail
+          || 'This sign-in is not linked to an account on this backend.')
+        : 'Signed in, but the API could not be reached.';
+      await signOut(supabase);
+      return { success: false, message };
+    }
   },
-  logout: () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
-    return Promise.resolve({ data: { success: true } });
+  logout: async () => {
+    await signOut(getSupabaseClient());
+    return { data: { success: true } };
   },
 };
 

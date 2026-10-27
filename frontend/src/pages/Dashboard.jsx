@@ -1,20 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { ProjectIcon, EvidenceIcon, ReviewIcon, SearchIcon, PlusIcon } from '../components/common/Icon';
 
 function Dashboard() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        setUser(null);
-      }
-    }
-  }, []);
+  const { user } = useAuth();
 
   // Mock data - will be replaced with API calls later
   const stats = [

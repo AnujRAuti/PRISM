@@ -1,21 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Profile() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        setUser(null);
-      }
-    }
-    setLoading(false);
-  }, []);
+  const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
 
   const userRoles = {
     citizen: 'Citizen - Can upload and view evidence',
@@ -153,11 +141,13 @@ function Profile() {
                 {user.name || user.username || 'User'}
               </h3>
               <p style={{ margin: '0.25rem 0 0 0', color: 'rgba(255,255,255,0.8)' }}>
-                {user.email || 'user@example.com'}
+                {user.email || 'Not provided'}
               </p>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
-                Member since {new Date(user.created_at || Date.now()).toLocaleDateString()}
-              </p>
+              {user.created_at && (
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                  Member since {new Date(user.created_at).toLocaleDateString()}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -304,10 +294,9 @@ function Profile() {
               Edit Profile
             </Link>
             <button
-              onClick={() => {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user');
-                window.location.href = '/login';
+              onClick={async () => {
+                await logout();
+                navigate('/login');
               }}
               style={{
                 padding: '0.75rem 1.5rem',
