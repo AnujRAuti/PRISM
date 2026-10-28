@@ -30,3 +30,17 @@ build/
 *.log
 .env
 backend/.venv312*/
+
+# Database dumps and backups: they hold real rows, so they never belong in Git.
+*.dump
+
+# Frontend dependency trees, including the generated manifests inside them.
+node_modules/
+
+# Local secret stores and probe state (each holds generated credentials).
+**/secrets.env
+Scratch/deploy1/armfull_state.json
+
+# A git worktree of another branch checked out inside this repo; the nested
+# branch owns that history, so it must not be recorded as a gitlink here.
+Scratch/mbe01-frontend/
