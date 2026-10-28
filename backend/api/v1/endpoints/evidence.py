@@ -60,15 +60,19 @@ def get_evidence(
 @router.get(
     "/evidence/{evidence_id}/download",
     response_model=EvidenceDownloadResponse,
-    summary="Issue a presigned download URL (requires evidence.read)",
-    description="The URL is issued only after authorization succeeds. "
-    "401 without credentials (enforcing mode). 403 without permission. "
-    "404 when the evidence is absent or outside the caller's scope.",
+    summary="Issue a presigned download URL (requires evidence.read and "
+            "evidence.read_sensitive)",
+    description="This route releases the original bytes, so it demands the "
+    "sensitive-evidence permission on top of the read permission that opens the "
+    "metadata. 401 without credentials (enforcing mode). 403 without either "
+    "permission. 404 when the evidence is absent or outside the caller's scope.",
 )
 def download_evidence(
     evidence_id: UUID,
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("evidence.read", "evidence", "evidence_id")),
+    _: Principal = Depends(
+        require("evidence.read_sensitive", "evidence", "evidence_id")),
 ) -> EvidenceDownloadResponse:
     evidence = db.query(Evidence).filter(Evidence.id == str(evidence_id)).one_or_none()
     if evidence is None:

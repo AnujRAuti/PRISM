@@ -973,8 +973,8 @@
     },
     "/api/v1/evidence/{evidence_id}/download": {
       "get": {
-        "summary": "Issue a presigned download URL (requires evidence.read)",
-        "description": "The URL is issued only after authorization succeeds. 401 without credentials (enforcing mode). 403 without permission. 404 when the evidence is absent or outside the caller's scope.",
+        "summary": "Issue a presigned download URL (requires evidence.read and evidence.read_sensitive)",
+        "description": "This route releases the original bytes, so it demands the sensitive-evidence permission on top of the read permission that opens the metadata. 401 without credentials (enforcing mode). 403 without either permission. 404 when the evidence is absent or outside the caller's scope.",
         "operationId": "download_evidence_api_v1_evidence__evidence_id__download_get",
         "parameters": [
           {

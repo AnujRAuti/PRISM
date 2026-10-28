@@ -564,17 +564,19 @@ def test_controlled_deletion_end_to_end():
             f"/api/v1/retention/delete/EVIDENCE/{evidence['evidence_id']}",
             headers=headers).json()
         assert again["result"] == "ALREADY_DELETED"
-        # Presigned URLs can no longer be issued after deletion. ADMINISTRATOR
-        # is an administrative role and deliberately does NOT hold evidence.read
-        # (models.py AUTH_ROLE_PERMISSIONS), so asking it would be denied with
-        # 403 NO_PERMISSION before existence is ever considered. A CITIZEN does
-        # hold evidence.read, so for that principal the 404 is the genuine
-        # "no such evidence" signal this assertion is about.
+        # Presigned URLs can no longer be issued after deletion. The reader here
+        # must hold BOTH permissions the download route now demands —
+        # evidence.read and evidence.read_sensitive — or it would be refused at
+        # the permission layer with 403 and the 404 below would prove nothing
+        # about deletion. REVIEWER is the smallest role holding both
+        # (models.py AUTH_ROLE_PERMISSIONS); a CITIZEN holds evidence.read but
+        # not the sensitive permission, and ADMINISTRATOR holds neither, so each
+        # is refused with 403 before existence is ever considered.
         reader_id, reader_headers = make_admin("retention-evidence-reader")
         user_ids.append(reader_id)
         session = get_session()
         try:
-            auth_service.assign_role(session, user_id=reader_id, role_name="CITIZEN",
+            auth_service.assign_role(session, user_id=reader_id, role_name="REVIEWER",
                                      scope_type="GLOBAL")
             session.commit()
         finally:
