@@ -1,0 +1,60 @@
+{
+  "verdict": "BLOCKED",
+  "checks": [
+    {
+      "name": "oidc_enabled",
+      "status": "PASS",
+      "detail": "the verifier is on"
+    },
+    {
+      "name": "auth_oidc_issuer",
+      "status": "PASS",
+      "detail": "host=tuaeujvuuanadqvykugw.supabase.co path='/auth/v1'"
+    },
+    {
+      "name": "auth_oidc_jwks_uri",
+      "status": "PASS",
+      "detail": "host=tuaeujvuuanadqvykugw.supabase.co path='/auth/v1/.well-known/jwks.json'"
+    },
+    {
+      "name": "same_authority",
+      "status": "PASS",
+      "detail": "both served by tuaeujvuuanadqvykugw.supabase.co"
+    },
+    {
+      "name": "issuer_shape",
+      "status": "PASS",
+      "detail": "/auth/v1 is that provider's auth path"
+    },
+    {
+      "name": "project_identity",
+      "status": "PASS",
+      "detail": "issuer belongs to project 'tuaeujvuuanadqvykugw', as expected"
+    },
+    {
+      "name": "configured_algorithms",
+      "status": "PASS",
+      "detail": "accepts ES256; identity provider is 'supabase'"
+    },
+    {
+      "name": "key_set_reachable",
+      "status": "PASS",
+      "detail": "1 published entry"
+    },
+    {
+      "name": "usable_keys",
+      "status": "PASS",
+      "detail": "1 verifiable key(s): ab0ac6ae-93be-441c-9196-7b2fade15af0 (published: EC/ES256)"
+    },
+    {
+      "name": "key_types",
+      "status": "PASS",
+      "detail": "only asymmetric key types: EC"
+    },
+    {
+      "name": "probe_token",
+      "status": "BLOCKED",
+      "detail": "no real token was supplied (pass --token-file); the key set is usable but no issued token has been verified end to end"
+    }
+  ]
+}

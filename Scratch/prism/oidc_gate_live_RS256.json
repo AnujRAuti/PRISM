@@ -1,0 +1,50 @@
+{
+  "verdict": "FAIL",
+  "checks": [
+    {
+      "name": "oidc_enabled",
+      "status": "PASS",
+      "detail": "the verifier is on"
+    },
+    {
+      "name": "auth_oidc_issuer",
+      "status": "PASS",
+      "detail": "host=tuaeujvuuanadqvykugw.supabase.co path='/auth/v1'"
+    },
+    {
+      "name": "auth_oidc_jwks_uri",
+      "status": "PASS",
+      "detail": "host=tuaeujvuuanadqvykugw.supabase.co path='/auth/v1/.well-known/jwks.json'"
+    },
+    {
+      "name": "same_authority",
+      "status": "PASS",
+      "detail": "both served by tuaeujvuuanadqvykugw.supabase.co"
+    },
+    {
+      "name": "issuer_shape",
+      "status": "PASS",
+      "detail": "/auth/v1 is that provider's auth path"
+    },
+    {
+      "name": "project_identity",
+      "status": "PASS",
+      "detail": "issuer belongs to project 'tuaeujvuuanadqvykugw', as expected"
+    },
+    {
+      "name": "configured_algorithms",
+      "status": "PASS",
+      "detail": "accepts RS256; identity provider is 'supabase'"
+    },
+    {
+      "name": "key_set_reachable",
+      "status": "PASS",
+      "detail": "1 published entry"
+    },
+    {
+      "name": "usable_keys",
+      "status": "FAIL",
+      "detail": "no published key is usable under RS256; the provider publishes EC/ES256; a symmetric or foreign-algorithm entry is never accepted, and an algorithm mismatch refuses every reviewer"
+    }
+  ]
+}

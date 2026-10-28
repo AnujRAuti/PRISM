@@ -60,8 +60,8 @@ def _fetch_key_set(uri: str) -> dict:
     return response.json()
 
 
-def _index(payload: dict) -> dict[str, PyJWK]:
-    algorithms = set(allowed_algorithms())
+def _index(payload: dict, algorithms: set[str] | None = None) -> dict[str, PyJWK]:
+    algorithms = set(allowed_algorithms()) if algorithms is None else set(algorithms)
     indexed: dict[str, PyJWK] = {}
     for entry in payload.get("keys", []) or []:
         if str(entry.get("kty", "")) not in ALLOWED_KEY_TYPES:

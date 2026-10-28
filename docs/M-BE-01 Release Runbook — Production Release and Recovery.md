@@ -144,6 +144,42 @@ Failure semantics worth knowing: with `AUTH_OIDC_ENABLED=true` and any value mis
 candidate **refuses to boot** (that is correct), and with `AUTH_OIDC_ALGORITHMS` left at
 the `RS256` default it boots and refuses every reviewer. Set all six.
 
+**Gate E check (must pass before Gate F, run from the directory holding the `.env`):**
+
+```
+python -m backend.security.oidc_preflight --expected-project-ref tuaeujvuuanadqvykugw
+```
+
+This is the gate that a syntactically valid configuration cannot pass by looking valid.
+It fetches the provider's real published key set and answers three questions the boot
+validator cannot: does the issuer host belong to *this* Supabase project (a real,
+working project that is not the one under review would verify tokens for different
+people), is the issuer on that provider's auth path, and can the published keys actually
+verify a token under the configured algorithm.
+
+Exit codes: `0` every check passed; `1` a check failed; `2` the configuration is
+consistent but something could not be verified (typically `probe_token`, because no real
+reviewer token was supplied). `2` does not authorise the release on its own — pair it
+with Gate H's real signed-in request.
+
+Measured on 2026-10-28 against this project's live endpoints, from the candidate
+interpreter:
+
+| configured algorithm | result |
+| --- | --- |
+| `ES256` (the value above) | all checks PASS; one usable key `ab0ac6ae-93be-441c-9196-7b2fade15af0` (`EC/ES256`); `probe_token` BLOCKED, no real token — exit `2` |
+| `RS256` (the shipped default) | `usable_keys` FAIL: "no published key is usable under RS256; the provider publishes EC/ES256" — exit `1` |
+
+A mistyped project ref is caught the same way: `tueaeujvuuanadqvykugw` (one extra letter)
+returned `project_identity FAIL: issuer is project 'tuaeujvuuanadqvykugw' but the release
+expects 'tueaeujvuuanadqvykugw'`, exit `1`.
+
+**Abort condition:** any exit `1` at this gate stops the release. Do not proceed on the
+reasoning that the values "look right"; fix the endpoint or the algorithm, then re-run.
+The report names key identifiers and algorithms only — never key material, and never a
+token. If a real token is used for `probe_token`, pass it as a file
+(`--token-file`), never as a command-line argument.
+
 ## 6. Gate F — deploy the candidate
 
 1. Point the compose services at the tested tag (the compose file currently pins
