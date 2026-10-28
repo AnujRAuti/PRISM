@@ -1,0 +1,7 @@
+[09:08:56] production + development defaults only: rc=1 stayed_up=False refused=True met=True
+[09:08:59] production + compliant jwt_secret, auth_mode left development: rc=1 stayed_up=False refused=True met=True
+[09:09:02] production + enforcing auth, dev tokens still enabled: rc=1 stayed_up=False refused=True met=True
+[09:09:05] production + enforcing, dev tokens off, wildcard CORS: rc=1 stayed_up=False refused=True met=True
+[09:09:07] production + too-short hand-set jwt_secret: rc=1 stayed_up=False refused=True met=True
+[09:10:00] production + every safeguard satisfied (positive control): rc=-1 stayed_up=True refused=False met=True
+[09:10:00] ledger posture runtime-update=error runtime-delete=error runtime-truncate=error owner-update-on-suite=ok owner-truncate-on-suite=ok acceptance_ledger_preserved=True

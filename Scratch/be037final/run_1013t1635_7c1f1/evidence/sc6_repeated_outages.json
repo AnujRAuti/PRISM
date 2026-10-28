@@ -1,0 +1,142 @@
+{
+  "again_lines": [
+    [
+      168.35899999999674,
+      "INFO:__main__:redis reachable again after 8 backoff(s)"
+    ]
+  ],
+  "completed_log_entry": [
+    168.34399999998277,
+    "INFO:__main__:analysis job completed job_id=04c62e7d-5d6f-4187-9bb2-3b119a02daf4"
+  ],
+  "configured_base_s": 4.0,
+  "configured_max_s": 20.0,
+  "cycles": [
+    {
+      "alive": true,
+      "cycle": 1,
+      "warnings_during_cycle": 3
+    },
+    {
+      "alive": true,
+      "cycle": 2,
+      "warnings_during_cycle": 4
+    },
+    {
+      "alive": true,
+      "cycle": 3,
+      "warnings_during_cycle": 6
+    },
+    {
+      "alive": true,
+      "cycle": 4,
+      "warnings_during_cycle": 8
+    }
+  ],
+  "fixture": {
+    "bytes": 68145,
+    "evidence_id": "e1084901-98de-4c06-b3da-0f550841751c",
+    "job_id": "04c62e7d-5d6f-4187-9bb2-3b119a02daf4",
+    "storage_key": "quarantine/e1084901-98de-4c06-b3da-0f550841751c/original"
+  },
+  "job_states": {
+    "04c62e7d-5d6f-4187-9bb2-3b119a02daf4": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    }
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 0
+  },
+  "max_stated_delay_s": 17.5,
+  "measured_inter_warning_intervals_s": [
+    4.29,
+    7.29,
+    14.25,
+    25.92,
+    13.04,
+    12.65,
+    13.6
+  ],
+  "scenario": "S6 repeated outages",
+  "stated_consecutive_failures": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "stated_delays_s": [
+    2.2,
+    5.2,
+    11.6,
+    17.5,
+    11.0,
+    12.0,
+    11.6,
+    14.6
+  ],
+  "total_warnings": 8,
+  "worker_ever_exited": false,
+  "worker_final": {
+    "again_lines": [
+      {
+        "arrival_s": 168.36,
+        "message": "INFO:__main__:redis reachable again after 8 backoff(s)"
+      }
+    ],
+    "alive_at_measurement": true,
+    "backoff_warnings": [
+      {
+        "arrival_s": 3.22,
+        "stated_consecutive_failures": 1,
+        "stated_delay_s": 2.2
+      },
+      {
+        "arrival_s": 7.51,
+        "stated_consecutive_failures": 2,
+        "stated_delay_s": 5.2
+      },
+      {
+        "arrival_s": 14.8,
+        "stated_consecutive_failures": 3,
+        "stated_delay_s": 11.6
+      },
+      {
+        "arrival_s": 29.05,
+        "stated_consecutive_failures": 4,
+        "stated_delay_s": 17.5
+      },
+      {
+        "arrival_s": 54.97,
+        "stated_consecutive_failures": 5,
+        "stated_delay_s": 11.0
+      },
+      {
+        "arrival_s": 68.01,
+        "stated_consecutive_failures": 6,
+        "stated_delay_s": 12.0
+      },
+      {
+        "arrival_s": 80.66,
+        "stated_consecutive_failures": 7,
+        "stated_delay_s": 11.6
+      },
+      {
+        "arrival_s": 94.26,
+        "stated_consecutive_failures": 8,
+        "stated_delay_s": 14.6
+      }
+    ],
+    "exit_code": null,
+    "log_lines": 12,
+    "pid": 29736,
+    "recovery_lines": []
+  }
+}

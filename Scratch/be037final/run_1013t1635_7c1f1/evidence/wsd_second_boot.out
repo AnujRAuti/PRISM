@@ -1,0 +1,2 @@
+[21:08:14] started be037fin7c1f1_db2, waiting for readiness
+[21:11:06] wrote wsd_second_boot.json: gate_rc=0 alembic_check_clean_rc=0

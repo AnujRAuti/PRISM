@@ -1,0 +1,87 @@
+{
+  "completed_log_entry": [
+    109.45400000002701,
+    "INFO:__main__:analysis job completed job_id=0c820e28-5e3d-405d-abac-698fe860db78"
+  ],
+  "configured": {
+    "base_s": 4.0,
+    "block_s": 3,
+    "max_s": 20.0,
+    "socket_timeout_s": 8.0
+  },
+  "fixture": {
+    "bytes": 68238,
+    "evidence_id": "828b1fd6-95d5-46d3-b5ce-53e9722d190d",
+    "job_id": "0c820e28-5e3d-405d-abac-698fe860db78",
+    "storage_key": "quarantine/828b1fd6-95d5-46d3-b5ce-53e9722d190d/original"
+  },
+  "harness_ping_during_outage": false,
+  "job_states": {
+    "0c820e28-5e3d-405d-abac-698fe860db78": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    }
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 0
+  },
+  "scenario": "S1 unavailable-before-startup",
+  "worker_during_outage": {
+    "again_lines": [],
+    "alive_at_measurement": true,
+    "backoff_warnings": [
+      {
+        "arrival_s": 8.62,
+        "stated_consecutive_failures": 1,
+        "stated_delay_s": 3.9
+      },
+      {
+        "arrival_s": 14.59,
+        "stated_consecutive_failures": 2,
+        "stated_delay_s": 5.5
+      },
+      {
+        "arrival_s": 22.09,
+        "stated_consecutive_failures": 3,
+        "stated_delay_s": 14.0
+      }
+    ],
+    "exit_code": null,
+    "log_lines": 4,
+    "pid": 11716,
+    "recovery_lines": []
+  },
+  "worker_final": {
+    "again_lines": [
+      {
+        "arrival_s": 109.45,
+        "message": "INFO:__main__:redis reachable again after 3 backoff(s)"
+      }
+    ],
+    "alive_at_measurement": true,
+    "backoff_warnings": [
+      {
+        "arrival_s": 8.62,
+        "stated_consecutive_failures": 1,
+        "stated_delay_s": 3.9
+      },
+      {
+        "arrival_s": 14.59,
+        "stated_consecutive_failures": 2,
+        "stated_delay_s": 5.5
+      },
+      {
+        "arrival_s": 22.09,
+        "stated_consecutive_failures": 3,
+        "stated_delay_s": 14.0
+      }
+    ],
+    "exit_code": null,
+    "log_lines": 7,
+    "pid": 11716,
+    "recovery_lines": []
+  }
+}

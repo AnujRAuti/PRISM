@@ -1,0 +1,32 @@
+=== G-E1 policy identity + version + activation ===
+PASS  G-E1 retention policy created  | HTTP 201 {"id": "64a8c428-200b-4a26-93d9-a2eac385cc6e", "resource_type": "EVIDENCE", "scope_type": "GLOBAL"}
+PASS  G-E1 policy version created  | HTTP 201 {"id": "1b399ee8-04a9-40b3-9f47-481c747a9853", "policy_id": "64a8c428-200b-4a26-93d9-a2eac385cc6e", "version": 1, "rules": {"anchor": "INGESTED_AT", "retention_
+PASS  G-E1 policy version activated  | HTTP 200 {"id": "1b399ee8-04a9-40b3-9f47-481c747a9853", "policy_id": "64a8c428-200b-4a26-93d9-a2eac385cc6e", "version": 1, "rules": {"anchor": "INGESTED_AT", "retention_
+
+=== G-E2 dry-run evaluation now sees an applicable policy for an aged resource ===
+PASS  G-E2 evaluate returns 200 with the policy attached  | HTTP 200 {"eligible": false, "archive_eligible": true, "deletion_eligible": false, "state": "ELIGIBLE_FOR_ARCHIVE", "anchor": "INGESTED_AT", "anchor_timestamp": "2026-10-03T08:12:50.076996+00:00", "expiry_timestamp": "2026-11-02T
+PASS  G-E2 aged evidence is archive_eligible under the activated policy  | archive_eligible=True blocking=["RETENTION_PERIOD_NOT_REACHED", "ACTIVE_DEPENDENCY"]
+
+=== G-E3 FIELD_OFFICER must not be able to archive (permission boundary) ===
+PASS  G-E3 archive denied for FIELD_OFFICER  | HTTP 403 {"detail": "Forbidden"}
+
+=== G-E4 archive action through the authenticated administrator path ===
+PASS  G-E4 archive accepted  | HTTP 200 {"result": "ARCHIVED", "operation_id": "670b8428-bb3e-4cbe-9cdd-6313a249bb6b", "storage_key": "archive/988d9235-c13a-47c9-805c-6b2869b059eb/original", "evaluation": {"eligible": false, "archive_eligible": true, "deletion_eligible": false, "state": "ELIGIBLE_FO
+
+=== G-E5 re-evaluate + resource detail reflect the archived state ===
+   OBSERVE post-archive evaluation -> HTTP 200 {"eligible": false, "archive_eligible": true, "deletion_eligible": false, "state": "ELIGIBLE_FOR_ARCHIVE", "anchor": "INGESTED_AT", "anchor_timestamp": "2026-10-03T08:12:50.076996+00:00", "expiry_timestamp": "2026-11-02T
+PASS  G-E5 retention resource detail readable after archive  | HTTP 200 {"resource_type": "EVIDENCE", "resource_id": "988d9235-c13a-47c9-805c-6b2869b059eb", "persisted_state": "ARCHIVED", "evaluation": {"eligible": false, "archive_eligible": true, "deletion_eligible": false, "state": "ELIGIB
+PASS  G-E5 an ARCHIVE operation row was recorded  | HTTP 200 operations=1 ["ARCHIVE"]
+
+=== ARTIFACTS ===
+{
+  "policy_id": "64a8c428-200b-4a26-93d9-a2eac385cc6e",
+  "version_id": "1b399ee8-04a9-40b3-9f47-481c747a9853",
+  "archive_response": {
+    "result": "ARCHIVED",
+    "operation_id": "670b8428-bb3e-4cbe-9cdd-6313a249bb6b",
+    "storage_key": "archive/988d9235-c13a-47c9-805c-6b2869b059eb/original"
+  }
+}
+
+G_RESULT_E: total=9 pass=9 fail=0

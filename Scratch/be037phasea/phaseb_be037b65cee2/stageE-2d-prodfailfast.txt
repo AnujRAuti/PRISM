@@ -1,0 +1,8 @@
+=== E2d production-mode configuration fail-fast (image poa-backend:be037a, --network none) ===
+expected: unsafe combinations exit non-zero with a refusal; the all-safe control exits 0
+CASE[prod + JWT_SECRET=changeme] exit=1 | REFUSED ValidationError 1 validation error for Settings   Value error, jwt_secret is unsafe for production: set a distinct secret of at least 32 characters (the dev
+CASE[prod + blank JWT_SECRET] exit=1 | REFUSED ValidationError 1 validation error for Settings   Value error, jwt_secret is unsafe for production: set a distinct secret of at least 32 characters (the dev
+CASE[prod + wildcard CORS] exit=1 | REFUSED ValidationError 1 validation error for Settings   Value error, cors_allow_origins must be an explicit origin allowlist in production; the wildcard '*' is un
+CASE[prod + AUTH_MODE=development] exit=1 | REFUSED ValidationError 1 validation error for Settings   Value error, auth_mode must be 'enforcing' in production (got 'development'); the development mode accepts
+CASE[prod + AUTH_DEV_TOKENS_ENABLED=true] exit=1 | REFUSED ValidationError 1 validation error for Settings   Value error, auth_dev_tokens_enabled must be false in production: the development tokens are non-secret id
+CASE[prod + all-safe control] exit=0 | ACCEPTED

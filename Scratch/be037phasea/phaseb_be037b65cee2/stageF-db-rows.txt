@@ -1,0 +1,19 @@
+=== F-DB: evidence rows vs quarantine objects (owner role, read-only queries inside the disposable db container) ===
+ evidence_rows 
+---------------
+             4
+(1 row)
+
+                  id                  |       status        | content_type | file_size |                       storage_key                        
+--------------------------------------+---------------------+--------------+-----------+----------------------------------------------------------
+ 7eb6c37c-d388-4c7a-9876-187579fa20ab | uploaded_quarantine | image/png    |      1538 | quarantine/7eb6c37c-d388-4c7a-9876-187579fa20ab/original
+ b0105ec8-d82a-45a4-b3b3-b147d703f55d | uploaded_quarantine | image/png    |      1351 | quarantine/b0105ec8-d82a-45a4-b3b3-b147d703f55d/original
+ 15ffd949-20c3-40a5-8c85-0fb232727568 | uploaded_quarantine | image/png    |      1526 | quarantine/15ffd949-20c3-40a5-8c85-0fb232727568/original
+ 9e22a42a-0cc3-4853-8255-4a3eff44bba0 | uploaded_quarantine | image/png    |      1534 | quarantine/9e22a42a-0cc3-4853-8255-4a3eff44bba0/original
+(4 rows)
+
+ rows_without_object_prefix 
+----------------------------
+                          0
+(1 row)
+

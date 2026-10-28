@@ -1,0 +1,4 @@
+G15a API presigned-download endpoint for a MISSING object -> HTTP 200 {"evidence_id": "39b1fbb2-0d80-4305-87b4-abb6d001cbae", "download_url": "http://minio:9000/be037b65cee2-quarantine/quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original?X-Amz-Algorithm=AWS4-HMAC-SH
+OBSERVATION: API issued a presigned URL even though the object is gone (no existence check)
+presigned target: http://minio:9000/be037b65cee2-quarantine/quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original
+G15b following presigned URL -> HTTP 404 b'<?xml version="1.0" encoding="UTF-8"?>\n<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><Key>quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original</Key><BucketName>be037b65cee2-quaranti'

@@ -1,0 +1,19 @@
+[08:29:25] suite db ready alembic=[('t0u1v2w3x030',)] tables=75
+[08:29:25] unit_all: python -m pytest tests/unit -q -p no:cacheprovider
+[08:30:24] unit_all: rc=0 59.0s {'passed': 540, 'skipped': 1, 'warning': 6}
+[08:30:24] integration_all: python -m pytest tests/integration -q -rs -p no:cacheprovider
+[08:44:28] integration_all: rc=0 844.2s {'passed': 390, 'warning': 10}
+[08:44:28] authorization: python -m pytest tests/unit/test_authorization.py tests/integration/test_authorization.py -q
+[08:45:17] authorization: rc=0 48.5s {'passed': 34, 'warning': 6}
+[08:45:17] worker: python -m pytest tests/unit/test_be037a_analysis_worker_shutdown.py tests/unit/test_be037c_analysis_queue_timeouts.py tests/unit/test_be037i1_analysis_worker_redis_outage.py tests/unit/test_be037g5_reprocessing_hook.py tests/integration/test_be036_webhook_worker.py tests/integration/test_be037c_redis_timeout_integration.py tests/integration/test_analysis_jobs.py -q
+[08:46:39] worker: rc=0 81.7s {'passed': 68, 'warning': 6}
+[08:46:39] storage: python -m pytest tests/integration/test_storage.py -q -rs
+[08:46:47] storage: rc=0 8.2s {'passed': 7, 'warning': 1}
+[08:46:47] migration: python -m pytest tests/unit/test_migrations.py tests/integration/test_migration_and_crud.py -q
+[08:46:56] migration: rc=0 9.0s {'passed': 10, 'warning': 1}
+[08:46:56] schema_drift: python -m pytest tests/integration/test_schema_drift_gate.py -q
+[08:47:12] schema_drift: rc=0 16.5s {'passed': 6, 'warning': 1}
+[08:47:12] be037_final: python -m pytest tests/unit/test_be037_webhook_redirect_ssrf.py tests/integration/test_be037g1_analysis_auth.py tests/integration/test_be037e2_ledger_identity_matrix.py tests/integration/test_be029_database_safety_guard.py -q
+[08:48:15] be037_final: rc=0 62.2s {'passed': 63, 'warning': 7}
+[08:48:15] full_suite: python -m pytest tests -q -rs -p no:cacheprovider
+[08:58:15] full_suite: rc=0 600.2s {'passed': 930, 'skipped': 1, 'warning': 10}

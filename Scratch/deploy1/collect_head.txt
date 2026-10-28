@@ -1,0 +1,111 @@
+tests/integration/test_analysis_jobs.py: 11
+tests/integration/test_audit_ledger.py: 10
+tests/integration/test_authorization.py: 17
+tests/integration/test_be007_contracts.py: 3
+tests/integration/test_be008_temporal.py: 11
+tests/integration/test_be025_admin_control_plane.py: 17
+tests/integration/test_be026_field_operations.py: 43
+tests/integration/test_be027_foundation_contract.py: 17
+tests/integration/test_be029_audit_ledger_history.py: 4
+tests/integration/test_be029_database_safety_guard.py: 19
+tests/integration/test_be029_identity_conflict_api.py: 17
+tests/integration/test_be029_identity_contract.py: 15
+tests/integration/test_be030_ledger_enforcement.py: 7
+tests/integration/test_be032r_anchored_verification.py: 8
+tests/integration/test_be036_webhook_worker.py: 12
+tests/integration/test_be037c_redis_timeout_integration.py: 5
+tests/integration/test_be037e2_ledger_identity_matrix.py: 7
+tests/integration/test_be037g1_analysis_auth.py: 13
+tests/integration/test_clip_embedding.py: 1
+tests/integration/test_duplicate_intelligence.py: 3
+tests/integration/test_evidence_graph.py: 10
+tests/integration/test_evidence_request.py: 9
+tests/integration/test_evidence_upload.py: 10
+tests/integration/test_explainability.py: 7
+tests/integration/test_fingerprinting.py: 4
+tests/integration/test_fusion.py: 10
+tests/integration/test_governance.py: 14
+tests/integration/test_migration_and_crud.py: 2
+tests/integration/test_publication.py: 44
+tests/integration/test_retention.py: 10
+tests/integration/test_review_case.py: 9
+tests/integration/test_schema_drift_gate.py: 6
+tests/integration/test_stage02_actor_attribution.py: 6
+tests/integration/test_stage02_context_route_authz.py: 5
+tests/integration/test_stage02_metrics_authz.py: 4
+tests/integration/test_stage02_reviewer_identity.py: 12
+tests/integration/test_storage.py: 7
+tests/integration/test_vision_intelligence.py: 8
+tests/unit/observability/test_health.py: 16
+tests/unit/observability/test_logging.py: 11
+tests/unit/observability/test_redaction.py: 8
+tests/unit/test_actor_attribution.py: 6
+tests/unit/test_audit_guard.py: 25
+tests/unit/test_audit_integrity_baseline.py: 15
+tests/unit/test_audit_ledger.py: 10
+tests/unit/test_authorization.py: 17
+tests/unit/test_be030_ledger_contract.py: 5
+tests/unit/test_be037_webhook_redirect_ssrf.py: 24
+tests/unit/test_be037a_analysis_worker_shutdown.py: 7
+tests/unit/test_be037c_analysis_queue_timeouts.py: 6
+tests/unit/test_be037g5_reprocessing_hook.py: 9
+tests/unit/test_be037i1_analysis_worker_redis_outage.py: 21
+tests/unit/test_configuration_and_logging.py: 16
+tests/unit/test_database_safety.py: 20
+tests/unit/test_evidence_graph.py: 21
+tests/unit/test_evidence_request.py: 10
+tests/unit/test_explainability.py: 14
+tests/unit/test_field_operations.py: 67
+tests/unit/test_fusion.py: 12
+tests/unit/test_governance.py: 44
+tests/unit/test_health.py: 3
+tests/unit/test_integration.py: 19
+tests/unit/test_migrations.py: 8
+tests/unit/test_notification.py: 7
+tests/unit/test_preflight.py: 24
+tests/unit/test_publication.py: 60
+tests/unit/test_retention.py: 10
+tests/unit/test_review_case.py: 10
+tests/unit/test_stage02_log_redaction.py: 13
+tests/unit/test_stage02_oidc_verification.py: 27
+tests/unit/test_test_target.py: 9
+tests/unit/test_vision.py: 16
+
+============================== warnings summary ===============================
+backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+backend\app\main.py:125
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:125: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+backend\app\main.py:139
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:139: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

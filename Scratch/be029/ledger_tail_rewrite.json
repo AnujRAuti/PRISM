@@ -1,0 +1,64 @@
+{
+  "database": "pofa_be029_scratch",
+  "before": {
+    "rows": 7264,
+    "max_sequence": 7300,
+    "tail_segment": {
+      "valid": true,
+      "checked": null,
+      "failures": [],
+      "failure_count": 0
+    }
+  },
+  "victim": {
+    "sequence": 7301,
+    "stored_event_hash_prefix": "f8745e8534564114"
+  },
+  "honest_append": {
+    "sequence": 7302,
+    "previous_hash": "f8745e8534564114",
+    "equals_the_stale_stored_hash": true
+  },
+  "verify_victim_only": {
+    "valid": false,
+    "checked": null,
+    "failures": [
+      "event_hash mismatch at sequence 7301"
+    ],
+    "failure_count": 1
+  },
+  "verify_victim_through_honest": {
+    "valid": false,
+    "checked": null,
+    "failures": [
+      "event_hash mismatch at sequence 7301"
+    ],
+    "failure_count": 1
+  },
+  "verify_honest_only": {
+    "valid": true,
+    "checked": null,
+    "failures": [],
+    "failure_count": 0
+  },
+  "gap": {
+    "deleted_sequence": 7301,
+    "deleted_id": "143583d6-dae9-4cde-97ff-452391b26fc0",
+    "next_append_sequence": 7303,
+    "writer_refused": false,
+    "note": "The DELETE above is committed against a throwaway clone only. tests/audit_guard.py forbids this spelling in the repository test tree with no rollback exception, which is why the property is measured here instead of shipped as a test (BE-029 results \u00a714.8)."
+  },
+  "verify_recent_window_after_damage": {
+    "valid": false,
+    "checked": null,
+    "failures": [
+      "missing predecessor for sequence 7302"
+    ],
+    "failure_count": 1
+  },
+  "after": {
+    "rows": 7266,
+    "max_sequence": 7303
+  },
+  "span_gap_now": 1
+}

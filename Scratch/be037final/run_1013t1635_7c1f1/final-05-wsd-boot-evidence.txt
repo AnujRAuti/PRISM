@@ -1,0 +1,20 @@
+=== WS-D bootstrap evidence: repo-mounted init vs image vendor init (2026-10-13T17:00:57Z) ===
+--- databases in the disposable cluster (template1 stays the clean template) ---
+be037fin7c1f1_app
+postgres
+--- app database: extensions after first boot with the repo's mounted init ---
+plpgsql 1.0
+postgis 3.4.2
+vector 0.7.4
+--- app database: public table count and any demo table ---
+3
+0
+--- boot-time scripts actually executed by the entrypoint (log lines) ---
+creating subdirectories ... ok
+creating configuration files ... ok
+running bootstrap script ... ok
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+/usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/init.sql
+--- mounted init dir contents (proves which script the entrypoint saw) ---
+ls: cannot access 'C:/Program Files/Git/docker-entrypoint-initdb.d/': No such file or directory

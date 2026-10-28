@@ -1,0 +1,29 @@
+{
+ "target": "pofa_be030_trunc",
+ "enforcement_present_at_start": {
+  "triggers": 1,
+  "rows": 38385,
+  "max_sequence": 38386
+ },
+ "truncate": {
+  "outcome": "executed",
+  "note": "the BEFORE ROW trigger never fires: TRUNCATE is not a row-level operation"
+ },
+ "after_truncate": {
+  "rows": 0,
+  "max_sequence": 0,
+  "trigger_survived": true
+ },
+ "chain_after_rebuild": {
+  "valid": true,
+  "checked": 3,
+  "first_sequence": 1,
+  "last_sequence": 3,
+  "meaning": "total-loss tamper followed by a fresh chain is reported as intact: link verification cannot distinguish a rebuilt history from a continuous one without an external checkpoint"
+ },
+ "privileges": {
+  "role": "postgres",
+  "table_owner": "postgres",
+  "truncate_priv": true
+ }
+}

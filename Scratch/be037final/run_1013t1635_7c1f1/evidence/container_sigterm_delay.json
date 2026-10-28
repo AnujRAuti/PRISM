@@ -1,0 +1,34 @@
+{
+  "case": "SIGTERM during a retry backoff wait",
+  "configured": {
+    "backoff_base_s": 40,
+    "backoff_max_s": 60,
+    "shutdown_poll_s": 0.5,
+    "redis_url": "redis://redis:6399/0 (closed port)"
+  },
+  "first_backoff_warning": [
+    4.17,
+    "WARNING:__main__:redis unavailable; backing off 35.6s (consecutive failures 1)"
+  ],
+  "stated_delay_s": 35.6,
+  "approx_remaining_sleep_s": [
+    15.8,
+    33.6
+  ],
+  "stop": {
+    "docker_stop_rc": 0,
+    "stop_command_wall_s": 1.25,
+    "state": "exited",
+    "exit_code": "0",
+    "oom_killed": "false",
+    "restart_count": "0",
+    "stopped_at": "2026-10-14T15:49:41.471270117Z"
+  },
+  "logs": [
+    "",
+    "INFO:__main__:analysis worker started",
+    "WARNING:__main__:redis unavailable; backing off 35.6s (consecutive failures 1)",
+    "INFO:__main__:analysis worker stopping; releasing queue and database resources",
+    "INFO:__main__:analysis worker stopped"
+  ]
+}

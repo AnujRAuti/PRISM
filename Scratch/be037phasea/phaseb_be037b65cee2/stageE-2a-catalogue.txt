@@ -1,0 +1,4 @@
+identity= [('be037b_app', 'be037b_rt')]
+roles_before= 0 permissions_before= 0
+roles_after= 6 permissions_after= 69 role_permissions= 131
+sample_roles= ['ADMINISTRATOR', 'API_CLIENT', 'CITIZEN', 'FIELD_OFFICER', 'REVIEWER', 'SUPERVISOR']

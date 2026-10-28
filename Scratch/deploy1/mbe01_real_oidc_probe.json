@@ -1,0 +1,82 @@
+[
+  {
+    "check": "discovery issuer is byte-identical to AUTH_OIDC_ISSUER",
+    "passed": true,
+    "detail": "https://tuaeujvuuanadqvykugw.supabase.co/auth/v1"
+  },
+  {
+    "check": "discovery jwks_uri is byte-identical to AUTH_OIDC_JWKS_URI",
+    "passed": true,
+    "detail": "https://tuaeujvuuanadqvykugw.supabase.co/auth/v1/.well-known/jwks.json"
+  },
+  {
+    "check": "the project publishes exactly one signing key",
+    "passed": true,
+    "detail": "[{\"kty\": \"EC\", \"crv\": \"P-256\", \"alg\": \"ES256\", \"use\": \"sig\", \"kid\": \"ab0ac6ae-93be-441c-9196-7b2fade15af0\"}]"
+  },
+  {
+    "check": "AUTH_OIDC_ALGORITHMS=ES256 matches the published key's algorithm",
+    "passed": true,
+    "detail": "alg=ES256 crv=P-256"
+  },
+  {
+    "check": "the verifier indexes the live kid under the configured algorithm",
+    "passed": true,
+    "detail": "indexed=['ab0ac6ae-93be-441c-9196-7b2fade15af0']"
+  },
+  {
+    "check": "no symmetric entry is published, so the retained HS256 key is unusable here",
+    "passed": true,
+    "detail": "kty=['EC']"
+  },
+  {
+    "check": "a token signed with the real kid but the wrong key is refused",
+    "passed": true,
+    "detail": "reason=TOKEN_REJECTED"
+  },
+  {
+    "check": "a token whose kid is not in the key set is refused",
+    "passed": true,
+    "detail": "reason=UNKNOWN_KEY_ID"
+  },
+  {
+    "check": "an unknown kid refetches the key set at most once per cooldown window",
+    "passed": true,
+    "detail": "extra fetches=0"
+  },
+  {
+    "check": "a correctly signed token from this key set is accepted, with its claims returned",
+    "passed": true,
+    "detail": "sub returned=00000000\u2026"
+  },
+  {
+    "check": "wrong issuer is refused",
+    "passed": true,
+    "detail": "reason=TOKEN_REJECTED expected=TOKEN_REJECTED"
+  },
+  {
+    "check": "wrong audience is refused",
+    "passed": true,
+    "detail": "reason=TOKEN_REJECTED expected=TOKEN_REJECTED"
+  },
+  {
+    "check": "an expired token is refused",
+    "passed": true,
+    "detail": "reason=TOKEN_REJECTED expected=TOKEN_REJECTED"
+  },
+  {
+    "check": "a token with no exp is refused",
+    "passed": true,
+    "detail": "reason=TOKEN_REJECTED expected=TOKEN_REJECTED"
+  },
+  {
+    "check": "a refresh token presented as an access token is refused",
+    "passed": true,
+    "detail": "reason=REFRESH_TOKEN expected=REFRESH_TOKEN"
+  },
+  {
+    "check": "an HS256 token is refused by algorithm, before any key lookup",
+    "passed": true,
+    "detail": "reason=ALGORITHM_REFUSED expected=ALGORITHM_REFUSED"
+  }
+]

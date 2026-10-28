@@ -1,0 +1,77 @@
+{
+  "ack_outage_warnings": [
+    [
+      88.06300000002375,
+      "WARNING:__main__:redis unavailable; backing off 3.9s (consecutive failures 1)"
+    ]
+  ],
+  "again_log_entry": [
+    95.14100000000326,
+    "INFO:__main__:redis reachable again after 1 backoff(s)"
+  ],
+  "completion_lines": [
+    [
+      95.14100000000326,
+      "INFO:__main__:analysis job completed job_id=d3869597-e051-4ebd-9eb3-1e93feefb352"
+    ]
+  ],
+  "configured_socket_timeout_s": 8.0,
+  "contents_after": {
+    "main": [],
+    "processing": []
+  },
+  "db_committed_while_frozen_at_worker_clock_s": 74.06,
+  "final_lists": {
+    "main": 0,
+    "processing": 0
+  },
+  "fixture": {
+    "bytes": 68233,
+    "evidence_id": "e04f908c-0b49-4f3e-b156-125c091b467f",
+    "job_id": "d3869597-e051-4ebd-9eb3-1e93feefb352",
+    "storage_key": "quarantine/e04f908c-0b49-4f3e-b156-125c091b467f/original"
+  },
+  "frozen_at_worker_clock_s": 8.954000000027008,
+  "held_frozen_past_commit_s": 20,
+  "job_running_at_worker_clock_s": 8.95,
+  "job_state_after": {
+    "attempt_count": 2,
+    "error": null,
+    "result_rows": 1,
+    "status": "completed"
+  },
+  "recovery_lines": [
+    [
+      94.25,
+      "INFO:__main__:analysis worker recovered 1 abandoned job(s)"
+    ]
+  ],
+  "scenario": "S3 stall without a clean disconnect, across the acknowledgement",
+  "thaw_at_worker_clock_s": 94.06300000002375,
+  "worker_alive_while_frozen": true,
+  "worker_final": {
+    "again_lines": [
+      {
+        "arrival_s": 95.14,
+        "message": "INFO:__main__:redis reachable again after 1 backoff(s)"
+      }
+    ],
+    "alive_at_measurement": true,
+    "backoff_warnings": [
+      {
+        "arrival_s": 88.06,
+        "stated_consecutive_failures": 1,
+        "stated_delay_s": 3.9
+      }
+    ],
+    "exit_code": null,
+    "log_lines": 6,
+    "pid": 6900,
+    "recovery_lines": [
+      {
+        "arrival_s": 94.25,
+        "message": "INFO:__main__:analysis worker recovered 1 abandoned job(s)"
+      }
+    ]
+  }
+}

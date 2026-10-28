@@ -1,0 +1,13 @@
+=== WS-D: provenance probe of the postgres image (no container is started; docker create + docker cp only) ===
+utc=2026-10-13T16:46:13Z
+--- create (never started) ---
+e7fc030e0f066ae97056a2e7d89b709962ce8a90387d749eca896bd5e7c78ab6
+--- /docker-entrypoint-initdb.d listing ---
+total 8
+drwxr-xr-x 1 Asura Tempest 197121    0 Jul 25  2025 .
+drwxr-xr-x 1 Asura Tempest 197121    0 Oct 13 22:16 ..
+-rw-r--r-- 1 Asura Tempest 197121 2647 Jul 25  2025 init.sql
+--- any exemplo_dados / tiger references inside those files ---
+/d/CODING/Scratch/be037final/run_1013t1635_7c1f1/img-initdb/init.sql
+--- remove the never-started probe container ---
+be037final7c1f1_imgprobe

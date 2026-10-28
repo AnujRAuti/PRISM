@@ -1,0 +1,137 @@
+{
+  "captured_at": "2026-10-14T22:17:45+0530",
+  "intended": {
+    "compose_project": "be037wf7e3",
+    "containers": [
+      "be037wf7e3_db",
+      "be037wf7e3_redis",
+      "be037wf7e3_minio"
+    ],
+    "app_containers": [
+      "be037wf7e3_api",
+      "be037wf7e3_worker",
+      "be037wf7e3_wsig_probe"
+    ],
+    "volumes": [
+      "be037wf7e3_db_data",
+      "be037wf7e3_redis_data",
+      "be037wf7e3_minio_data"
+    ],
+    "networks": [
+      "be037wf7e3_net"
+    ],
+    "databases": [
+      "be037wf7e3_app"
+    ],
+    "roles": [
+      "be037wf7e3_runtime",
+      "be037wf7e3_migrator"
+    ],
+    "buckets": [
+      "be037wf7e3-quarantine",
+      "be037wf7e3-evidence"
+    ],
+    "queue_keys": [
+      "be037wf7e3:analysis:jobs",
+      "be037wf7e3:analysis:jobs:processing"
+    ],
+    "host_ports": [
+      15442,
+      16389,
+      19010,
+      19011,
+      18080
+    ]
+  },
+  "pre_existence": {
+    "containers": {
+      "be037wf7e3_db": false,
+      "be037wf7e3_redis": false,
+      "be037wf7e3_minio": false,
+      "be037wf7e3_api": false,
+      "be037wf7e3_worker": false,
+      "be037wf7e3_wsig_probe": false
+    },
+    "volumes": {
+      "be037wf7e3_db_data": false,
+      "be037wf7e3_redis_data": false,
+      "be037wf7e3_minio_data": false
+    },
+    "networks": {
+      "be037wf7e3_net": false
+    }
+  },
+  "all_names_free": true,
+  "host_ports_free": {
+    "15442": true,
+    "16389": true,
+    "19010": true,
+    "19011": true,
+    "18080": true
+  },
+  "all_ports_free": true,
+  "protected_baseline": {
+    "pofa_db": {
+      "exists": true,
+      "id": "7949c99808161e138c35489a9d34928b873cfcd4cead9eb0f00fb37261033baf",
+      "id_short": "7949c9980816",
+      "created": "2026-09-18T18:09:18.006806062Z",
+      "state": "running",
+      "restart_count": "0",
+      "image": "garapadev/postgres-postgis-pgvector:15-stable",
+      "compose_project": "proof-of-action-final"
+    },
+    "pofa_redis": {
+      "exists": true,
+      "id": "29b684e82d7c9b2818fc1a3d0f48415ab78f923ec7e063150208d275bd767af5",
+      "id_short": "29b684e82d7c",
+      "created": "2026-09-13T16:58:41.514014662Z",
+      "state": "running",
+      "restart_count": "0",
+      "image": "redis:7-alpine",
+      "compose_project": "proof-of-action-final"
+    },
+    "pofa_minio": {
+      "exists": true,
+      "id": "54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd",
+      "id_short": "54fce2fccd46",
+      "created": "2026-09-13T13:33:00.828947067Z",
+      "state": "running",
+      "restart_count": "0",
+      "image": "quay.io/minio/minio:latest",
+      "compose_project": "proof-of-action-final"
+    }
+  },
+  "sibling_run_stack": {
+    "be037fin7c1f1_db": {
+      "exists": true,
+      "id": "4a48b1a282564ce3408b772307b1b13a63cdd93b96e12edc20da7cdb2a1fa0b1",
+      "id_short": "4a48b1a28256",
+      "created": "2026-10-13T17:00:36.906590053Z",
+      "state": "running",
+      "restart_count": "0",
+      "image": "garapadev/postgres-postgis-pgvector:15-stable",
+      "compose_project": "be037fin7c1f1"
+    },
+    "be037fin7c1f1_redis": {
+      "exists": true,
+      "id": "54478fdd8ec27440e8fd36ec09547f6c15de7b0598119633455541040e2bc296",
+      "id_short": "54478fdd8ec2",
+      "created": "2026-10-13T17:00:36.90921175Z",
+      "state": "running",
+      "restart_count": "0",
+      "image": "redis:7-alpine",
+      "compose_project": "be037fin7c1f1"
+    },
+    "be037fin7c1f1_minio": {
+      "exists": true,
+      "id": "510d225a29a61569821018f7ca59235217e427caa420c595c233ff24292a6e85",
+      "id_short": "510d225a29a6",
+      "created": "2026-10-13T17:00:36.88621582Z",
+      "state": "running",
+      "restart_count": "0",
+      "image": "quay.io/minio/minio:latest",
+      "compose_project": "be037fin7c1f1"
+    }
+  }
+}

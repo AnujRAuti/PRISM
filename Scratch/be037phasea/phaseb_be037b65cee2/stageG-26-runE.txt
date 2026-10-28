@@ -1,0 +1,35 @@
+=== G-E1 policy identity + version + activation ===
+PASS  G-E1 retention policy created  | HTTP 201 {"id": "30209fc8-cf53-48f4-bc78-2a9040d2efa6", "resource_type": "EVIDENCE", "scope_type": "GLOBAL"}
+FAIL  G-E1 policy version created  | HTTP 422 {"detail": "rules.archive_after_days must precede retention_days"}
+FAIL  G-E1 policy version activated  | HTTP 422 {"detail": [{"type": "uuid_parsing", "loc": ["path", "version_id"], "msg": "Input should be a valid UUID, invalid character: expected an optional prefix of `urn
+
+=== G-E2 dry-run evaluation now sees an applicable policy for an aged resource ===
+PASS  G-E2 evaluate returns 200 with the policy attached  | HTTP 200 {"eligible": false, "archive_eligible": false, "deletion_eligible": false, "state": "ACTIVE", "anchor": null, "anchor_timestamp": null, "expiry_timestamp": null, "policy_id": null, "policy_version": null, "blocking_reaso
+FAIL  G-E2 aged evidence is archive_eligible under the activated policy  | archive_eligible=False blocking=["NO_APPLICABLE_POLICY"]
+
+=== G-E3 FIELD_OFFICER must not be able to archive (permission boundary) ===
+PASS  G-E3 archive denied for FIELD_OFFICER  | HTTP 403 {"detail": "Forbidden"}
+
+=== G-E4 archive action through the authenticated administrator path ===
+FAIL  G-E4 archive accepted  | HTTP 422 {"detail": "Archive not eligible: NO_APPLICABLE_POLICY"}
+
+=== G-E5 re-evaluate + resource detail reflect the archived state ===
+   OBSERVE post-archive evaluation -> HTTP 200 {"eligible": false, "archive_eligible": false, "deletion_eligible": false, "state": "ACTIVE", "anchor": null, "anchor_timestamp": null, "expiry_timestamp": null, "policy_id": null, "policy_version": null, "blocking_reaso
+PASS  G-E5 retention resource detail readable after archive  | HTTP 200 {"resource_type": "EVIDENCE", "resource_id": "988d9235-c13a-47c9-805c-6b2869b059eb", "persisted_state": null, "evaluation": {"eligible": false, "archive_eligible": false, "deletion_eligible": false, "state": "ACTIVE", "a
+FAIL  G-E5 an ARCHIVE operation row was recorded  | HTTP 200 operations=0 []
+
+=== ARTIFACTS ===
+{
+  "policy_id": "30209fc8-cf53-48f4-bc78-2a9040d2efa6",
+  "version_id": null,
+  "archive_response": {
+    "detail": "Archive not eligible: NO_APPLICABLE_POLICY"
+  }
+}
+
+G_RESULT_E: total=9 pass=4 fail=5
+FAILING CHECK: G-E1 policy version created | HTTP 422 {"detail": "rules.archive_after_days must precede retention_days"}
+FAILING CHECK: G-E1 policy version activated | HTTP 422 {"detail": [{"type": "uuid_parsing", "loc": ["path", "version_id"], "msg": "Input should be a valid UUID, invalid character: expected an optional prefix of `urn
+FAILING CHECK: G-E2 aged evidence is archive_eligible under the activated policy | archive_eligible=False blocking=["NO_APPLICABLE_POLICY"]
+FAILING CHECK: G-E4 archive accepted | HTTP 422 {"detail": "Archive not eligible: NO_APPLICABLE_POLICY"}
+FAILING CHECK: G-E5 an ARCHIVE operation row was recorded | HTTP 200 operations=0 []

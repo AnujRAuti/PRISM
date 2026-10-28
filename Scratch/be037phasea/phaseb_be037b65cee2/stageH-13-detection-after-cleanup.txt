@@ -1,0 +1,74 @@
+
+===== STAGE=final: what does the integrated stack report? =====
+--- bounded range over the tail -> HTTP 200
+{
+  "checked_events": 8,
+  "failures": [],
+  "first_sequence": 80,
+  "last_sequence": 87,
+  "valid": true
+}
+--- whole chain -> HTTP 200
+{
+  "checked_events": 87,
+  "failures": [],
+  "first_sequence": 1,
+  "last_sequence": 87,
+  "valid": true
+}
+--- anchored, default (fail-closed) baseline -> HTTP 200
+{
+  "checked_events": 87,
+  "checkpoint": {
+    "max_sequence": 87,
+    "min_sequence": 1,
+    "rows": 87,
+    "tail_event_hash": "e96f2f3287032ccfc23869b5609ee7dca278dc0b18ea1aaa86684f976adf6679",
+    "tail_previous_hash": "7ac9e36ca1a1750ddf44ff6916eef0170e956b267408fea185560681c7a4f2ae"
+  },
+  "classification": {
+    "baseline_name": "none",
+    "baseline_version": 0,
+    "degraded": false,
+    "hard_anomalies": [],
+    "known_historical_gaps": [],
+    "new_gaps": [],
+    "status": "clean"
+  },
+  "failures": [],
+  "first_sequence": 1,
+  "last_sequence": 87,
+  "valid": true,
+  "writer_policy": "controlled_continuation"
+}
+--- anchored, blessed pofa-dev baseline -> HTTP 200
+{
+  "checked_events": 87,
+  "checkpoint": {
+    "max_sequence": 87,
+    "min_sequence": 1,
+    "rows": 87,
+    "tail_event_hash": "e96f2f3287032ccfc23869b5609ee7dca278dc0b18ea1aaa86684f976adf6679",
+    "tail_previous_hash": "7ac9e36ca1a1750ddf44ff6916eef0170e956b267408fea185560681c7a4f2ae"
+  },
+  "classification": {
+    "baseline_name": "pofa-dev-pre-be030-test-cleanup",
+    "baseline_version": 1,
+    "degraded": false,
+    "hard_anomalies": [],
+    "known_historical_gaps": [],
+    "new_gaps": [],
+    "status": "clean"
+  },
+  "failures": [],
+  "first_sequence": 1,
+  "last_sequence": 87,
+  "valid": true,
+  "writer_policy": "controlled_continuation"
+}
+STAGE_final_VALID=True
+STAGE_final_STATUS=clean degraded=False
+STAGE_final_NEW_GAPS=[]
+STAGE_final_KNOWN_GAPS=[]
+STAGE_final_HARD=[]
+STAGE_final_FAILURES=[]

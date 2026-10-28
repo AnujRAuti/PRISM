@@ -1,0 +1,10 @@
+{
+  "image": "poa-backend:mbe01-wt1",
+  "modules_local": 134,
+  "modules_in_image": 134,
+  "identical": 134,
+  "differing": [],
+  "only_in_worktree": [],
+  "only_in_image": [],
+  "verdict_exact": true
+}

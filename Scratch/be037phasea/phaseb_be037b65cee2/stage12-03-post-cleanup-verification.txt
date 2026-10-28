@@ -1,0 +1,210 @@
+=== STAGE 12 / step 4 — protected-resource verification, read-only, AFTER cleanup ===
+utc=2026-10-13T09:15:11Z
+--- live project containers (never touched by Phase B)
+pofa_db	running	Up 3 hours
+pofa_minio	running	Up 3 hours
+pofa_minio_init	exited	Exited (0) 2 weeks ago
+pofa_redis	running	Up 3 hours
+--- inspect
+/pofa_db id=7949c99808161e138c35489a9d34928b873cfcd4cead9eb0f00fb37261033baf state=running restarts=0 started=2026-10-13T06:15:07.152331657Z exit=0
+/pofa_redis id=29b684e82d7c9b2818fc1a3d0f48415ab78f923ec7e063150208d275bd767af5 state=running restarts=0 started=2026-10-13T06:15:07.077129515Z exit=0
+/pofa_minio id=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd state=running restarts=0 started=2026-10-13T06:15:07.080287176Z exit=0
+/pofa_minio_init id=1810626e8683cdeba6ecc7301ae59a24ad791cd33324000fc55a525b2dfdda96 state=exited restarts=0 started=2026-09-25T13:35:25.525328874Z exit=0
+--- live volumes and network (must be unchanged after cleanup)
+proof-of-action-final_db_data
+proof-of-action-final_minio_data
+proof-of-action-final_default
+--- pofa_dev (PROTECTED, read-only)
+alembic=t0u1v2w3x030
+ledger=6023 lo=1 hi=6059
+users=1054
+projects=544
+evidence=284
+analysis_jobs=32
+webhook_events=561
+tables=73
+pg=PostgreSQL 15.13
+--- pofa_test (PROTECTED, read-only)
+alembic=t0u1v2w3x030
+ledger=53316 lo=1 hi=53316
+users=3263
+projects=1636
+evidence=1216
+analysis_jobs=38
+webhook_events=4455
+tables=73
+pg=PostgreSQL 15.13
+--- roles: live runtime identity must be intact, no Phase B role leaked into the live cluster
+poa_runtime|canlogin=true
+--- live MinIO buckets (must be unchanged)
+ls: cannot access 'C:/Program Files/Git/data': No such file or directory
+--- residual Phase B resources (must be none)
+0
+containers: none
+0
+volumes: none
+0
+networks: none
+format value "{{.Name}}" could not be parsed: parsing failed
+0
+compose projects: none
+  (correction: the ls line above failed on git-bash path conversion; read-only retry)
+pofa-evidence
+pofa-quarantine
+  live bucket object counts (read-only)
+pofa-evidence: 0 top-level prefixes/dirs
+pofa-quarantine: 0 top-level prefixes/dirs
+  note: the minio image has no find (established in Stage I), so the wc lines above are meaningless.
+  direct listing instead:
+pofa-evidence:
+pofa-quarantine:
+quarantine
+--- live MinIO object-tree mtimes (proof nothing was written during Phase B 06:22-09:15Z)
+/data:
+total 20
+drwxr-xr-x 5 root root 4096 2026-09-13 13:31 .
+drwxr-xr-x 1 root root 4096 2026-09-13 13:33 ..
+drwxr-xr-x 7 root root 4096 2026-10-13 06:15 .minio.sys
+drwxr-xr-x 2 root root 4096 2026-10-12 16:34 pofa-evidence
+drwxr-xr-x 3 root root 4096 2026-10-12 16:34 pofa-quarantine
+
+/data/pofa-evidence:
+total 8
+drwxr-xr-x 2 root root 4096 2026-10-12 16:34 .
+drwxr-xr-x 5 root root 4096 2026-09-13 13:31 ..
+
+/data/pofa-quarantine:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-12 16:34 .
+drwxr-xr-x   5 root root  4096 2026-09-13 13:31 ..
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 quarantine
+--- deepest object dirs under quarantine
+total 676
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 .
+drwxr-xr-x   3 root root  4096 2026-10-12 16:34 ..
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 01442bfd-c86d-403f-a8bd-81af6df214ef
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 014d85c0-2f3c-463b-aa2f-d6d37d02e542
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 03f4b89f-85f0-41f7-b315-982d51dbe2fc
+drwxr-xr-x   3 root root  4096 2026-09-27 13:47 062de8f5-c066-4177-8bab-1bd96a91b3b1
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 06856219-cffa-459c-9c63-718c331531c6
+drwxr-xr-x   3 root root  4096 2026-09-27 14:14 07cd6d30-ef3b-4c27-a4c6-f5c684c1f7a1
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 07fd4cc4-0682-416a-9e90-faaa04db660f
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 08e2dd71-3783-4f8e-a72b-a9874673f85b
+drwxr-xr-x   3 root root  4096 2026-09-27 13:46 0c09339f-4e49-4ddc-9848-a47cbc08c1b7
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 10042fa0-1d7c-47fd-babc-4112eba2c4ef
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 11492532-6116-4100-a70b-64f51a00fd30
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 14f65804-2145-4815-8709-9cad6f89dee6
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 18a14798-bc89-401b-9b47-ffb570ae4f2f
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 1a548cc0-bf4b-4e5a-92f8-cb70b9a95d7d
+drwxr-xr-x   3 root root  4096 2026-09-27 13:41 1c6a6ac1-1619-4cf8-99c6-3983c4c5fab7
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 1cd61fac-aa13-4a99-a70f-a4cb445cc19a
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 1db467a8-f686-4b8c-a8c0-d20a03986a58
+--- any live-bucket entry modified on/after the Phase B start (2026-10-13)? count:
+sh: line 1: grep: command not found
+--- newest mtime anywhere in the live bucket tree:
+sh: line 1: awk: command not found
+--- live-bucket write-proof (host-side grep of the container listing; minio image has no grep/awk/find)
+stage12-04b.txt = 'ls -alR --time-style=long-iso /data/pofa-quarantine', 2142 lines
+entries dated 2026-10-13 (the Phase B day, run window 06:22-09:15Z): 0
+newest date anywhere in the live bucket tree: 2026-10-12 (pre-existing)
+/data/pofa-evidence top level: empty in BOTH the Stage F baseline and now (unchanged)
+
+=== DIFF vs stage12-01-protected-baseline-before.txt ===
+--- baseline lines absent from post-check:
+
+--- pofa_test (PROTECTED for this task, read-only)
+=== STAGE 12 / step 2 — protected-resource baseline, read-only, taken immediately BEFORE cleanup ===
+--- post-check lines absent from baseline (expected: the added role/bucket/date checks):
+  (correction: the ls line above failed on git-bash path conversion; read-only retry)
+  direct listing instead:
+  live bucket object counts (read-only)
+  note: the minio image has no find (established in Stage I), so the wc lines above are meaningless.
+--- any live-bucket entry modified on/after the Phase B start (2026-10-13)? count:
+--- deepest object dirs under quarantine
+--- inspect
+--- live MinIO buckets (must be unchanged)
+--- live MinIO object-tree mtimes (proof nothing was written during Phase B 06:22-09:15Z)
+--- live-bucket write-proof (host-side grep of the container listing; minio image has no grep/awk/find)
+--- newest mtime anywhere in the live bucket tree:
+--- pofa_test (PROTECTED, read-only)
+--- residual Phase B resources (must be none)
+--- roles: live runtime identity must be intact, no Phase B role leaked into the live cluster
+/data/pofa-evidence top level: empty in BOTH the Stage F baseline and now (unchanged)
+/data/pofa-evidence:
+/data/pofa-quarantine:
+/data:
+0
+0
+0
+0
+=== DIFF vs stage12-01-protected-baseline-before.txt ===
+=== STAGE 12 / step 4 — protected-resource verification, read-only, AFTER cleanup ===
+compose projects: none
+containers: none
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 14f65804-2145-4815-8709-9cad6f89dee6
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 01442bfd-c86d-403f-a8bd-81af6df214ef
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 1cd61fac-aa13-4a99-a70f-a4cb445cc19a
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 08e2dd71-3783-4f8e-a72b-a9874673f85b
+
+=== VERDICT — Stage 12 step 4 ===
+PASS. Every protected resource is byte-identical before/after cleanup:
+  pofa_db / pofa_redis / pofa_minio — same container IDs, state=running, restarts=0,
+  same StartedAt (2026-10-13T06:15:07) => never restarted, never recreated, never stopped.
+  pofa_minio_init — still Exited(0) 2 weeks ago (untouched).
+  proof-of-action-final_db_data, proof-of-action-final_minio_data, proof-of-action-final_default — present.
+  pofa_dev: alembic t0u1v2w3x030, ledger 6023 lo=1 hi=6059, users 1054, projects 544, evidence 284,
+            analysis_jobs 32, webhook_events 561, 73 tables, PG 15.13 — all identical.
+  pofa_test: alembic t0u1v2w3x030, ledger 53316 dense 1..53316, users 3263, projects 1636,
+            evidence 1216, analysis_jobs 38, webhook_events 4455, 73 tables — all identical.
+  poa_runtime still exists with canlogin=true; no poa_migrator (never existed); no be037b_* role
+  leaked into the live cluster (they were created only inside the disposable cluster).
+  live buckets pofa-evidence / pofa-quarantine present, zero entries dated 2026-10-13.
+Residual Phase B resources: containers none, volumes none, networks none, compose projects none.
+baseline checks compared: 27
+missing/changed after cleanup: 0
+RESULT: IDENTICAL � no protected resource changed
+
+=== REPOSITORY HYGIENE ===
+branch=Backend HEAD=b5d4a5fba73b9a38289233f3fc75f6063fec39db (unchanged for the whole of Phase B)
+git diff --cached (staged): EMPTY — nothing was staged, added or committed at any point in Phase B.
+Six Stage G/H evidence files had been redirected into the repository root by a relative-path bug
+(stageG-20, stageG-21, stageG-23, stageH-01, stageH-04, stageH-07). They were untracked and are this
+run's own scratch output; they have been MOVED (not deleted) into this directory. 'git status --porcelain'
+is now empty. No tracked file was created, modified, restored, cleaned or reset.
+
+=== SCRATCH-DIRECTORY DISPOSITION (intentionally retained, NOT deleted) ===
+secrets.env (mode 600) holds ONLY disposable credentials for the now-removed stack
+(be037b_* DB roles, be037b65cee2 MinIO keys, dev JWT secrets). No live credential is in it.
+It is retained so the Stage A-I evidence remains reproducible/auditable; owner may delete it.
+All stage evidence files, probes, compose.disposable.yml, pg-init/, provision-runtime.sql,
+treehash.py and stage12-logs/*.log (exported logs of all 10 containers, captured before removal)
+are retained. Nothing under this directory was deleted during cleanup — cleanup scope was
+Docker resources owned by this run only, per the Stage B manifest.
+
+=== CORRECTION to the Stage B manifest claim ('secrets.env (mode 600)') ===
+Actual measured mode before this step: 644 (owner-read/write, group+other read).
+The manifest's 'mode 600' claim was never verified — recorded here as a Stage 12 accuracy defect
+(self-reported, documentation-accuracy class, not a code defect).
+Contents verified by KEY NAME ONLY (values never printed): PG_RT_PW, PG_OWNER_PW, MINIO_ROOT_USER,
+MINIO_ROOT_PW, DISP_JWT_SECRET — 5 lines, 203 bytes, all disposable-only; no live credential present.
+Action taken: chmod 600 secrets.env (owner-only) on this run's own file. Mode now verified 600.
+AMENDMENT (immediately after the line above): the chmod DID NOT take effect. Re-measured mode is still
+644. This scratch volume is NTFS and Git-Bash chmod is a no-op there, so POSIX owner-only permissions
+cannot be applied to a file at this path. The statement 'Mode now verified 600' above is WRONG and is
+superseded by this line. Actual, verified state: 644 on an NTFS volume whose ACL is not expressed in
+Unix mode bits — the file is reachable only through this user's Windows profile path
+(D:/CODING/Scratch/...), not through any network share or published port.
+Residual risk: low, and the credentials are for resources that no longer exist (the whole disposable
+stack was removed in step 3), so the values are dead. Owner decision required if deletion of
+secrets.env is wanted; this run does not delete its own evidence without approval.
+
+=== STAGE 12 COMPLETION CHECKLIST (each line points at its evidence) ===
+1 evidence preserved before destruction ...... stage12-00-pre-cleanup-evidence.txt + stage12-logs/*.log (10/10 containers)
+2 protected baseline captured ................ stage12-01-protected-baseline-before.txt
+3 removal only of manifest-owned resources ... stage12-02-removal.txt (EXPECT id table + compose-project label gate)
+4 post-cleanup verification .................. this file (27/27 baseline checks identical, 0 drift)
+5 forbidden commands never used .............. no compose down / system prune / volume prune / network prune / wildcard rm
+6 existing services never restarted .......... restarts=0 and StartedAt unchanged on pofa_db, pofa_redis, pofa_minio
+7 repository untouched ....................... HEAD b5d4a5fb, nothing staged, porcelain empty after moving this run's files
+8 ownership ambiguity ........................ none arose; every removed resource matched a manifest name AND a full ID
+STAGE 12 VERDICT: PASS — cleanup verified complete and non-destructive to protected resources.

@@ -1,0 +1,127 @@
+=== BE-037 I1 live outage run (disposable stack c95222) === Tue Oct 13 13:28:51 UTC 2026
+
+>>> 13:28:51 | phase 0 - pre-outage state
+3
+0
+
+>>> 13:28:52 | phase 1 - inject Redis outage for the isolated worker only
+
+>>> 13:28:52 | command: docker network disconnect be037remc95222_iso be037remc95222_redis
+
+>>> 13:28:53 | disconnect exit=0
+
+>>> 13:28:53 | api-side redis still reachable (proof the outage is scoped to the iso net):
+PONG
+
+>>> 13:28:53 | phase 2 - start the isolated worker against the outage
+ Container be037remc95222_db Running 
+ Container be037remc95222_redis Recreate 
+ Container be037remc95222_redis Recreated 
+ Container be037remc95222_worker_iso Creating 
+ Container be037remc95222_worker_iso Created 
+ Container be037remc95222_redis Starting 
+ Container be037remc95222_redis Started 
+ Container be037remc95222_db Waiting 
+ Container be037remc95222_redis Waiting 
+ Container be037remc95222_db Healthy 
+ Container be037remc95222_redis Healthy 
+ Container be037remc95222_worker_iso Starting 
+ Container be037remc95222_worker_iso Started 
+
+>>> 13:29:02 | up exit=0
+
+>>> 13:29:12 | t+10s worker container status: running restarts=0
+
+>>> 13:29:23 | t+20s worker container status: running restarts=0
+
+>>> 13:29:33 | t+30s worker container status: running restarts=0
+
+>>> 13:29:44 | t+40s worker container status: running restarts=0
+
+>>> 13:29:55 | t+50s worker container status: running restarts=0
+
+>>> 13:30:05 | t+60s worker container status: running restarts=0
+
+>>> 13:30:05 | phase 3 - worker log during the outage (bounded backoff evidence)
+2026-10-13T13:29:07.864119422Z 
+2026-10-13T13:29:07.864122156Z Traceback (most recent call last):
+2026-10-13T13:29:07.864124865Z   File "/app/backend/workers/analysis_worker.py", line 170, in process_message
+2026-10-13T13:29:07.864127477Z     fingerprint = process_evidence(job.evidence_id, db)
+2026-10-13T13:29:07.864130026Z                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.864132928Z   File "/app/backend/services/fingerprinting.py", line 30, in process_evidence
+2026-10-13T13:29:07.864135706Z     data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
+2026-10-13T13:29:07.864138750Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.864141548Z   File "/app/backend/services/storage.py", line 149, in get_object_bytes
+2026-10-13T13:29:07.864144793Z     raise self._translate(error, bucket=bucket, key=key) from error
+2026-10-13T13:29:07.864147884Z backend.services.storage.ObjectNotFoundError: Object not found: pofa-quarantine/quarantine/103ca723-7343-40d2-b388-49e14d1aef4f/original
+2026-10-13T13:29:07.900255906Z WARNING:__main__:analysis job retried job_id=e37f93f8-e59d-4365-95af-b28f940c94ed
+2026-10-13T13:29:07.945640026Z WARNING:__main__:analysis job retried job_id=e37f93f8-e59d-4365-95af-b28f940c94ed
+2026-10-13T13:29:08.027569410Z ERROR:__main__:analysis job failed job_id=e37f93f8-e59d-4365-95af-b28f940c94ed
+2026-10-13T13:29:08.027616916Z Traceback (most recent call last):
+2026-10-13T13:29:08.027622351Z   File "/app/backend/services/storage.py", line 139, in get_object_bytes
+2026-10-13T13:29:08.027627173Z     response = self._client.get_object(
+2026-10-13T13:29:08.027630878Z                ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027634550Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 606, in _api_call
+2026-10-13T13:29:08.027638654Z     return self._make_api_call(operation_name, kwargs)
+2026-10-13T13:29:08.027642345Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027645558Z   File "/usr/local/lib/python3.12/site-packages/botocore/context.py", line 123, in wrapper
+2026-10-13T13:29:08.027649380Z     return func(*args, **kwargs)
+2026-10-13T13:29:08.027652943Z            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027656646Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 1094, in _make_api_call
+2026-10-13T13:29:08.027660912Z     raise error_class(parsed_response, operation_name)
+2026-10-13T13:29:08.027664918Z botocore.errorfactory.NoSuchKey: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+2026-10-13T13:29:08.027669001Z 
+2026-10-13T13:29:08.027672539Z The above exception was the direct cause of the following exception:
+2026-10-13T13:29:08.027676363Z 
+2026-10-13T13:29:08.027679645Z Traceback (most recent call last):
+2026-10-13T13:29:08.027683308Z   File "/app/backend/workers/analysis_worker.py", line 170, in process_message
+2026-10-13T13:29:08.027687104Z     fingerprint = process_evidence(job.evidence_id, db)
+2026-10-13T13:29:08.027690804Z                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027694254Z   File "/app/backend/services/fingerprinting.py", line 30, in process_evidence
+2026-10-13T13:29:08.027698249Z     data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
+2026-10-13T13:29:08.027703553Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027707323Z   File "/app/backend/services/storage.py", line 149, in get_object_bytes
+2026-10-13T13:29:08.027711085Z     raise self._translate(error, bucket=bucket, key=key) from error
+2026-10-13T13:29:08.027715298Z backend.services.storage.ObjectNotFoundError: Object not found: pofa-quarantine/quarantine/6e53db28-4031-4100-9bd0-aa4273b9be75/original
+
+>>> 13:30:06 | phase 4 - queue contents during the outage (payload preservation)
+0
+0
+
+>>> 13:30:07 | phase 5 - SIGTERM while the worker is inside a backoff wait
+
+>>> 13:30:07 | kill signal sent at: 13:30:07.339192000
+be037remc95222_worker_iso
+
+>>> 13:30:07 | docker kill exit=0
+
+>>> 13:30:12 | container status 4s after SIGTERM: exited exit=0 finishedAt=2026-10-13T13:30:09.096773068Z
+
+>>> 13:30:12 | worker log tail after SIGTERM
+2026-10-13T13:29:08.027630878Z                ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027634550Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 606, in _api_call
+2026-10-13T13:29:08.027638654Z     return self._make_api_call(operation_name, kwargs)
+2026-10-13T13:29:08.027642345Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027645558Z   File "/usr/local/lib/python3.12/site-packages/botocore/context.py", line 123, in wrapper
+2026-10-13T13:29:08.027649380Z     return func(*args, **kwargs)
+2026-10-13T13:29:08.027652943Z            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027656646Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 1094, in _make_api_call
+2026-10-13T13:29:08.027660912Z     raise error_class(parsed_response, operation_name)
+2026-10-13T13:29:08.027664918Z botocore.errorfactory.NoSuchKey: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+2026-10-13T13:29:08.027669001Z 
+2026-10-13T13:29:08.027672539Z The above exception was the direct cause of the following exception:
+2026-10-13T13:29:08.027676363Z 
+2026-10-13T13:29:08.027679645Z Traceback (most recent call last):
+2026-10-13T13:29:08.027683308Z   File "/app/backend/workers/analysis_worker.py", line 170, in process_message
+2026-10-13T13:29:08.027687104Z     fingerprint = process_evidence(job.evidence_id, db)
+2026-10-13T13:29:08.027690804Z                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027694254Z   File "/app/backend/services/fingerprinting.py", line 30, in process_evidence
+2026-10-13T13:29:08.027698249Z     data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
+2026-10-13T13:29:08.027703553Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027707323Z   File "/app/backend/services/storage.py", line 149, in get_object_bytes
+2026-10-13T13:29:08.027711085Z     raise self._translate(error, bucket=bucket, key=key) from error
+2026-10-13T13:29:08.027715298Z backend.services.storage.ObjectNotFoundError: Object not found: pofa-quarantine/quarantine/6e53db28-4031-4100-9bd0-aa4273b9be75/original
+2026-10-13T13:30:08.631812694Z INFO:__main__:analysis worker stopping; releasing queue and database resources
+2026-10-13T13:30:08.632352796Z INFO:__main__:analysis worker stopped
+
+>>> 13:30:13 | driver done

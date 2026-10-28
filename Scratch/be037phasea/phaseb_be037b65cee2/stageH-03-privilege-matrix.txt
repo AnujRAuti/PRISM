@@ -1,0 +1,59 @@
+=== H7 who the runtime really is ===
+PASS  H7 runtime connects as be037b_rt (not owner, not superuser)  | [('be037b_rt', 'be037b_rt')]
+FAIL  H7 neither local role is superuser, creator, createdb or BYPASSRLS  | [(True, True, True, True)]
+
+=== H8 statements the runtime must NOT be able to run ===
+PASS  H8a UPDATE the ledger (row 1) is refused  | REFUSED: permission denied for table audit_ledger_events
+PASS  H8b DELETE a ledger row is refused  | REFUSED: permission denied for table audit_ledger_events
+PASS  H8c TRUNCATE the ledger is refused  | REFUSED: permission denied for table audit_ledger_events
+PASS  H8d DROP the ledger is refused  | REFUSED: must be owner of table audit_ledger_events
+PASS  H8e ALTER the ledger (add a column) is refused  | REFUSED: must be owner of table audit_ledger_events
+PASS  H8f Revoke/re-grant the append-only trigger away is refused  | REFUSED: must be owner of relation audit_ledger_events
+PASS  H8g Re-create the enforcement function is refused  | REFUSED: permission denied for schema public
+FAIL  H8h GRANT itself UPDATE on the ledger is refused  | ALLOWED: -1 rows
+PASS  H8i Escalate with SET ROLE to the migration identity is refused  | REFUSED: permission denied to set role "be037b_owner"
+PASS  H8j Escalate with SET ROLE to the bootstrap superuser is refused  | REFUSED: role "postgres" does not exist
+PASS  H8k ALTER ROLE to gain superuser is refused  | REFUSED: must be superuser to alter superuser roles or change superuser attribute
+PASS  H8l Create a table in the application schema is refused  | REFUSED: permission denied for schema public
+PASS  H8m Write migration history directly is refused  | REFUSED: permission denied for table alembic_version
+PASS  H8n Read migration history is refused  | REFUSED: permission denied for table alembic_version
+FAIL  H8o Delete from an ordinary business table is refused  | ALLOWED: -1 rows
+PASS  H8p Read a role-password hash view is refused  | REFUSED: column "rolpassword" does not exist
+
+=== H8q the hatch cannot substitute for a missing grant ===
+   hatch GUC value the runtime could set = 'on'
+   UPDATE with hatch on -> REFUSED: permission denied for table audit_ledger_events
+PASS  H8q ledger UPDATE still refused even with the sanctioned hatch GUC set (grants, not the trigger, are the outer wall)  | REFUSED: permission denied for table audit_ledger_events
+
+=== H9 positive controls: what the runtime legitimately CAN do ===
+PASS  H9a Read the ledger  | ALLOWED: [(87,)]
+   -> H9a Read the ledger: ALLOWED | [(87,)]
+FAIL  H9b CAPABILITY CONFIRMED: the database accepts a direct ledger INSERT with hand-made hashes (no BEFORE INSERT chain validation at the DB layer)  | REFUSED: invalid input syntax for type integer: "a"
+   -> H9b CAPABILITY CONFIRMED: the database accepts a direct ledger INSERT with hand-made hashes (no BEFORE INSERT chain validation at the DB layer): REFUSED | invalid input syntax for type integer: "a"
+PASS  H9c Ordinary DML on a business table (UPDATE of one row, rolled back)  | ALLOWED: -1 rows
+   -> H9c Ordinary DML on a business table (UPDATE of one row, rolled back): ALLOWED | -1 rows
+PASS  H9d Ordinary reads of business tables  | ALLOWED: [(8,)]
+   -> H9d Ordinary reads of business tables: ALLOWED | [(8,)]
+
+=== H10 the append-only CHECK constraint is enforced at the database ===
+PASS  H10a invalid event_type is refused by the domain CHECK  | REFUSED: invalid input syntax for type integer: "a"
+   -> H10a invalid event_type: REFUSED | invalid input syntax for type integer: "a"
+PASS  H10b empty event_type is refused by the domain CHECK  | REFUSED: invalid input syntax for type integer: "a"
+   -> H10b empty event_type: REFUSED | invalid input syntax for type integer: "a"
+PASS  H10c sql-injection-shaped event_type is refused by the domain CHECK  | REFUSED: invalid input syntax for type integer: "a"
+   -> H10c sql-injection-shaped event_type: REFUSED | invalid input syntax for type integer: "a"
+
+=== H11 duplicate head sequence cannot fork the chain ===
+PASS  H11 re-using an existing sequence_number is refused (no chain fork)  | REFUSED: invalid input syntax for type integer: "a"
+
+=== H12 nothing from this probe persisted ===
+   ledger rows/max-seq after every probe statement rolled back: [(87, 87)]
+PASS  H12 all probe writes were rolled back  | [(87, 87)]
+PASS  H12 no probe table exists  | [(0,)]
+
+=== SUMMARY ===
+FAILING CHECK: H7 neither local role is superuser, creator, createdb or BYPASSRLS | [(True, True, True, True)]
+FAILING CHECK: H8h GRANT itself UPDATE on the ledger is refused | ALLOWED: -1 rows
+FAILING CHECK: H8o Delete from an ordinary business table is refused | ALLOWED: -1 rows
+FAILING CHECK: H9b CAPABILITY CONFIRMED: the database accepts a direct ledger INSERT with hand-made hashes (no BEFORE INSERT chain validation at the DB layer) | REFUSED: invalid input syntax for type integer: "a"
+H2_RESULT: total=29 pass=25 fail=4

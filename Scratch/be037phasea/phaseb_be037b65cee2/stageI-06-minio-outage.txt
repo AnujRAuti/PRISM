@@ -1,0 +1,57 @@
+=== STAGE I / MinIO (object storage) outage — re-run with an evidence.create principal ===
+host_utc=2026-10-13T08:57:32Z
+--- phase UP (baseline while storage is reachable)
+# STAGE=up mark=be037b-I-minio-outage 08:57:33
+M1 ready(storage UP) -> 200 (117ms) {'raw': '{"status":"healthy","timestamp":1791881853.285569,"checks":{"application":{"status":"healt'}
+M2 POST /evidence -> 201 (65ms) '{"evidence_id":"12b381ec-f821-41ea-bfca-b8b206b4d8f7","status":"uploaded","storage_key":"quarantine/12b381ec-f821-41ea-bfca-b8b206b4d8f7/original","content_type":"image/png","size":99}'
+M2 EID=12b381ec-f821-41ea-bfca-b8b206b4d8f7
+M3 GET download -> 200 (37ms) '{"evidence_id":"12b381ec-f821-41ea-bfca-b8b206b4d8f7","download_url":"http://minio:9000/be037b65cee2-quarantine/quarantine/12b381ec-f821-41ea-bfca-b8b'
+M3 row=[('12b381ec-f821-41ea-bfca-b8b206b4d8f7', 'uploaded_quarantine', 'quarantine/12b381ec-f821-41ea-bfca-b8b206b4d8f7/original')]
+# stage done 08:57:33
+captured EID=12b381ec-f821-41ea-bfca-b8b206b4d8f7
+--- object present in the disposable bucket before the outage
+OCI runtime exec failed: exec failed: unable to start container process: exec: "find": executable file not found in $PATH
+--- stopping minio -t 2
+stop_utc=2026-10-13T08:57:34Z
+be037b65cee2_minio
+--- phase DOWN
+# STAGE=down mark=be037b-I-minio-outage 08:57:35
+M4 ready(storage DOWN) -> 503 (8734ms) {'raw': '{"status":"unhealthy","timestamp":1791881864.5095258,"checks":{"application":{"status":"he'}
+M4 ready again -> 503 {'raw': '{"status":"unhealthy","timestamp":1791881871.3791559,"checks":{"application":{"status":"he'}
+M5 metadata read (DB only) -> [('12b381ec-f821-41ea-bfca-b8b206b4d8f7', 'uploaded_quarantine')]
+M6 GET download -> 200 (33ms) '{"evidence_id":"12b381ec-f821-41ea-bfca-b8b206b4d8f7","download_url":"http://minio:9000/be037b65cee2-quarantine/quarantine/12b381ec-f821-41ea-bfca-b8b'
+M7 POST /evidence -> 500 (6512ms) '{"detail":"internal server error"}'
+M7 upload rejected; is there an orphan evidence row?
+M7 newest evidence rows = [('12b381ec-f821-41ea-bfca-b8b206b4d8f7', 'uploaded_quarantine', 'quarantine/12b381ec-f821-41ea-bfca-b8b206b4d8f7/original', datetime.datetime(2026, 10, 13, 8, 57, 33, 293972, tzinfo=datetime.timezone.utc)), ('39b1fbb2-0d80-4305-87b4-abb6d001cbae', 'uploaded_quarantine', 'quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original', datetime.datetime(2026, 10, 13, 7, 53, 11, 11717, tzinfo=datetime.timezone.utc)), ('7f703702-7976-4070-9215-5536e967245b', 'uploaded_quarantine', 'quarantine/7f703702-7976-4070-9215-5536e967245b/original', datetime.datetime(2026, 10, 13, 7, 52, 20, 385845, tzinfo=datetime.timezone.utc)), ('a66e0565-0b62-461a-ae06-36e852dd4019', 'uploaded_quarantine', 'quarantine/a66e0565-0b62-461a-ae06-36e852dd4019/original', datetime.datetime(2026, 10, 13, 7, 51, 17, 799233, tzinfo=datetime.timezone.utc))]
+M7 evidence rows with no object written (status counts) = [('uploaded_quarantine', 9)]
+M8 dbread during storage outage -> 200 '{"valid":true,"checked_events":90,"first_sequence":1,"last_sequence":90,"failures":[]}'
+# stage done 08:57:58
+--- api log lines mentioning storage during the outage
+2026-10-13 08:57:44,508 WARNING backend.observability.health [rid=bfec13c7-9899-4a9a-a585-140ee87620ce] Storage health check failed: Could not connect to the endpoint URL: "http://minio:9000/"
+Storage health check failed: Could not connect to the endpoint URL: "http://minio:9000/"
+2026-10-13 08:57:51,378 WARNING backend.observability.health [rid=d1d0e7c9-d0d6-4af7-b387-f1aec9862b6c] Storage health check failed: Could not connect to the endpoint URL: "http://minio:9000/"
+Storage health check failed: Could not connect to the endpoint URL: "http://minio:9000/"
+urllib3.exceptions.NameResolutionError: AWSHTTPConnection(host='minio', port=9000): Failed to resolve 'minio' ([Errno -3] Temporary failure in name resolution)
+  File "/app/backend/services/storage.py", line 126, in put_object
+    raise EndpointConnectionError(endpoint_url=request.url, error=e)
+botocore.exceptions.EndpointConnectionError: Could not connect to the endpoint URL: "http://minio:9000/be037b65cee2-quarantine/quarantine/a3425a6b-a2b8-4f0f-b20b-aa77301aa109/original"
+    storage.put_object(
+  File "/app/backend/services/storage.py", line 135, in put_object
+    raise StorageConnectionError("Unable to connect to object storage") from error
+backend.services.storage.StorageConnectionError: Unable to connect to object storage
+--- starting minio
+start_utc=2026-10-13T08:57:58Z
+be037b65cee2_minio
+--- phase RESTORE
+# STAGE=restore mark=be037b-I-minio-outage 08:58:00
+M9 recovered after ~0s -> 200 (101ms) {'raw': '{"status":"healthy","timestamp":1791881880.4410355,"checks":{"application":{"status":"heal'}
+M10 GET download -> 200 (28ms) '{"evidence_id":"12b381ec-f821-41ea-bfca-b8b206b4d8f7","download_url":"http://minio:9000/be037b65cee2-quarantine/quarantine/12b381ec-f821-41ea-bfca-b8b'
+M11 POST /evidence -> 201 (50ms) '{"evidence_id":"a3444ecb-459c-4b39-85e3-30df347fdc66","status":"uploaded","storage_key":"quarantine/a3444ecb-459c-4b39-85e3-30df347fdc66/original","content_type":"image/png","size":99}'
+M12 evidence by status = [('uploaded_quarantine', 10)]
+CLOSE chain -> 200 '{"valid":true,"checked_events":91,"first_sequence":1,"last_sequence":91,"failures":[]}'
+# stage done 08:58:00
+--- minio final state
+state=running health=starting restarts=0 exit=0
+--- object inventory after restore
+1
+end_utc=2026-10-13T08:58:01Z

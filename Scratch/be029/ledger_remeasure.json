@@ -1,0 +1,134 @@
+{
+  "database": "pofa_dev",
+  "revision": "s9t0u1v2w029",
+  "count": 6023,
+  "min_seq": 1,
+  "max_seq": 6059,
+  "missing_by_span": 36,
+  "gaps": [
+    {
+      "lo": 5344,
+      "hi": 5349,
+      "rows_missing": 6
+    },
+    {
+      "lo": 5374,
+      "hi": 5379,
+      "rows_missing": 6
+    },
+    {
+      "lo": 5381,
+      "hi": 5384,
+      "rows_missing": 4
+    },
+    {
+      "lo": 5386,
+      "hi": 5391,
+      "rows_missing": 6
+    },
+    {
+      "lo": 5393,
+      "hi": 5396,
+      "rows_missing": 4
+    },
+    {
+      "lo": 5671,
+      "hi": 5676,
+      "rows_missing": 6
+    },
+    {
+      "lo": 5678,
+      "hi": 5681,
+      "rows_missing": 4
+    }
+  ],
+  "gap_count": 7,
+  "gap_rows": 36,
+  "distinct_sequence_numbers": 6023,
+  "events_since": [
+    {
+      "sequence_number": 6054,
+      "event_type": "USER_CREATED",
+      "action": "create",
+      "resource_type": "users",
+      "resource_id": "fc1f4f91-4439-4874-98e0-e56cc583dc9a",
+      "actor_id": null,
+      "project_id": null,
+      "created_at": "2026-10-09 15:57:40.960952+00:00"
+    },
+    {
+      "sequence_number": 6055,
+      "event_type": "ROLE_ASSIGNED",
+      "action": "assign",
+      "resource_type": "user_role_assignments",
+      "resource_id": "9da417e1-f601-4c09-abbd-4a32c0a86d64",
+      "actor_id": null,
+      "project_id": null,
+      "created_at": "2026-10-09 15:57:41.024330+00:00"
+    },
+    {
+      "sequence_number": 6056,
+      "event_type": "USER_CREATED",
+      "action": "create",
+      "resource_type": "users",
+      "resource_id": "d295a665-8410-4baf-95d3-33d908a4df30",
+      "actor_id": null,
+      "project_id": null,
+      "created_at": "2026-10-09 15:57:56.433345+00:00"
+    },
+    {
+      "sequence_number": 6057,
+      "event_type": "ROLE_ASSIGNED",
+      "action": "assign",
+      "resource_type": "user_role_assignments",
+      "resource_id": "65f045cd-e12b-449c-a8a2-7b9de72d1e8a",
+      "actor_id": null,
+      "project_id": null,
+      "created_at": "2026-10-09 15:57:56.487711+00:00"
+    },
+    {
+      "sequence_number": 6058,
+      "event_type": "USER_CREATED",
+      "action": "create",
+      "resource_type": "users",
+      "resource_id": "1ce16913-0c23-419b-9493-0e42b1bd1d50",
+      "actor_id": null,
+      "project_id": null,
+      "created_at": "2026-10-09 15:58:15.007938+00:00"
+    },
+    {
+      "sequence_number": 6059,
+      "event_type": "ROLE_ASSIGNED",
+      "action": "assign",
+      "resource_type": "user_role_assignments",
+      "resource_id": "c35d67fe-bfdf-453f-87ed-a2f96e77976d",
+      "actor_id": null,
+      "project_id": null,
+      "created_at": "2026-10-09 15:58:15.044508+00:00"
+    }
+  ],
+  "events_since_resource_rows_still_present": [],
+  "events_since_actor_rows_still_present": [],
+  "verify_chain_full": {
+    "valid": false,
+    "checked_events": 6023,
+    "first_sequence": 1,
+    "last_sequence": 6059,
+    "failures": [
+      "sequence gap before 5350 (expected 5344)",
+      "sequence gap before 5380 (expected 5374)",
+      "sequence gap before 5385 (expected 5381)",
+      "sequence gap before 5392 (expected 5386)",
+      "sequence gap before 5397 (expected 5393)",
+      "sequence gap before 5677 (expected 5671)",
+      "sequence gap before 5682 (expected 5678)"
+    ]
+  },
+  "verify_chain_tail": {
+    "valid": true,
+    "checked_events": 21,
+    "first_sequence": 6039,
+    "last_sequence": 6059,
+    "failures": []
+  }
+}

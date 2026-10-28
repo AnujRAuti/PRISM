@@ -1,0 +1,190 @@
+# BE-037 Phase B remediation — DISPOSABLE STACK ONLY (run c95222).
+#
+# Nothing in this file can resolve to the protected resources: every name
+# carries the run prefix (containers, volumes, networks, database, roles), the
+# repository's docker-compose.yml is never modified or started by this task, and
+# no port here collides with pofa_db / pofa_redis / pofa_minio.
+#
+#   docker compose --project-name be037remc95222 \
+#     --env-file secrets.env -f compose.remed.yml up -d db redis minio
+#   docker compose --project-name be037remc95222 \
+#     --env-file secrets.env -f compose.remed.yml --profile tools up minio-init
+#
+# Networking:
+#   * be037remc95222_net is a normal bridge with ports published to 127.0.0.1
+#     ONLY, because the host test suite needs a socket. Nothing is bound to a
+#     routable interface.
+#   * be037remc95222_iso is `internal: true`. The worker container used for the
+#     SIGTERM-during-backoff proof attaches to it alone, so it has no route to
+#     the host network or the internet: it cannot download model weights and
+#     cannot send anything outward.
+#
+# Persistence: Redis runs with appendonly so a stop/start outage keeps the
+# queued payloads instead of destroying the evidence for the queue-preservation
+# check.
+
+name: be037remc95222
+
+x-app-environment: &app-environment
+  ENVIRONMENT: development
+  DATABASE_URL: postgresql+psycopg2://be037rem_owner:${PG_OWNER_PW}@db:5432/be037rem_app
+  REDIS_URL: redis://redis:6379/0
+  S3_ENDPOINT: http://minio:9000
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER}
+  S3_SECRET_KEY: ${MINIO_ROOT_PW}
+  S3_USE_SSL: "false"
+  JWT_SECRET: ${DISP_JWT_SECRET}
+  CORS_ALLOW_ORIGINS: http://be037rem-client.invalid
+  AUTH_MODE: development
+  AUTH_DEV_TOKENS_ENABLED: "true"
+
+# The image bakes the code as it was at build time; this run's remediation is
+# uncommitted, so the current source tree is mounted read-only over it. Nothing
+# is mounted over the Python environment, so the image's pinned dependencies
+# stay exactly as built.
+x-source-mounts: &source-mounts
+  - D:/CODING/Projects/Proof-Of-Action-Final/backend:/app/backend:ro
+  - D:/CODING/Projects/Proof-Of-Action-Final/alembic:/app/alembic:ro
+  - D:/CODING/Projects/Proof-Of-Action-Final/alembic.ini:/app/alembic.ini:ro
+  - D:/CODING/Projects/Proof-Of-Action-Final/yolo11n.pt:/app/yolo11n.pt:ro
+
+services:
+  db:
+    image: garapadev/postgres-postgis-pgvector:15-stable
+    container_name: be037remc95222_db
+    restart: "no"
+    environment:
+      POSTGRES_USER: be037rem_owner
+      POSTGRES_PASSWORD: ${PG_OWNER_PW}
+      POSTGRES_DB: be037rem_app
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - be037remc95222_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U be037rem_owner -d be037rem_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks: [remed, isolated]
+
+  redis:
+    image: redis:7-alpine
+    container_name: be037remc95222_redis
+    restart: "no"
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:56379:6379"
+    volumes:
+      - be037remc95222_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [remed, isolated]
+
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: be037remc95222_minio
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PW}
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:59000:9000"
+      - "127.0.0.1:59001:9001"
+    volumes:
+      - be037remc95222_miniodata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    networks: [remed, isolated]
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    container_name: be037remc95222_minio_init
+    profiles: ["tools"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PW}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do sleep 1; done; mc mb --ignore-existing "local/pofa-quarantine"; mc mb --ignore-existing "local/pofa-evidence"; mc anonymous set none "local/pofa-quarantine"; mc anonymous set none "local/pofa-evidence"'
+    networks: [remed]
+
+  # The actual disposable API stack, run in enforcing mode so the G1 remediation
+  # is exercised over a real socket with no anonymous bypass anywhere.
+  api:
+    image: poa-backend:be037a
+    container_name: be037remc95222_api
+    restart: "no"
+    command: ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      <<: *app-environment
+      AUTH_MODE: enforcing
+    ports:
+      - "127.0.0.1:58000:8000"
+    volumes: *source-mounts
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)\""
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+    networks: [remed]
+
+  # Worker used only for the SIGTERM-during-backoff proof. Attached to the
+  # internal network alone: no egress, so it cannot fetch model weights and
+  # cannot reach anything outside this stack.
+  worker_iso:
+    image: poa-backend:be037a
+    container_name: be037remc95222_worker_iso
+    profiles: ["tools"]
+    restart: "no"
+    command: ["python", "-m", "backend.workers.analysis_worker"]
+    environment:
+      <<: *app-environment
+      ANALYSIS_RETRY_BACKOFF_BASE_SECONDS: "8"
+      ANALYSIS_RETRY_BACKOFF_MAX_SECONDS: "60"
+    volumes: *source-mounts
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [isolated]
+
+volumes:
+  be037remc95222_pgdata:
+    name: be037remc95222_pgdata
+  be037remc95222_redisdata:
+    name: be037remc95222_redisdata
+  be037remc95222_miniodata:
+    name: be037remc95222_miniodata
+
+networks:
+  remed:
+    name: be037remc95222_net
+    driver: bridge
+  isolated:
+    name: be037remc95222_iso
+    internal: true
+    driver: bridge

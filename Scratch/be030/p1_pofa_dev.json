@@ -1,0 +1,160 @@
+{
+ "requested_database": "pofa_dev",
+ "server_database": "pofa_dev",
+ "postgres_version": "PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1) on x86_64-pc-linux-gnu",
+ "alembic_version_num": [
+  "s9t0u1v2w029"
+ ],
+ "ledger": {
+  "rows": 6023,
+  "min_sequence": 1,
+  "max_sequence": 6059,
+  "distinct_sequences": 6023,
+  "span": 6059,
+  "span_minus_count": 36
+ },
+ "event_type_counts": {
+  "null_event_type": 0,
+  "distinct_event_types": 50,
+  "rows": 6023
+ },
+ "out_of_domain_event_types": [],
+ "column_types": {
+  "event_hash": "character varying",
+  "event_type": "character varying",
+  "metadata": "json",
+  "payload": "json",
+  "previous_hash": "character varying",
+  "sequence_number": "bigint"
+ },
+ "triggers": [],
+ "rules": [],
+ "policies": [],
+ "constraints": [
+  {
+   "name": "audit_ledger_events_pkey",
+   "definition": "PRIMARY KEY (id)"
+  },
+  {
+   "name": "uq_audit_ledger_sequence",
+   "definition": "UNIQUE (sequence_number)"
+  }
+ ],
+ "row_security": {
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ "privileges": {
+  "role": "postgres",
+  "update_priv": true,
+  "delete_priv": true,
+  "table_owner": "postgres"
+ },
+ "missing_ranges": [
+  {
+   "from_sequence": 5344,
+   "to_sequence": 5349,
+   "count": 6,
+   "survivor_before_created_at": "2026-09-25 10:23:58.872112+00:00",
+   "survivor_after_created_at": "2026-09-25 10:35:54.433672+00:00"
+  },
+  {
+   "from_sequence": 5374,
+   "to_sequence": 5379,
+   "count": 6,
+   "survivor_before_created_at": "2026-09-25 10:36:05.348290+00:00",
+   "survivor_after_created_at": "2026-09-25 10:46:01.670131+00:00"
+  },
+  {
+   "from_sequence": 5381,
+   "to_sequence": 5384,
+   "count": 4,
+   "survivor_before_created_at": "2026-09-25 10:46:01.670131+00:00",
+   "survivor_after_created_at": "2026-09-25 10:46:12.554569+00:00"
+  },
+  {
+   "from_sequence": 5386,
+   "to_sequence": 5391,
+   "count": 6,
+   "survivor_before_created_at": "2026-09-25 10:46:12.554569+00:00",
+   "survivor_after_created_at": "2026-09-25 10:56:24.029439+00:00"
+  },
+  {
+   "from_sequence": 5393,
+   "to_sequence": 5396,
+   "count": 4,
+   "survivor_before_created_at": "2026-09-25 10:56:24.029439+00:00",
+   "survivor_after_created_at": "2026-09-25 10:56:32.796019+00:00"
+  },
+  {
+   "from_sequence": 5671,
+   "to_sequence": 5676,
+   "count": 6,
+   "survivor_before_created_at": "2026-09-25 11:00:03.180854+00:00",
+   "survivor_after_created_at": "2026-09-25 11:00:09.503430+00:00"
+  },
+  {
+   "from_sequence": 5678,
+   "to_sequence": 5681,
+   "count": 4,
+   "survivor_before_created_at": "2026-09-25 11:00:09.503430+00:00",
+   "survivor_after_created_at": "2026-09-25 11:00:15.749669+00:00"
+  }
+ ],
+ "missing_total": 36,
+ "verify_chain": {
+  "full_range": {
+   "valid": false,
+   "checked_events": 6023,
+   "first_sequence": 1,
+   "last_sequence": 6059,
+   "failure_count": 7,
+   "failures_by_class": {
+    "sequence gap": 7
+   },
+   "first_failures": [
+    "sequence gap before 5350 (expected 5344)",
+    "sequence gap before 5380 (expected 5374)",
+    "sequence gap before 5385 (expected 5381)",
+    "sequence gap before 5392 (expected 5386)",
+    "sequence gap before 5397 (expected 5393)",
+    "sequence gap before 5677 (expected 5671)",
+    "sequence gap before 5682 (expected 5678)"
+   ],
+   "duration_seconds": 2.099
+  },
+  "window_last_500": {
+   "valid": false,
+   "checked_events": 490,
+   "first_sequence": 5560,
+   "last_sequence": 6059,
+   "failure_count": 2,
+   "failures_by_class": {
+    "sequence gap": 2
+   },
+   "first_failures": [
+    "sequence gap before 5677 (expected 5671)",
+    "sequence gap before 5682 (expected 5678)"
+   ],
+   "duration_seconds": 0.087
+  },
+  "window_last_1": {
+   "valid": true,
+   "checked_events": 1,
+   "first_sequence": 6059,
+   "last_sequence": 6059,
+   "failure_count": 0,
+   "failures_by_class": {},
+   "first_failures": [],
+   "duration_seconds": 0.007
+  }
+ },
+ "drift": {
+  "operations": 2,
+  "mentions_ledger": false,
+  "operation_details": [
+   "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assignments>",
+   "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assignments>), "
+  ]
+ }
+}

@@ -1,0 +1,72 @@
+=== post-teardown protected check 2026-10-13T14:10:09Z ===
+
+=== this run's owned resources (must be empty) ===
+no be037rem containers
+no be037rem volumes
+no be037rem networks
+
+=== protected containers: id / started / restarts / running ===
+NAME=/pofa_db ID=7949c99808161e138c35489a9d34928b873cfcd4cead9eb0f00fb37261033baf STARTED=2026-10-13T06:15:07.152331657Z RESTARTS=0 RUNNING=true
+NAME=/pofa_redis ID=29b684e82d7c9b2818fc1a3d0f48415ab78f923ec7e063150208d275bd767af5 STARTED=2026-10-13T06:15:07.077129515Z RESTARTS=0 RUNNING=true
+NAME=/pofa_minio ID=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd STARTED=2026-10-13T13:51:24.897524698Z RESTARTS=0 RUNNING=true
+
+=== protected live services still listening ===
+7949c9980816|pofa_db|Up 8 hours|0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+29b684e82d7c|pofa_redis|Up 8 hours|0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+54fce2fccd46|pofa_minio|Up 18 minutes|0.0.0.0:9000-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp
+
+=== pofa_minio restart observation (StartedAt differs from the baseline) ===
+health/live http_code=200
+ID=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd RestartPolicy=unless-stopped Created=2026-09-13T13:33:00.828947067Z StartedAt=2026-10-13T13:51:24.897524698Z FinishedAt=2026-10-13T13:51:24.508020499Z ExitCode=0 OOM=false
+--- mounts (the data-bearing volume must be the original) ---
+proof-of-action-final_minio_data volume /var/lib/docker/volumes/proof-of-action-final_minio_data/_data
+
+--- last 5 log lines before/after the transition ---
+API: http://172.18.0.2:9000  http://127.0.0.1:9000 
+WebUI: http://172.18.0.2:9001 http://127.0.0.1:9001  
+
+Docs: https://docs.min.io
+WARN: Detected default credentials 'minioadmin:minioadmin', we recommend that you change these values with 'MINIO_ROOT_USER' and 'MINIO_ROOT_PASSWORD' environment variables
+--- this run's scripts never name pofa_minio (grep over the scratch dir) ---
+run-post-teardown-check.sh
+
+columns: ledger_count lo hi users projects evidence analysis_jobs webhook_events public_tables
+--- pofa_dev ---
+6023|1|6059|1054|544|284|32|561|75
+PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+pofa_dev|postgres
+t0u1v2w3x030
+--- pofa_test ---
+53316|1|53316|3263|1636|1216|38|4455|75
+PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+pofa_test|postgres
+t0u1v2w3x030
+
+=== databases present in the live cluster (names only) ===
+pofa_audit_verify
+pofa_be028_fresh
+pofa_be028_rollback
+pofa_be028_scratch
+pofa_be029_assumptions
+pofa_be029_bkpverify
+pofa_be029_control
+pofa_be029_devpost
+pofa_be029_fresh
+pofa_be029_premig_verify
+pofa_be029_rehearsal
+pofa_be029_rollback
+pofa_be029_scratch
+pofa_be030_proof
+pofa_be030_scratch
+pofa_dev
+pofa_test
+postgres
+
+=== git (must match the pre-creation baseline exactly) ===
+b5d4a5fba73b9a38289233f3fc75f6063fec39db
+ M backend/api/v1/endpoints/analysis.py
+ M backend/core/config.py
+ M backend/services/authorization.py
+ M backend/workers/analysis_worker.py
+?? tests/integration/test_be037g1_analysis_auth.py
+?? tests/unit/test_be037i1_analysis_worker_redis_outage.py

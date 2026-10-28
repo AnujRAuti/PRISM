@@ -1,0 +1,9 @@
+database=pofa_dev rows=6017 span=1..6053
+valid=False checked=6017 failures=7
+  - sequence gap before 5350 (expected 5344)
+  - sequence gap before 5380 (expected 5374)
+  - sequence gap before 5385 (expected 5381)
+  - sequence gap before 5392 (expected 5386)
+  - sequence gap before 5397 (expected 5393)
+  - sequence gap before 5677 (expected 5671)
+  - sequence gap before 5682 (expected 5678)

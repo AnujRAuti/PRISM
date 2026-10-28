@@ -1,0 +1,68 @@
+{
+ "pofa_test": {
+  "expected": "pofa_test",
+  "current_database": "pofa_test",
+  "server_version": "15.13 (Debian 15.13-1.pgdg120+1)",
+  "alembic_version": [
+   "t0u1v2w3x030"
+  ],
+  "ledger": {
+   "rows": 42545,
+   "min_seq": 1,
+   "max_seq": 42545,
+   "distinct_seq": 42545,
+   "span_minus_count": 0
+  },
+  "gap_range_count": 0,
+  "null_event_type": 0,
+  "trigger_present": true,
+  "function_present": true,
+  "check_present": true,
+  "table_owner": "postgres",
+  "session_user": "postgres",
+  "login_user": "postgres",
+  "has_truncate_priv": true,
+  "is_owner_of_table": true,
+  "role_memberships": [],
+  "users_total": 2710,
+  "external_subject_null": 2710,
+  "distinct_identity_provider": [
+   "local"
+  ],
+  "uq_def": "UNIQUE (identity_provider, external_subject)",
+  "target_matches_expectation": true
+ },
+ "pofa_dev": {
+  "expected": "pofa_dev",
+  "current_database": "pofa_dev",
+  "server_version": "15.13 (Debian 15.13-1.pgdg120+1)",
+  "alembic_version": [
+   "s9t0u1v2w029"
+  ],
+  "ledger": {
+   "rows": 6023,
+   "min_seq": 1,
+   "max_seq": 6059,
+   "distinct_seq": 6023,
+   "span_minus_count": 36
+  },
+  "gap_range_count": 7,
+  "null_event_type": 0,
+  "trigger_present": false,
+  "function_present": false,
+  "check_present": false,
+  "table_owner": "postgres",
+  "session_user": "postgres",
+  "login_user": "postgres",
+  "has_truncate_priv": true,
+  "is_owner_of_table": true,
+  "role_memberships": [],
+  "users_total": 1054,
+  "external_subject_null": 1004,
+  "distinct_identity_provider": [
+   "local"
+  ],
+  "uq_def": "UNIQUE (identity_provider, external_subject)",
+  "target_matches_expectation": true
+ }
+}

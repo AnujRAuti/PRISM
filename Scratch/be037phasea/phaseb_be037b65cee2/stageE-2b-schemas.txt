@@ -1,0 +1,14 @@
+========== POST /api/v1/evidence
+========== POST /api/v1/projects
+  body: {"properties": {}, "type": "object", "required": ["name", "owner_id"]}
+========== GET /api/v1/evidence/nearby
+  params: [('latitude', 'query', True, '{"type": "number"}'), ('longitude', 'query', True, '{"type": "number"}'), ('radius', 'query', True, '{"type": "number"}'), ('limit', 'query', False, '{"type": "integer"}'), ('offset', 'query', False, '{"type": "integer"}')]
+========== PATCH /api/v1/evidence/{evidence_id}/location
+  body: {"properties": {}, "type": "object", "required": ["latitude", "longitude"]}
+  params: [('evidence_id', 'path', True, '{"type": "string"}')]
+========== POST /api/v1/integrations/webhooks
+  body: {"properties": {}, "type": "object", "required": ["external_system_id", "endpoint_url", "subscribed_events"]}
+========== POST /api/v1/retention/evaluate
+  body: {"properties": {}, "type": "object", "required": ["resource_type", "resource_id"]}
+========== POST /api/v1/analysis/jobs
+  body: {"properties": {}, "type": "object", "required": ["evidence_id"]}

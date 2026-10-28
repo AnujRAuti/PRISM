@@ -1,0 +1,10 @@
+GET                   /docs                                                              NONE
+GET                   /docs/oauth2-redirect                                              NONE
+GET                   /health                                                            NONE
+GET                   /healthz                                                           NONE
+GET                   /metrics                                                           require(metrics.read, res=None, id=None)
+GET                   /openapi.json                                                      NONE
+GET                   /ready                                                             NONE
+GET                   /redoc                                                             NONE
+
+routes=8 guarded=1 unguarded=7

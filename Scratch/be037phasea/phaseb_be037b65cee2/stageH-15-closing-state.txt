@@ -1,0 +1,22 @@
+=== Stage H closing measurement (2026-10-13T08:37:11Z) ===
+ rows | first | head 
+------+-------+------
+   87 |     1 |   87
+(1 row)
+
+ forged_rows_remaining 
+-----------------------
+                     0
+(1 row)
+
+ event_type | count 
+------------+-------
+(0 rows)
+
+--- anchored verify after the demo and after later live traffic ---
+STAGE_closing_VALID=True
+STAGE_closing_STATUS=clean degraded=False
+STAGE_closing_NEW_GAPS=[]
+STAGE_closing_KNOWN_GAPS=[]
+STAGE_closing_HARD=[]
+STAGE_closing_FAILURES=[]

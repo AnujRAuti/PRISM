@@ -1,0 +1,10 @@
+=== enforcing-mode (AUTH_MODE=enforcing, AUTH_DEV_TOKENS_ENABLED=false) anonymous matrix ===
+healthz -> 200
+readyz -> 404 {"detail": "Not Found"}
+G10a anonymous POST /integrations/systems -> HTTP 401 {"detail": "Authentication required"}
+G10b anonymous POST /integrations/webhooks -> HTTP 401 {"detail": "Authentication required"}
+G10c anonymous POST /auth/users -> HTTP 401 {"detail": "Authentication required"}
+G10d anonymous GET /integrations/systems -> HTTP 401
+G10e anonymous GET /audit/verify -> HTTP 401
+G10g anonymous POST /analysis/jobs under ENFORCING -> HTTP 202 {"job_id": "6e02a5ae-e645-4885-b487-676cda9fe37c", "evidence_id": "7f703702-7976-4070-9215-5536e967245b", "status": "queued", "attempt_count": 0, "err
+G10h anonymous GET /analysis/jobs/{id} under ENFORCING -> HTTP 200 status= running

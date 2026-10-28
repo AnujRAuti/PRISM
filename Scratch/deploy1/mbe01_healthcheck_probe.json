@@ -1,0 +1,17 @@
+{
+  "image": "poa-backend:mbe01-wt1",
+  "probe": "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=8).status==200 else 1)\"",
+  "target": "http://127.0.0.1:8000/healthz",
+  "checks": [
+    {
+      "check": "the compose probe exits 0 when every dependency is up",
+      "passed": true,
+      "detail": "rc=0 "
+    },
+    {
+      "check": "the same probe exits non-zero when the database is gone (so Docker can see the outage at all)",
+      "passed": true,
+      "detail": "rc=1 urllib.error.HTTPError: HTTP Error 503: Service Unavailable"
+    }
+  ]
+}

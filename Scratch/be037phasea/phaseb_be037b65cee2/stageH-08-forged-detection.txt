@@ -1,0 +1,7 @@
+HEAD_BEFORE=87 ROWS_BEFORE=87
+Traceback (most recent call last):
+  File "<stdin>", line 71, in <module>
+psycopg2.errors.SyntaxError: syntax error at or near "be037b"
+LINE 1: ...vent_hash FROM audit_ledger_events WHERE action=''be037b-for...
+                                                             ^
+

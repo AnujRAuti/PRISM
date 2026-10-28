@@ -1,0 +1,130 @@
+{
+  "sigterm_during_retry_delay": {
+    "case": "SIGTERM during a retry backoff wait",
+    "configured": {
+      "backoff_base_s": 40,
+      "backoff_max_s": 60,
+      "shutdown_poll_s": 0.5,
+      "redis_url": "redis://redis:6399/0 (closed port)"
+    },
+    "first_backoff_warning": [
+      4.17,
+      "WARNING:__main__:redis unavailable; backing off 35.6s (consecutive failures 1)"
+    ],
+    "stated_delay_s": 35.6,
+    "approx_remaining_sleep_s": [
+      15.8,
+      33.6
+    ],
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_command_wall_s": 1.25,
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "stopped_at": "2026-10-14T15:49:41.471270117Z"
+    },
+    "logs": [
+      "",
+      "INFO:__main__:analysis worker started",
+      "WARNING:__main__:redis unavailable; backing off 35.6s (consecutive failures 1)",
+      "INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "INFO:__main__:analysis worker stopped"
+    ]
+  },
+  "sigterm_blocked_dequeue_20s": {
+    "case": "SIGTERM during a blocked dequeue (20s block)",
+    "configured": {
+      "dequeue_block_s": 20,
+      "socket_timeout_s": 30,
+      "shutdown_poll_s": 0.5
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_command_wall_s": 18.62,
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "stopped_at": "2026-10-14T15:50:08.985513671Z"
+    },
+    "logs": [
+      "",
+      "INFO:__main__:analysis worker started",
+      "INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "INFO:__main__:analysis worker stopped"
+    ]
+  },
+  "sigterm_blocked_dequeue_1s": {
+    "case": "SIGTERM during a blocked dequeue (1s block, contrast)",
+    "configured": {
+      "dequeue_block_s": 1,
+      "socket_timeout_s": 30,
+      "shutdown_poll_s": 0.5
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_command_wall_s": 1.5,
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "stopped_at": "2026-10-14T15:50:17.673192463Z"
+    },
+    "logs": [
+      "",
+      "INFO:__main__:analysis worker started",
+      "INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "INFO:__main__:analysis worker stopped"
+    ]
+  },
+  "sigterm_during_long_job": {
+    "case": "SIGTERM while a job is genuinely running",
+    "fixture": {
+      "evidence_id": "f4a018ad-6cbe-4af1-bd03-becbaa8d2e45",
+      "job_id": "940c09cb-3db0-4e35-8f81-ef4724e38640",
+      "bytes": 42220302,
+      "storage_key": "quarantine/f4a018ad-6cbe-4af1-bd03-becbaa8d2e45/original"
+    },
+    "job_picked_up_after_s": 5.64,
+    "job_state_at_stop": {
+      "status": "running",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 0
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_command_wall_s": 10.91,
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "stopped_at": "2026-10-14T15:55:33.026698937Z"
+    },
+    "logs": [
+      "",
+      "INFO:__main__:analysis worker started",
+      "Using a slow image processor as `use_fast` is unset and a slow processor was saved with this model. `use_fast=True` will be the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.",
+      "INFO:__main__:analysis job completed job_id=940c09cb-3db0-4e35-8f81-ef4724e38640",
+      "INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "INFO:__main__:analysis worker stopped"
+    ],
+    "job_state_after_stop": {
+      "status": "completed",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1
+    },
+    "lists_after_stop": {
+      "main": 0,
+      "processing": 0
+    },
+    "final_states_log": [
+      "INFO:__main__:analysis job completed job_id=940c09cb-3db0-4e35-8f81-ef4724e38640",
+      "INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "INFO:__main__:analysis worker stopped"
+    ]
+  }
+}

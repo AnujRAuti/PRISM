@@ -1,0 +1,32 @@
+                                Table "public.audit_ledger_events"
+     Column      |           Type           | Collation | Nullable |            Default            
+-----------------+--------------------------+-----------+----------+-------------------------------
+ id              | uuid                     |           | not null | 
+ sequence_number | bigint                   |           | not null | 
+ event_type      | character varying(100)   |           | not null | 
+ action          | character varying(100)   |           | not null | 
+ resource_type   | character varying(100)   |           | not null | 
+ resource_id     | uuid                     |           |          | 
+ actor_id        | uuid                     |           |          | 
+ project_id      | uuid                     |           |          | 
+ payload         | json                     |           | not null | '{}'::json
+ metadata        | json                     |           | not null | '{}'::json
+ previous_hash   | character varying(256)   |           | not null | 
+ event_hash      | character varying(256)   |           | not null | 
+ hash_algorithm  | character varying(50)    |           | not null | 'SHA-256'::character varying
+ ledger_version  | character varying(50)    |           | not null | 'audit-v1'::character varying
+ created_at      | timestamp with time zone |           | not null | 
+Indexes:
+    "audit_ledger_events_pkey" PRIMARY KEY, btree (id)
+    "ix_audit_ledger_actor" btree (actor_id)
+    "ix_audit_ledger_created" btree (created_at)
+    "ix_audit_ledger_project" btree (project_id)
+    "ix_audit_ledger_resource" btree (resource_type, resource_id)
+    "ix_audit_ledger_sequence" btree (sequence_number)
+    "ix_audit_ledger_type" btree (event_type)
+    "uq_audit_ledger_sequence" UNIQUE CONSTRAINT, btree (sequence_number)
+Check constraints:
+    "ck_audit_ledger_event_type_domain" CHECK (event_type::text = ANY (ARRAY['ANALYSIS_COMPLETED'::character varying, 'ANALYSIS_FAILED'::character varying, 'API_CLIENT_CREATED'::character varying, 'API_CLIENT_DISABLED'::character varying, 'API_CREDENTIAL_CREATED'::character varying, 'API_CREDENTIAL_REVOKED'::character varying, 'CORRECTION_APPLIED'::character varying, 'CORRECTION_APPROVED'::character varying, 'CORRECTION_CANCELLED'::character varying, 'CORRECTION_REJECTED'::character varying, 'CORRECTION_REQUESTED'::character varying, 'CORRECTION_REVIEW_STARTED'::character varying, 'DELETION_BLOCKED'::character varying, 'DELETION_REQUESTED'::character varying, 'DEPENDENT_INTELLIGENCE_CHANGED'::character varying, 'DISPUTE_ASSIGNED'::character varying, 'DISPUTE_CREATED'::character varying, 'DISPUTE_ESCALATED'::character varying, 'DISPUTE_REJECTED'::character varying, 'DISPUTE_RESOLVED'::character varying, 'DISPUTE_REVIEW_STARTED'::character varying, 'DISPUTE_WITHDRAWN'::character varying, 'EVIDENCE_REQUEST_ACKNOWLEDGED'::character varying, 'EVIDENCE_REQUEST_CANCELLED'::character varying, 'EVIDENCE_REQUEST_CREATED'::character varying, 'EVIDENCE_REQUEST_DECLINED'::character varying, 'EVIDENCE_REQUEST_EXPIRED'::character varying, 'EVIDENCE_REQUEST_FULFILLED'::character varying, 'EVIDENCE_REQUEST_ISSUED'::character varying, 'EVIDENCE_UPLOADED'::character varying, 'EXPLANATION_GENERATED'::character varying, 'EXTERNAL_REFERENCE_CREATED'::character varying, 'EXTERNAL_SYSTEM_CREATED'::character varying, 'FIELD_ASSIGNMENT_ACCESSED'::character varying, 'FIELD_ASSIGNMENT_CREATED'::character varying, 'FIELD_ASSIGNMENT_EXPIRED'::character varying, 'FIELD_ASSIGNMENT_SECURITY_FAILURE'::character varying, 'FIELD_ASSIGNMENT_STATUS_CHANGED'::character varying, 'FIELD_EVIDENCE_ASSOCIATED'::character varying, 'FIELD_SESSION_CLOSED'::character varying, 'FIELD_SESSION_OPENED'::character varying, 'FIELD_SYNC_ACCEPTED'::character varying, 'FIELD_SYNC_CONFLICT'::character varying, 'FIELD_SYNC_CONFLICT_RESOLVED'::character varying, 'FIELD_SYNC_DUPLICATE'::character varying, 'FIELD_SYNC_REJECTED'::character varying, 'FUSION_RUN_CREATED'::character varying, 'GRAPH_RELATIONSHIP_CREATED'::character varying, 'GRAPH_RELATIONSHIP_INVALIDATED'::character varying, 'GRAPH_RELATIONSHIP_SUPERSEDED'::character varying, 'INTELLIGENCE_INVALIDATED'::character varying, 'INTELLIGENCE_REPROCESS_COMPLETED'::character varying, 'INTELLIGENCE_REPROCESS_FAILED'::character varying, 'INTELLIGENCE_REPROCESS_REQUESTED'::character varying, 'NOTIFICATION_DELIVERY_FAILED'::character varying, 'NOTIFICATION_DELIVERY_SUCCEEDED'::character varying, 'NOTIFICATION_PREFERENCE_CHANGED'::character varying, 'ORGANIZATIONAL_UNIT_CREATED'::character varying, 'ORGANIZATIONAL_UNIT_UPDATED'::character varying, 'ORGANIZATION_CREATED'::character varying, 'ORGANIZATION_UPDATED'::character varying, 'PROJECT_OWNERSHIP_CHANGED'::character varying, 'PROJECT_SCOPE_CHANGED'::character varying, 'PUBLICATION_APPROVED'::character varying, 'PUBLICATION_CREATED'::character varying, 'PUBLICATION_ELIGIBILITY_FAILED'::character varying, 'PUBLICATION_POLICY_CREATED'::character varying, 'PUBLICATION_POLICY_UPDATED'::character varying, 'PUBLICATION_PUBLISHED'::character varying, 'PUBLICATION_REJECTED'::character varying, 'PUBLICATION_REVIEW_STARTED'::character varying, 'PUBLICATION_UNPUBLISHED'::character varying, 'PUBLIC_PUBLICATION_VERSION_CREATED'::character varying, 'RESOURCE_ARCHIVED'::character varying, 'RESOURCE_DELETED'::character varying, 'RESOURCE_RESTORED'::character varying, 'RETENTION_HOLD_CREATED'::character varying, 'RETENTION_HOLD_RELEASED'::character varying, 'RETENTION_POLICY_ACTIVATED'::character varying, 'RETENTION_POLICY_CREATED'::character varying, 'REVIEW_CASE_ASSIGNED'::character varying, 'REVIEW_CASE_CREATED'::character varying, 'REVIEW_CASE_DECISION_RECORDED'::character varying, 'REVIEW_CASE_ESCALATED'::character varying, 'REVIEW_CASE_REOPENED'::character varying, 'REVIEW_CASE_RESOLVED'::character varying, 'ROLE_ASSIGNED'::character varying, 'ROLE_REVOKED'::character varying, 'USER_CREATED'::character varying, 'USER_STATUS_CHANGED'::character varying, 'WEBHOOK_CREATED'::character varying, 'WEBHOOK_DELIVERY_FAILED'::character varying, 'WEBHOOK_DELIVERY_SUCCEEDED'::character varying, 'WEBHOOK_DISABLED'::character varying]::text[]))
+Triggers:
+    trg_audit_ledger_append_only BEFORE DELETE OR UPDATE ON audit_ledger_events FOR EACH ROW EXECUTE FUNCTION audit_ledger_refuse_mutation()
+

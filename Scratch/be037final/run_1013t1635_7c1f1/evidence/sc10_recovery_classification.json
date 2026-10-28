@@ -1,0 +1,105 @@
+{
+  "classification": {
+    "corrupt_discarded": true,
+    "fresh_left_untouched": true,
+    "missing_discarded": true,
+    "stale_job_reprocessed_to_completed": true,
+    "stale_payload_acked_at_the_end": true,
+    "stale_requeued_not_lost": true,
+    "terminal_discarded": true,
+    "terminal_job_not_reprocessed": true
+  },
+  "configured_abandoned_timeout_s": 30,
+  "contents_after_recovery_pass": {
+    "main": [],
+    "processing": [
+      "{\"job_id\":\"da342f85-57ca-4cf7-9507-62d7eda616c7\"}",
+      "{\"job_id\":\"f61eca30-877a-4e9f-9a61-292e9d745df7\"}"
+    ]
+  },
+  "final_contents": {
+    "main": [],
+    "processing": [
+      "{\"job_id\":\"f61eca30-877a-4e9f-9a61-292e9d745df7\"}"
+    ]
+  },
+  "fixtures": {
+    "fresh": {
+      "bytes": 68133,
+      "evidence_id": "f623b437-20f5-4507-8cf0-eb1b9097a57c",
+      "job_id": "f61eca30-877a-4e9f-9a61-292e9d745df7",
+      "storage_key": "quarantine/f623b437-20f5-4507-8cf0-eb1b9097a57c/original"
+    },
+    "missing_id": "325f0dbf-2b22-446d-a5fd-4bae8920131e",
+    "stale": {
+      "bytes": 68217,
+      "evidence_id": "0eac0995-dfa5-428b-a608-e33dc74a0b61",
+      "job_id": "da342f85-57ca-4cf7-9507-62d7eda616c7",
+      "storage_key": "quarantine/0eac0995-dfa5-428b-a608-e33dc74a0b61/original"
+    },
+    "terminal": {
+      "bytes": 68083,
+      "evidence_id": "f21f3c2c-4f15-44b2-ab9d-58c49dc5a31c",
+      "job_id": "0ea41a03-4714-4701-86c6-b614329d77fc",
+      "storage_key": "quarantine/f21f3c2c-4f15-44b2-ab9d-58c49dc5a31c/original"
+    }
+  },
+  "job_states": {
+    "fresh": {
+      "attempt_count": 0,
+      "error": null,
+      "result_rows": 0,
+      "status": "running"
+    },
+    "stale": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    },
+    "terminal": {
+      "attempt_count": 0,
+      "error": null,
+      "result_rows": 0,
+      "status": "completed"
+    }
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 1
+  },
+  "planted_contents": {
+    "main": [],
+    "processing": [
+      "{\"job_id\":\"da342f85-57ca-4cf7-9507-62d7eda616c7\"}",
+      "{\"job_id\":\"f61eca30-877a-4e9f-9a61-292e9d745df7\"}",
+      "{\"job_id\":\"0ea41a03-4714-4701-86c6-b614329d77fc\"}",
+      "{\"job_id\":\"325f0dbf-2b22-446d-a5fd-4bae8920131e\"}",
+      "{\"not_job_id\":1}"
+    ]
+  },
+  "recovered_count_logged": 1,
+  "recovery_log_entry": [
+    6.202999999979511,
+    "INFO:__main__:analysis worker recovered 1 abandoned job(s)"
+  ],
+  "scenario": "S10 recovery of abandoned processing-list entries",
+  "stale_job_completion_log": [
+    49.79699999996228,
+    "INFO:__main__:analysis job completed job_id=da342f85-57ca-4cf7-9507-62d7eda616c7"
+  ],
+  "worker_final": {
+    "again_lines": [],
+    "alive_at_measurement": true,
+    "backoff_warnings": [],
+    "exit_code": null,
+    "log_lines": 4,
+    "pid": 18728,
+    "recovery_lines": [
+      {
+        "arrival_s": 6.2,
+        "message": "INFO:__main__:analysis worker recovered 1 abandoned job(s)"
+      }
+    ]
+  }
+}

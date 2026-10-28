@@ -1,0 +1,52 @@
+=== F0  bootstrap an authorized disposable principal (FIELD_OFFICER) ===
+PASS  F0 create disposable test user  | HTTP 201 (expected 201) 
+PASS  F0 grant FIELD_OFFICER (evidence.create)  | HTTP 201 (expected 201) 
+
+=== F1  upload through the supported application flow ===
+   synthetic PNG generated in-container: 1534 bytes
+PASS  F1 POST /api/v1/evidence accepts the synthetic image  | HTTP 201 {"evidence_id": "9e22a42a-0cc3-4853-8255-4a3eff44bba0", "status": "uploaded", "storage_key": "quarantine/9e22a42a-0cc3-4853-8255-4a3eff44bba0/original", "content_type": "image/png", "size": 1534}
+   evidence_id= 9e22a42a-0cc3-4853-8255-4a3eff44bba0 storage_key= quarantine/9e22a42a-0cc3-4853-8255-4a3eff44bba0/original size= 1534 api_status= uploaded
+
+=== F2  metadata returned by the API ===
+PASS  F2 GET /evidence/{id} returns metadata  | HTTP 200
+PASS  F2 stored status is the quarantine state (not 'trusted')  | db status=uploaded_quarantine api status=uploaded
+PASS  F2 metadata agrees with the upload result  | size 1534 / 1534 / 1534
+
+=== F3  presigned download returns exactly the uploaded bytes ===
+PASS  F3 download URL issued after authorization  | HTTP 200 keys=['download_url', 'evidence_id', 'expires_in']
+PASS  F3 presigned URL points at the disposable MinIO service only  | http://minio:9000/be037b65cee2-quarantine/quarantine/9e22a42a-0cc3-4853-8255-4a3eff44bba0/original
+PASS  F3 downloaded bytes equal the uploaded bytes  | fetched 1534 bytes, sha match=True
+
+=== F4  rejected inputs (MIME / malformed / empty / oversized) ===
+PASS  F4 disallowed declared MIME rejected with 415  | HTTP 415 (expected 415) 
+PASS  F4 malformed payload with an image MIME rejected with 415  | HTTP 415 (expected 415) 
+PASS  F4 real JPEG bytes declared as image/png rejected with 415 (declared!=actual)  | HTTP 415 (expected 415) 
+PASS  F4 empty payload rejected with 400  | HTTP 400 (expected 400) 
+PASS  F4 oversized payload rejected with 413  | HTTP 413 (expected 413) 
+
+=== F5  no valid evidence record without its object ===
+PASS  F5 unknown evidence id is 404 (no phantom record)  | HTTP 404
+
+=== F6  geospatial write/read path on the created evidence ===
+PASS  F6 valid coordinates accepted  | HTTP 200 (expected 200) 
+PASS  F6 out-of-range latitude rejected  | HTTP 422 (expected 422) 
+PASS  F6 out-of-range longitude rejected  | HTTP 422 (expected 422) 
+PASS  F6 PostGIS nearby query returns the located evidence  | HTTP 200 ids=['7eb6c37c-d388-4c7a-9876-187579fa20ab', '15ffd949-20c3-40a5-8c85-0fb232727568', '9e22a42a-0cc3-4853-8255-4a3eff44bba0']
+
+=== F7  retention: permission boundary, then dry-run as an authorized principal ===
+PASS  F7 FIELD_OFFICER (no retention.read) is refused the retention dry-run  | HTTP 403 {"detail": "Forbidden"} | FIELD_OFFICER catalogue has no retention.read
+PASS  F7 create disposable admin user  | HTTP 201 (expected 201) 
+PASS  F7 grant ADMINISTRATOR (retention.read)  | HTTP 201 (expected 201) 
+PASS  F7 authorized retention dry-run answers for the synthetic evidence  | HTTP 200 {"eligible": false, "archive_eligible": false, "deletion_eligible": false, "state": "ACTIVE", "anchor": null, "anchor_timestamp": null, "expiry_timestamp": null, "policy_id": null, "policy_version": null, "blocking_reasons": ["NO_APPLICABLE
+PASS  F7 dry-run returns the eligibility verdict fields  | keys=['anchor', 'anchor_timestamp', 'archive_eligible', 'blocking_reasons', 'deletion_eligible', 'details', 'eligible', 'evaluated_at', 'expiry_timestamp', 'policy_id', 'policy_version', 'state']
+PASS  F7 freshly uploaded evidence is not deletion-eligible and states why  | {"deletion_eligible": false, "blocking_reasons": ["NO_APPLICABLE_POLICY"]}
+PASS  F7 evidence record still present after evaluation (no deletion performed)  | HTTP 200
+
+=== IDS for the report ===
+EVIDENCE_ID=9e22a42a-0cc3-4853-8255-4a3eff44bba0
+STORAGE_KEY=quarantine/9e22a42a-0cc3-4853-8255-4a3eff44bba0/original
+USER_ID=23ebc848-98f4-4763-8e50-6e49cb6df4d0
+PROJECT_OWNER=23ebc848-98f4-4763-8e50-6e49cb6df4d0
+
+=== SUMMARY ===
+F_RESULT: total=26 pass=26 fail=0

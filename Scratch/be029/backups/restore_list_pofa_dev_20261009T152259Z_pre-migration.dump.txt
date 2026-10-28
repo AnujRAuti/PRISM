@@ -1,0 +1,495 @@
+;
+; Archive created at 2026-10-09 15:23:00 UTC
+;     dbname: pofa_dev
+;     TOC Entries: 484
+;     Compression: 6
+;     Dump Version: 1.14-0
+;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 15.13 (Debian 15.13-1.pgdg120+1)
+;     Dumped by pg_dump version: 15.13 (Debian 15.13-1.pgdg120+1)
+;
+;
+; Selected TOC Entries:
+;
+2; 3079 16385 EXTENSION - postgis 
+5553; 0 0 COMMENT - EXTENSION postgis 
+3; 3079 17461 EXTENSION - vector 
+5554; 0 0 COMMENT - EXTENSION vector 
+224; 1259 17804 TABLE public activities postgres
+221; 1259 17781 TABLE public alembic_version postgres
+228; 1259 17872 TABLE public analysis_jobs postgres
+229; 1259 17883 TABLE public analysis_results postgres
+230; 1259 17896 TABLE public anomalies postgres
+257; 1259 51358 TABLE public api_clients postgres
+268; 1259 59459 TABLE public api_credentials postgres
+233; 1259 17943 TABLE public audit_events postgres
+250; 1259 50999 TABLE public audit_ledger_events postgres
+243; 1259 42915 TABLE public case_generation_configurations postgres
+244; 1259 42927 TABLE public case_generation_runs postgres
+225; 1259 17822 TABLE public claims postgres
+279; 1259 59682 TABLE public correction_events postgres
+278; 1259 59656 TABLE public correction_requests postgres
+277; 1259 59641 TABLE public dispute_events postgres
+276; 1259 59614 TABLE public disputes postgres
+231; 1259 17909 TABLE public duplicate_matches postgres
+226; 1259 17840 TABLE public evidence postgres
+227; 1259 17859 TABLE public evidence_metadata postgres
+249; 1259 50915 TABLE public evidence_request_events postgres
+248; 1259 50890 TABLE public evidence_request_items postgres
+247; 1259 50845 TABLE public evidence_requests postgres
+242; 1259 42783 TABLE public explanation_runs postgres
+270; 1259 59490 TABLE public external_assertions postgres
+269; 1259 59472 TABLE public external_references postgres
+267; 1259 59437 TABLE public external_systems postgres
+237; 1259 42650 TABLE public fusion_configurations postgres
+238; 1259 42665 TABLE public fusion_runs postgres
+239; 1259 42681 TABLE public fusion_signals postgres
+235; 1259 34410 TABLE public graph_nodes postgres
+236; 1259 34420 TABLE public graph_relationships postgres
+271; 1259 59512 TABLE public idempotency_keys postgres
+275; 1259 59590 TABLE public integration_events postgres
+240; 1259 42699 TABLE public integrity_assessments postgres
+280; 1259 59697 TABLE public intelligence_invalidations postgres
+264; 1259 59386 TABLE public notification_deliveries postgres
+266; 1259 59424 TABLE public notification_outbox postgres
+265; 1259 59407 TABLE public notification_preferences postgres
+263; 1259 59355 TABLE public notifications postgres
+252; 1259 51250 TABLE public organizational_units postgres
+251; 1259 51238 TABLE public organizations postgres
+254; 1259 51291 TABLE public permissions postgres
+223; 1259 17793 TABLE public projects postgres
+284; 1259 59810 TABLE public public_identifiers postgres
+288; 1259 59901 TABLE public public_media_derivatives postgres
+287; 1259 59886 TABLE public publication_events postgres
+282; 1259 59767 TABLE public publication_policies postgres
+283; 1259 59778 TABLE public publication_policy_versions postgres
+286; 1259 59858 TABLE public publication_versions postgres
+285; 1259 59826 TABLE public publications postgres
+281; 1259 59731 TABLE public reprocessing_requests postgres
+261; 1259 51451 TABLE public retention_holds postgres
+262; 1259 51485 TABLE public retention_operations postgres
+258; 1259 51380 TABLE public retention_policies postgres
+259; 1259 51409 TABLE public retention_policy_versions postgres
+260; 1259 51428 TABLE public retention_states postgres
+246; 1259 42993 TABLE public review_case_events postgres
+245; 1259 42949 TABLE public review_cases postgres
+232; 1259 17925 TABLE public review_decisions postgres
+241; 1259 42722 TABLE public review_priorities postgres
+255; 1259 51302 TABLE public role_permissions postgres
+253; 1259 51277 TABLE public roles postgres
+256; 1259 51321 TABLE public user_role_assignments postgres
+222; 1259 17786 TABLE public users postgres
+234; 1259 34357 TABLE public vision_detections postgres
+274; 1259 59564 TABLE public webhook_deliveries postgres
+273; 1259 59549 TABLE public webhook_events postgres
+272; 1259 59529 TABLE public webhook_subscriptions postgres
+5482; 0 17804 TABLE DATA public activities postgres
+5479; 0 17781 TABLE DATA public alembic_version postgres
+5486; 0 17872 TABLE DATA public analysis_jobs postgres
+5487; 0 17883 TABLE DATA public analysis_results postgres
+5488; 0 17896 TABLE DATA public anomalies postgres
+5515; 0 51358 TABLE DATA public api_clients postgres
+5526; 0 59459 TABLE DATA public api_credentials postgres
+5491; 0 17943 TABLE DATA public audit_events postgres
+5508; 0 50999 TABLE DATA public audit_ledger_events postgres
+5501; 0 42915 TABLE DATA public case_generation_configurations postgres
+5502; 0 42927 TABLE DATA public case_generation_runs postgres
+5483; 0 17822 TABLE DATA public claims postgres
+5537; 0 59682 TABLE DATA public correction_events postgres
+5536; 0 59656 TABLE DATA public correction_requests postgres
+5535; 0 59641 TABLE DATA public dispute_events postgres
+5534; 0 59614 TABLE DATA public disputes postgres
+5489; 0 17909 TABLE DATA public duplicate_matches postgres
+5484; 0 17840 TABLE DATA public evidence postgres
+5485; 0 17859 TABLE DATA public evidence_metadata postgres
+5507; 0 50915 TABLE DATA public evidence_request_events postgres
+5506; 0 50890 TABLE DATA public evidence_request_items postgres
+5505; 0 50845 TABLE DATA public evidence_requests postgres
+5500; 0 42783 TABLE DATA public explanation_runs postgres
+5528; 0 59490 TABLE DATA public external_assertions postgres
+5527; 0 59472 TABLE DATA public external_references postgres
+5525; 0 59437 TABLE DATA public external_systems postgres
+5495; 0 42650 TABLE DATA public fusion_configurations postgres
+5496; 0 42665 TABLE DATA public fusion_runs postgres
+5497; 0 42681 TABLE DATA public fusion_signals postgres
+5493; 0 34410 TABLE DATA public graph_nodes postgres
+5494; 0 34420 TABLE DATA public graph_relationships postgres
+5529; 0 59512 TABLE DATA public idempotency_keys postgres
+5533; 0 59590 TABLE DATA public integration_events postgres
+5498; 0 42699 TABLE DATA public integrity_assessments postgres
+5538; 0 59697 TABLE DATA public intelligence_invalidations postgres
+5522; 0 59386 TABLE DATA public notification_deliveries postgres
+5524; 0 59424 TABLE DATA public notification_outbox postgres
+5523; 0 59407 TABLE DATA public notification_preferences postgres
+5521; 0 59355 TABLE DATA public notifications postgres
+5510; 0 51250 TABLE DATA public organizational_units postgres
+5509; 0 51238 TABLE DATA public organizations postgres
+5512; 0 51291 TABLE DATA public permissions postgres
+5481; 0 17793 TABLE DATA public projects postgres
+5542; 0 59810 TABLE DATA public public_identifiers postgres
+5546; 0 59901 TABLE DATA public public_media_derivatives postgres
+5545; 0 59886 TABLE DATA public publication_events postgres
+5540; 0 59767 TABLE DATA public publication_policies postgres
+5541; 0 59778 TABLE DATA public publication_policy_versions postgres
+5544; 0 59858 TABLE DATA public publication_versions postgres
+5543; 0 59826 TABLE DATA public publications postgres
+5539; 0 59731 TABLE DATA public reprocessing_requests postgres
+5519; 0 51451 TABLE DATA public retention_holds postgres
+5520; 0 51485 TABLE DATA public retention_operations postgres
+5516; 0 51380 TABLE DATA public retention_policies postgres
+5517; 0 51409 TABLE DATA public retention_policy_versions postgres
+5518; 0 51428 TABLE DATA public retention_states postgres
+5504; 0 42993 TABLE DATA public review_case_events postgres
+5503; 0 42949 TABLE DATA public review_cases postgres
+5490; 0 17925 TABLE DATA public review_decisions postgres
+5499; 0 42722 TABLE DATA public review_priorities postgres
+5513; 0 51302 TABLE DATA public role_permissions postgres
+5511; 0 51277 TABLE DATA public roles postgres
+4622; 0 16703 TABLE DATA public spatial_ref_sys postgres
+5514; 0 51321 TABLE DATA public user_role_assignments postgres
+5480; 0 17786 TABLE DATA public users postgres
+5492; 0 34357 TABLE DATA public vision_detections postgres
+5532; 0 59564 TABLE DATA public webhook_deliveries postgres
+5531; 0 59549 TABLE DATA public webhook_events postgres
+5530; 0 59529 TABLE DATA public webhook_subscriptions postgres
+4906; 2606 17811 CONSTRAINT public activities activities_pkey postgres
+4895; 2606 17785 CONSTRAINT public alembic_version alembic_version_pkc postgres
+4918; 2606 17877 CONSTRAINT public analysis_jobs analysis_jobs_pkey postgres
+4921; 2606 17890 CONSTRAINT public analysis_results analysis_results_pkey postgres
+4923; 2606 17903 CONSTRAINT public anomalies anomalies_pkey postgres
+5061; 2606 51369 CONSTRAINT public api_clients api_clients_pkey postgres
+5120; 2606 59464 CONSTRAINT public api_credentials api_credentials_pkey postgres
+4931; 2606 17950 CONSTRAINT public audit_events audit_events_pkey postgres
+5019; 2606 51009 CONSTRAINT public audit_ledger_events audit_ledger_events_pkey postgres
+4982; 2606 42924 CONSTRAINT public case_generation_configurations case_generation_configurations_pkey postgres
+4986; 2606 42937 CONSTRAINT public case_generation_runs case_generation_runs_pkey postgres
+4908; 2606 17829 CONSTRAINT public claims claims_pkey postgres
+5181; 2606 59690 CONSTRAINT public correction_events correction_events_pkey postgres
+5173; 2606 59670 CONSTRAINT public correction_requests correction_requests_pkey postgres
+5170; 2606 59649 CONSTRAINT public dispute_events dispute_events_pkey postgres
+5161; 2606 59628 CONSTRAINT public disputes disputes_pkey postgres
+4925; 2606 17914 CONSTRAINT public duplicate_matches duplicate_matches_pkey postgres
+4916; 2606 17866 CONSTRAINT public evidence_metadata evidence_metadata_pkey postgres
+4910; 2606 17847 CONSTRAINT public evidence evidence_pkey postgres
+5016; 2606 50923 CONSTRAINT public evidence_request_events evidence_request_events_pkey postgres
+5010; 2606 50900 CONSTRAINT public evidence_request_items evidence_request_items_pkey postgres
+5001; 2606 50857 CONSTRAINT public evidence_requests evidence_requests_pkey postgres
+4976; 2606 42793 CONSTRAINT public explanation_runs explanation_runs_pkey postgres
+5130; 2606 59498 CONSTRAINT public external_assertions external_assertions_pkey postgres
+5124; 2606 59480 CONSTRAINT public external_references external_references_pkey postgres
+5114; 2606 59449 CONSTRAINT public external_systems external_systems_pkey postgres
+4950; 2606 42662 CONSTRAINT public fusion_configurations fusion_configurations_pkey postgres
+4954; 2606 42677 CONSTRAINT public fusion_runs fusion_runs_pkey postgres
+4960; 2606 42691 CONSTRAINT public fusion_signals fusion_signals_pkey postgres
+4937; 2606 34416 CONSTRAINT public graph_nodes graph_nodes_pkey postgres
+4942; 2606 34433 CONSTRAINT public graph_relationships graph_relationships_pkey postgres
+5135; 2606 59519 CONSTRAINT public idempotency_keys idempotency_keys_pkey postgres
+5156; 2606 59601 CONSTRAINT public integration_events integration_events_pkey postgres
+4964; 2606 42712 CONSTRAINT public integrity_assessments integrity_assessments_pkey postgres
+5184; 2606 59711 CONSTRAINT public intelligence_invalidations intelligence_invalidations_pkey postgres
+5102; 2606 59397 CONSTRAINT public notification_deliveries notification_deliveries_pkey postgres
+5112; 2606 59435 CONSTRAINT public notification_outbox notification_outbox_pkey postgres
+5107; 2606 59415 CONSTRAINT public notification_preferences notification_preferences_pkey postgres
+5098; 2606 59366 CONSTRAINT public notifications notifications_pkey postgres
+5035; 2606 51258 CONSTRAINT public organizational_units organizational_units_pkey postgres
+5030; 2606 51246 CONSTRAINT public organizations organizations_pkey postgres
+5045; 2606 51298 CONSTRAINT public permissions permissions_pkey postgres
+4904; 2606 17798 CONSTRAINT public projects projects_pkey postgres
+5209; 2606 59819 CONSTRAINT public public_identifiers public_identifiers_pkey postgres
+5237; 2606 59909 CONSTRAINT public public_media_derivatives public_media_derivatives_pkey postgres
+5233; 2606 59893 CONSTRAINT public publication_events publication_events_pkey postgres
+5197; 2606 59775 CONSTRAINT public publication_policies publication_policies_pkey postgres
+5202; 2606 59800 CONSTRAINT public publication_policy_versions publication_policy_versions_pkey postgres
+5227; 2606 59869 CONSTRAINT public publication_versions publication_versions_pkey postgres
+5219; 2606 59841 CONSTRAINT public publications publications_pkey postgres
+5194; 2606 59741 CONSTRAINT public reprocessing_requests reprocessing_requests_pkey postgres
+5088; 2606 51461 CONSTRAINT public retention_holds retention_holds_pkey postgres
+5092; 2606 51496 CONSTRAINT public retention_operations retention_operations_pkey postgres
+5069; 2606 51390 CONSTRAINT public retention_policies retention_policies_pkey postgres
+5072; 2606 51419 CONSTRAINT public retention_policy_versions retention_policy_versions_pkey postgres
+5081; 2606 51438 CONSTRAINT public retention_states retention_states_pkey postgres
+4999; 2606 43001 CONSTRAINT public review_case_events review_case_events_pkey postgres
+4995; 2606 42960 CONSTRAINT public review_cases review_cases_pkey postgres
+4929; 2606 17932 CONSTRAINT public review_decisions review_decisions_pkey postgres
+4972; 2606 42733 CONSTRAINT public review_priorities review_priorities_pkey postgres
+5050; 2606 51307 CONSTRAINT public role_permissions role_permissions_pkey postgres
+5040; 2606 51287 CONSTRAINT public roles roles_pkey postgres
+5064; 2606 51371 CONSTRAINT public api_clients uq_api_clients_name postgres
+4968; 2606 42714 CONSTRAINT public integrity_assessments uq_assessment_run postgres
+5027; 2606 51011 CONSTRAINT public audit_ledger_events uq_audit_ledger_sequence postgres
+4984; 2606 42926 CONSTRAINT public case_generation_configurations uq_case_generation_config_version postgres
+5104; 2606 59399 CONSTRAINT public notification_deliveries uq_delivery_notification_channel postgres
+4927; 2606 18008 CONSTRAINT public duplicate_matches uq_duplicate_match_pair postgres
+4980; 2606 42795 CONSTRAINT public explanation_runs uq_explanation_run postgres
+5128; 2606 59482 CONSTRAINT public external_references uq_external_reference_source_id postgres
+5118; 2606 59451 CONSTRAINT public external_systems uq_external_system_code postgres
+4952; 2606 42664 CONSTRAINT public fusion_configurations uq_fusion_config_version postgres
+4940; 2606 34418 CONSTRAINT public graph_nodes uq_graph_node_identity postgres
+5139; 2606 59521 CONSTRAINT public idempotency_keys uq_idempotency_client_key postgres
+5109; 2606 59417 CONSTRAINT public notification_preferences uq_notification_preference_user_type postgres
+5037; 2606 51260 CONSTRAINT public organizational_units uq_org_unit_code postgres
+5032; 2606 51248 CONSTRAINT public organizations uq_organizations_code postgres
+5047; 2606 51300 CONSTRAINT public permissions uq_permissions_name postgres
+5074; 2606 51421 CONSTRAINT public retention_policy_versions uq_policy_version postgres
+4974; 2606 42735 CONSTRAINT public review_priorities uq_priority_run postgres
+5211; 2606 59821 CONSTRAINT public public_identifiers uq_public_identifier_public_id postgres
+5213; 2606 59823 CONSTRAINT public public_identifiers uq_public_identifier_target postgres
+5221; 2606 59843 CONSTRAINT public publications uq_publication_active_target postgres
+5199; 2606 59777 CONSTRAINT public publication_policies uq_publication_policy_name postgres
+5205; 2606 59802 CONSTRAINT public publication_policy_versions uq_publication_policy_version postgres
+5229; 2606 59871 CONSTRAINT public publication_versions uq_publication_version_number postgres
+5014; 2606 50902 CONSTRAINT public evidence_request_items uq_request_evidence_link postgres
+5083; 2606 51440 CONSTRAINT public retention_states uq_retention_state_resource postgres
+5052; 2606 51309 CONSTRAINT public role_permissions uq_role_permission postgres
+5042; 2606 51289 CONSTRAINT public roles uq_roles_name postgres
+4899; 2606 51236 CONSTRAINT public users uq_user_identity_subject postgres
+5057; 2606 51329 CONSTRAINT public user_role_assignments uq_user_role_scoped postgres
+5152; 2606 59576 CONSTRAINT public webhook_deliveries uq_webhook_delivery_event_sub postgres
+5059; 2606 51327 CONSTRAINT public user_role_assignments user_role_assignments_pkey postgres
+4901; 2606 17792 CONSTRAINT public users users_pkey postgres
+4935; 2606 34362 CONSTRAINT public vision_detections vision_detections_pkey postgres
+5154; 2606 59574 CONSTRAINT public webhook_deliveries webhook_deliveries_pkey postgres
+5147; 2606 59561 CONSTRAINT public webhook_events webhook_events_pkey postgres
+5143; 2606 59541 CONSTRAINT public webhook_subscriptions webhook_subscriptions_pkey postgres
+4911; 1259 17858 INDEX public idx_evidence_location postgres
+4919; 1259 59611 INDEX public ix_analysis_jobs_staleness postgres
+5062; 1259 51377 INDEX public ix_api_clients_name postgres
+5121; 1259 59470 INDEX public ix_api_credentials_client postgres
+5122; 1259 59471 INDEX public ix_api_credentials_client_revoked postgres
+4965; 1259 42721 INDEX public ix_assessments_run postgres
+4966; 1259 42720 INDEX public ix_assessments_target postgres
+5053; 1259 51357 INDEX public ix_assignments_org postgres
+5054; 1259 51356 INDEX public ix_assignments_project postgres
+5055; 1259 51355 INDEX public ix_assignments_user postgres
+5020; 1259 51014 INDEX public ix_audit_ledger_actor postgres
+5021; 1259 51013 INDEX public ix_audit_ledger_created postgres
+5022; 1259 51017 INDEX public ix_audit_ledger_project postgres
+5023; 1259 51016 INDEX public ix_audit_ledger_resource postgres
+5024; 1259 51012 INDEX public ix_audit_ledger_sequence postgres
+5025; 1259 51015 INDEX public ix_audit_ledger_type postgres
+4987; 1259 42948 INDEX public ix_case_generation_runs_run postgres
+5182; 1259 59696 INDEX public ix_correction_events_correction postgres
+5174; 1259 59680 INDEX public ix_correction_requests_created postgres
+5175; 1259 59678 INDEX public ix_correction_requests_project postgres
+5176; 1259 59679 INDEX public ix_correction_requests_requester postgres
+5177; 1259 59677 INDEX public ix_correction_requests_status postgres
+5178; 1259 59676 INDEX public ix_correction_requests_target postgres
+5171; 1259 59655 INDEX public ix_dispute_events_dispute postgres
+5162; 1259 59638 INDEX public ix_disputes_assigned postgres
+5163; 1259 59639 INDEX public ix_disputes_created postgres
+5164; 1259 59637 INDEX public ix_disputes_initiator postgres
+5165; 1259 59636 INDEX public ix_disputes_project postgres
+5166; 1259 59635 INDEX public ix_disputes_status postgres
+5167; 1259 59634 INDEX public ix_disputes_target postgres
+4912; 1259 17960 INDEX public ix_evidence_claim postgres
+4913; 1259 17959 INDEX public ix_evidence_project postgres
+5017; 1259 50929 INDEX public ix_evidence_request_events_request postgres
+5011; 1259 50914 INDEX public ix_evidence_request_items_evidence postgres
+5012; 1259 50913 INDEX public ix_evidence_request_items_request postgres
+5002; 1259 50884 INDEX public ix_evidence_requests_case postgres
+5003; 1259 50889 INDEX public ix_evidence_requests_due postgres
+5004; 1259 50886 INDEX public ix_evidence_requests_priority postgres
+5005; 1259 50883 INDEX public ix_evidence_requests_project postgres
+5006; 1259 50888 INDEX public ix_evidence_requests_recipient postgres
+5007; 1259 50887 INDEX public ix_evidence_requests_requester postgres
+5008; 1259 50885 INDEX public ix_evidence_requests_status postgres
+4914; 1259 17975 INDEX public ix_evidence_sha256 postgres
+4977; 1259 42801 INDEX public ix_explanation_runs_run postgres
+4978; 1259 59613 INDEX public ix_explanation_runs_staleness postgres
+5131; 1259 59511 INDEX public ix_external_assertions_ingested postgres
+5132; 1259 59510 INDEX public ix_external_assertions_resource postgres
+5133; 1259 59509 INDEX public ix_external_assertions_system postgres
+5125; 1259 59489 INDEX public ix_external_references_resource postgres
+5126; 1259 59488 INDEX public ix_external_references_system postgres
+5115; 1259 59458 INDEX public ix_external_systems_code postgres
+5116; 1259 59457 INDEX public ix_external_systems_org postgres
+4955; 1259 42680 INDEX public ix_fusion_runs_created postgres
+4956; 1259 59612 INDEX public ix_fusion_runs_staleness postgres
+4957; 1259 42679 INDEX public ix_fusion_runs_status postgres
+4958; 1259 42678 INDEX public ix_fusion_runs_target postgres
+4961; 1259 42697 INDEX public ix_fusion_signals_run postgres
+4962; 1259 42698 INDEX public ix_fusion_signals_type postgres
+4938; 1259 34419 INDEX public ix_graph_nodes_type_entity postgres
+4943; 1259 34448 INDEX public ix_graph_relationships_dedupe postgres
+4944; 1259 34447 INDEX public ix_graph_relationships_run postgres
+4945; 1259 34444 INDEX public ix_graph_relationships_source postgres
+4946; 1259 34445 INDEX public ix_graph_relationships_target postgres
+4947; 1259 34446 INDEX public ix_graph_relationships_type postgres
+5084; 1259 51483 INDEX public ix_holds_project postgres
+5085; 1259 51484 INDEX public ix_holds_resource postgres
+5086; 1259 51482 INDEX public ix_holds_status postgres
+5136; 1259 59527 INDEX public ix_idempotency_keys_client postgres
+5137; 1259 59528 INDEX public ix_idempotency_keys_expires postgres
+5157; 1259 59603 INDEX public ix_integration_events_aggregate postgres
+5158; 1259 59604 INDEX public ix_integration_events_project postgres
+5159; 1259 59602 INDEX public ix_integration_events_status postgres
+5185; 1259 59729 INDEX public ix_intelligence_invalidations_correction postgres
+5186; 1259 59730 INDEX public ix_intelligence_invalidations_created postgres
+5187; 1259 59728 INDEX public ix_intelligence_invalidations_dispute postgres
+5188; 1259 59727 INDEX public ix_intelligence_invalidations_target postgres
+5099; 1259 59406 INDEX public ix_notification_deliveries_notification postgres
+5100; 1259 59405 INDEX public ix_notification_deliveries_status_next_attempt postgres
+5110; 1259 59436 INDEX public ix_notification_outbox_status postgres
+5105; 1259 59423 INDEX public ix_notification_preferences_user postgres
+5093; 1259 59385 INDEX public ix_notifications_created_at postgres
+5094; 1259 59384 INDEX public ix_notifications_project postgres
+5095; 1259 59382 INDEX public ix_notifications_recipient_created postgres
+5096; 1259 59383 INDEX public ix_notifications_recipient_status postgres
+5033; 1259 51266 INDEX public ix_org_units_org postgres
+5028; 1259 51249 INDEX public ix_organizations_code postgres
+5043; 1259 51301 INDEX public ix_permissions_name postgres
+5070; 1259 51427 INDEX public ix_policy_versions_policy postgres
+4969; 1259 42742 INDEX public ix_priorities_run postgres
+4970; 1259 42741 INDEX public ix_priorities_target postgres
+4902; 1259 17958 INDEX public ix_projects_owner postgres
+5206; 1259 59824 INDEX public ix_public_identifiers_public_id postgres
+5207; 1259 59825 INDEX public ix_public_identifiers_target postgres
+5234; 1259 59926 INDEX public ix_public_media_derivatives_evidence postgres
+5235; 1259 59925 INDEX public ix_public_media_derivatives_publication postgres
+5230; 1259 59900 INDEX public ix_publication_events_created postgres
+5231; 1259 59899 INDEX public ix_publication_events_publication postgres
+5200; 1259 59809 INDEX public ix_publication_policy_versions_policy postgres
+5222; 1259 59885 INDEX public ix_publication_versions_created postgres
+5223; 1259 59884 INDEX public ix_publication_versions_public_id postgres
+5224; 1259 59882 INDEX public ix_publication_versions_publication postgres
+5225; 1259 59883 INDEX public ix_publication_versions_status postgres
+5214; 1259 59857 INDEX public ix_publications_created postgres
+5215; 1259 59856 INDEX public ix_publications_public_id postgres
+5216; 1259 59855 INDEX public ix_publications_status postgres
+5217; 1259 59854 INDEX public ix_publications_target postgres
+5189; 1259 59765 INDEX public ix_reprocessing_requests_created postgres
+5190; 1259 59762 INDEX public ix_reprocessing_requests_evidence postgres
+5191; 1259 59764 INDEX public ix_reprocessing_requests_invalidation postgres
+5192; 1259 59763 INDEX public ix_reprocessing_requests_status postgres
+5089; 1259 51502 INDEX public ix_retention_operations_resource postgres
+5090; 1259 51503 INDEX public ix_retention_operations_status postgres
+5065; 1259 51408 INDEX public ix_retention_policies_org postgres
+5066; 1259 51407 INDEX public ix_retention_policies_project postgres
+5067; 1259 51406 INDEX public ix_retention_policies_resource postgres
+5075; 1259 51448 INDEX public ix_retention_states_expiry postgres
+5076; 1259 51450 INDEX public ix_retention_states_policy postgres
+5077; 1259 51449 INDEX public ix_retention_states_project postgres
+5078; 1259 51446 INDEX public ix_retention_states_resource postgres
+5079; 1259 51447 INDEX public ix_retention_states_state postgres
+4997; 1259 43007 INDEX public ix_review_case_events_case postgres
+4988; 1259 42989 INDEX public ix_review_cases_assigned postgres
+4989; 1259 42991 INDEX public ix_review_cases_created postgres
+4990; 1259 42988 INDEX public ix_review_cases_priority postgres
+4991; 1259 42986 INDEX public ix_review_cases_project postgres
+4992; 1259 42990 INDEX public ix_review_cases_run postgres
+4993; 1259 42987 INDEX public ix_review_cases_status postgres
+5048; 1259 51320 INDEX public ix_role_permissions_role postgres
+5038; 1259 51290 INDEX public ix_roles_name postgres
+4896; 1259 17957 INDEX public ix_users_email postgres
+4897; 1259 17956 INDEX public ix_users_username postgres
+4932; 1259 34368 INDEX public ix_vision_detections_analysis_result_id postgres
+4933; 1259 34369 INDEX public ix_vision_detections_class_name postgres
+5148; 1259 59588 INDEX public ix_webhook_deliveries_event postgres
+5149; 1259 59587 INDEX public ix_webhook_deliveries_status_next postgres
+5150; 1259 59589 INDEX public ix_webhook_deliveries_subscription postgres
+5144; 1259 59563 INDEX public ix_webhook_events_project postgres
+5145; 1259 59562 INDEX public ix_webhook_events_status postgres
+5140; 1259 59548 INDEX public ix_webhook_subscriptions_status postgres
+5141; 1259 59547 INDEX public ix_webhook_subscriptions_system postgres
+5179; 1259 59681 INDEX public uq_correction_active_target_category_requester postgres
+5168; 1259 59640 INDEX public uq_disputes_active_target_initiator postgres
+4948; 1259 34449 INDEX public uq_graph_relationships_dedupe_active postgres
+5203; 1259 59808 INDEX public uq_publication_policy_active_version postgres
+5195; 1259 59766 INDEX public uq_reprocessing_pending_evidence postgres
+4996; 1259 42992 INDEX public uq_review_case_active_run postgres
+5241; 2606 17817 FK CONSTRAINT public activities activities_actor_id_fkey postgres
+5242; 2606 17812 FK CONSTRAINT public activities activities_project_id_fkey postgres
+5248; 2606 17878 FK CONSTRAINT public analysis_jobs analysis_jobs_evidence_id_fkey postgres
+5249; 2606 17891 FK CONSTRAINT public analysis_results analysis_results_job_id_fkey postgres
+5250; 2606 17904 FK CONSTRAINT public anomalies anomalies_evidence_id_fkey postgres
+5287; 2606 51372 FK CONSTRAINT public api_clients api_clients_project_id_fkey postgres
+5304; 2606 59465 FK CONSTRAINT public api_credentials api_credentials_client_id_fkey postgres
+5255; 2606 17951 FK CONSTRAINT public audit_events audit_events_actor_id_fkey postgres
+5263; 2606 42943 FK CONSTRAINT public case_generation_runs case_generation_runs_configuration_id_fkey postgres
+5264; 2606 42938 FK CONSTRAINT public case_generation_runs case_generation_runs_fusion_run_id_fkey postgres
+5243; 2606 17835 FK CONSTRAINT public claims claims_claimant_id_fkey postgres
+5244; 2606 17830 FK CONSTRAINT public claims claims_project_id_fkey postgres
+5315; 2606 59691 FK CONSTRAINT public correction_events correction_events_correction_id_fkey postgres
+5314; 2606 59671 FK CONSTRAINT public correction_requests correction_requests_project_id_fkey postgres
+5313; 2606 59650 FK CONSTRAINT public dispute_events dispute_events_dispute_id_fkey postgres
+5312; 2606 59629 FK CONSTRAINT public disputes disputes_project_id_fkey postgres
+5251; 2606 17915 FK CONSTRAINT public duplicate_matches duplicate_matches_evidence_id_fkey postgres
+5252; 2606 17920 FK CONSTRAINT public duplicate_matches duplicate_matches_matched_evidence_id_fkey postgres
+5245; 2606 17853 FK CONSTRAINT public evidence evidence_claim_id_fkey postgres
+5247; 2606 17867 FK CONSTRAINT public evidence_metadata evidence_metadata_evidence_id_fkey postgres
+5246; 2606 17848 FK CONSTRAINT public evidence evidence_project_id_fkey postgres
+5278; 2606 50924 FK CONSTRAINT public evidence_request_events evidence_request_events_request_id_fkey postgres
+5276; 2606 50908 FK CONSTRAINT public evidence_request_items evidence_request_items_evidence_id_fkey postgres
+5277; 2606 50903 FK CONSTRAINT public evidence_request_items evidence_request_items_request_id_fkey postgres
+5271; 2606 50868 FK CONSTRAINT public evidence_requests evidence_requests_activity_id_fkey postgres
+5272; 2606 50873 FK CONSTRAINT public evidence_requests evidence_requests_claim_id_fkey postgres
+5273; 2606 50878 FK CONSTRAINT public evidence_requests evidence_requests_evidence_id_fkey postgres
+5274; 2606 50863 FK CONSTRAINT public evidence_requests evidence_requests_project_id_fkey postgres
+5275; 2606 50858 FK CONSTRAINT public evidence_requests evidence_requests_review_case_id_fkey postgres
+5262; 2606 42796 FK CONSTRAINT public explanation_runs explanation_runs_fusion_run_id_fkey postgres
+5306; 2606 59504 FK CONSTRAINT public external_assertions external_assertions_api_client_id_fkey postgres
+5307; 2606 59499 FK CONSTRAINT public external_assertions external_assertions_external_system_id_fkey postgres
+5305; 2606 59483 FK CONSTRAINT public external_references external_references_external_system_id_fkey postgres
+5303; 2606 59452 FK CONSTRAINT public external_systems external_systems_organization_id_fkey postgres
+5238; 2606 51272 FK CONSTRAINT public projects fk_projects_org_unit postgres
+5239; 2606 51267 FK CONSTRAINT public projects fk_projects_organization postgres
+5259; 2606 42692 FK CONSTRAINT public fusion_signals fusion_signals_fusion_run_id_fkey postgres
+5257; 2606 34434 FK CONSTRAINT public graph_relationships graph_relationships_source_node_id_fkey postgres
+5258; 2606 34439 FK CONSTRAINT public graph_relationships graph_relationships_target_node_id_fkey postgres
+5308; 2606 59522 FK CONSTRAINT public idempotency_keys idempotency_keys_client_id_fkey postgres
+5260; 2606 42715 FK CONSTRAINT public integrity_assessments integrity_assessments_fusion_run_id_fkey postgres
+5316; 2606 59722 FK CONSTRAINT public intelligence_invalidations intelligence_invalidations_correction_id_fkey postgres
+5317; 2606 59717 FK CONSTRAINT public intelligence_invalidations intelligence_invalidations_dispute_id_fkey postgres
+5318; 2606 59712 FK CONSTRAINT public intelligence_invalidations intelligence_invalidations_project_id_fkey postgres
+5301; 2606 59400 FK CONSTRAINT public notification_deliveries notification_deliveries_notification_id_fkey postgres
+5302; 2606 59418 FK CONSTRAINT public notification_preferences notification_preferences_user_id_fkey postgres
+5298; 2606 59372 FK CONSTRAINT public notifications notifications_organization_id_fkey postgres
+5299; 2606 59377 FK CONSTRAINT public notifications notifications_project_id_fkey postgres
+5300; 2606 59367 FK CONSTRAINT public notifications notifications_recipient_id_fkey postgres
+5279; 2606 51261 FK CONSTRAINT public organizational_units organizational_units_organization_id_fkey postgres
+5240; 2606 17799 FK CONSTRAINT public projects projects_owner_id_fkey postgres
+5329; 2606 59920 FK CONSTRAINT public public_media_derivatives public_media_derivatives_original_evidence_id_fkey postgres
+5330; 2606 59910 FK CONSTRAINT public public_media_derivatives public_media_derivatives_publication_id_fkey postgres
+5331; 2606 59915 FK CONSTRAINT public public_media_derivatives public_media_derivatives_publication_version_id_fkey postgres
+5328; 2606 59894 FK CONSTRAINT public publication_events publication_events_publication_id_fkey postgres
+5323; 2606 59803 FK CONSTRAINT public publication_policy_versions publication_policy_versions_policy_id_fkey postgres
+5326; 2606 59877 FK CONSTRAINT public publication_versions publication_versions_policy_version_id_fkey postgres
+5327; 2606 59872 FK CONSTRAINT public publication_versions publication_versions_publication_id_fkey postgres
+5324; 2606 59844 FK CONSTRAINT public publications publications_policy_id_fkey postgres
+5325; 2606 59849 FK CONSTRAINT public publications publications_policy_version_id_fkey postgres
+5319; 2606 59757 FK CONSTRAINT public reprocessing_requests reprocessing_requests_analysis_job_id_fkey postgres
+5320; 2606 59747 FK CONSTRAINT public reprocessing_requests reprocessing_requests_evidence_id_fkey postgres
+5321; 2606 59752 FK CONSTRAINT public reprocessing_requests reprocessing_requests_invalidation_id_fkey postgres
+5322; 2606 59742 FK CONSTRAINT public reprocessing_requests reprocessing_requests_project_id_fkey postgres
+5293; 2606 51472 FK CONSTRAINT public retention_holds retention_holds_case_id_fkey postgres
+5294; 2606 51467 FK CONSTRAINT public retention_holds retention_holds_claim_id_fkey postgres
+5295; 2606 51477 FK CONSTRAINT public retention_holds retention_holds_organization_id_fkey postgres
+5296; 2606 51462 FK CONSTRAINT public retention_holds retention_holds_project_id_fkey postgres
+5297; 2606 51497 FK CONSTRAINT public retention_operations retention_operations_policy_version_id_fkey postgres
+5288; 2606 51391 FK CONSTRAINT public retention_policies retention_policies_organization_id_fkey postgres
+5289; 2606 51396 FK CONSTRAINT public retention_policies retention_policies_organizational_unit_id_fkey postgres
+5290; 2606 51401 FK CONSTRAINT public retention_policies retention_policies_project_id_fkey postgres
+5291; 2606 51422 FK CONSTRAINT public retention_policy_versions retention_policy_versions_policy_id_fkey postgres
+5292; 2606 51441 FK CONSTRAINT public retention_states retention_states_policy_version_id_fkey postgres
+5270; 2606 43002 FK CONSTRAINT public review_case_events review_case_events_case_id_fkey postgres
+5265; 2606 42981 FK CONSTRAINT public review_cases review_cases_case_generation_run_id_fkey postgres
+5266; 2606 42966 FK CONSTRAINT public review_cases review_cases_claim_id_fkey postgres
+5267; 2606 42971 FK CONSTRAINT public review_cases review_cases_evidence_id_fkey postgres
+5268; 2606 42976 FK CONSTRAINT public review_cases review_cases_fusion_run_id_fkey postgres
+5269; 2606 42961 FK CONSTRAINT public review_cases review_cases_project_id_fkey postgres
+5253; 2606 17933 FK CONSTRAINT public review_decisions review_decisions_evidence_id_fkey postgres
+5254; 2606 17938 FK CONSTRAINT public review_decisions review_decisions_reviewer_id_fkey postgres
+5261; 2606 42736 FK CONSTRAINT public review_priorities review_priorities_fusion_run_id_fkey postgres
+5280; 2606 51315 FK CONSTRAINT public role_permissions role_permissions_permission_id_fkey postgres
+5281; 2606 51310 FK CONSTRAINT public role_permissions role_permissions_role_id_fkey postgres
+5282; 2606 51340 FK CONSTRAINT public user_role_assignments user_role_assignments_organization_id_fkey postgres
+5283; 2606 51345 FK CONSTRAINT public user_role_assignments user_role_assignments_organizational_unit_id_fkey postgres
+5284; 2606 51350 FK CONSTRAINT public user_role_assignments user_role_assignments_project_id_fkey postgres
+5285; 2606 51335 FK CONSTRAINT public user_role_assignments user_role_assignments_role_id_fkey postgres
+5286; 2606 51330 FK CONSTRAINT public user_role_assignments user_role_assignments_user_id_fkey postgres
+5256; 2606 34363 FK CONSTRAINT public vision_detections vision_detections_analysis_result_id_fkey postgres
+5310; 2606 59582 FK CONSTRAINT public webhook_deliveries webhook_deliveries_subscription_id_fkey postgres
+5311; 2606 59577 FK CONSTRAINT public webhook_deliveries webhook_deliveries_webhook_event_id_fkey postgres
+5309; 2606 59542 FK CONSTRAINT public webhook_subscriptions webhook_subscriptions_external_system_id_fkey postgres

@@ -1,0 +1,34 @@
+=== STAGE 12 / step 2 — protected-resource baseline, read-only, taken immediately BEFORE cleanup ===
+utc=2026-10-13T09:10:29Z
+--- live project containers (never touched by Phase B)
+pofa_db	running	Up 3 hours
+pofa_minio_init	exited	Exited (0) 2 weeks ago
+pofa_redis	running	Up 3 hours
+pofa_minio	running	Up 3 hours
+/pofa_db id=7949c99808161e138c35489a9d34928b873cfcd4cead9eb0f00fb37261033baf state=running restarts=0 started=2026-10-13T06:15:07.152331657Z exit=0
+/pofa_redis id=29b684e82d7c9b2818fc1a3d0f48415ab78f923ec7e063150208d275bd767af5 state=running restarts=0 started=2026-10-13T06:15:07.077129515Z exit=0
+/pofa_minio id=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd state=running restarts=0 started=2026-10-13T06:15:07.080287176Z exit=0
+/pofa_minio_init id=1810626e8683cdeba6ecc7301ae59a24ad791cd33324000fc55a525b2dfdda96 state=exited restarts=0 started=2026-09-25T13:35:25.525328874Z exit=0
+--- live volumes and network (must be unchanged after cleanup)
+proof-of-action-final_db_data
+proof-of-action-final_minio_data
+template parsing error: template: :1:12: executing "" at <.Id>: can't evaluate field Id in type *network.networkContext
+--- pofa_dev (PROTECTED, read-only)
+alembic=t0u1v2w3x030
+ledger=6023 lo=1 hi=6059
+users=1054
+projects=544
+evidence=284
+analysis_jobs=32
+webhook_events=561
+tables=73
+pg=15.13 (Debian 15.13-1.pgdg120+1)
+--- pofa_test (PROTECTED for this task, read-only)
+alembic=t0u1v2w3x030
+ledger=53316 lo=1 hi=53316
+users=3263
+projects=1636
+evidence=1216
+analysis_jobs=38
+webhook_events=4455
+tables=73

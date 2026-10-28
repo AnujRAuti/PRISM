@@ -1,0 +1,34 @@
+=== vendor-init first boot (no repo mount) 2026-10-13T17:05:26Z ===
+ready after 1 polls
+
+--- which init scripts the entrypoint saw (nothing mounted => the baked file) ---
+total 12
+drwxr-xr-x 1 root root 4096 Jul 25  2025 .
+drwxr-xr-x 1 root root 4096 Oct 13 17:04 ..
+-rwxr-xr-x 1 root root 2647 Jul 25  2025 init.sql
+/usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/init.sql
+
+--- extensions created in the application database by the vendor script ---
+fuzzystrmatch 1.1, plpgsql 1.0, postgis 3.4.2, postgis_tiger_geocoder 3.4.2, postgis_topology 3.4.2, vector 0.7.4
+
+--- public object inventory ---
+information_schema tables+views=4
+real tables=2
+public indexes=4
+
+--- the demo table the drift report could not account for ---
+exemplo_dados exists=1
+rows=3
+owner=postgres
+extension-depended rows in pg_depend=0
+exemplo_dados_pkey, idx_exemplo_localizacao, idx_exemplo_embedding
+
+--- the same query against THIS RUN's properly bootstrapped application database ---
+plpgsql 1.0, postgis 3.4.2, vector 0.7.4
+information_schema tables+views=75
+real tables=73
+public indexes=265
+exemplo_dados exists=0
+alembic revision=t0u1v2w3x030
+
+=== done ===

@@ -1,0 +1,54 @@
+{
+  "completed_log_entry": [
+    88.54699999996228,
+    "INFO:__main__:analysis job completed job_id=759484c3-6580-431b-9bb4-9abb3abe0c31"
+  ],
+  "configured_block_s": 3,
+  "configured_socket_timeout_s": 8.0,
+  "first_backoff_warning": [
+    5.139999999955762,
+    "WARNING:__main__:redis unavailable; backing off 2.5s (consecutive failures 1)"
+  ],
+  "fixture": {
+    "bytes": 68076,
+    "evidence_id": "63680e42-63e8-4171-a229-796d5f1eef84",
+    "job_id": "759484c3-6580-431b-9bb4-9abb3abe0c31",
+    "storage_key": "quarantine/63680e42-63e8-4171-a229-796d5f1eef84/original"
+  },
+  "job_states": {
+    "759484c3-6580-431b-9bb4-9abb3abe0c31": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    }
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 0
+  },
+  "scenario": "S2 disconnect during blocking dequeue",
+  "seconds_stop_to_warning": 0.17,
+  "stop_at_worker_clock_s": 4.97,
+  "worker_alive_during_outage": true,
+  "worker_final": {
+    "again_lines": [
+      {
+        "arrival_s": 88.55,
+        "message": "INFO:__main__:redis reachable again after 1 backoff(s)"
+      }
+    ],
+    "alive_at_measurement": true,
+    "backoff_warnings": [
+      {
+        "arrival_s": 5.14,
+        "stated_consecutive_failures": 1,
+        "stated_delay_s": 2.5
+      }
+    ],
+    "exit_code": null,
+    "log_lines": 5,
+    "pid": 21088,
+    "recovery_lines": []
+  }
+}

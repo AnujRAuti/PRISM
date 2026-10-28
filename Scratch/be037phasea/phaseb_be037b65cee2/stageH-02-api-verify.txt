@@ -1,0 +1,145 @@
+=== H1 principals ===
+PASS  H1 ADMINISTRATOR user created  | user id 2387cd58-7fa2-4435-9960-59499cf09795
+PASS  H1 FIELD_OFFICER user created  | user id 8e6deec1-847f-40d3-b979-3774aacce281
+
+=== H2 whole-chain verify (authenticated ADMINISTRATOR) ===
+--- GET /api/v1/audit/verify -> HTTP 200
+{
+  "checked_events": 86,
+  "failures": [],
+  "first_sequence": 1,
+  "last_sequence": 86,
+  "valid": true
+}
+PASS  H2 /audit/verify returns 200 for audit.read  | HTTP 200
+PASS  H2 whole chain is valid  | valid=True
+PASS  H2 no chain failures reported  | failures=[]
+PASS  H2 events were actually walked  | checked_events=86
+PASS  H2 range starts at sequence 1  | first=1
+HEAD_SEQ=86  CHECKED=86
+
+=== H3 bounded range verify ===
+PASS  H3 explicit full range also valid  | HTTP 200 valid=True checked=86
+--- GET /audit/verify?from_sequence=5&to_sequence=12 -> HTTP 200
+{
+  "checked_events": 8,
+  "failures": [],
+  "first_sequence": 5,
+  "last_sequence": 12,
+  "valid": true
+}
+PASS  H3 partial-range walk is valid and covers 8 events  | HTTP 200 valid=True checked=8
+PASS  H3 out-of-range bound is rejected by validation, not ignored  | HTTP 422 {"detail": [{"type": "greater_than_equal", "loc": ["query", "to_sequence"], "msg": "Input should be greater than or equal to 1", "input": "0", "ctx": {"ge": 1}}
+
+=== H4 anchored verification + checkpoint + classification ===
+--- GET /api/v1/audit/verify/anchored (default baseline) -> HTTP 200
+{
+  "checked_events": 86,
+  "checkpoint": {
+    "max_sequence": 86,
+    "min_sequence": 1,
+    "rows": 86,
+    "tail_event_hash": "7ac9e36ca1a1750ddf44ff6916eef0170e956b267408fea185560681c7a4f2ae",
+    "tail_previous_hash": "a6fc61edc10a9ed7c033319e011a3d6dbbdc95343f971c40ecc83355d1a9845a"
+  },
+  "classification": {
+    "baseline_name": "none",
+    "baseline_version": 0,
+    "degraded": false,
+    "hard_anomalies": [],
+    "known_historical_gaps": [],
+    "new_gaps": [],
+    "status": "clean"
+  },
+  "failures": [],
+  "first_sequence": 1,
+  "last_sequence": 86,
+  "valid": true,
+  "writer_policy": "controlled_continuation"
+}
+PASS  H4 anchored verify 200 + valid  | HTTP 200 valid=True
+PASS  H4 checkpoint publishes row count and head bounds  | checkpoint={"rows": 86, "min_sequence": 1, "max_sequence": 86, "tail_event_hash": "7ac9e36ca1a1750ddf44ff6916eef0170e956b267408fea185560681c7a4f2ae", "tail_previous_hash": "a6fc61edc10a9ed7c033319e011a3d6dbbdc95
+PASS  H4 checkpoint publishes tail hashes (the anti-TRUNCATE anchor)  | tail_event_hash=7ac9e36ca1a1750d... tail_previous_hash=a6fc61edc10a9ed7...
+PASS  H4 default baseline is the fail-closed empty one  | classification={"status": "clean", "degraded": false, "known_historical_gaps": [], "new_gaps": [], "hard_anomalies": [], "baseline_name": "none", "baseline_version": 0}
+PASS  H4 writer policy is reported  | writer_policy=controlled_continuation
+PASS  H4 explicit 'none' baseline matches the default  | HTTP 200
+--- GET /audit/verify/anchored?baseline=pofa-dev-pre-be030-test-cleanup -> HTTP 200
+{
+  "checked_events": 86,
+  "checkpoint": {
+    "max_sequence": 86,
+    "min_sequence": 1,
+    "rows": 86,
+    "tail_event_hash": "7ac9e36ca1a1750ddf44ff6916eef0170e956b267408fea185560681c7a4f2ae",
+    "tail_previous_hash": "a6fc61edc10a9ed7c033319e011a3d6dbbdc95343f971c40ecc83355d1a9845a"
+  },
+  "classification": {
+    "baseline_name": "pofa-dev-pre-be030-test-cleanup",
+    "baseline_version": 1,
+    "degraded": false,
+    "hard_anomalies": [],
+    "known_historical_gaps": [],
+    "new_gaps": [],
+    "status": "clean"
+  },
+  "failures": [],
+  "first_sequence": 1,
+  "last_sequence": 86,
+  "valid": true,
+  "writer_policy": "controlled_continuation"
+}
+PASS  H4 a registered foreign baseline is accepted and still reports no gaps here  | HTTP 200 classification={"status": "clean", "degraded": false, "known_historical_gaps": [], "new_gaps": [], "hard_anomalies": [], "baseline_name": "pofa-dev-pre-be030-test-cleanup", "baseline_version": 1}
+PASS  H4 the pofa-dev baseline does NOT bless anything on this ledger  | known=[]
+PASS  H4 an unknown baseline name is rejected rather than silently defaulted  | HTTP 422 {"detail": "Unknown baseline 'is-made-up'; registered baselines: ['none', 'pofa-dev-pre-be030-test-cleanup']"}
+
+=== H5 authorization actually binds an authenticated principal ===
+PASS  H5 FIELD_OFFICER (no audit.read) is refused the chain walk  | HTTP 403 {"detail": "Forbidden"}
+PASS  H5 anonymous request in dev mode is NOT refused (recorded as finding G2, not a probe failure)  | HTTP 200 -- dev-mode anonymous bypass, see BE-037B-G2
+--- GET /api/v1/audit/verify (anonymous, dev mode) -> HTTP 200
+{
+  "checked_events": 86,
+  "failures": [],
+  "first_sequence": 1,
+  "last_sequence": 86,
+  "valid": true
+}
+
+=== H6 application-path append, then re-verify continuity ===
+PASS  H6 an application write succeeded  | HTTP 201
+   before: seq=86 rows=86
+   after : seq=87 rows=87
+PASS  H6 the ledger advanced after the application write  | head 86 -> 87
+PASS  H6 the chain is still valid after the append  | valid=True failures=[]
+PASS  H6 the checkpoint tail hash changed (new head is anchored)  | before=7ac9e36ca1a1750d... after=e96f2f3287032ccf...
+   /audit/events?resource_id=<new user> -> HTTP 200, 1 items, total=1
+PASS  H6 the appended event is retrievable through the audit API  | HTTP 200 count=1
+--- the appended USER_CREATED event -> HTTP 200
+{
+  "action": "create",
+  "actor_id": null,
+  "created_at": "2026-10-13T08:25:06.599167Z",
+  "event_hash": "e96f2f3287032ccfc23869b5609ee7dca278dc0b18ea1aaa86684f976adf6679",
+  "event_metadata": {
+    "request_id": "993d015b-0b72-46bf-8199-8419f6ac5075",
+    "source": "authorization_service"
+  },
+  "event_type": "USER_CREATED",
+  "hash_algorithm": "SHA-256",
+  "id": "1a7c18a4-be4b-4c73-b0a7-629583763e51",
+  "ledger_version": "audit-v1",
+  "payload": {
+    "user_id": "0c47e94b-5762-4081-bf9d-3152dfb7ab16",
+    "username": "be037b_h_append_fdd1bc93"
+  },
+  "previous_hash": "7ac9e36ca1a1750ddf44ff6916eef0170e956b267408fea185560681c7a4f2ae",
+  "project_id": null,
+  "resource_id": "0c47e94b-5762-4081-bf9d-3152dfb7ab16",
+  "resource_type": "users",
+  "sequence_number": 87
+}
+PASS  H6 the appended row links to its predecessor by hash  | seq=87 alg=SHA-256 prev=7ac9e36ca1a1750d...
+PASS  H6 the appended head sequence matches the anchored checkpoint  | event seq=87 checkpoint=87
+
+=== SUMMARY ===
+H1_RESULT: total=28 pass=28 fail=0
+H1_HEAD_SEQ_AFTER=87 H1_ROWS_AFTER=87

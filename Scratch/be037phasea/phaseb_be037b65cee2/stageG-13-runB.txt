@@ -1,0 +1,15 @@
+=== G4b  job against evidence whose stored object was deleted first ===
+PASS  G4b metadata row still exists before the job (DB says uploaded, storage says gone)  | HTTP 200
+   OBSERVE presigned download for the missing object -> HTTP 200 {"evidence_id": "39b1fbb2-0d80-4305-87b4-abb6d001cbae", "download_url": "http://minio:9000/be037b65cee2-quarantine/quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original?X-Amz-Algorithm=AWS4-HMAC-SH
+PASS  G4b job accepted for evidence with no object  | HTTP 202 {"job_id": "da486ea1-1abc-4f21-bfa3-e3db6ae89119", "evidence_id": "39b1fbb2-0d80-4305-87b4-abb6d001cbae", "status": "queued", "attempt_count": 0, "error": null, "started_at": null, "completed_at": nul
+   status observed: queued (attempt_count=0)
+   status observed: failed (attempt_count=3)
+   final job: {"job_id": "da486ea1-1abc-4f21-bfa3-e3db6ae89119", "evidence_id": "39b1fbb2-0d80-4305-87b4-abb6d001cbae", "status": "failed", "attempt_count": 3, "error": "Analysis processing failed", "started_at": "2026-10-13T07:56:28.827052Z", "completed_at": "2026-10-13T07:56:28.869919Z", "result": null}
+PASS  G4b job is marked failed, never completed (no silent success)  | status=failed
+PASS  G4b failure carries an error message  | error=Analysis processing failed
+PASS  G4b worker used its bounded retry count before declaring failure  | attempt_count=3
+PASS  G4b no AnalysisResult was stored for the failed job  | result=null
+G4b_STATUS_TRACE=queued,failed
+
+=== SUMMARY ===
+G_RESULT_B: total=6 pass=6 fail=0

@@ -1,0 +1,5 @@
+=== F object/DB counts — 2026-10-13T07:24:16Z ===
+BEFORE: quarantine=0 evidence=0
+  db evidence_rows=0
+AFTER: quarantine=0 evidence=0
+  db evidence_rows=2

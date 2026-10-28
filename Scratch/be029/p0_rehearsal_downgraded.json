@@ -1,0 +1,93 @@
+{
+ "current_database": {
+  "n": "pofa_be029_rehearsal"
+ },
+ "alembic_version": [
+  {
+   "version_num": "q7r8s9t0u027"
+  }
+ ],
+ "users": {
+  "n": 1094
+ },
+ "projects": {
+  "n": 584
+ },
+ "evidence": {
+  "n": 324
+ },
+ "audit_ledger_events": {
+  "n": 6017
+ },
+ "residue_users": {
+  "n": 40
+ },
+ "residue_projects": {
+  "n": 40
+ },
+ "residue_evidence": {
+  "n": 40
+ },
+ "dup_username_groups": {
+  "n": 1
+ },
+ "dup_email_groups": {
+  "n": 1
+ },
+ "dup_username_values": [
+  {
+   "username": "testuser",
+   "n": 40
+  }
+ ],
+ "dup_email_values": [
+  {
+   "email": "test@example.com",
+   "n": 40
+  }
+ ],
+ "users_indexes": [
+  {
+   "indexname": "ix_users_email",
+   "indexdef": "CREATE INDEX ix_users_email ON public.users USING btree (email)"
+  },
+  {
+   "indexname": "ix_users_username",
+   "indexdef": "CREATE INDEX ix_users_username ON public.users USING btree (username)"
+  }
+ ],
+ "users_constraints": [
+  {
+   "conname": "ck_user_status",
+   "def": "CHECK (((status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'SUSPENDED'::character varying, 'DISABLED'::character varying])::text[])))"
+  },
+  {
+   "conname": "uq_user_identity_subject",
+   "def": "UNIQUE (identity_provider, external_subject)"
+  },
+  {
+   "conname": "users_pkey",
+   "def": "PRIMARY KEY (id)"
+  }
+ ],
+ "null_external_subject": [
+  {
+   "n_null": 1009,
+   "n_total": 1094
+  }
+ ],
+ "archive_table": {
+  "n": 0
+ },
+ "archive_rows": "table absent",
+ "fk_into_residue": [
+  {
+   "ref": "projects.owner_id",
+   "n": 40
+  },
+  {
+   "ref": "evidence.project_id",
+   "n": 40
+  }
+ ]
+}

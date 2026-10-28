@@ -1,0 +1,361 @@
+=== BE-037 remediation full suites (disposable target) === Tue Oct 13 13:43:32 UTC 2026
+
+>>> 13:43:32 | FULL UNIT SUITE
+........................................................................ [ 13%]
+........................................................................ [ 27%]
+.............F.......................................................... [ 41%]
+........................................................................ [ 55%]
+........................................................................ [ 68%]
+...........................................s............................ [ 82%]
+........................................................................ [ 96%]
+..................                                                       [100%]
+================================== FAILURES ===================================
+________ test_development_and_staging_keep_the_permissive_jwt_default _________
+
+    def test_development_and_staging_keep_the_permissive_jwt_default():
+        """Only production is hardened; local workflows must not break."""
+>       assert Settings(environment="development").jwt_secret == "changeme"
+E       AssertionError: assert 'FYqFKUSwcBMZ...NVUs8j5hvb5ue' == 'changeme'
+E         
+E         - changeme
+E         + FYqFKUSwcBMZXj3oHlKUhQPNsejCvMZ2wK7NVUs8j5hvb5ue
+
+tests\unit\test_configuration_and_logging.py:121: AssertionError
+============================== warnings summary ===============================
+backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+backend\app\main.py:121
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:121: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+backend\app\main.py:135
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:135: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\unit\test_preflight.py:117: ML stack genuinely installed in this environment
+FAILED tests/unit/test_configuration_and_logging.py::test_development_and_staging_keep_the_permissive_jwt_default
+1 failed, 520 passed, 1 skipped, 6 warnings in 31.88s
+
+>>> 13:44:08 | unit exit=1
+
+>>> 13:44:08 | FULL INTEGRATION SUITE
+........................................................................ [ 19%]
+....................................................................F... [ 38%]
+........................................................................ [ 57%]
+........................................................................ [ 76%]
+..................................................................F...F. [ 96%]
+...............                                                          [100%]
+================================== FAILURES ===================================
+_ test_verification_context_refuses_the_shared_test_database_over_a_real_connection _
+
+    def test_verification_context_refuses_the_shared_test_database_over_a_real_connection():
+        """A probe mislabelled as verification is stopped by the server's own answer."""
+>       with pytest.raises(ProtectedDatabaseError, match="protected database"):
+E       Failed: DID NOT RAISE ProtectedDatabaseError
+
+tests\integration\test_be029_database_safety_guard.py:147: Failed
+________________ test_drift_is_exactly_the_documented_baseline ________________
+
+drift = ['remove_index|featnames|idx_tiger_featnames_lname', 'remove_index|featnames|idx_tiger_featnames_snd_name', 'remove_in...eatnames_tlid_statefp', 'remove_table|None|featnames', 'remove_table|None|zip_lookup_all', 'remove_table|None|bg', ...]
+
+    def test_drift_is_exactly_the_documented_baseline(drift):
+        """§20: fail on unexpected schema change, in both directions."""
+        verdict = compare(drift)
+>       assert verdict.clean, (
+            "Schema drift is not fully accounted for.\n"
+            f"UNEXPLAINED (new since the baseline was written): {list(verdict.new)}\n"
+            f"NO LONGER PRESENT (the baseline is stale): {list(verdict.resolved)}\n"
+            "Explain a new operation by classifying it (BE-028 §13) and adding it "
+            "to tests/schema_drift_baseline.py with a reason, or fix it with a "
+            "migration. If one has been resolved, delete its baseline entry in the "
+            "same change."
+        )
+E       AssertionError: Schema drift is not fully accounted for.
+E         UNEXPLAINED (new since the baseline was written): ['remove_index|addrfeat|idx_addrfeat_geom_gist', 'remove_index|addrfeat|idx_addrfeat_tlid', 'remove_index|addrfeat|idx_addrfeat_zipl', 'remove_index|addrfeat|idx_addrfeat_zipr', 'remove_index|addr|idx_tiger_addr_tlid_statefp', 'remove_index|addr|idx_tiger_addr_zip', 'remove_index|county_lookup|county_lookup_name_idx', 'remove_index|county_lookup|county_lookup_state_idx', 'remove_index|countysub_lookup|countysub_lookup_name_idx', 'remove_index|countysub_lookup|countysub_lookup_state_idx', 'remove_index|county|idx_tiger_county', 'remove_index|cousub|tige_cousub_the_geom_gist', 'remove_index|direction_lookup|direction_lookup_abbrev_idx', 'remove_index|edges|idx_edges_tlid', 'remove_index|edges|idx_tiger_edges_countyfp', 'remove_index|edges|idx_tiger_edges_the_geom_gist', 'remove_index|exemplo_dados|idx_exemplo_embedding', 'remove_index|exemplo_dados|idx_exemplo_localizacao', 'remove_index|faces|idx_tiger_faces_countyfp', 'remove_index|faces|idx_tiger_faces_tfid', 'remove_index|faces|tiger_faces_the_geom_gist', 'remove_index|featnames|idx_tiger_featnames_lname', 'remove_index|featnames|idx_tiger_featnames_snd_name', 'remove_index|featnames|idx_tiger_featnames_tlid_statefp', 'remove_index|place_lookup|place_lookup_name_idx', 'remove_index|place_lookup|place_lookup_state_idx', 'remove_index|place|tiger_place_the_geom_gist', 'remove_index|secondary_unit_lookup|secondary_unit_lookup_abbrev_idx', 'remove_index|state|idx_tiger_state_the_geom_gist', 'remove_index|street_type_lookup|street_type_lookup_abbrev_idx', 'remove_table|None|addr', 'remove_table|None|addrfeat', 'remove_table|None|bg', 'remove_table|None|county', 'remove_table|None|county_lookup', 'remove_table|None|countysub_lookup', 'remove_table|None|cousub', 'remove_table|None|direction_lookup', 'remove_table|None|edges', 'remove_table|None|exemplo_dados', 'remove_table|None|faces', 'remove_table|None|featnames', 'remove_table|None|geocode_settings', 'remove_table|None|geocode_settings_default', 'remove_table|None|layer', 'remove_table|None|loader_lookuptables', 'remove_table|None|loader_platform', 'remove_table|None|loader_variables', 'remove_table|None|pagc_gaz', 'remove_table|None|pagc_lex', 'remove_table|None|pagc_rules', 'remove_table|None|place', 'remove_table|None|place_lookup', 'remove_table|None|secondary_unit_lookup', 'remove_table|None|state', 'remove_table|None|state_lookup', 'remove_table|None|street_type_lookup', 'remove_table|None|tabblock', 'remove_table|None|tabblock20', 'remove_table|None|topology', 'remove_table|None|tract', 'remove_table|None|zcta5', 'remove_table|None|zip_lookup', 'remove_table|None|zip_lookup_all', 'remove_table|None|zip_lookup_base', 'remove_table|None|zip_state', 'remove_table|None|zip_state_loc']
+E         NO LONGER PRESENT (the baseline is stale): []
+E         Explain a new operation by classifying it (BE-028 §13) and adding it to tests/schema_drift_baseline.py with a reason, or fix it with a migration. If one has been resolved, delete its baseline entry in the same change.
+E       assert False
+E        +  where False = DriftVerdict(new=('remove_index|addrfeat|idx_addrfeat_geom_gist', 'remove_index|addrfeat|idx_addrfeat_tlid', 'remove_i...', 'remove_table|None|zip_lookup_base', 'remove_table|None|zip_state', 'remove_table|None|zip_state_loc'), resolved=()).clean
+
+tests\integration\test_schema_drift_gate.py:94: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+Context impl PostgresqlImpl.
+Will assume transactional DDL.
+Detected sequence named 'featnames_gid_seq' as owned by integer column 'featnames(gid)', assuming SERIAL and omitting
+Detected removed index 'idx_tiger_featnames_lname' on 'featnames'
+Detected removed index 'idx_tiger_featnames_snd_name' on 'featnames'
+Detected removed index 'idx_tiger_featnames_tlid_statefp' on 'featnames'
+Detected removed table 'featnames'
+Detected removed table 'zip_lookup_all'
+Detected sequence named 'bg_gid_seq' as owned by integer column 'bg(gid)', assuming SERIAL and omitting
+Detected removed table 'bg'
+Detected removed index 'county_lookup_name_idx' on 'county_lookup'
+Detected removed index 'county_lookup_state_idx' on 'county_lookup'
+Detected removed table 'county_lookup'
+Detected removed index 'street_type_lookup_abbrev_idx' on 'street_type_lookup'
+Detected removed table 'street_type_lookup'
+Detected removed table 'zip_lookup_base'
+Detected sequence named 'state_gid_seq' as owned by integer column 'state(gid)', assuming SERIAL and omitting
+Detected removed index 'idx_tiger_state_the_geom_gist' on 'state'
+Detected removed table 'state'
+Detected sequence named 'topology_id_seq' as owned by integer column 'topology(id)', assuming SERIAL and omitting
+Detected removed table 'topology'
+Detected removed index 'direction_lookup_abbrev_idx' on 'direction_lookup'
+Detected removed table 'direction_lookup'
+Detected sequence named 'tract_gid_seq' as owned by integer column 'tract(gid)', assuming SERIAL and omitting
+Detected removed table 'tract'
+Detected removed table 'loader_lookuptables'
+Detected sequence named 'edges_gid_seq' as owned by integer column 'edges(gid)', assuming SERIAL and omitting
+Detected removed index 'idx_edges_tlid' on 'edges'
+Detected removed index 'idx_tiger_edges_countyfp' on 'edges'
+Detected removed index 'idx_tiger_edges_the_geom_gist' on 'edges'
+Detected removed table 'edges'
+Detected sequence named 'addrfeat_gid_seq' as owned by integer column 'addrfeat(gid)', assuming SERIAL and omitting
+Detected removed index 'idx_addrfeat_geom_gist' on 'addrfeat'
+Detected removed index 'idx_addrfeat_tlid' on 'addrfeat'
+Detected removed index 'idx_addrfeat_zipl' on 'addrfeat'
+Detected removed index 'idx_addrfeat_zipr' on 'addrfeat'
+Detected removed table 'addrfeat'
+Detected sequence named 'pagc_lex_id_seq' as owned by integer column 'pagc_lex(id)', assuming SERIAL and omitting
+Detected removed table 'pagc_lex'
+Detected removed table 'loader_variables'
+Detected removed table 'zip_lookup'
+Detected removed table 'tabblock20'
+Detected sequence named 'zcta5_gid_seq' as owned by integer column 'zcta5(gid)', assuming SERIAL and omitting
+Detected removed table 'zcta5'
+Detected sequence named 'pagc_gaz_id_seq' as owned by integer column 'pagc_gaz(id)', assuming SERIAL and omitting
+Detected removed table 'pagc_gaz'
+Detected sequence named 'pagc_rules_id_seq' as owned by integer column 'pagc_rules(id)', assuming SERIAL and omitting
+Detected removed table 'pagc_rules'
+Detected sequence named 'county_gid_seq' as owned by integer column 'county(gid)', assuming SERIAL and omitting
+Detected removed index 'idx_tiger_county' on 'county'
+Detected removed table 'county'
+Detected sequence named 'cousub_gid_seq' as owned by integer column 'cousub(gid)', assuming SERIAL and omitting
+Detected removed index 'tige_cousub_the_geom_gist' on 'cousub'
+Detected removed table 'cousub'
+Detected sequence named 'addr_gid_seq' as owned by integer column 'addr(gid)', assuming SERIAL and omitting
+Detected removed index 'idx_tiger_addr_tlid_statefp' on 'addr'
+Detected removed index 'idx_tiger_addr_zip' on 'addr'
+Detected removed table 'addr'
+Detected removed index 'countysub_lookup_name_idx' on 'countysub_lookup'
+Detected removed index 'countysub_lookup_state_idx' on 'countysub_lookup'
+Detected removed table 'countysub_lookup'
+Detected removed index 'secondary_unit_lookup_abbrev_idx' on 'secondary_unit_lookup'
+Detected removed table 'secondary_unit_lookup'
+Detected removed table 'geocode_settings_default'
+Detected sequence named 'faces_gid_seq' as owned by integer column 'faces(gid)', assuming SERIAL and omitting
+Detected removed index 'idx_tiger_faces_countyfp' on 'faces'
+Detected removed index 'idx_tiger_faces_tfid' on 'faces'
+Detected removed index 'tiger_faces_the_geom_gist' on 'faces'
+Detected removed table 'faces'
+Detected removed table 'zip_state_loc'
+Detected removed table 'zip_state'
+Detected sequence named 'place_gid_seq' as owned by integer column 'place(gid)', assuming SERIAL and omitting
+Detected removed index 'tiger_place_the_geom_gist' on 'place'
+Detected removed table 'place'
+Detected removed table 'geocode_settings'
+Detected removed table 'loader_platform'
+Detected removed table 'layer'
+Detected removed index 'place_lookup_name_idx' on 'place_lookup'
+Detected removed index 'place_lookup_state_idx' on 'place_lookup'
+Detected removed table 'place_lookup'
+Detected sequence named 'tabblock_gid_seq' as owned by integer column 'tabblock(gid)', assuming SERIAL and omitting
+Detected removed table 'tabblock'
+Detected sequence named 'exemplo_dados_id_seq' as owned by integer column 'exemplo_dados(id)', assuming SERIAL and omitting
+Detected removed index 'idx_exemplo_embedding' on 'exemplo_dados'
+Detected removed index 'idx_exemplo_localizacao' on 'exemplo_dados'
+Detected removed table 'exemplo_dados'
+Detected removed table 'state_lookup'
+Detected changed unique constraint 'uq_user_role_scoped' on 'user_role_assignments': expression ('UNIQUE_CONSTRAINT', 'organization_id', 'organizational_unit_id', 'project_id', 'role_id', 'scope_type', 'user_id') to ('UNIQUE_CONSTRAINT', 'organization_id', 'organizational_unit_id', 'project_id', 'role_id', 'scope_type', 'user_id', ('nulls_not_distinct', True))
+----------------------------- Captured log setup ------------------------------
+INFO     alembic.runtime.migration:migration.py:213 Context impl PostgresqlImpl.
+INFO     alembic.runtime.migration:migration.py:216 Will assume transactional DDL.
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'featnames_gid_seq' as owned by integer column 'featnames(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_featnames_lname' on 'featnames'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_featnames_snd_name' on 'featnames'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_featnames_tlid_statefp' on 'featnames'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'featnames'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'zip_lookup_all'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'bg_gid_seq' as owned by integer column 'bg(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'bg'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'county_lookup_name_idx' on 'county_lookup'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'county_lookup_state_idx' on 'county_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'county_lookup'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'street_type_lookup_abbrev_idx' on 'street_type_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'street_type_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'zip_lookup_base'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'state_gid_seq' as owned by integer column 'state(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_state_the_geom_gist' on 'state'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'state'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'topology_id_seq' as owned by integer column 'topology(id)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'topology'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'direction_lookup_abbrev_idx' on 'direction_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'direction_lookup'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'tract_gid_seq' as owned by integer column 'tract(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'tract'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'loader_lookuptables'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'edges_gid_seq' as owned by integer column 'edges(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_edges_tlid' on 'edges'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_edges_countyfp' on 'edges'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_edges_the_geom_gist' on 'edges'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'edges'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'addrfeat_gid_seq' as owned by integer column 'addrfeat(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_addrfeat_geom_gist' on 'addrfeat'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_addrfeat_tlid' on 'addrfeat'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_addrfeat_zipl' on 'addrfeat'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_addrfeat_zipr' on 'addrfeat'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'addrfeat'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'pagc_lex_id_seq' as owned by integer column 'pagc_lex(id)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'pagc_lex'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'loader_variables'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'zip_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'tabblock20'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'zcta5_gid_seq' as owned by integer column 'zcta5(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'zcta5'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'pagc_gaz_id_seq' as owned by integer column 'pagc_gaz(id)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'pagc_gaz'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'pagc_rules_id_seq' as owned by integer column 'pagc_rules(id)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'pagc_rules'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'county_gid_seq' as owned by integer column 'county(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_county' on 'county'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'county'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'cousub_gid_seq' as owned by integer column 'cousub(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'tige_cousub_the_geom_gist' on 'cousub'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'cousub'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'addr_gid_seq' as owned by integer column 'addr(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_addr_tlid_statefp' on 'addr'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_addr_zip' on 'addr'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'addr'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'countysub_lookup_name_idx' on 'countysub_lookup'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'countysub_lookup_state_idx' on 'countysub_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'countysub_lookup'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'secondary_unit_lookup_abbrev_idx' on 'secondary_unit_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'secondary_unit_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'geocode_settings_default'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'faces_gid_seq' as owned by integer column 'faces(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_faces_countyfp' on 'faces'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_tiger_faces_tfid' on 'faces'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'tiger_faces_the_geom_gist' on 'faces'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'faces'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'zip_state_loc'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'zip_state'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'place_gid_seq' as owned by integer column 'place(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'tiger_place_the_geom_gist' on 'place'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'place'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'geocode_settings'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'loader_platform'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'layer'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'place_lookup_name_idx' on 'place_lookup'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'place_lookup_state_idx' on 'place_lookup'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'place_lookup'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'tabblock_gid_seq' as owned by integer column 'tabblock(gid)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'tabblock'
+INFO     alembic.ddl.postgresql:postgresql.py:224 Detected sequence named 'exemplo_dados_id_seq' as owned by integer column 'exemplo_dados(id)', assuming SERIAL and omitting
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_exemplo_embedding' on 'exemplo_dados'
+INFO     alembic.autogenerate.compare:compare.py:752 Detected removed index 'idx_exemplo_localizacao' on 'exemplo_dados'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'exemplo_dados'
+INFO     alembic.autogenerate.compare:compare.py:224 Detected removed table 'state_lookup'
+INFO     alembic.autogenerate.compare:compare.py:789 Detected changed unique constraint 'uq_user_role_scoped' on 'user_role_assignments': expression ('UNIQUE_CONSTRAINT', 'organization_id', 'organizational_unit_id', 'project_id', 'role_id', 'scope_type', 'user_id') to ('UNIQUE_CONSTRAINT', 'organization_id', 'organizational_unit_id', 'project_id', 'role_id', 'scope_type', 'user_id', ('nulls_not_distinct', True))
+__________ test_extension_owned_objects_are_excluded_not_suppressed ___________
+
+drift = ['remove_index|featnames|idx_tiger_featnames_lname', 'remove_index|featnames|idx_tiger_featnames_snd_name', 'remove_in...eatnames_tlid_statefp', 'remove_table|None|featnames', 'remove_table|None|zip_lookup_all', 'remove_table|None|bg', ...]
+
+    def test_extension_owned_objects_are_excluded_not_suppressed(drift):
+        """The PostGIS exclusion is narrow: named objects only, nothing else."""
+>       assert not [d for d in drift if d.startswith("remove_table|")], (
+            "The comparison wants to drop a table. If it is spatial_ref_sys, the "
+            "include_object hook has stopped working and an autogenerated "
+            "migration would destroy the PostGIS SRID registry."
+        )
+E       AssertionError: The comparison wants to drop a table. If it is spatial_ref_sys, the include_object hook has stopped working and an autogenerated migration would destroy the PostGIS SRID registry.
+E       assert not ['remove_table|None|featnames', 'remove_table|None|zip_lookup_all', 'remove_table|None|bg', 'remove_table|None|county_lookup', 'remove_table|None|street_type_lookup', 'remove_table|None|zip_lookup_base', ...]
+
+tests\integration\test_schema_drift_gate.py:170: AssertionError
+============================== warnings summary ===============================
+backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+backend\app\main.py:121
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:121: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+backend\app\main.py:135
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:135: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+tests/integration/test_be025_admin_control_plane.py::test_pagination_bounds_and_enumeration
+tests/integration/test_be037g1_analysis_auth.py::test_malformed_identifiers_rejected_before_any_lookup
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\security\authorization.py:84: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    reject_malformed_resource_id(resource_id)
+
+tests/integration/test_be026_field_operations.py::test_unsupported_sync_fields_are_refused_not_ignored
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\routing.py:352: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    return await dependant.call(**values)
+
+tests/integration/test_governance.py::test_reprocessing_idempotent_delegation_and_completion
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\anyio\_backends\_asyncio.py:1100: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    result = context.run(func, *args)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/integration/test_be029_database_safety_guard.py::test_verification_context_refuses_the_shared_test_database_over_a_real_connection
+FAILED tests/integration/test_schema_drift_gate.py::test_drift_is_exactly_the_documented_baseline
+FAILED tests/integration/test_schema_drift_gate.py::test_extension_owned_objects_are_excluded_not_suppressed
+3 failed, 372 passed, 10 warnings in 442.12s (0:07:22)
+
+>>> 13:51:37 | integration exit=1
+
+>>> 13:51:37 | full suites done

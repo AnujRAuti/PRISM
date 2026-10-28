@@ -1,0 +1,6 @@
+=== bucket listing via mc inside the DISPOSABLE minio container (alias 'local' is preconfigured by the image entrypoint) ===
+mc: <ERROR> Unable to list folder. Access Denied.
+--- quarantine ---
+1
+--- evidence ---
+1

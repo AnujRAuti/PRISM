@@ -1,0 +1,22 @@
+=== C1 all Phase B container IDs — 2026-10-13T07:08:09Z ===
+/be037b65cee2_db id=996ee2c6da35bd8fcca7f41c8f8c090bc09421afcd8e91536ee56e714ade5908 status=running restarts=0 started=2026-10-13T07:01:11.635327607Z
+/be037b65cee2_redis id=102dacdc41aeea79105361e554f8272338a26675f38ccf5221d52cbcb6dfd561 status=running restarts=0 started=2026-10-13T07:01:11.350655133Z
+/be037b65cee2_minio id=92628fb9f86348ac5aa3e0681d59e879b7c33ef19a8acaef1c2ee296ce3530a6 status=running restarts=0 started=2026-10-13T07:01:12.056104707Z
+/be037b65cee2_minio_init id=9f030ac082f330863b120e1eebab19e1b853a2b4ce16b030a74b11e6c9a8a8e1 status=exited restarts=0 started=2026-10-13T07:01:17.841653673Z
+/be037b65cee2_api id=4f8c81a56b01f7d4fed95db1f20090e9132fa34999d8880900324413ae017f00 status=running restarts=0 started=2026-10-13T07:07:30.937194244Z
+/be037b65cee2_analysis id=a89b917473262128daafaa0aedf8a5de0f014c510797cbd07267a50c3774fe70 status=running restarts=0 started=2026-10-13T07:07:31.75916333Z
+/be037b65cee2_notification id=0c6ff14a5f563aef00eadf2ee25ab64e29075ef33110f028af2aa4a3c3895b10 status=running restarts=0 started=2026-10-13T07:07:29.400211195Z
+/be037b65cee2_retention id=5cdcf41071adf66839109135c0be8c147f882aba6ea8f077522c7b167f20f53d status=running restarts=0 started=2026-10-13T07:07:29.953865909Z
+/be037b65cee2_webhook id=9f572ceec444518f0b67a003836ba665ff9b58f0b7c4682f185535142c99c226 status=running restarts=0 started=2026-10-13T07:07:28.829661383Z
+/be037b65cee2_client id=e98bb071c6c8b1ddb9a5c24d0ed574421e1f0961b0ec64383a354119a33919e3 status=running restarts=0 started=2026-10-13T07:07:28.131574352Z
+
+=== E1a API startup log (first 40 lines, secret-scrubbed) ===
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2026-10-13 07:07:38,294 INFO backend.app.main [rid=-] application.starting
+application.starting
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:41974 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48272 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36738 - "GET /health HTTP/1.1" 200 OK

@@ -1,0 +1,74 @@
+{
+  "started_at": "2026-10-14T22:59:20",
+  "containers_removed": {
+    "be037wf7e3_api": {
+      "rc": 0,
+      "out": ""
+    },
+    "be037wf7e3_worker": {
+      "rc": 0,
+      "out": ""
+    },
+    "be037wf7e3_wsig_probe": {
+      "rc": 0,
+      "out": ""
+    }
+  },
+  "tables_cleared_count": 68,
+  "tables_kept": [
+    "alembic_version",
+    "permissions",
+    "role_permissions",
+    "roles",
+    "spatial_ref_sys"
+  ],
+  "reset_history_note": "this script has been run more than once: the first F1/F3 abort and a second partial run each left state that needed clearing. rows_before/after below are measured by this attempt, whatever the earlier attempts left.",
+  "rows_before": {
+    "analysis_jobs": 3,
+    "analysis_results": 3,
+    "api_clients": 7,
+    "api_credentials": 6,
+    "audit_ledger_events": 21,
+    "evidence": 3,
+    "evidence_metadata": 2,
+    "organizations": 2,
+    "projects": 2,
+    "user_role_assignments": 4,
+    "users": 4
+  },
+  "truncate_rc": 0,
+  "rows_after": {},
+  "all_app_tables_empty": true,
+  "catalogue_roles_still_present": 6,
+  "alembic_version": "t0u1v2w3x030",
+  "identity": [
+    "be037wf7e3_app",
+    "postgres",
+    5432
+  ],
+  "redis_del": {
+    "rc": 0,
+    "out": "0"
+  },
+  "redis_lists_after": {
+    "be037wf7e3:analysis:jobs": {
+      "rc": 0,
+      "value": "0"
+    },
+    "be037wf7e3:analysis:jobs:processing": {
+      "rc": 0,
+      "value": "0"
+    }
+  },
+  "minio": {
+    "be037wf7e3-quarantine": {
+      "objects_deleted": 3,
+      "objects_after": 0
+    },
+    "be037wf7e3-evidence": {
+      "objects_deleted": 0,
+      "objects_after": 0
+    }
+  },
+  "finished_at": "2026-10-14T22:59:25"
+}

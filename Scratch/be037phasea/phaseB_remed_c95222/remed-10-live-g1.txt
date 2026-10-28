@@ -1,0 +1,22 @@
+connected to: [('be037rem_app', 'be037rem_owner')]
+host settings.auth_mode = 'development' (container env is the enforcing one; this process only writes fixtures)
+queue key = pofa:analysis:jobs
+disposable redis queue length after the authorized POST: 8
+
+=== G1 live-endpoint matrix ===
+[PASS] GET /health (service reachable): expected 200 got 200 :: {"status":"healthy","timestamp":1791897907.9338274,"checks":
+[PASS] anonymous POST /analysis/jobs: expected 401 got 401 :: {"detail":"Authentication required"}
+[PASS] anonymous GET /analysis/jobs/{id}: expected 401 got 401 :: {"detail":"Authentication required"}
+[PASS] invalid bearer POST: expected 401 got 401 :: {"detail":"Invalid credentials"}
+[PASS] malformed job id (authorized principal): expected 422 got 422 :: {"detail":"Invalid resource identifier"}
+[PASS] CITIZEN (evidence.read only) POST: expected 403 got 403 :: {"detail":"Forbidden"}
+[PASS] cross-org FIELD_OFFICER POST (org B -> org A evidence): expected 404 got 404 :: body={"detail":"Not found"} job_rows_before=2 after=2
+[PASS] cross-org FIELD_OFFICER GET (org B -> org A job): expected 404 got 404 :: {"detail":"Not found"}
+[PASS] authorized FIELD_OFFICER POST (own project): expected 202 got 202 :: {"job_id":"8811c9fe-be73-4ce2-9e4c-f71c7e05b975","evidence_id":"b06adf8a-d781-4fd0-b6f5-84
+[PASS] authorized FIELD_OFFICER GET (own job): expected 200 got 200 :: {"job_id":"8811c9fe-be73-4ce2-9e4c-f71c7e05b975","evidence_id":"b06adf8a-d781-4fd0-b6f5-84
+[PASS] CITIZEN GET (own project job): expected 200 got 200 :: {"job_id":"dda1d9ee-5e22-4cc8-bf07-f923c719a770","evidence_id":"b06adf8a-d781-4fd0-b6f5-84
+[PASS] service-to-service API client POST (own project): expected 202 got 202 :: {"job_id":"d67bb6c7-a939-4aa5-9573-ca8da6d042e7","evidence_id":"b06adf8a-d781-4fd0-b6f5-84
+[PASS] service-to-service API client GET (other org's job): expected 404 got 404 :: {"detail":"Not found"}
+
+13/13 checks passed
+analysis_jobs rows after fixture cleanup: 0

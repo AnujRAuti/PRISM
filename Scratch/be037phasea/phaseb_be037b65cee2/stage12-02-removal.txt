@@ -1,0 +1,29 @@
+=== STAGE 12 / step 3 — manifest-matched removal (one resource at a time, ID verified first) ===
+utc=2026-10-13T09:11:23Z
+Policy: only resources whose exact name AND full ID were created by run be037b_20261013T062257Z_65cee2.
+Forbidden and not used: docker compose down, docker system prune, docker volume prune, docker network prune, wildcards.
+
+  REMOVED be037b65cee2_api id=4f8c81a56b01 project=be037b65cee2 exit=0
+  REMOVED be037b65cee2_analysis id=a89b91747326 project=be037b65cee2 exit=0
+  REMOVED be037b65cee2_notification id=0c6ff14a5f56 project=be037b65cee2 exit=137
+  REMOVED be037b65cee2_webhook id=9f572ceec444 project=be037b65cee2 exit=137
+  REMOVED be037b65cee2_retention id=5cdcf41071ad project=be037b65cee2 exit=137
+  REMOVED be037b65cee2_client id=e98bb071c6c8 project=be037b65cee2 exit=137
+  REMOVED be037b65cee2_minio_init id=9f030ac082f3 project=be037b65cee2 exit=0
+  REMOVED be037b65cee2_minio id=92628fb9f863 project=be037b65cee2 exit=0
+  REMOVED be037b65cee2_redis id=102dacdc41ae project=be037b65cee2 exit=0
+  REMOVED be037b65cee2_db id=996ee2c6da35 project=be037b65cee2 exit=0
+
+--- volumes: label must read project=be037b65cee2 before removal
+  REMOVED volume be037b65cee2_pgdata project=be037b65cee2
+  REMOVED volume be037b65cee2_miniodata project=be037b65cee2
+
+--- network: full ID must match the manifest
+  REMOVED network be037b65cee2_net id=7d581f96427e
+
+--- residual resources carrying this run's prefix (must be empty)
+  containers: none
+  volumes: none
+  networks: none
+  compose projects: none
+utc=2026-10-13T09:12:43Z

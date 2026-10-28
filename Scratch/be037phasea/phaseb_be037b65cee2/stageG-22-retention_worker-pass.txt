@@ -1,0 +1,4 @@
+=== retention_worker --once/limit pass ===
+INFO:backend.services.retention:retention sweep evaluated=0 archived=0 deleted=0 blocked=0 failed=0
+INFO:__main__:retention sweep finished: {'evaluated': 0, 'archived': 0, 'deleted': 0, 'blocked': 0, 'failed': 0, 'resource_ids': []}
+EXIT=0

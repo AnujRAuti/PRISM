@@ -1,0 +1,18 @@
+current_database(), current_user, server_version:
+   [('be037rem_app', 'be037rem_owner', 'PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit')]
+alembic_version:
+   [('t0u1v2w3x030',)]
+table count in public: 76
+  rows in users:  0
+  rows in evidence:  0
+  rows in analysis_jobs:  0
+  rows in audit_ledger_events:  0
+  rows in permissions:  0
+  rows in roles:  0
+  rows in role_permissions:  0
+extensions: [('fuzzystrmatch',), ('plpgsql',), ('postgis',), ('postgis_tiger_geocoder',), ('postgis_topology',), ('vector',)]
+other databases visible from this connection:
+    be037rem_app
+    postgres
+    template0
+    template1

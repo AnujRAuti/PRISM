@@ -1,0 +1,35 @@
+{
+  "budget_seconds": 45.0,
+  "redis_url_in_use": "redis://127.0.0.1:16379/0",
+  "timeouterror_is_subclass_of_connectionerror": false,
+  "both_under_rediserror": true,
+  "client_kwargs_as_configured": {
+    "socket_timeout": null,
+    "socket_connect_timeout": null,
+    "health_check_interval": null
+  },
+  "healthy_blocking_dequeue": {
+    "elapsed": 5.062,
+    "outcome": "returned",
+    "value": "None"
+  },
+  "pause_returncode": 0,
+  "frozen_new_connection_ping": {
+    "elapsed": 45.016,
+    "outcome": "HUNG past the budget",
+    "thread": "daemon, abandoned"
+  },
+  "frozen_blocking_dequeue": {
+    "elapsed": 45.0,
+    "outcome": "HUNG past the budget",
+    "thread": "daemon, abandoned"
+  },
+  "frozen_raw_socket_check": {
+    "elapsed": 0.0,
+    "outcome": "returned",
+    "value": "None"
+  },
+  "frozen_observation_seconds": 90.0,
+  "unpause_returncode": 0,
+  "redis_reachable_after_unpause": true
+}

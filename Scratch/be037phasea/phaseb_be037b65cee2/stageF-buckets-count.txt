@@ -1,0 +1,19 @@
+=== F-COUNT: disposable MinIO object inventory (credentials resolved inside the container's own env; never printed) ===
+buckets:
+[2026-10-13 07:01:18 UTC]     0B be037b65cee2-evidence/
+[2026-10-13 07:01:18 UTC]     0B be037b65cee2-quarantine/
+
+be037b65cee2-quarantine objects=4
+[2026-10-13 07:27:51 UTC] 1.5KiB STANDARD quarantine/15ffd949-20c3-40a5-8c85-0fb232727568/original
+[2026-10-13 07:24:19 UTC] 1.5KiB STANDARD quarantine/7eb6c37c-d388-4c7a-9876-187579fa20ab/original
+[2026-10-13 07:28:46 UTC] 1.5KiB STANDARD quarantine/9e22a42a-0cc3-4853-8255-4a3eff44bba0/original
+[2026-10-13 07:24:19 UTC] 1.3KiB STANDARD quarantine/b0105ec8-d82a-45a4-b3b3-b147d703f55d/original
+usage:
+5.8KiB	4 objects	be037b65cee2-quarantine
+
+be037b65cee2-evidence objects=0
+usage:
+0B	0 objects	be037b65cee2-evidence
+
+anonymous policy check:
+Access permission for `disp/be037b65cee2-quarantine` is `private`

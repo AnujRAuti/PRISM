@@ -1,0 +1,16 @@
+    owner     |                            relacl                             
+--------------+---------------------------------------------------------------
+ be037b_owner | {be037b_owner=arwdDxt/be037b_owner,be037b_rt=ar/be037b_owner}
+(1 row)
+
+   rolname    | rolsuper | rolcreaterole | rolcreatedb | rolbypassrls 
+--------------+----------+---------------+-------------+--------------
+ be037b_owner | t        | t             | t           | t
+ be037b_rt    | f        | f             | f           | f
+(2 rows)
+
+ upd | del | ins | trn 
+-----+-----+-----+-----
+ f   | f   | t   | f
+(1 row)
+

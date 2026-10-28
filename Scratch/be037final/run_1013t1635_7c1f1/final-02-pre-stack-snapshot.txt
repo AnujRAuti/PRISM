@@ -1,0 +1,32 @@
+=== pre-stack snapshot 2026-10-13T16:57:04Z ===
+--- docker server ---
+ServerVersion=29.7.2 OS=Docker Desktop
+--- images (name:tag id) ---
+alpine:latest 294b683cb724 13MB
+garapadev/postgres-postgis-pgvector:15-stable 6ebf83d85b52 902MB
+poa-backend:be037a 839b0e63c0ff 3.06GB
+quay.io/minio/mc:latest a7fe349ef4bd 117MB
+quay.io/minio/minio:latest 14cea493d9a3 241MB
+redis:7-alpine ff02b58f971e 57.8MB
+--- containers (all) ---
+pofa_db | garapadev/postgres-postgis-pgvector:15-stable | Up 11 hours | 0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+pofa_minio | quay.io/minio/minio:latest | Up 3 hours | 0.0.0.0:9000-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp
+pofa_minio_init | quay.io/minio/mc:latest | Exited (0) 2 weeks ago | 
+pofa_redis | redis:7-alpine | Up 11 hours | 0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+--- volumes ---
+35393f31e3261a8303fa830841fc6497e1b31f140881f92cc71ac1a12703c758
+53d73830397a014f1a50263c48a77cd123df6cc2cc798521b7c8596cdaa64401
+86901abfdac566d47f9695a60221be82f3c02f3c8a68ca28e55f3dc9d51d5105
+bdfa6f08253d9049c56b3fc6b35c7cec69387ccd2b250c3fd4d6225a1fc44014
+proof-of-action-final_db_data
+proof-of-action-final_minio_data
+--- networks ---
+bridge | bridge | local
+host | host | local
+none | null | local
+proof-of-action-final_default | bridge | local
+--- compose projects (labels on existing containers) ---
+pofa_db proof-of-action-final
+pofa_minio proof-of-action-final
+pofa_minio_init proof-of-action-final
+pofa_redis proof-of-action-final

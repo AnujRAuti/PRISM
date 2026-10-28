@@ -1,0 +1,27 @@
+[23:01:30] running F2 cases: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']
+[23:01:40] C1 queued {'queue': '3', 'processing': '0'} then stopping redis
+[23:01:42] started be037wf7e3_f2_c1 id=96c4ee451f0e
+[23:02:26] recorded f2_c1
+[23:02:26] c1 done in 56.5s
+[23:02:28] started be037wf7e3_f2_c2 id=57bc8fd33d61
+[23:06:00] recorded f2_c2
+[23:06:00] c2 done in 213.8s
+[23:08:14] started be037wf7e3_f2_c3 id=f5e7c9048bc5
+[23:08:18] C3 job running after {'after_s': 4.34, 'status': 'running', 'attempt_count': 1, 'error': None, 'result_rows': 0}
+[23:08:52] recorded f2_c3
+[23:08:52] c3 done in 172.0s
+[23:08:54] started be037wf7e3_f2_c4 id=7a2587a4cda7
+[23:19:17] recorded f2_c4
+[23:19:17] c4 done in 624.4s
+[23:19:18] started be037wf7e3_f2_c5 id=0e130d8b78f4
+[23:19:26] recorded f2_c5
+[23:19:26] c5 done in 9.0s
+[23:19:27] started be037wf7e3_f2_cblock20 id=b48c83dd5da0
+[23:19:52] recorded f2_c6
+[23:19:52] c6 done in 26.0s
+[23:20:23] started be037wf7e3_f2_cblock1 id=52f3866841eb
+[23:20:31] recorded f2_c7
+[23:20:31] c7 done in 39.2s
+[23:22:42] started be037wf7e3_f2_c8 id=a34365921f3d
+[23:23:00] recorded f2_c8
+[23:23:00] c8 done in 148.7s

@@ -1,0 +1,8 @@
+current_database(): pofa_be029_devpost
+users rows before: 1054
+  duplicate an existing username: rejected (UniqueViolation)  [expected rejected]  OK
+  duplicate an existing email: rejected (UniqueViolation)  [expected rejected]  OK
+  brand-new username + email: accepted  [expected accepted]  OK
+users rows after: 1054
+
+VERDICT: unique identity constraint behaves as designed against real migrated dev rows

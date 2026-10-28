@@ -1,0 +1,5 @@
+[21:19:34] started be037fin7c1f1_wsig_delay
+[21:19:45] started be037fin7c1f1_wsig_block20
+[21:20:11] started be037fin7c1f1_wsig_block1
+[21:25:14] started be037fin7c1f1_wsig_job
+[21:25:38] captured: ['sigterm_blocked_dequeue_1s', 'sigterm_blocked_dequeue_20s', 'sigterm_during_long_job', 'sigterm_during_retry_delay']

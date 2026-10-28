@@ -1,0 +1,11 @@
+=== F-LIVE: read-only inspection of the LIVE MinIO (pofa_minio) to prove it was not written by this run ===
+--- container identity/restart/volume (compare with stageC-00 baseline) ---
+54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd started=2026-10-13T06:15:07.080287176Z restarts=0 status=running
+proof-of-action-final_minio_data->/data 
+--- network attachments of the disposable containers (must be ONLY be037b65cee2_net) ---
+be037b65cee2_api: template parsing error: template: :1: bad character U+0024 '$'
+be037b65cee2_minio: template parsing error: template: :1: bad character U+0024 '$'
+be037b65cee2_client: template parsing error: template: :1: bad character U+0024 '$'
+--- live bucket list + object counts (mc alias already inside the container) ---
+[2026-09-13 13:31:53 UTC]     0B pofa-evidence/
+[2026-09-13 13:31:53 UTC]     0B pofa-quarantine/

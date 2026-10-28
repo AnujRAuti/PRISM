@@ -1,0 +1,108 @@
+{
+  "candidate": "poa-backend:mbe01-wt1",
+  "stand_in": "poa-backend:be037final",
+  "dump": "poa_prod-20261017T153144Z.dump",
+  "dump_sha256": "09c51a3b1726b56f1c6490afa9e7198eae44c2486e1ee335da98f359c5526396",
+  "checks": [
+    {
+      "check": "production dump restored into the rehearsal database",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "rehearsal starts at production's exact position",
+      "passed": true,
+      "detail": "revision=v2w3x4y5z032 vocabulary=96 PROJECT_CREATED=False ledger=1 projects=0"
+    },
+    {
+      "check": "deployed image serves /health pre-migration",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "deployed image reports ready pre-migration",
+      "passed": true,
+      "detail": "200 {\"status\":\"ok\"}"
+    },
+    {
+      "check": "authenticated read works through the deployed image",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "check": "candidate applies alembic upgrade head while the old app runs",
+      "passed": true,
+      "detail": "INFO  [alembic.runtime.migration] Will assume transactional DDL. | INFO  [alembic.runtime.migration] Running upgrade v2w3x4y5z032 -> w3x4y5z6a033, Add PROJECT_CREATED to the enforced audit vocabulary."
+    },
+    {
+      "check": "migrated schema has the 97-value vocabulary incl. PROJECT_CREATED",
+      "passed": true,
+      "detail": "vocabulary=97"
+    },
+    {
+      "check": "no pre-existing row changed during the migration",
+      "passed": true,
+      "detail": "changed=none"
+    },
+    {
+      "check": "old app keeps serving with no restart after the migration",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "check": "old image can still write against the migrated schema (rollback safety net)",
+      "passed": true,
+      "detail": "201 rows=1 {\"id\":\"04de71a8-88c1-4dee-a0c4-5be283fd050a\",\"name\":\"dep-oldwrite-1793081905\",\"owner_id\":\"e09ccda0-c22c-4cc1-ab98-954e30"
+    },
+    {
+      "check": "candidate-shaped POST /projects is refused by the old image, so the request shape is an integrator-visible change on this sequence",
+      "passed": true,
+      "detail": "422 {\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"owner_id\"],\"msg\":\"Field required\",\"input\":{\"name\":\"dep-shape-1793081906\"}}]}"
+    },
+    {
+      "check": "candidate serves /health as the API",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "candidate creates a project and appends PROJECT_CREATED with the caller as actor",
+      "passed": true,
+      "detail": "201 actor=e09ccda0-c22c-4cc1-ab98-954e301fe655"
+    },
+    {
+      "check": "candidate refuses an anonymous caller under AUTH_MODE=enforcing",
+      "passed": true,
+      "detail": "401"
+    },
+    {
+      "check": "candidate shuts down on SIGTERM without a non-zero exit",
+      "passed": true,
+      "detail": "exit/status=0 exited"
+    },
+    {
+      "check": "a candidate pointed at a nonexistent database reports NOT ready (/ready and /healthz and /api/v1/ready all 503)",
+      "passed": true,
+      "detail": "/ready=503 /healthz=503 /api/v1/ready=503"
+    },
+    {
+      "check": "... while liveness stays 200 and the container stays running, by design (so readiness, not the exit code, is the only outage signal)",
+      "passed": true,
+      "detail": "state=running 0"
+    },
+    {
+      "check": "operator restores service with the previous image after the failed start",
+      "passed": true,
+      "detail": "/health 200 = True"
+    },
+    {
+      "check": "the failed start lost no data",
+      "passed": true,
+      "detail": "tables compared=73"
+    },
+    {
+      "check": "alembic check reports no drift after the whole sequence",
+      "passed": true,
+      "detail": "er_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)"
+    }
+  ]
+}

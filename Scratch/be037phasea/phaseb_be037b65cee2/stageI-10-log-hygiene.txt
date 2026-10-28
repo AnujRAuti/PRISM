@@ -1,0 +1,81 @@
+=== STAGE I / log hygiene scan ===
+host_utc=2026-10-13T09:03:49Z
+--- 1. exact secret values, per container (counts only, values never printed)
+  api          PG_OWNER_PW  hits=0
+  api          PG_RT_PW     hits=0
+  api          MINIO_ROOT_USER hits=0
+  api          MINIO_ROOT_PW hits=0
+  api          DISP_JWT_SECRET hits=0
+  analysis     PG_OWNER_PW  hits=0
+  analysis     PG_RT_PW     hits=0
+  analysis     MINIO_ROOT_USER hits=0
+  analysis     MINIO_ROOT_PW hits=0
+  analysis     DISP_JWT_SECRET hits=0
+  notification PG_OWNER_PW  hits=0
+  notification PG_RT_PW     hits=0
+  notification MINIO_ROOT_USER hits=0
+  notification MINIO_ROOT_PW hits=0
+  notification DISP_JWT_SECRET hits=0
+  webhook      PG_OWNER_PW  hits=0
+  webhook      PG_RT_PW     hits=0
+  webhook      MINIO_ROOT_USER hits=0
+  webhook      MINIO_ROOT_PW hits=0
+  webhook      DISP_JWT_SECRET hits=0
+  retention    PG_OWNER_PW  hits=0
+  retention    PG_RT_PW     hits=0
+  retention    MINIO_ROOT_USER hits=0
+  retention    MINIO_ROOT_PW hits=0
+  retention    DISP_JWT_SECRET hits=0
+  client       PG_OWNER_PW  hits=0
+  client       PG_RT_PW     hits=0
+  client       MINIO_ROOT_USER hits=0
+  client       MINIO_ROOT_PW hits=0
+  client       DISP_JWT_SECRET hits=0
+  db           PG_OWNER_PW  hits=0
+  db           PG_RT_PW     hits=0
+  db           MINIO_ROOT_USER hits=0
+  db           MINIO_ROOT_PW hits=0
+  db           DISP_JWT_SECRET hits=0
+  redis        PG_OWNER_PW  hits=0
+  redis        PG_RT_PW     hits=0
+  redis        MINIO_ROOT_USER hits=0
+  redis        MINIO_ROOT_PW hits=0
+  redis        DISP_JWT_SECRET hits=0
+  minio        PG_OWNER_PW  hits=0
+  minio        PG_RT_PW     hits=0
+  minio        MINIO_ROOT_USER hits=0
+  minio        MINIO_ROOT_PW hits=0
+  minio        DISP_JWT_SECRET hits=0
+--- 2. credential-bearing DSN patterns (user:pass@host) in any log
+  api          dsn_pattern_hits=0
+  analysis     dsn_pattern_hits=0
+  notification dsn_pattern_hits=0
+  webhook      dsn_pattern_hits=0
+  retention    dsn_pattern_hits=0
+  client       dsn_pattern_hits=0
+  db           dsn_pattern_hits=0
+  redis        dsn_pattern_hits=0
+  minio        dsn_pattern_hits=0
+--- 3. bearer/JWT-looking tokens logged
+  api          jwt_like_hits=0
+  analysis     jwt_like_hits=0
+  notification jwt_like_hits=0
+  webhook      jwt_like_hits=0
+  retention    jwt_like_hits=0
+  client       jwt_like_hits=0
+  db           jwt_like_hits=0
+  redis        jwt_like_hits=0
+  minio        jwt_like_hits=0
+--- 4. runtime role name appearing in a logged DSN (username disclosure, not a password)
+--- 5. dev token strings logged (the app logs principal=USER:<uuid>, not the token)
+0
+principal=USER:06316901-b9e0-44d3-a492-bfea5a0a7630
+principal=USER:0d373e32-1961-4fe5-971b-0d613d35770c
+principal=USER:20dc9d67-4945-4f6a-8d5c-5369115e41e1
+principal=USER:2387cd58-7fa2-4435-9960-59499cf09795
+--- 6. full lines of any logged URL containing a scheme+authority (sample, masked)
+http://0.0.0.0:8000
+http://minio:9000/"
+http://minio:9000/be037b65cee2-quarantine/quarantine/a3425a6b-a2b8-4f0f-b20b-aa77301aa109/original"
+https://sqlalche.me/e/20/e3q8)
+end_utc=2026-10-13T09:04:09Z

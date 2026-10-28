@@ -1,0 +1,42 @@
+=== G0  authorized disposable principal ===
+PASS  G0 create disposable user  | HTTP 201 {"id": "47e3c96c-0991-4c6c-b6db-23874e4cacf8", "username": "be037b_g1_fdf9c684", "email": "be037b-g1-fdf9c684@example.invalid", "display_name": "be037b_g1_fdf9c
+PASS  G0 grant FIELD_OFFICER  | HTTP 201 {"id": "50cd5539-e8ea-4393-a5f3-d1332710b69d", "user_id": "47e3c96c-0991-4c6c-b6db-23874e4cacf8", "role_id": "b82622db-3cee-419f-ad95-a68b025fe7c4", "role_name"
+
+=== G1  fingerprint job: queue -> running worker -> DB result ===
+PASS  G1 upload evidence for the fingerprint job  | HTTP 201
+PASS  G1 POST /analysis/jobs (fingerprint) accepted with 202  | HTTP 202 {"job_id": "dc8ed508-cbe2-4739-a401-122235684602", "evidence_id": "a66e0565-0b62-461a-ae06-36e852dd4019", "status": "queued", "attempt_count": 0, "error": null, "started_at": null, "completed_at": nul
+   waiting for the analysis worker to claim job dc8ed508-cbe2-4739-a401-122235684602
+   final job: {"job_id": "dc8ed508-cbe2-4739-a401-122235684602", "evidence_id": "a66e0565-0b62-461a-ae06-36e852dd4019", "status": "completed", "attempt_count": 1, "error": null, "started_at": "2026-10-13T07:51:18.405060Z", "completed_at": "2026-10-13T07:52:18.651354Z", "result": {"phash": "eee6b078c5c45037", "sha256": "8e4eb6b9b41ecd22602c0c5af4fa40bce52bfd1b64a5b44c1f897985ded8fd6f", "exif_status": "no_metadata", "phash_status": "success", "temporal_analysis": {"status": "unknown", "claim_id": null, "captured_at": null, "evidence_id": "a66e0565-0b62-461a-ae06-36e852dd4019", "uploaded_at": "2026-10-13T07:51
+PASS  G1 worker completed the fingerprint job (status=completed)  | status=completed
+PASS  G1 worker stamped started_at/completed_at and counted the attempt  | attempt_count=1
+PASS  G1 fingerprint sha256 equals the bytes stored in MinIO (worker read the object)  | job=8e4eb6b9b41ecd22602c0c5af4fa40bce52bfd1b64a5b44c1f897985ded8fd6f local=8e4eb6b9b41ecd22602c0c5af4fa40bce52bfd1b64a5b44c1f897985ded8fd6f
+PASS  G1 perceptual hash computed by the worker  | phash=eee6b078c5c45037 status=success
+   duplicate_analysis: {"exact_matches": [], "embedding_error": "Can't load image processor for 'openai/clip-vit-base-patch32'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure 'openai/clip-vit-base-patch32' is the correct path to a directory containing a preprocessor_config.json file", "embedding_status": "unavailable
+PASS  G1 embedding outcome is REPORTED, not silently claimed successful  | status=unavailable error=Can't load image processor for 'openai/clip-vit-base-patch32'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a lo
+PASS  G1 temporal analysis returned a verdict object (no crash in the worker)  | temporal keys=['capture_upload', 'captured_at', 'captured_source', 'captured_tz_known', 'claim_id', 'claim_window', 'evidence_id', 'inconsistencies', 'relationships', 'status']
+
+=== G2  vision job: real CPU inference with the mounted weights ===
+PASS  G2 upload evidence for the vision job  | HTTP 201
+PASS  G2 POST /analysis/jobs (vision) accepted with 202  | HTTP 202 {"job_id": "f19f9177-3808-4213-b128-75cba7c7c9a4", "evidence_id": "7f703702-7976-4070-9215-5536e967245b", "status": "queued", "attempt_count": 0, "error": null, "started_at": null, "completed_at": nul
+   waiting for vision inference (first model load can be slow)
+   final vision job: {"job_id": "f19f9177-3808-4213-b128-75cba7c7c9a4", "evidence_id": "7f703702-7976-4070-9215-5536e967245b", "status": "completed", "attempt_count": 1, "error": null, "started_at": "2026-10-13T07:52:20.470395Z", "completed_at": "2026-10-13T07:52:22.935968Z", "result": {"image": {"width": 640, "height": 480}, "model": {"name": "yolo11n.pt", "device": "cpu", "version": "8.4.155", "iou_threshold": 0.45,
+PASS  G2 vision job reached a terminal state  | status=completed error=None
+PASS  G2 stored vision result is retrievable through the API  | HTTP 200 {"evidence_id": "7f703702-7976-4070-9215-5536e967245b", "job_id": "f19f9177-3808-4213-b128-75cba7c7c9a4", "result": {"analysis_type": "vision_detection", "model": {"name": "yolo11n.pt", "version": "8.
+PASS  G2 vision pipeline produced a persisted analysis (detection rows may legitimately be 0)  | detection_count=1 model={"analysis_type": "vision_detection", "model": {"name": "yolo11n.pt", "version": "8.4.155", "conf_threshold": 0.25, "iou_threshold": 0.45, "max_detections": 100, "device": "cpu"}, "image": {"width": 6
+
+=== G3  anonymous access to the job-creating endpoint (posture observation) ===
+PASS  G3 upload evidence for the anonymous-posture case  | HTTP 201
+   OBSERVE anonymous POST /analysis/jobs -> HTTP 202 {"job_id": "5be75539-f310-42f9-aba7-5c192b602097", "evidence_id": "988d9235-c13a-47c9-805c-6b2869b059eb", "status": "queued", "attempt_count": 0, "error": null, "started_at": null, "completed_at": nul
+PASS  G3 measurement recorded (any HTTP code is a valid observation; see finding)  | HTTP 202
+   OBSERVE anonymous GET /analysis/jobs/{id} -> HTTP 200 status=running
+   anonymous-created job terminal status: completed
+
+=== G4  upload whose stored object will be removed before processing ===
+PASS  G4 upload evidence for the missing-object failure path  | HTTP 201
+   NO JOB CREATED YET. Host must delete this object first:
+G4_EVIDENCE_ID=39b1fbb2-0d80-4305-87b4-abb6d001cbae
+G4_STORAGE_KEY=quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original
+G1_EVIDENCE_ID=a66e0565-0b62-461a-ae06-36e852dd4019 G2_EVIDENCE_ID=7f703702-7976-4070-9215-5536e967245b G3_EVIDENCE_ID=988d9235-c13a-47c9-805c-6b2869b059eb
+
+=== SUMMARY ===
+G_RESULT_A: total=18 pass=18 fail=0

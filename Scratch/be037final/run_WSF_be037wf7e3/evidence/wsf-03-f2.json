@@ -1,0 +1,1191 @@
+{
+  "f2_c1": {
+    "case": "C1 Redis down before the worker starts, 3 jobs already queued",
+    "worker_container": {
+      "container": "be037wf7e3_f2_c1",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6379/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "60",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "96c4ee451f0e21ca5596b91421062f83bb8189c3043d0fc479b0678ade7ebf2b",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:31:41.522643797Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "queue_before_stop": {
+      "queue": "3",
+      "processing": "0"
+    },
+    "first_outage_warning": {
+      "after_s": 8.36,
+      "line": "2026-10-14T17:31:50.303237571Z WARNING:__main__:redis unavailable; backing off 4.6s (consecutive failures 1)"
+    },
+    "warnings_before_restore": 2,
+    "stated_delays_before_restore_s": [
+      4.6,
+      9.0
+    ],
+    "recovery_log_line": {
+      "after_s": 15.12,
+      "line": "2026-10-14T17:32:18.307253134Z INFO:__main__:redis reachable again after 2 backoff(s)"
+    },
+    "jobs_final": {
+      "94233512-f52a-437e-b988-ce6d1d695702": {
+        "after_s": 1.19,
+        "status": "completed",
+        "attempt_count": 1,
+        "error": null,
+        "result_rows": 1
+      },
+      "38c72c29-1187-41ef-9d16-9e2660f960bc": {
+        "after_s": 0.06,
+        "status": "completed",
+        "attempt_count": 1,
+        "error": null,
+        "result_rows": 1
+      },
+      "77804dda-b9c9-4648-bf59-5bfb9679f85d": {
+        "after_s": 0.08,
+        "status": "completed",
+        "attempt_count": 1,
+        "error": null,
+        "result_rows": 1
+      }
+    },
+    "jobs_completed": 3,
+    "lists_after": {
+      "queue": "0",
+      "processing": "0"
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 5.52,
+      "grace_requested_s": 60,
+      "id": "96c4ee451f0e21ca5596b91421062f83bb8189c3043d0fc479b0678ade7ebf2b",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:31:41.522643797Z",
+      "finished_at": "2026-10-14T17:32:25.635904532Z",
+      "stop_output": "be037wf7e3_f2_c1"
+    },
+    "container_facts": {
+      "id": "96c4ee451f0e21ca5596b91421062f83bb8189c3043d0fc479b0678ade7ebf2b",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:31:41.522643797Z",
+      "finished_at": "2026-10-14T17:32:25.635904532Z"
+    },
+    "outage_warnings": [
+      {
+        "docker_timestamp": "2026-10-14T17:31:50.303237571Z",
+        "stated_delay_s": 4.6,
+        "line": "2026-10-14T17:31:50.303237571Z WARNING:__main__:redis unavailable; backing off 4.6s (consecutive failures 1)"
+      },
+      {
+        "docker_timestamp": "2026-10-14T17:31:58.914655027Z",
+        "stated_delay_s": 9.0,
+        "line": "2026-10-14T17:31:58.914655027Z WARNING:__main__:redis unavailable; backing off 9.0s (consecutive failures 2)"
+      }
+    ],
+    "warning_count": 2,
+    "stated_backoff_delays_s": [
+      4.6,
+      9.0
+    ],
+    "measured_intervals_between_warnings_s": [
+      8.61
+    ],
+    "worker_log_tail": [
+      "2026-10-14T17:31:46.174178065Z INFO:__main__:analysis worker started",
+      "2026-10-14T17:31:50.303237571Z WARNING:__main__:redis unavailable; backing off 4.6s (consecutive failures 1)",
+      "2026-10-14T17:31:58.914655027Z WARNING:__main__:redis unavailable; backing off 9.0s (consecutive failures 2)",
+      " the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.",
+      "2026-10-14T17:32:18.306526196Z INFO:__main__:analysis job completed job_id=77804dda-b9c9-4648-bf59-5bfb9679f85d",
+      "2026-10-14T17:32:18.307253134Z INFO:__main__:redis reachable again after 2 backoff(s)",
+      "2026-10-14T17:32:18.708635319Z INFO:__main__:analysis job completed job_id=38c72c29-1187-41ef-9d16-9e2660f960bc",
+      "2026-10-14T17:32:18.836923503Z INFO:__main__:analysis job completed job_id=94233512-f52a-437e-b988-ce6d1d695702",
+      "2026-10-14T17:32:23.873163683Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-14T17:32:23.874318550Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 56.5,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        5
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  },
+  "run_id": "be037wf7e3",
+  "f2_c2": {
+    "case": "C2 Redis lost while the worker is parked in BRPOPLPUSH",
+    "worker_container": {
+      "container": "be037wf7e3_f2_c2",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6379/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "60",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "57bc8fd33d6131b3515629a146e453a610682eb6a005dd7c21943a3099c66de7",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:32:27.997754609Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "startup_log": {
+      "after_s": 3.44,
+      "line": "2026-10-14T17:32:31.920635057Z INFO:__main__:analysis worker started"
+    },
+    "first_outage_warning": {
+      "after_s": 0.14,
+      "line": "2026-10-14T17:32:35.325094594Z WARNING:__main__:redis unavailable; backing off 3.4s (consecutive failures 1)"
+    },
+    "recovery_log_line": null,
+    "job_after_recovery": {
+      "after_s": 9.72,
+      "status": "completed",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1
+    },
+    "lists_after": {
+      "queue": "0",
+      "processing": "0"
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 5.88,
+      "grace_requested_s": 60,
+      "id": "57bc8fd33d6131b3515629a146e453a610682eb6a005dd7c21943a3099c66de7",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:32:27.997754609Z",
+      "finished_at": "2026-10-14T17:35:59.561015908Z",
+      "stop_output": "be037wf7e3_f2_c2"
+    },
+    "container_facts": {
+      "id": "57bc8fd33d6131b3515629a146e453a610682eb6a005dd7c21943a3099c66de7",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:32:27.997754609Z",
+      "finished_at": "2026-10-14T17:35:59.561015908Z"
+    },
+    "outage_warnings": [
+      {
+        "docker_timestamp": "2026-10-14T17:32:35.325094594Z",
+        "stated_delay_s": 3.4,
+        "line": "2026-10-14T17:32:35.325094594Z WARNING:__main__:redis unavailable; backing off 3.4s (consecutive failures 1)"
+      },
+      {
+        "docker_timestamp": "2026-10-14T17:32:42.693742649Z",
+        "stated_delay_s": 10.0,
+        "line": "2026-10-14T17:32:42.693742649Z WARNING:__main__:redis unavailable; backing off 10.0s (consecutive failures 2)"
+      }
+    ],
+    "warning_count": 2,
+    "stated_backoff_delays_s": [
+      3.4,
+      10.0
+    ],
+    "measured_intervals_between_warnings_s": [
+      7.37
+    ],
+    "worker_log_tail": [
+      "2026-10-14T17:32:31.920635057Z INFO:__main__:analysis worker started",
+      "2026-10-14T17:32:35.325094594Z WARNING:__main__:redis unavailable; backing off 3.4s (consecutive failures 1)",
+      "2026-10-14T17:32:42.693742649Z WARNING:__main__:redis unavailable; backing off 10.0s (consecutive failures 2)",
+      " the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.",
+      "2026-10-14T17:35:52.895165936Z INFO:__main__:analysis job completed job_id=2c1da971-e2ed-482f-94c1-2fea591a294b",
+      "2026-10-14T17:35:52.896456071Z INFO:__main__:redis reachable again after 2 backoff(s)",
+      "2026-10-14T17:35:57.934949449Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-14T17:35:57.935558901Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 213.8,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        5
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  },
+  "f2_c3": {
+    "case": "C3 Redis lost while a job is in flight (commit-before-ack)",
+    "worker_container": {
+      "container": "be037wf7e3_f2_c3",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6379/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "60",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "f5e7c9048bc5d60f7c622be1317e30e2084833b7ea0267ad4a5ba9562e7b1003",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:38:13.627740109Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "fixture": {
+      "evidence_id": "7b37f232-714c-4691-9708-811467d3431d",
+      "job_id": "5d85f7dc-532e-4153-86ef-cfe03ae22d9b",
+      "bytes": 42222805,
+      "storage_key": "quarantine/7b37f232-714c-4691-9708-811467d3431d/original"
+    },
+    "picked_up": {
+      "after_s": 4.34,
+      "status": "running",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 0
+    },
+    "job_state_when_redis_down": {
+      "after_s": 10.86,
+      "status": "completed",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1
+    },
+    "redis_state_at_that_moment": "exited",
+    "recovery_log_line": {
+      "after_s": 6.55,
+      "line": "2026-10-14T17:38:44.779236127Z INFO:__main__:redis reachable again after 1 backoff(s)"
+    },
+    "lists_drained_after_recovery_s": 0.48,
+    "final_job_state": {
+      "status": "completed",
+      "attempt_count": 2,
+      "error": null,
+      "result_rows": 1
+    },
+    "lists_after": {
+      "queue": "0",
+      "processing": "0"
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 5.5,
+      "grace_requested_s": 60,
+      "id": "f5e7c9048bc5d60f7c622be1317e30e2084833b7ea0267ad4a5ba9562e7b1003",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:38:13.627740109Z",
+      "finished_at": "2026-10-14T17:38:51.660262261Z",
+      "stop_output": "be037wf7e3_f2_c3"
+    },
+    "container_facts": {
+      "id": "f5e7c9048bc5d60f7c622be1317e30e2084833b7ea0267ad4a5ba9562e7b1003",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:38:13.627740109Z",
+      "finished_at": "2026-10-14T17:38:51.660262261Z"
+    },
+    "outage_warnings": [
+      {
+        "docker_timestamp": "2026-10-14T17:38:38.142921576Z",
+        "stated_delay_s": 4.2,
+        "line": "2026-10-14T17:38:38.142921576Z WARNING:__main__:redis unavailable; backing off 4.2s (consecutive failures 1)"
+      }
+    ],
+    "warning_count": 1,
+    "stated_backoff_delays_s": [
+      4.2
+    ],
+    "measured_intervals_between_warnings_s": [],
+    "worker_log_tail": [
+      "2026-10-14T17:38:17.470908788Z INFO:__main__:analysis worker started",
+      " the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.",
+      "2026-10-14T17:38:38.142921576Z WARNING:__main__:redis unavailable; backing off 4.2s (consecutive failures 1)",
+      "2026-10-14T17:38:42.357134771Z INFO:__main__:analysis worker recovered 1 abandoned job(s)",
+      "2026-10-14T17:38:44.778352022Z INFO:__main__:analysis job completed job_id=5d85f7dc-532e-4153-86ef-cfe03ae22d9b",
+      "2026-10-14T17:38:44.779236127Z INFO:__main__:redis reachable again after 1 backoff(s)",
+      "2026-10-14T17:38:49.816242138Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-14T17:38:49.817761585Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 172.0,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        6
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  },
+  "f2_c4": {
+    "case": "C4 three outage/restore cycles, bounded backoff, worker must not exit",
+    "worker_container": {
+      "container": "be037wf7e3_f2_c4",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6379/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "20",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "7a2587a4cda7be19f87fad070b9af58b92e03f3e365d07e10bf3be092df11542",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:38:53.842220881Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "configured": {
+      "backoff_base_s": 5,
+      "backoff_max_s": 20
+    },
+    "cycles": [
+      {
+        "cycle": 1,
+        "outage_length_s": 22,
+        "recovery_after_restore_s": null,
+        "warning_count_so_far": 2
+      },
+      {
+        "cycle": 2,
+        "outage_length_s": 22,
+        "recovery_after_restore_s": null,
+        "warning_count_so_far": 4
+      },
+      {
+        "cycle": 3,
+        "outage_length_s": 22,
+        "recovery_after_restore_s": null,
+        "warning_count_so_far": 6
+      }
+    ],
+    "still_running_before_stop": "running",
+    "restart_count_before_stop": "0",
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 1.94,
+      "grace_requested_s": 60,
+      "id": "7a2587a4cda7be19f87fad070b9af58b92e03f3e365d07e10bf3be092df11542",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:38:53.842220881Z",
+      "finished_at": "2026-10-14T17:49:16.074356186Z",
+      "stop_output": "be037wf7e3_f2_c4"
+    },
+    "container_facts": {
+      "id": "7a2587a4cda7be19f87fad070b9af58b92e03f3e365d07e10bf3be092df11542",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:38:53.842220881Z",
+      "finished_at": "2026-10-14T17:49:16.074356186Z"
+    },
+    "outage_warnings": [
+      {
+        "docker_timestamp": "2026-10-14T17:39:01.588304195Z",
+        "stated_delay_s": 4.0,
+        "line": "2026-10-14T17:39:01.588304195Z WARNING:__main__:redis unavailable; backing off 4.0s (consecutive failures 1)"
+      },
+      {
+        "docker_timestamp": "2026-10-14T17:39:09.559209169Z",
+        "stated_delay_s": 8.5,
+        "line": "2026-10-14T17:39:09.559209169Z WARNING:__main__:redis unavailable; backing off 8.5s (consecutive failures 2)"
+      },
+      {
+        "docker_timestamp": "2026-10-14T17:42:21.101240844Z",
+        "stated_delay_s": 12.8,
+        "line": "2026-10-14T17:42:21.101240844Z WARNING:__main__:redis unavailable; backing off 12.8s (consecutive failures 3)"
+      },
+      {
+        "docker_timestamp": "2026-10-14T17:42:37.866575738Z",
+        "stated_delay_s": 15.1,
+        "line": "2026-10-14T17:42:37.866575738Z WARNING:__main__:redis unavailable; backing off 15.1s (consecutive failures 4)"
+      },
+      {
+        "docker_timestamp": "2026-10-14T17:45:47.675910088Z",
+        "stated_delay_s": 14.4,
+        "line": "2026-10-14T17:45:47.675910088Z WARNING:__main__:redis unavailable; backing off 14.4s (consecutive failures 5)"
+      },
+      {
+        "docker_timestamp": "2026-10-14T17:46:06.120724781Z",
+        "stated_delay_s": 12.5,
+        "line": "2026-10-14T17:46:06.120724781Z WARNING:__main__:redis unavailable; backing off 12.5s (consecutive failures 6)"
+      }
+    ],
+    "warning_count": 6,
+    "stated_backoff_delays_s": [
+      4.0,
+      8.5,
+      12.8,
+      15.1,
+      14.4,
+      12.5
+    ],
+    "measured_intervals_between_warnings_s": [
+      7.97,
+      191.54,
+      16.77,
+      189.81,
+      18.44
+    ],
+    "worker_log_tail": [
+      "2026-10-14T17:38:57.449056444Z INFO:__main__:analysis worker started",
+      "2026-10-14T17:39:01.588304195Z WARNING:__main__:redis unavailable; backing off 4.0s (consecutive failures 1)",
+      "2026-10-14T17:39:09.559209169Z WARNING:__main__:redis unavailable; backing off 8.5s (consecutive failures 2)",
+      "2026-10-14T17:42:21.101240844Z WARNING:__main__:redis unavailable; backing off 12.8s (consecutive failures 3)",
+      "2026-10-14T17:42:37.866575738Z WARNING:__main__:redis unavailable; backing off 15.1s (consecutive failures 4)",
+      "2026-10-14T17:45:47.675910088Z WARNING:__main__:redis unavailable; backing off 14.4s (consecutive failures 5)",
+      "2026-10-14T17:46:06.120724781Z WARNING:__main__:redis unavailable; backing off 12.5s (consecutive failures 6)",
+      "2026-10-14T17:49:15.608690960Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-14T17:49:15.611593437Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 624.4,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        6
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  },
+  "f2_c5": {
+    "case": "C5 SIGTERM during a 40s retry backoff wait (closed Redis port)",
+    "worker_container": {
+      "container": "be037wf7e3_f2_c5",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6399/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "40",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "60",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "0e130d8b78f4ac89b035aee0c5879aa59b49a777747ca849c1f9e507751a721f",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:17.79792493Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "first_warning": {
+      "after_s": 3.34,
+      "line": "2026-10-14T17:49:21.555839958Z WARNING:__main__:redis unavailable; backing off 22.7s (consecutive failures 1)"
+    },
+    "stated_delay_s": 22.7,
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 0.97,
+      "grace_requested_s": 120,
+      "id": "0e130d8b78f4ac89b035aee0c5879aa59b49a777747ca849c1f9e507751a721f",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:17.79792493Z",
+      "finished_at": "2026-10-14T17:49:25.419842994Z",
+      "stop_output": "be037wf7e3_f2_c5"
+    },
+    "container_facts": {
+      "id": "0e130d8b78f4ac89b035aee0c5879aa59b49a777747ca849c1f9e507751a721f",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:17.79792493Z",
+      "finished_at": "2026-10-14T17:49:25.419842994Z"
+    },
+    "outage_warnings": [
+      {
+        "docker_timestamp": "2026-10-14T17:49:21.555839958Z",
+        "stated_delay_s": 22.7,
+        "line": "2026-10-14T17:49:21.555839958Z WARNING:__main__:redis unavailable; backing off 22.7s (consecutive failures 1)"
+      }
+    ],
+    "warning_count": 1,
+    "stated_backoff_delays_s": [
+      22.7
+    ],
+    "measured_intervals_between_warnings_s": [],
+    "worker_log_tail": [
+      "2026-10-14T17:49:21.432153056Z INFO:__main__:analysis worker started",
+      "2026-10-14T17:49:21.555839958Z WARNING:__main__:redis unavailable; backing off 22.7s (consecutive failures 1)",
+      "2026-10-14T17:49:25.057878981Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-14T17:49:25.058756255Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 9.0,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        6
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  },
+  "f2_c6": {
+    "case": "SIGTERM during a blocked dequeue (block=20s)",
+    "worker_container": {
+      "container": "be037wf7e3_f2_cblock20",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6379/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "20",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "60",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "b48c83dd5da0f06d5eb1941585840431585f026ebab7ef99e7cb28934a70dc40",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:27.436441257Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "configured": {
+      "dequeue_block_s": 20,
+      "socket_timeout_s": 30,
+      "shutdown_poll_s": 0.5
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 18.41,
+      "grace_requested_s": 80,
+      "id": "b48c83dd5da0f06d5eb1941585840431585f026ebab7ef99e7cb28934a70dc40",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:27.436441257Z",
+      "finished_at": "2026-10-14T17:49:51.40444955Z",
+      "stop_output": "be037wf7e3_f2_cblock20"
+    },
+    "container_facts": {
+      "id": "b48c83dd5da0f06d5eb1941585840431585f026ebab7ef99e7cb28934a70dc40",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:27.436441257Z",
+      "finished_at": "2026-10-14T17:49:51.40444955Z"
+    },
+    "outage_warnings": [],
+    "warning_count": 0,
+    "stated_backoff_delays_s": [],
+    "measured_intervals_between_warnings_s": [],
+    "worker_log_tail": [
+      "2026-10-14T17:49:30.832349842Z INFO:__main__:analysis worker started",
+      "2026-10-14T17:49:50.999470110Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-14T17:49:51.000107440Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 26.0,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        6
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  },
+  "f2_c7": {
+    "case": "SIGTERM during a blocked dequeue (block=1s)",
+    "worker_container": {
+      "container": "be037wf7e3_f2_cblock1",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6379/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "1",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "60",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "52f3866841eb6d29e7bc2f185342f4649116357c0880082598a5c4aaeff0deaf",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:53.479648408Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "configured": {
+      "dequeue_block_s": 1,
+      "socket_timeout_s": 30,
+      "shutdown_poll_s": 0.5
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 1.75,
+      "grace_requested_s": 61,
+      "id": "52f3866841eb6d29e7bc2f185342f4649116357c0880082598a5c4aaeff0deaf",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:53.479648408Z",
+      "finished_at": "2026-10-14T17:50:30.796461957Z",
+      "stop_output": "be037wf7e3_f2_cblock1"
+    },
+    "container_facts": {
+      "id": "52f3866841eb6d29e7bc2f185342f4649116357c0880082598a5c4aaeff0deaf",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:49:53.479648408Z",
+      "finished_at": "2026-10-14T17:50:30.796461957Z"
+    },
+    "outage_warnings": [],
+    "warning_count": 0,
+    "stated_backoff_delays_s": [],
+    "measured_intervals_between_warnings_s": [],
+    "worker_log_tail": [
+      "2026-10-14T17:50:27.202438819Z INFO:__main__:analysis worker started",
+      "2026-10-14T17:50:30.424923789Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-14T17:50:30.425743268Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 39.2,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        6
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  },
+  "f2_c8": {
+    "case": "C8 SIGTERM while a job is running (in-flight completes first)",
+    "worker_container": {
+      "container": "be037wf7e3_f2_c8",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6379/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "60",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "a34365921f3d9173597a7eaf9220c0cdc35944ce119c14c94350201ba82cfd39",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:52:41.937929212Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "fixture": {
+      "evidence_id": "c25da3b6-21f5-4adc-a24e-0eed7ccdb4e2",
+      "job_id": "7224d2f3-ff38-4f9c-9ed3-2f36df0b27f4",
+      "bytes": 42219467,
+      "storage_key": "quarantine/c25da3b6-21f5-4adc-a24e-0eed7ccdb4e2/original"
+    },
+    "picked_up": {
+      "after_s": 4.42,
+      "status": "running",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 0
+    },
+    "job_state_at_signal": {
+      "status": "running",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 0
+    },
+    "job_state_after_stop": {
+      "status": "completed",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1
+    },
+    "lists_after_stop": {
+      "queue": "0",
+      "processing": "0"
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 12.12,
+      "grace_requested_s": 240,
+      "id": "a34365921f3d9173597a7eaf9220c0cdc35944ce119c14c94350201ba82cfd39",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:52:41.937929212Z",
+      "finished_at": "2026-10-14T17:52:58.716780494Z",
+      "stop_output": "be037wf7e3_f2_c8"
+    },
+    "container_facts": {
+      "id": "a34365921f3d9173597a7eaf9220c0cdc35944ce119c14c94350201ba82cfd39",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-14T17:52:41.937929212Z",
+      "finished_at": "2026-10-14T17:52:58.716780494Z"
+    },
+    "outage_warnings": [],
+    "warning_count": 0,
+    "stated_backoff_delays_s": [],
+    "measured_intervals_between_warnings_s": [],
+    "worker_log_tail": [
+      "2026-10-14T17:52:45.464928496Z INFO:__main__:analysis worker started",
+      " the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.",
+      "2026-10-14T17:52:57.019937480Z INFO:__main__:analysis job completed job_id=7224d2f3-ff38-4f9c-9ed3-2f36df0b27f4",
+      "2026-10-14T17:52:57.021153234Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-14T17:52:57.022013965Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 148.7,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        2
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  },
+  "f2_c9": {
+    "case": "C3b Redis outage/restore cycles with an empty queue (recovery observability and failure-counter reset)",
+    "worker_container": {
+      "container": "be037wf7e3_f2_c9",
+      "configured": {
+        "ENVIRONMENT": "development",
+        "DATABASE_URL": "postgresql+psycopg2://be037wf7e3_runtime:REDACTED@db:5432/be037wf7e3_app",
+        "REDIS_URL": "redis://redis:6379/0",
+        "S3_ENDPOINT": "http://minio:9000",
+        "S3_ACCESS_KEY": "***REDACTED***",
+        "S3_SECRET_KEY": "***REDACTED***",
+        "S3_USE_SSL": "false",
+        "S3_QUARANTINE_BUCKET": "be037wf7e3-quarantine",
+        "S3_EVIDENCE_BUCKET": "be037wf7e3-evidence",
+        "ANALYSIS_QUEUE_NAME": "be037wf7e3:analysis:jobs",
+        "ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS": "30",
+        "ANALYSIS_REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS": "5",
+        "ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS": "15",
+        "ANALYSIS_DEQUEUE_BLOCK_SECONDS": "1",
+        "ANALYSIS_RETRY_BACKOFF_BASE_SECONDS": "5",
+        "ANALYSIS_RETRY_BACKOFF_MAX_SECONDS": "600",
+        "ANALYSIS_SHUTDOWN_POLL_SECONDS": "0.5",
+        "ANALYSIS_ABANDONED_TIMEOUT_SECONDS": "300",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "id": "cb3f06260357ba22d0ffc29a23acafad8cc7c80229e08d6987b32d3e078e4119",
+      "state": "running",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-15T02:49:12.30904903Z",
+      "finished_at": "0001-01-01T00:00:00Z"
+    },
+    "startup_log": {
+      "after_s": 4.25,
+      "line": "2026-10-15T02:49:16.505186542Z INFO:__main__:analysis worker started"
+    },
+    "configured": {
+      "backoff_base_s": 5,
+      "backoff_max_s": 600,
+      "dequeue_block_s": 1
+    },
+    "cycles": [
+      {
+        "cycle": 1,
+        "outage_length_s": 30,
+        "idle_period_after_restore_s": 45,
+        "warnings_this_cycle": [
+          {
+            "docker_timestamp": "2026-10-15T02:49:17.409612813Z",
+            "stated_delay_s": 3.7,
+            "line": "2026-10-15T02:49:17.409612813Z WARNING:__main__:redis unavailable; backing off 3.7s (consecutive failures 1)"
+          },
+          {
+            "docker_timestamp": "2026-10-15T02:49:25.102227888Z",
+            "stated_delay_s": 6.5,
+            "line": "2026-10-15T02:49:25.102227888Z WARNING:__main__:redis unavailable; backing off 6.5s (consecutive failures 2)"
+          },
+          {
+            "docker_timestamp": "2026-10-15T02:49:35.564927198Z",
+            "stated_delay_s": 14.0,
+            "line": "2026-10-15T02:49:35.564927198Z WARNING:__main__:redis unavailable; backing off 14.0s (consecutive failures 3)"
+          }
+        ],
+        "all_stated_delays_s": [
+          3.7,
+          6.5,
+          14.0
+        ],
+        "measured_intervals_s": [
+          7.69,
+          10.46
+        ],
+        "warning_count_total": 3
+      },
+      {
+        "cycle": 2,
+        "outage_length_s": 30,
+        "idle_period_after_restore_s": 45,
+        "warnings_this_cycle": [
+          {
+            "docker_timestamp": "2026-10-15T02:50:34.607441254Z",
+            "stated_delay_s": 22.6,
+            "line": "2026-10-15T02:50:34.607441254Z WARNING:__main__:redis unavailable; backing off 22.6s (consecutive failures 4)"
+          },
+          {
+            "docker_timestamp": "2026-10-15T02:51:01.236206955Z",
+            "stated_delay_s": 40.2,
+            "line": "2026-10-15T02:51:01.236206955Z WARNING:__main__:redis unavailable; backing off 40.2s (consecutive failures 5)"
+          }
+        ],
+        "all_stated_delays_s": [
+          3.7,
+          6.5,
+          14.0,
+          22.6,
+          40.2
+        ],
+        "measured_intervals_s": [
+          7.69,
+          10.46,
+          59.04,
+          26.63
+        ],
+        "warning_count_total": 5
+      },
+      {
+        "cycle": 3,
+        "outage_length_s": 30,
+        "idle_period_after_restore_s": 45,
+        "warnings_this_cycle": [
+          {
+            "docker_timestamp": "2026-10-15T02:51:51.337453635Z",
+            "stated_delay_s": 151.9,
+            "line": "2026-10-15T02:51:51.337453635Z WARNING:__main__:redis unavailable; backing off 151.9s (consecutive failures 6)"
+          }
+        ],
+        "all_stated_delays_s": [
+          3.7,
+          6.5,
+          14.0,
+          22.6,
+          40.2,
+          151.9
+        ],
+        "measured_intervals_s": [
+          7.69,
+          10.46,
+          59.04,
+          26.63,
+          50.1
+        ],
+        "warning_count_total": 6
+      }
+    ],
+    "recovery_lines_logged_while_idle": [],
+    "job_enqueued_after_cycles": {
+      "after_s": 74.17,
+      "status": "completed",
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1
+    },
+    "recovery_lines_after_first_processed_job": [
+      "2026-10-15T02:54:35.906122041Z INFO:__main__:redis reachable again after 6 backoff(s)"
+    ],
+    "final_lists": {
+      "queue": "0",
+      "processing": "0"
+    },
+    "stop": {
+      "docker_stop_rc": 0,
+      "stop_wall_s": 2.19,
+      "grace_requested_s": 60,
+      "id": "cb3f06260357ba22d0ffc29a23acafad8cc7c80229e08d6987b32d3e078e4119",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-15T02:49:12.30904903Z",
+      "finished_at": "2026-10-15T02:54:38.451453357Z",
+      "stop_output": "be037wf7e3_f2_c9"
+    },
+    "container_facts": {
+      "id": "cb3f06260357ba22d0ffc29a23acafad8cc7c80229e08d6987b32d3e078e4119",
+      "state": "exited",
+      "exit_code": "0",
+      "oom_killed": "false",
+      "restart_count": "0",
+      "started_at": "2026-10-15T02:49:12.30904903Z",
+      "finished_at": "2026-10-15T02:54:38.451453357Z"
+    },
+    "outage_warnings": [
+      {
+        "docker_timestamp": "2026-10-15T02:49:17.409612813Z",
+        "stated_delay_s": 3.7,
+        "line": "2026-10-15T02:49:17.409612813Z WARNING:__main__:redis unavailable; backing off 3.7s (consecutive failures 1)"
+      },
+      {
+        "docker_timestamp": "2026-10-15T02:49:25.102227888Z",
+        "stated_delay_s": 6.5,
+        "line": "2026-10-15T02:49:25.102227888Z WARNING:__main__:redis unavailable; backing off 6.5s (consecutive failures 2)"
+      },
+      {
+        "docker_timestamp": "2026-10-15T02:49:35.564927198Z",
+        "stated_delay_s": 14.0,
+        "line": "2026-10-15T02:49:35.564927198Z WARNING:__main__:redis unavailable; backing off 14.0s (consecutive failures 3)"
+      },
+      {
+        "docker_timestamp": "2026-10-15T02:50:34.607441254Z",
+        "stated_delay_s": 22.6,
+        "line": "2026-10-15T02:50:34.607441254Z WARNING:__main__:redis unavailable; backing off 22.6s (consecutive failures 4)"
+      },
+      {
+        "docker_timestamp": "2026-10-15T02:51:01.236206955Z",
+        "stated_delay_s": 40.2,
+        "line": "2026-10-15T02:51:01.236206955Z WARNING:__main__:redis unavailable; backing off 40.2s (consecutive failures 5)"
+      },
+      {
+        "docker_timestamp": "2026-10-15T02:51:51.337453635Z",
+        "stated_delay_s": 151.9,
+        "line": "2026-10-15T02:51:51.337453635Z WARNING:__main__:redis unavailable; backing off 151.9s (consecutive failures 6)"
+      }
+    ],
+    "warning_count": 6,
+    "stated_backoff_delays_s": [
+      3.7,
+      6.5,
+      14.0,
+      22.6,
+      40.2,
+      151.9
+    ],
+    "measured_intervals_between_warnings_s": [
+      7.69,
+      10.46,
+      59.04,
+      26.63,
+      50.1
+    ],
+    "worker_log_tail": [
+      "2026-10-15T02:49:16.505186542Z INFO:__main__:analysis worker started",
+      "2026-10-15T02:49:17.409612813Z WARNING:__main__:redis unavailable; backing off 3.7s (consecutive failures 1)",
+      "2026-10-15T02:49:25.102227888Z WARNING:__main__:redis unavailable; backing off 6.5s (consecutive failures 2)",
+      "2026-10-15T02:49:35.564927198Z WARNING:__main__:redis unavailable; backing off 14.0s (consecutive failures 3)",
+      "2026-10-15T02:50:34.607441254Z WARNING:__main__:redis unavailable; backing off 22.6s (consecutive failures 4)",
+      "2026-10-15T02:51:01.236206955Z WARNING:__main__:redis unavailable; backing off 40.2s (consecutive failures 5)",
+      "2026-10-15T02:51:51.337453635Z WARNING:__main__:redis unavailable; backing off 151.9s (consecutive failures 6)",
+      " the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.",
+      "2026-10-15T02:54:35.904912952Z INFO:__main__:analysis job completed job_id=64d026dd-d4ac-447f-bd62-b81ff861fd97",
+      "2026-10-15T02:54:35.906122041Z INFO:__main__:redis reachable again after 6 backoff(s)",
+      "2026-10-15T02:54:36.945640664Z INFO:__main__:analysis worker stopping; releasing queue and database resources",
+      "2026-10-15T02:54:36.946342974Z INFO:__main__:analysis worker stopped"
+    ],
+    "wall_s": 328.8,
+    "database_identities_at_case_end": [
+      [
+        "postgres",
+        "",
+        "idle",
+        15
+      ],
+      [
+        "postgres",
+        "",
+        "active",
+        1
+      ]
+    ]
+  }
+}

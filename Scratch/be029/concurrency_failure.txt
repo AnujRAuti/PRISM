@@ -1,0 +1,67 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__ test_concurrent_duplicate_username_ends_with_one_account_and_two_answers ___
+
+db = <sqlalchemy.orm.session.Session object at 0x0000029026CD3DA0>
+created = <tests.integration.test_be029_identity_conflict_api.Created object at 0x0000029026E1E510>
+
+    def test_concurrent_duplicate_username_ends_with_one_account_and_two_answers(db, created):
+        """§3.3 case 11, run for real on two connections.
+    
+        Which request wins is not fixed and must not be asserted. What is fixed is
+        the outcome the unique index guarantees: one row, one ``201``, one ``409``,
+        and no ``500`` for the loser. A pre-check could not promise that, which is
+        exactly why the database constraint stays authoritative.
+        """
+        headers = admin_headers(db, created)
+        username = unique("race")
+        emails = {tag: f"{unique('race-' + tag)}@example.com" for tag in ("p", "q")}
+        for email in emails.values():
+            created.values_of(username, email)
+    
+>       barrier = threading.Barrier(2)
+                  ^^^^^^^^^
+E       NameError: name 'threading' is not defined. Did you forget to import 'threading'
+
+tests\integration\test_be029_identity_conflict_api.py:450: NameError
+============================== warnings summary ===============================
+backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+backend\app\main.py:121
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:121: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+backend\app\main.py:135
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:135: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/integration/test_be029_identity_conflict_api.py::test_concurrent_duplicate_username_ends_with_one_account_and_two_answers
+1 failed, 6 warnings in 9.72s

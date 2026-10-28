@@ -1,0 +1,35 @@
+=== I3 PostgreSQL outage on the disposable stack (containers created by run be037b65cee2) ===
+Tue Oct 13 08:42:45 UTC 2026
+# WHICH=db polls=22 interval=3.0s
+08:42:46 health=200(68ms) ready=200(46ms) '{"status":"healthy","timestamp":1791880966.5930817,"checks":' dbread=200(23ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+08:42:49 health=200(4ms) ready=200(44ms) '{"status":"healthy","timestamp":1791880969.6641943,"checks":' dbread=200(29ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+>>> docker stop db at 08:42:51Z
+>>> db stopped 08:42:52Z
+08:42:52 health=200(3ms) ready=503(30ms) '{"status":"unhealthy","timestamp":1791880972.726326,"checks"' dbread=401(8ms) '{"detail":"Invalid credentials"}'
+08:42:55 health=200(4ms) ready=503(32ms) '{"status":"unhealthy","timestamp":1791880975.7722523,"checks' dbread=401(8ms) '{"detail":"Invalid credentials"}'
+08:42:58 health=200(4ms) ready=503(29ms) '{"status":"unhealthy","timestamp":1791880978.814873,"checks"' dbread=401(8ms) '{"detail":"Invalid credentials"}'
+api_container_health_during_outage=healthy
+db_container_status=exited exit=0
+08:43:01 health=200(6ms) ready=503(33ms) '{"status":"unhealthy","timestamp":1791880981.8621116,"checks' dbread=401(9ms) '{"detail":"Invalid credentials"}'
+08:43:04 health=200(4ms) ready=503(33ms) '{"status":"unhealthy","timestamp":1791880984.909228,"checks"' dbread=401(7ms) '{"detail":"Invalid credentials"}'
+08:43:07 health=200(4ms) ready=503(28ms) '{"status":"unhealthy","timestamp":1791880987.9459765,"checks' dbread=401(7ms) '{"detail":"Invalid credentials"}'
+08:43:10 health=200(4ms) ready=503(27ms) '{"status":"unhealthy","timestamp":1791880990.9843986,"checks' dbread=401(10ms) '{"detail":"Invalid credentials"}'
+08:43:13 health=200(4ms) ready=503(31ms) '{"status":"unhealthy","timestamp":1791880994.0292015,"checks' dbread=401(9ms) '{"detail":"Invalid credentials"}'
+08:43:17 health=200(4ms) ready=503(28ms) '{"status":"unhealthy","timestamp":1791880997.071762,"checks"' dbread=401(7ms) '{"detail":"Invalid credentials"}'
+08:43:20 health=200(3ms) ready=503(28ms) '{"status":"unhealthy","timestamp":1791881000.1110518,"checks' dbread=401(6ms) '{"detail":"Invalid credentials"}'
+08:43:23 health=200(3ms) ready=503(30ms) '{"status":"unhealthy","timestamp":1791881003.1507509,"checks' dbread=401(8ms) '{"detail":"Invalid credentials"}'
+>>> docker start db at 08:43:25Z
+08:43:26 health=200(5ms) ready=503(31ms) '{"status":"unhealthy","timestamp":1791881006.1949265,"checks' dbread=401(6ms) '{"detail":"Invalid credentials"}'
+>>> db started 08:43:26Z
+08:43:29 health=200(6ms) ready=200(41ms) '{"status":"healthy","timestamp":1791881009.2482588,"checks":' dbread=200(45ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+08:43:32 health=200(5ms) ready=200(41ms) '{"status":"healthy","timestamp":1791881012.3388507,"checks":' dbread=200(25ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+08:43:35 health=200(5ms) ready=200(39ms) '{"status":"healthy","timestamp":1791881015.409103,"checks":{' dbread=200(23ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+08:43:38 health=200(5ms) ready=200(47ms) '{"status":"healthy","timestamp":1791881018.4824476,"checks":' dbread=200(24ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+08:43:41 health=200(6ms) ready=200(39ms) '{"status":"healthy","timestamp":1791881021.5530407,"checks":' dbread=200(22ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+08:43:44 health=200(4ms) ready=200(36ms) '{"status":"healthy","timestamp":1791881024.6165855,"checks":' dbread=200(19ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+08:43:47 health=200(4ms) ready=200(50ms) '{"status":"healthy","timestamp":1791881027.689736,"checks":{' dbread=200(30ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+08:43:50 health=200(5ms) ready=200(39ms) '{"status":"healthy","timestamp":1791881030.7646382,"checks":' dbread=200(29ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":8'
+# polling finished
+=== post-outage: api recovered without a restart? ===
+api_health=healthy restarts=0
+db_health=healthy

@@ -1,0 +1,232 @@
+# BE-037 Phase B — DISPOSABLE STACK ONLY (run be037b65cee2).
+#
+# Generated from the inspected facts in phaseB-stageA-preflight.md. This file is
+# scratch-local and the repository's docker-compose.yml is never modified or
+# started by this task. Every name carries the run prefix; nothing here can
+# resolve to pofa_db / pofa_redis / pofa_minio / pofa_dev / pofa_test.
+#
+#   docker compose --project-name be037b65cee2 \
+#     --env-file secrets.env -f compose.disposable.yml up -d
+#
+# `internal: true` means the network has no route to the host or the internet and
+# publishes no ports at all, so no check in this run can send anything outward and
+# no service is exposed publicly. HTTP tests run from a client container attached
+# to the same network.
+
+name: be037b65cee2
+
+x-app-environment: &app-environment
+  ENVIRONMENT: development
+  DATABASE_URL: postgresql+psycopg2://be037b_rt:${PG_RT_PW}@db:5432/be037b_app
+  REDIS_URL: redis://redis:6379/0
+  S3_ENDPOINT: http://minio:9000
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER}
+  S3_SECRET_KEY: ${MINIO_ROOT_PW}
+  S3_USE_SSL: "false"
+  S3_QUARANTINE_BUCKET: be037b65cee2-quarantine
+  S3_EVIDENCE_BUCKET: be037b65cee2-evidence
+  JWT_SECRET: ${DISP_JWT_SECRET}
+  CORS_ALLOW_ORIGINS: http://be037b-client.invalid
+  AUTH_MODE: development
+  AUTH_DEV_TOKENS_ENABLED: "true"
+
+services:
+  db:
+    image: garapadev/postgres-postgis-pgvector:15-stable
+    container_name: be037b65cee2_db
+    restart: "no"
+    environment:
+      POSTGRES_USER: be037b_owner
+      POSTGRES_PASSWORD: ${PG_OWNER_PW}
+      POSTGRES_DB: be037b_app
+    volumes:
+      - be037b65cee2_pgdata:/var/lib/postgresql/data
+      - ./pg-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U be037b_owner -d be037b_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks: [disposable]
+
+  redis:
+    image: redis:7-alpine
+    container_name: be037b65cee2_redis
+    restart: "no"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [disposable]
+
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: be037b65cee2_minio
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PW}
+    command: server /data --console-address ":9001"
+    volumes:
+      - be037b65cee2_miniodata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    networks: [disposable]
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    container_name: be037b65cee2_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PW}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do sleep 1; done; mc mb --ignore-existing "local/be037b65cee2-quarantine"; mc mb --ignore-existing "local/be037b65cee2-evidence"; mc anonymous set none "local/be037b65cee2-quarantine"; mc anonymous set none "local/be037b65cee2-evidence"'
+    networks: [disposable]
+
+  api:
+    image: poa-backend:be037a
+    container_name: be037b65cee2_api
+    restart: "no"
+    command: ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - D:/CODING/Projects/Proof-Of-Action-Final/yolo11n.pt:/app/yolo11n.pt:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)\""
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+    networks: [disposable]
+
+  analysis_worker:
+    image: poa-backend:be037a
+    container_name: be037b65cee2_analysis
+    restart: "no"
+    command: ["python", "-m", "backend.workers.analysis_worker"]
+    environment: *app-environment
+    volumes:
+      - D:/CODING/Projects/Proof-Of-Action-Final/yolo11n.pt:/app/yolo11n.pt:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks: [disposable]
+
+  notification_worker:
+    image: poa-backend:be037a
+    container_name: be037b65cee2_notification
+    restart: "no"
+    command: ["sh", "-c", "while true; do python -m backend.workers.notification_worker --limit 50; sleep 15; done"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [disposable]
+
+  retention_worker:
+    image: poa-backend:be037a
+    container_name: be037b65cee2_retention
+    restart: "no"
+    command: ["sh", "-c", "while true; do python -m backend.workers.retention_worker --limit 200; sleep 3600; done"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks: [disposable]
+
+  webhook_worker:
+    image: poa-backend:be037a
+    container_name: be037b65cee2_webhook
+    restart: "no"
+    command: ["sh", "-c", "while true; do python -m backend.workers.webhook_worker --once --limit 50; sleep 15; done"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [disposable]
+
+  # One-shot migration service, never part of `up` (tools profile). Uses the
+  # OWNER identity only; the runtime role is created afterwards by a separate
+  # explicitly-invoked step.
+  migrate:
+    image: poa-backend:be037a
+    container_name: be037b65cee2_migrate
+    profiles: ["tools"]
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *app-environment
+      DATABASE_URL: postgresql+psycopg2://be037b_owner:${PG_OWNER_PW}@db:5432/be037b_app
+      POA_DATABASE_CONTEXT: verification
+      POA_AUTHORIZED_DATABASE_NAME: be037b_app
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [disposable]
+
+  # Role provisioning helper (tools profile): creates the disposable runtime role
+  # with the F-05 grant shape. Distinct names -> cannot touch cluster role poa_runtime.
+  provision:
+    image: garapadev/postgres-postgis-pgvector:15-stable
+    container_name: be037b65cee2_provision
+    profiles: ["tools"]
+    entrypoint: ["sh", "-c"]
+    command:
+      - 'psql "$${PGURL}" -v ON_ERROR_STOP=1 -v runtime_password="''$${PG_RT_PW}''" -f /provision.sql'
+    environment:
+      PGURL: postgresql://be037b_owner:${PG_OWNER_PW}@db:5432/be037b_app
+      PG_RT_PW: ${PG_RT_PW}
+    volumes:
+      - ./provision-runtime.sql:/provision.sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [disposable]
+
+  # HTTP client used for all API tests (the network is internal, so there is no
+  # host-published port to curl from).
+  client:
+    image: poa-backend:be037a
+    container_name: be037b65cee2_client
+    profiles: ["tools"]
+    entrypoint: ["sleep", "7200"]
+    networks: [disposable]
+
+volumes:
+  be037b65cee2_pgdata:
+    name: be037b65cee2_pgdata
+  be037b65cee2_miniodata:
+    name: be037b65cee2_miniodata
+
+networks:
+  disposable:
+    name: be037b65cee2_net
+    internal: true
+    driver: bridge

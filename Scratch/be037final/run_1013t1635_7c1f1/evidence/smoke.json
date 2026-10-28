@@ -1,0 +1,32 @@
+{
+  "completed_log_entry": null,
+  "fixture": {
+    "bytes": 68215,
+    "evidence_id": "e32e68e6-60a8-4585-9751-38b8467461a0",
+    "job_id": "d920bb84-f9d7-4737-a813-71f566550541",
+    "storage_key": "quarantine/e32e68e6-60a8-4585-9751-38b8467461a0/original"
+  },
+  "full_log": "INFO:__main__:analysis worker started",
+  "job_states": {
+    "d920bb84-f9d7-4737-a813-71f566550541": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 0,
+      "status": "running"
+    }
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 1
+  },
+  "scenario": "smoke",
+  "worker_final": {
+    "again_lines": [],
+    "alive_at_measurement": true,
+    "backoff_warnings": [],
+    "exit_code": null,
+    "log_lines": 1,
+    "pid": 18508,
+    "recovery_lines": []
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "captured_at": "2026-10-14T23:25:26+0530",
+  "statement_kinds": "SELECT only",
+  "jobs": {
+    "f2_c1": [
+      {
+        "job_id": "94233512-f52a-437e-b988-ce6d1d695702",
+        "status/attempt/results/ledger_events": [
+          "completed",
+          1,
+          1,
+          0
+        ],
+        "ledger_event_types": []
+      },
+      {
+        "job_id": "38c72c29-1187-41ef-9d16-9e2660f960bc",
+        "status/attempt/results/ledger_events": [
+          "completed",
+          1,
+          1,
+          0
+        ],
+        "ledger_event_types": []
+      },
+      {
+        "job_id": "77804dda-b9c9-4648-bf59-5bfb9679f85d",
+        "status/attempt/results/ledger_events": [
+          "completed",
+          1,
+          1,
+          0
+        ],
+        "ledger_event_types": []
+      }
+    ],
+    "f2_c3": [
+      {
+        "job_id": "5d85f7dc-532e-4153-86ef-cfe03ae22d9b",
+        "status/attempt/results/ledger_events": [
+          "completed",
+          2,
+          1,
+          0
+        ],
+        "ledger_event_types": []
+      }
+    ],
+    "f2_c8": [
+      {
+        "job_id": "7224d2f3-ff38-4f9c-9ed3-2f36df0b27f4",
+        "status/attempt/results/ledger_events": [
+          "completed",
+          1,
+          1,
+          0
+        ],
+        "ledger_event_types": []
+      }
+    ]
+  },
+  "ledger_total": 23,
+  "ledger_sequence_range": [
+    1,
+    23
+  ],
+  "ledger_analysis_event_types": [],
+  "analysis_result_shape": {
+    "results": 10,
+    "distinct_jobs": 10,
+    "jobs_total": 10,
+    "jobs_by_status": [
+      [
+        "completed",
+        10
+      ]
+    ]
+  }
+}

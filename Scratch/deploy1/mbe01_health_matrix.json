@@ -1,0 +1,80 @@
+{
+  "all dependencies live": [
+    [
+      "/health",
+      "200",
+      "0.582691",
+      "application=healthy"
+    ],
+    [
+      "/ready",
+      "200",
+      "2.539706",
+      "application=healthy postgresql=healthy redis=healthy storage=healthy"
+    ],
+    [
+      "/healthz",
+      "200",
+      "2.090311",
+      "healthy"
+    ],
+    [
+      "/api/v1/ready",
+      "200",
+      "1.260732",
+      "ok"
+    ]
+  ],
+  "database unreachable": [
+    [
+      "/health",
+      "200",
+      "0.590239",
+      "application=healthy"
+    ],
+    [
+      "/ready",
+      "503",
+      "0.565404",
+      "application=healthy postgresql=unhealthy redis=healthy storage=healthy"
+    ],
+    [
+      "/healthz",
+      "503",
+      "0.527093",
+      "unhealthy"
+    ],
+    [
+      "/api/v1/ready",
+      "503",
+      "0.271597",
+      "unavailable"
+    ]
+  ],
+  "redis unreachable": [
+    [
+      "/health",
+      "200",
+      "0.616949",
+      "application=healthy"
+    ],
+    [
+      "/ready",
+      "503",
+      "1.251150",
+      "application=healthy postgresql=healthy redis=unhealthy storage=healthy"
+    ],
+    [
+      "/healthz",
+      "503",
+      "1.817169",
+      "unhealthy"
+    ],
+    [
+      "/api/v1/ready",
+      "200",
+      "1.865131",
+      "ok"
+    ]
+  ]
+}

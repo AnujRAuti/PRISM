@@ -1,0 +1,122 @@
+{
+ "armed_for": "pofa_be030_scratch",
+ "target": {
+  "database": "pofa_be030_scratch",
+  "revision": [
+   "s9t0u1v2w029"
+  ],
+  "rows": 38261,
+  "max_sequence": 38261,
+  "columns": [
+   "id",
+   "sequence_number",
+   "event_type",
+   "action",
+   "resource_type",
+   "resource_id",
+   "actor_id",
+   "project_id",
+   "payload",
+   "metadata",
+   "previous_hash",
+   "event_hash",
+   "hash_algorithm",
+   "ledger_version",
+   "created_at"
+  ]
+ },
+ "baseline_touch_without_trigger": {
+  "outcome": "executed",
+  "rowcount": 1
+ },
+ "percent_placeholder_via_psycopg2_directly": {
+  "outcome": "compiled"
+ },
+ "drift_with_enforcement_installed": {
+  "operations": 2,
+  "mentions_ledger_table": false,
+  "mentions_trigger": false,
+  "mentions_check": false
+ },
+ "update_refused": {
+  "outcome": "refused",
+  "error_class": "ProgrammingError",
+  "sqlstate": "42501",
+  "message": "(psycopg2.errors.InsufficientPrivilege) append-only enforcement refuses UPDATE on the audit ledger"
+ },
+ "delete_refused": {
+  "outcome": "refused",
+  "error_class": "ProgrammingError",
+  "sqlstate": "42501",
+  "message": "(psycopg2.errors.InsufficientPrivilege) append-only enforcement refuses DELETE on the audit ledger"
+ },
+ "rollback_guarded_tamper_update_refused": {
+  "outcome": "refused",
+  "error_class": "ProgrammingError",
+  "sqlstate": "42501",
+  "message": "(psycopg2.errors.InsufficientPrivilege) append-only enforcement refuses UPDATE on the audit ledger"
+ },
+ "update_with_set_local_in_transaction": {
+  "outcome": "executed",
+  "rowcount": 1
+ },
+ "update_after_the_transaction_ended": {
+  "outcome": "refused",
+  "error_class": "ProgrammingError",
+  "sqlstate": "42501",
+  "message": "(psycopg2.errors.InsufficientPrivilege) append-only enforcement refuses UPDATE on the audit ledger"
+ },
+ "session_level_set_leaks_past_the_transaction": {
+  "with_plain_set": {
+   "outcome": "executed",
+   "rowcount": 1
+  },
+  "after_reset": {
+   "outcome": "refused",
+   "message": "append-only enforcement refuses UPDATE on the audit ledger"
+  },
+  "conclusion": "SET (session scope) opens the hatch for the whole pooled connection; only SET LOCAL is transaction-bounded"
+ },
+ "append_event_with_trigger": {
+  "first_sequence": 38262,
+  "last_sequence": 38281,
+  "count": 20,
+  "ms_per_append": 47.18
+ },
+ "event_type_check_added": {
+  "members": 94,
+  "validate_seconds_on_this_data": 0.078
+ },
+ "out_of_domain_raw_sql_insert": {
+  "outcome": "refused",
+  "error_class": "IntegrityError",
+  "sqlstate": "23514",
+  "message": "(psycopg2.errors.CheckViolation) new row for relation \"audit_ledger_events\" violates check constraint \"ck_audit_ledger_event_type_domain\""
+ },
+ "in_domain_raw_sql_insert": {
+  "outcome": "executed"
+ },
+ "event_type_parity_on_stored_data": {
+  "distinct_used": 72,
+  "distinct_used_in_domain": 72,
+  "enum_members": 94
+ },
+ "catalog_after": {
+  "triggers": [
+   "trg_audit_ledger_append_only"
+  ],
+  "rules": [],
+  "constraints": [
+   "audit_ledger_events_pkey",
+   "ck_audit_ledger_event_type_domain",
+   "uq_audit_ledger_sequence"
+  ],
+  "function_exists": true,
+  "row_security": false
+ },
+ "final_state": {
+  "rows": 38281,
+  "max_sequence": 38281
+ },
+ "enforcement_left_installed": true
+}

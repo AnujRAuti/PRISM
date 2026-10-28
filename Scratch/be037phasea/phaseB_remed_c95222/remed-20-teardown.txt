@@ -1,0 +1,43 @@
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"PG_OWNER_PW\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_USER\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_PW\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_USER\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_PW\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"PG_OWNER_PW\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_USER\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_PW\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"DISP_JWT_SECRET\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"PG_OWNER_PW\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_PW\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_USER\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"DISP_JWT_SECRET\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_USER\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"MINIO_ROOT_PW\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"DISP_JWT_SECRET\" variable is not set. Defaulting to a blank string."
+time="2026-10-13T19:37:02+05:30" level=warning msg="The \"PG_OWNER_PW\" variable is not set. Defaulting to a blank string."
+ Container be037remc95222_api Stopping 
+ Container be037remc95222_api Stopped 
+ Container be037remc95222_api Removing 
+ Container be037remc95222_api Removed 
+ Container be037remc95222_redis Stopping 
+ Container be037remc95222_db Stopping 
+ Container be037remc95222_minio Stopping 
+ Container be037remc95222_minio Stopped 
+ Container be037remc95222_minio Removing 
+ Container be037remc95222_minio Removed 
+ Container be037remc95222_db Stopped 
+ Container be037remc95222_db Removing 
+ Container be037remc95222_db Removed 
+ Container be037remc95222_redis Stopped 
+ Container be037remc95222_redis Removing 
+ Container be037remc95222_redis Removed 
+ Volume be037remc95222_redisdata Removing 
+ Network be037remc95222_iso Removing 
+ Network be037remc95222_net Removing 
+ Volume be037remc95222_pgdata Removing 
+ Volume be037remc95222_miniodata Removing 
+ Volume be037remc95222_redisdata Removed 
+ Volume be037remc95222_miniodata Removed 
+ Volume be037remc95222_pgdata Removed 
+ Network be037remc95222_iso Removed 
+ Network be037remc95222_net Removed 

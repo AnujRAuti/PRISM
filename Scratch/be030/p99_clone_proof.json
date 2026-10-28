@@ -1,0 +1,156 @@
+{
+ "armed_for": "pofa_be030_proof",
+ "before_upgrade": {
+  "revision": [
+   "s9t0u1v2w029"
+  ],
+  "trigger": false,
+  "function": false,
+  "check": false
+ },
+ "confirmed_database_before": "pofa_be030_proof",
+ "alembic_upgrade": {
+  "args": [
+   "upgrade",
+   "t0u1v2w3x030"
+  ],
+  "returncode": 0,
+  "stdout_tail": [],
+  "stderr_tail": [
+   "INFO  [alembic.env] Alembic target database: pofa_be030_proof",
+   "INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.",
+   "INFO  [alembic.runtime.migration] Will assume transactional DDL.",
+   "INFO  [alembic.runtime.migration] Running upgrade s9t0u1v2w029 -> t0u1v2w3x030, BE-030: append-only enforcement + event-type domain CHECK for the audit ledger."
+  ]
+ },
+ "after_upgrade": {
+  "revision": [
+   "t0u1v2w3x030"
+  ],
+  "trigger": true,
+  "function": true,
+  "check": true
+ },
+ "update_refused": {
+  "outcome": "refused",
+  "error_class": "ProgrammingError",
+  "sqlstate": "42501",
+  "message": "append-only enforcement refuses UPDATE on the audit ledger"
+ },
+ "delete_refused": {
+  "outcome": "refused",
+  "error_class": "ProgrammingError",
+  "sqlstate": "42501",
+  "message": "append-only enforcement refuses DELETE on the audit ledger"
+ },
+ "truncate_hole": {
+  "outcome": "executed",
+  "rows_during_truncate": 0,
+  "rows_after_rollback": 38261,
+  "note": "FOR EACH ROW trigger does not fire on TRUNCATE; rollback restored the clone, so no damage persisted"
+ },
+ "hatch_update_in_transaction": {
+  "outcome": "executed (rolled back)"
+ },
+ "hatch_does_not_survive": {
+  "outcome": "refused",
+  "error_class": "ProgrammingError",
+  "sqlstate": "42501",
+  "message": "append-only enforcement refuses UPDATE on the audit ledger"
+ },
+ "out_of_domain_insert": {
+  "outcome": "refused",
+  "error_class": "IntegrityError",
+  "sqlstate": "23514",
+  "message": "new row for relation \"audit_ledger_events\" violates check constraint \"ck_audit_ledger_event_type_domain\""
+ },
+ "in_domain_insert": {
+  "outcome": "executed"
+ },
+ "check_latency_note": "both inserts rolled back; no out-of-domain row persists",
+ "writer_contiguous": {
+  "start": 38261,
+  "seqs": [
+   38262,
+   38263,
+   38264
+  ],
+  "contiguous": true
+ },
+ "midchain_asymmetry": {
+  "downstream_window_valid": true,
+  "covering_range_valid": false,
+  "covering_failures": [
+   "event_hash mismatch at sequence 38263"
+  ],
+  "expected": "downstream window valid; covering range invalid with event_hash mismatch"
+ },
+ "midchain_restored_valid": true,
+ "d2a_tail_refusal": {
+  "outcome": "PredecessorInvalid",
+  "message": "refusing to append onto sequence 38264: event_hash mismatch at sequence 38264"
+ },
+ "d2a_after_restore_append": {
+  "outcome": "executed",
+  "seq": 38265
+ },
+ "anchored_full_chain": {
+  "valid": true,
+  "checked_events": 38265,
+  "first_sequence": 1,
+  "last_sequence": 38265
+ },
+ "checkpoint": {
+  "rows": 38265,
+  "min_sequence": 1,
+  "max_sequence": 38265,
+  "tail_event_hash": "4b73574aa88127c7e9dd728a37b31316fdf9e35b4337b1d02e15743e3d13b406",
+  "tail_previous_hash": "bfbf0c5d3b9fa16a5bb36f5053475131b1268611517d4e43ee9ba3ae5dda047f"
+ },
+ "alembic_downgrade": {
+  "args": [
+   "downgrade",
+   "s9t0u1v2w029"
+  ],
+  "returncode": 0,
+  "stdout_tail": [],
+  "stderr_tail": [
+   "INFO  [alembic.env] Alembic target database: pofa_be030_proof",
+   "INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.",
+   "INFO  [alembic.runtime.migration] Will assume transactional DDL.",
+   "INFO  [alembic.runtime.migration] Running downgrade t0u1v2w3x030 -> s9t0u1v2w029, BE-030: append-only enforcement + event-type domain CHECK for the audit ledger."
+  ]
+ },
+ "after_downgrade": {
+  "revision": [
+   "s9t0u1v2w029"
+  ],
+  "trigger": false,
+  "function": false,
+  "check": false
+ },
+ "alembic_reupgrade": {
+  "args": [
+   "upgrade",
+   "head"
+  ],
+  "returncode": 0,
+  "stdout_tail": [],
+  "stderr_tail": [
+   "INFO  [alembic.env] Alembic target database: pofa_be030_proof",
+   "INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.",
+   "INFO  [alembic.runtime.migration] Will assume transactional DDL.",
+   "INFO  [alembic.runtime.migration] Running upgrade s9t0u1v2w029 -> t0u1v2w3x030, BE-030: append-only enforcement + event-type domain CHECK for the audit ledger."
+  ]
+ },
+ "after_reupgrade": {
+  "revision": [
+   "t0u1v2w3x030"
+  ],
+  "trigger": true,
+  "function": true,
+  "check": true
+ },
+ "final_full_chain_valid": true,
+ "confirmed_database_end": "pofa_be030_proof"
+}

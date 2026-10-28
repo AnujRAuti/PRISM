@@ -1,0 +1,172 @@
+{
+ "database": "pofa_test",
+ "alembic_version": "s9t0u1v2w029",
+ "archive_counts": [
+  {
+   "source_table": "evidence",
+   "n": 19
+  },
+  {
+   "source_table": "projects",
+   "n": 19
+  },
+  {
+   "source_table": "users",
+   "n": 19
+  }
+ ],
+ "users_off_signature": [],
+ "user_columns_present": [
+  "created_at",
+  "email",
+  "external_subject",
+  "id",
+  "identity_provider",
+  "retired_at",
+  "status",
+  "username"
+ ],
+ "projects_off_signature": [],
+ "projects_owned_by_non_archived_user": [],
+ "evidence_off_signature": [],
+ "evidence_in_non_archived_project": [],
+ "triple_linkage_ok": true,
+ "live_users_with_username": 0,
+ "live_users_with_email": 0,
+ "ledger_rows_referencing_archived_ids": 0,
+ "archived_users": [
+  {
+   "id": "00969173-93ec-4f8c-8c3e-79feb9a16c18",
+   "created_at": "2026-09-27T14:07:00.641592+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "0b509b0c-8be2-4eb4-be1b-01f4c5234d56",
+   "created_at": "2026-09-25T13:28:44.052932+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "1211c614-8051-4e10-96ab-2f7995b11b2b",
+   "created_at": "2026-09-25T14:04:48.106334+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "1a97dd65-d9b2-455e-afde-5740e5bee102",
+   "created_at": "2026-09-27T05:54:40.13357+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "43222446-16ff-4d0b-a0fa-681e1365afbe",
+   "created_at": "2026-09-30T12:33:49.181279+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "7139b74e-5905-4987-bf74-520426997e5b",
+   "created_at": "2026-09-30T12:26:57.416496+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "8a050854-73ec-40c9-8a70-57563863e3bc",
+   "created_at": "2026-09-30T11:43:27.830259+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "8cda6984-bb5c-4c0d-8409-0ab2bf7576ff",
+   "created_at": "2026-09-27T06:01:04.756867+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "98e8d916-c6d8-4360-9071-b6b08e7dbbc1",
+   "created_at": "2026-09-26T16:26:46.265545+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "9a437cf3-2266-44e9-a484-eb305dc622d0",
+   "created_at": "2026-09-25T13:39:31.309209+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "9c6c6f3b-dba5-4fe1-9edc-82e80aad7ed2",
+   "created_at": "2026-09-27T13:30:55.03755+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "ba2176e7-f386-45b6-a344-04a3236f58a6",
+   "created_at": "2026-09-26T13:37:14.57992+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "bc530964-7062-49bb-9601-9ad31eff3243",
+   "created_at": "2026-09-25T13:43:58.484962+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "c07289d1-d64f-4d7f-a13c-7b3ceffc250e",
+   "created_at": "2026-09-26T15:17:59.450581+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "c3938e20-bd81-42e1-a093-58f5726ebfd3",
+   "created_at": "2026-09-26T13:26:42.65375+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "cc48aee1-cdee-425b-bce6-c75d030018da",
+   "created_at": "2026-09-30T12:03:29.579524+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "d7a8e6ce-6249-4d6f-a9c2-10497718b03e",
+   "created_at": "2026-09-27T14:34:47.384832+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "dcd3ef11-949d-416d-ba5d-6df1019fab55",
+   "created_at": "2026-09-26T13:47:27.046733+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  },
+  {
+   "id": "f39c1598-5a44-4e31-baa6-9290811fe251",
+   "created_at": "2026-10-06T16:26:29.498559+00:00",
+   "status": "ACTIVE",
+   "identity_provider": "local",
+   "external_subject": null
+  }
+ ]
+}

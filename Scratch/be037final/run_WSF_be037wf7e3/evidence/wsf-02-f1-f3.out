@@ -1,0 +1,37 @@
+[22:59:33] image weights present=False
+[22:59:41] api be037wf7e3_api rc=0 state=running ready={'status': 200, 'body': '{"status":"healthy","timestamp":1791998981.1273243,"checks":{"application":{"status":"healthy","message":"Application is running","required":false},"postgresql":{"status":"healthy","message":"PostgreSQL connection successful","required":true},"redis":{"status":"healthy","message":"Redis connection s'} id=e3bd690b9b16
+[22:59:42] bootstrap steps met=22/22
+[22:59:50] api be037wf7e3_api rc=0 state=running ready={'status': 200, 'body': '{"status":"healthy","timestamp":1791998990.7085164,"checks":{"application":{"status":"healthy","message":"Application is running","required":false},"postgresql":{"status":"healthy","message":"PostgreSQL connection successful","required":true},"redis":{"status":"healthy","message":"Redis connection s'} id=7c41e0c850a0
+[22:59:51] anonymous enqueue: 401 (expected 401) delta=0
+[22:59:52] invalid bearer: 401 (expected 401) delta=0
+[22:59:52] dev-user token while dev tokens disabled: 401 (expected 401) delta=0
+[22:59:52] client with unknown secret: 401 (expected 401) delta=0
+[22:59:52] client without intelligence.reprocess: 403 (expected 403) delta=0
+[22:59:53] cross-organisation client (B on A evidence): 404 (expected 404) delta=0
+[22:59:53] authorised enqueue (GLOBAL intake client): 202 (expected 202) delta=1
+[22:59:54] enqueue by the project-A client (evidence now projected): 202 (expected 202) delta=1
+[22:59:54] malformed job id: 422 (expected 422) delta=0
+[22:59:54] absent job id (valid uuid): 404 (expected 404) delta=0
+[22:59:54] authorised job read: 200 (expected 200) delta=0
+[22:59:55] anchored verify, global-scope audit.read client: 200 (expected 200) delta=0
+[22:59:55] anchored verify, project-scope audit.read client: 403 (expected 403) delta=0
+[22:59:55] anchored verify, client without audit.read: 403 (expected 403) delta=0
+[22:59:56] anchored verify, unknown baseline name: 422 (expected 422) delta=0
+[22:59:56] anchored verify, anonymous: 401 (expected 401) delta=0
+[22:59:56] health surface anonymous /health: 200 (expected 200) delta=0
+[22:59:57] ready surface anonymous /ready: 200 (expected 200) delta=0
+[22:59:59] api docs/openapi reachable: 200 (expected 200) delta=0
+[23:00:07] api be037wf7e3_api rc=0 state=running ready={'status': 200, 'body': '{"status":"healthy","timestamp":1791999007.8309643,"checks":{"application":{"status":"healthy","message":"Application is running","required":false},"postgresql":{"status":"healthy","message":"PostgreSQL connection successful","required":true},"redis":{"status":"healthy","message":"Redis connection s'} id=a5bbdd9d5f86
+[23:00:08] dev-user enqueue (officer A, permission in org scope): 202 (expected 202)
+[23:00:09] dev-user CITIZEN (no intelligence.reprocess): 403 (expected 403)
+[23:00:09] dev-user officer B on A evidence (cross-org): 404 (expected 404)
+[23:00:09] unknown dev-user id: 401 (expected 401)
+[23:00:10] officer B reading an A job: 404 (expected 404)
+[23:00:10] officer A reading its own job: 200 (expected 200)
+[23:00:10] malformed evidence id in enqueue body: 422 (expected 422)
+[23:00:11] invalid job_type literal: 422 (expected 422)
+[23:00:11] dev-user ADMINISTRATOR on anchored verify: 200 (expected 200)
+[23:00:11] dev-user CITIZEN on anchored verify: 403 (expected 403)
+[23:00:12] worker be037wf7e3_worker rc=0 state=running id=fde64bffff7a out=fde64bffff7a29e7981570166579a63ff409343c399080f4303dc42379d5e972
+[23:00:34] ledger identity=be037wf7e3_runtime valid=True
+[23:00:35] f1 off all_met=True on all_met=True

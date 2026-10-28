@@ -1,0 +1,207 @@
+{
+  "database": "pofa_be029_assumptions",
+  "revision": [
+    "s9t0u1v2w029"
+  ],
+  "ledger_before": {
+    "rows": 12,
+    "max_sequence": 13
+  },
+  "event_type_values_outside_the_python_domain": [],
+  "variants": [
+    {
+      "variant": "none (current shipped schema)",
+      "writer_appends": true,
+      "appended_sequence": 14,
+      "update": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "delete": {
+        "refused": false,
+        "swallowed": false,
+        "changed": false,
+        "gone": true,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded",
+        "target": "0f79308f-70d4-47ec-b688-954809dc04c5"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "operation_details": [
+          "('add_table', Table('identity_retirement_archive', MetaData(), Column('source_table', String(length=32), table=<identity_retirement_archive>, primary_",
+          "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_as",
+          "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assig"
+        ],
+        "mentions_ledger": false
+      }
+    },
+    {
+      "variant": "BEFORE ROW trigger that RAISEs EXCEPTION",
+      "writer_appends": true,
+      "appended_sequence": 16,
+      "update": {
+        "refused": true,
+        "swallowed": false,
+        "changed": false,
+        "error": "InsufficientPrivilege: append-only: UPDATE on the audit ledger is not permitted CONTEXT: PL/pgSQL function audit_ledger_events_refuse_mutation() line 3 at RAISE"
+      },
+      "delete": {
+        "refused": true,
+        "swallowed": false,
+        "changed": false,
+        "error": "InsufficientPrivilege: append-only: DELETE on the audit ledger is not permitted CONTEXT: PL/pgSQL function audit_ledger_events_refuse_mutation() line 3 at RAISE"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": true,
+        "swallowed": false,
+        "changed": false,
+        "error": "InsufficientPrivilege: append-only: UPDATE on the audit ledger is not permitted CONTEXT: PL/pgSQL function audit_ledger_events_refuse_mutation() line 3 at RAISE",
+        "target": "a89080f2-a414-40c8-bc69-86bc0466b4ec"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "operation_details": [
+          "('add_table', Table('identity_retirement_archive', MetaData(), Column('source_table', String(length=32), table=<identity_retirement_archive>, primary_",
+          "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_as",
+          "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assig"
+        ],
+        "mentions_ledger": false
+      }
+    },
+    {
+      "variant": "rules spelled DO NOTHING",
+      "writer_appends": true,
+      "appended_sequence": 18,
+      "update": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "delete": {
+        "refused": false,
+        "swallowed": false,
+        "changed": false,
+        "gone": true,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded",
+        "target": "df1e015a-25ab-4b62-9ff1-8418aa40fba3"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "operation_details": [
+          "('add_table', Table('identity_retirement_archive', MetaData(), Column('source_table', String(length=32), table=<identity_retirement_archive>, primary_",
+          "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_as",
+          "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assig"
+        ],
+        "mentions_ledger": false
+      }
+    },
+    {
+      "variant": "rules spelled DO INSTEAD NOTHING",
+      "writer_appends": true,
+      "appended_sequence": 20,
+      "update": {
+        "refused": false,
+        "swallowed": true,
+        "changed": false,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "delete": {
+        "refused": false,
+        "swallowed": true,
+        "changed": false,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": false,
+        "swallowed": true,
+        "changed": false,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded",
+        "target": "378e0954-cd45-4958-b130-1a74b0d0f921"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "operation_details": [
+          "('add_table', Table('identity_retirement_archive', MetaData(), Column('source_table', String(length=32), table=<identity_retirement_archive>, primary_",
+          "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_as",
+          "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assig"
+        ],
+        "mentions_ledger": false
+      }
+    },
+    {
+      "variant": "REVOKE UPDATE, DELETE from the connected role",
+      "writer_appends": true,
+      "appended_sequence": 22,
+      "update": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "delete": {
+        "refused": false,
+        "swallowed": false,
+        "changed": false,
+        "gone": true,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded",
+        "target": "1c121a24-d6f6-4b08-9346-dcd38ee665df"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "operation_details": [
+          "('add_table', Table('identity_retirement_archive', MetaData(), Column('source_table', String(length=32), table=<identity_retirement_archive>, primary_",
+          "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_as",
+          "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assig"
+        ],
+        "mentions_ledger": false
+      }
+    }
+  ],
+  "ledger_after": {
+    "rows": 22,
+    "max_sequence": 23
+  },
+  "appends_only_growth": true
+}

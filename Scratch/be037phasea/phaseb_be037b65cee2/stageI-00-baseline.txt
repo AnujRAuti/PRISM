@@ -1,0 +1,34 @@
+=== I1 baseline resource + state snapshot (08:39:38Z) ===
+be037b65cee2_retention	cpu=0.00%	mem=16.13MiB / 7.606GiB	0.21%
+be037b65cee2_webhook	cpu=46.90%	mem=3.363MiB / 7.606GiB	0.04%
+be037b65cee2_api	cpu=0.19%	mem=160.1MiB / 7.606GiB	2.06%
+be037b65cee2_analysis	cpu=0.00%	mem=446.6MiB / 7.606GiB	5.73%
+be037b65cee2_client	cpu=0.00%	mem=2.473MiB / 7.606GiB	0.03%
+be037b65cee2_notification	cpu=37.63%	mem=2.23MiB / 7.606GiB	0.03%
+be037b65cee2_redis	cpu=0.67%	mem=6.945MiB / 7.606GiB	0.09%
+be037b65cee2_db	cpu=1.14%	mem=77.7MiB / 7.606GiB	1.00%
+be037b65cee2_minio	cpu=0.16%	mem=114MiB / 7.606GiB	1.46%
+pofa_db	cpu=0.00%	mem=107.6MiB / 7.606GiB	1.38%
+pofa_redis	cpu=0.79%	mem=5.664MiB / 7.606GiB	0.07%
+pofa_minio	cpu=0.00%	mem=145.6MiB / 7.606GiB	1.87%
+
+--- restart counts / exit codes / oom ---
+be037b65cee2_db restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:01:11.635327607Z health=healthy
+be037b65cee2_redis restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:01:11.350655133Z health=healthy
+be037b65cee2_minio restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:01:12.056104707Z health=healthy
+be037b65cee2_api restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:07:30.937194244Z health=healthy
+be037b65cee2_analysis restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:07:31.75916333Z health=none
+be037b65cee2_notification restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:07:29.400211195Z health=none
+be037b65cee2_retention restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:07:29.953865909Z health=none
+be037b65cee2_webhook restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:07:28.829661383Z health=none
+be037b65cee2_client restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T07:07:28.131574352Z health=none
+pofa_db restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T06:15:07.152331657Z health=none
+pofa_redis restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T06:15:07.077129515Z health=none
+pofa_minio restarts=0 running=true status=running exit=0 oomkilled=false started=2026-10-13T06:15:07.080287176Z health=none
+
+--- pid1 signal masks (from Phase A, re-measured) ---
+be037b65cee2_api SigIgn:	0000000001001000 SigCgt:	0000000100004002 
+be037b65cee2_analysis SigIgn:	0000000001001000 SigCgt:	0000000100004002 
+be037b65cee2_notification SigIgn:	0000000000000000 SigCgt:	0000000000010002 
+be037b65cee2_retention SigIgn:	0000000000000000 SigCgt:	0000000000010002 
+be037b65cee2_webhook SigIgn:	0000000000000000 SigCgt:	0000000000010002 

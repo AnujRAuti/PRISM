@@ -1,0 +1,148 @@
+{
+  "database": "pofa_be029_assumptions",
+  "revision": [
+    "s9t0u1v2w029"
+  ],
+  "ledger_before": {
+    "rows": 4,
+    "max_sequence": 5
+  },
+  "event_type_values_outside_the_python_domain": [],
+  "variants": [
+    {
+      "variant": "none (current shipped schema)",
+      "writer_appends": true,
+      "appended_sequence": 6,
+      "update": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "delete": {
+        "refused": false,
+        "swallowed": false,
+        "changed": false,
+        "gone": true,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded",
+        "target": "baded1e7-55f5-4453-8102-fc683ed80fb0"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "mentions_ledger": false
+      }
+    },
+    {
+      "variant": "BEFORE ROW trigger that RAISEs EXCEPTION",
+      "writer_appends": true,
+      "appended_sequence": 8,
+      "update": {
+        "refused": true,
+        "swallowed": false,
+        "changed": false,
+        "error": "UndefinedColumn: column \"tg_tag\" does not exist LINE 1: TG_TAG ^ QUERY: TG_TAG CONTEXT: PL/pgSQL function audit_ledger_events_refuse_mutation() line 3 at RAISE"
+      },
+      "delete": {
+        "refused": true,
+        "swallowed": false,
+        "changed": false,
+        "error": "UndefinedColumn: column \"tg_tag\" does not exist LINE 1: TG_TAG ^ QUERY: TG_TAG CONTEXT: PL/pgSQL function audit_ledger_events_refuse_mutation() line 3 at RAISE"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": true,
+        "swallowed": false,
+        "changed": false,
+        "error": "UndefinedColumn: column \"tg_tag\" does not exist LINE 1: TG_TAG ^ QUERY: TG_TAG CONTEXT: PL/pgSQL function audit_ledger_events_refuse_mutation() line 3 at RAISE",
+        "target": "266e63e1-11f0-4b92-8cad-e1f7b145f4d0"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "mentions_ledger": false
+      }
+    },
+    {
+      "variant": "DO NOTHING rewrite rules",
+      "writer_appends": true,
+      "appended_sequence": 10,
+      "update": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "delete": {
+        "refused": false,
+        "swallowed": false,
+        "changed": false,
+        "gone": true,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded",
+        "target": "f374de05-957e-4792-b77f-fe0c53490171"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "mentions_ledger": false
+      }
+    },
+    {
+      "variant": "REVOKE UPDATE, DELETE from the connected role",
+      "writer_appends": true,
+      "appended_sequence": 12,
+      "update": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "delete": {
+        "refused": false,
+        "swallowed": false,
+        "changed": false,
+        "gone": true,
+        "error": null,
+        "note": "statement succeeded"
+      },
+      "sanctioned_tamper_pattern": {
+        "refused": false,
+        "swallowed": false,
+        "changed": true,
+        "gone": false,
+        "error": null,
+        "note": "statement succeeded",
+        "target": "0e1ab223-1804-468d-8e53-a8955c24cf56"
+      },
+      "drift_gate_sees_it": {
+        "operations": 3,
+        "mentions_ledger": false
+      }
+    }
+  ],
+  "ledger_after": {
+    "rows": 12,
+    "max_sequence": 13
+  },
+  "appends_only_growth": true
+}

@@ -1,0 +1,46 @@
+{
+  "report_path": "docs/BE-037 Final Backend Completion and Acceptance Report.md",
+  "report_exists": true,
+  "report_was_pre_existing": false,
+  "report_sha256": "de6bab394cef0719f13d77bcd2d954f5a3a0779c8b4beeb61218a8f1e34a6b6b",
+  "report_bytes": 69486,
+  "report_lines": 948,
+  "sections_present": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ],
+  "written_at_utc": "2026-10-15T04:17:06+00:00",
+  "git": {
+    "head": "d3764806f86a313bb0917bda8819768ccbe5f431",
+    "branch": "Backend",
+    "staged_files": [],
+    "status_short": [
+      " M .env.example",
+      " M docs/storage.md",
+      " M tests/integration/test_storage.py",
+      "?? \"docs/BE-037 Final Backend Completion and Acceptance Report.md\"",
+      "?? tests/integration/test_be037c_redis_timeout_integration.py",
+      "?? tests/integration/test_be037e2_ledger_identity_matrix.py"
+    ]
+  },
+  "note": "Placed as a NEW file; the previous BE-031..BE-037 reports were deleted by the user in 52084de7 and that deletion is preserved. Nothing staged, committed or pushed.",
+  "evidence_manifest_added": "section 16 names every artifact file; each was verified present via ls before being named"
+}

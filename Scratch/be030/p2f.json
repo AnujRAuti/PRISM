@@ -1,0 +1,42 @@
+{
+ "target": "pofa_be030_scratch",
+ "tail_before": 38384,
+ "damage": {
+  "tampered_sequence": 38384,
+  "committed": true
+ },
+ "step2_prototype_first": {
+  "outcome": "refused",
+  "message": "refusing to append: predecessor sequence 38384 does not verify (event_hash mismatch at sequence 38384)"
+ },
+ "step3_shipped_writer_rebased": {
+  "appended_sequence": 38385,
+  "previous_hash_equals_stale_tail_hash": true
+ },
+ "step4_prototype_after_rebase": {
+  "outcome": "appended",
+  "sequence": 38386,
+  "meaning": "D-2-A is a one-shot control: it refuses the first append onto a damaged tail, and nothing after a successful re-basing looks damaged locally"
+ },
+ "step5_window_from_damaged_row": {
+  "valid": false,
+  "checked": 2,
+  "failures": [
+   "event_hash mismatch at sequence 38384"
+  ]
+ },
+ "step5_tail_only_window": {
+  "valid": true,
+  "checked": 2
+ },
+ "step5_anchored_from_last_known_good": {
+  "anchor_sequence": 38383,
+  "anchor_verifies": true,
+  "range_from_anchor_valid": false,
+  "range_from_anchor_failures": [
+   "event_hash mismatch at sequence 38384"
+  ]
+ },
+ "final_tail": 38386,
+ "tamper_marker_removed": true
+}

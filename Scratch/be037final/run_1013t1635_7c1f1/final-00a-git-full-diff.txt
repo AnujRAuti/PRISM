@@ -1,0 +1,274 @@
+=== full working-tree diff (for change-preservation audit) ===
+warning: in the working copy of 'backend/core/config.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/services/authorization.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/workers/analysis_worker.py', LF will be replaced by CRLF the next time Git touches it
+diff --git a/backend/api/v1/endpoints/analysis.py b/backend/api/v1/endpoints/analysis.py
+index cd573ae6..17a57348 100644
+--- a/backend/api/v1/endpoints/analysis.py
++++ b/backend/api/v1/endpoints/analysis.py
+@@ -1,26 +1,45 @@
+ from typing import Any
+ from uuid import UUID
+ 
+-from fastapi import APIRouter, Depends, HTTPException, status
++from fastapi import APIRouter, Depends, HTTPException, Request, status
+ from sqlalchemy.orm import Session
+ 
+ from backend.db.session import get_db
+ from backend.schemas.analysis import AnalysisJobCreate, AnalysisJobResponse
++from backend.security.authentication import is_development_bypass
++from backend.security.authorization import enforce, require
+ from backend.services.analysis_jobs import (
+     create_analysis_job,
+     get_analysis_job,
+     get_analysis_result,
+ )
++from backend.services.authorization import Principal, resolve_resource_scope
+ 
+ 
+ router = APIRouter(prefix="/analysis")
+ 
+ 
+ @router.post("/jobs", response_model=AnalysisJobResponse, status_code=status.HTTP_202_ACCEPTED)
+-def create_job(request: AnalysisJobCreate, db: Session = Depends(get_db)) -> AnalysisJobResponse:
++def create_job(
++    payload: AnalysisJobCreate,
++    request: Request,
++    db: Session = Depends(get_db),
++    principal: Principal = Depends(require("intelligence.reprocess")),
++) -> AnalysisJobResponse:
+     try:
+-        UUID(request.evidence_id)
+-        job = create_analysis_job(request.evidence_id, db, job_type=request.job_type)
++        UUID(payload.evidence_id)
++        # The target evidence is named in the body, so its scope can only be
++        # resolved here (the correction endpoint's pattern): a grant held for
++        # one project must not enqueue worker work over another organization's
++        # evidence. HTTPException is not caught by the handlers below.
++        if not is_development_bypass(principal):
++            enforce(
++                principal,
++                "intelligence.reprocess",
++                resolve_resource_scope(db, "evidence", payload.evidence_id),
++                request,
++            )
++        job = create_analysis_job(payload.evidence_id, db, job_type=payload.job_type)
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail="Invalid evidence ID") from error
+     except LookupError as error:
+@@ -31,7 +50,11 @@ def create_job(request: AnalysisJobCreate, db: Session = Depends(get_db)) -> Ana
+ 
+ 
+ @router.get("/jobs/{job_id}", response_model=AnalysisJobResponse)
+-def get_job(job_id: str, db: Session = Depends(get_db)) -> AnalysisJobResponse:
++def get_job(
++    job_id: str,
++    db: Session = Depends(get_db),
++    principal: Principal = Depends(require("evidence.read", "analysis_job", "job_id")),
++) -> AnalysisJobResponse:
+     try:
+         UUID(job_id)
+     except ValueError as error:
+diff --git a/backend/core/config.py b/backend/core/config.py
+index c1de9279..e325a5e7 100644
+--- a/backend/core/config.py
++++ b/backend/core/config.py
+@@ -32,6 +32,15 @@ class Settings(BaseSettings):
+     analysis_queue_name: str = "pofa:analysis:jobs"
+     analysis_max_attempts: int = 3
+     analysis_abandoned_timeout_seconds: int = 300
++    # BE-037 I1: how the analysis worker waits out a Redis outage. The wait is
++    # ``min(max, base * 2 ** failures)``, split half fixed and half jitter so
++    # several workers do not retry in lockstep. Bounded on purpose: a long
++    # outage settles at a steady poll rate rather than a growing one, and the
++    # worker never gives up (queued work is in Redis, so exiting would leave it
++    # stranded). The poll interval is what lets SIGTERM stop a wait early.
++    analysis_retry_backoff_base_seconds: float = 1.0
++    analysis_retry_backoff_max_seconds: float = 60.0
++    analysis_shutdown_poll_seconds: float = 0.5
+     phash_max_hamming_distance: int = 8
+     embedding_model_name: str = "openai/clip-vit-base-patch32"
+     embedding_dimension: int = 512
+diff --git a/backend/services/authorization.py b/backend/services/authorization.py
+index 6440a289..8844e0c8 100644
+--- a/backend/services/authorization.py
++++ b/backend/services/authorization.py
+@@ -1103,6 +1103,16 @@ def resolve_resource_scope(
+                 target_resource = governance_target_resource(row.target_type)
+                 if target_resource is not None:
+                     return resolve_resource_scope(db, target_resource, str(row.target_id))
++        elif resource_type == "analysis_job":
++            # BE-037 G1: an analysis job has no scope columns of its own, so
++            # it is scoped through the evidence it analyses (job -> evidence ->
++            # project -> organization), the same fallback used for corrections
++            # and reprocessing requests.
++            from backend.db.models import AnalysisJob
++
++            row = db.query(AnalysisJob).filter(AnalysisJob.id == resource_id).one_or_none()
++            if row is not None:
++                return resolve_resource_scope(db, "evidence", str(row.evidence_id))
+         elif resource_type == "graph_relationship":
+             # BE-021: scope a relationship by its endpoint nodes' owning
+             # projects (the same resolution the graph list filter uses).
+diff --git a/backend/workers/analysis_worker.py b/backend/workers/analysis_worker.py
+index 67a6c711..9f548ccc 100644
+--- a/backend/workers/analysis_worker.py
++++ b/backend/workers/analysis_worker.py
+@@ -1,8 +1,12 @@
+ import logging
++import random
+ import signal
+ import sys
++import time
+ from typing import Any
+ 
++import redis
++
+ from backend.core.config import settings
+ from backend.db.models import AnalysisJob, AnalysisResult, Evidence
+ from backend.db.session import get_engine, get_session
+@@ -22,6 +26,14 @@ logger = logging.getLogger(__name__)
+ #: transaction are never interrupted (BE-037A-D3).
+ _shutdown_requested = False
+ 
++#: BE-037 I1: the only failures treated as a Redis outage. ``ConnectionError``
++#: also covers ``TimeoutError`` and ``BusyLoadingError`` (Redis reloading its
++#: dataset after a restart), which are all resolved by waiting and retrying.
++#: Every other ``RedisError`` — ``DataError``, ``ResponseError`` such as
++#: ``WRONGTYPE``, ``AuthenticationError`` — is a programming or configuration
++#: fault that retrying cannot fix, so it still propagates and fails loudly.
++TRANSIENT_REDIS_ERRORS = (redis.exceptions.ConnectionError,)
++
+ 
+ def _request_shutdown(signum: int, frame: Any) -> None:
+     """Signal handler: flip the flag and return immediately.
+@@ -45,6 +57,68 @@ def install_shutdown_handlers() -> None:
+     signal.signal(signal.SIGTERM, _request_shutdown)
+ 
+ 
++def _backoff_delay(consecutive_failures: int) -> float:
++    """Bounded exponential backoff with equal jitter, in seconds.
++
++    ``min(cap, base * 2 ** (failures - 1))`` halves, plus jitter in the other
++    half: the wait is capped (so a long outage settles at a steady poll rate
++    instead of growing without limit) and de-synchronised (so several workers
++    that lost Redis at the same moment do not all retry in lockstep).
++    """
++    cap = min(
++        settings.analysis_retry_backoff_max_seconds,
++        settings.analysis_retry_backoff_base_seconds * (2 ** (consecutive_failures - 1)),
++    )
++    half = cap / 2
++    return half + random.uniform(0, half)
++
++
++def _interruptible_sleep(seconds: float) -> bool:
++    """Sleep in short slices; True if a shutdown was requested meanwhile.
++
++    A single ``time.sleep(delay)`` could not be interrupted: CPython retries the
++    remaining time after a signal handler returns (PEP 475), so a SIGTERM during
++    a backoff wait would keep the worker blocked until the wait expired.
++    """
++    deadline = time.monotonic() + seconds
++    poll = settings.analysis_shutdown_poll_seconds
++    while True:
++        if _shutdown_requested:
++            return True
++        remaining = deadline - time.monotonic()
++        if remaining <= 0:
++            return False
++        time.sleep(min(remaining, poll))
++
++
++def _await_redis_retry(consecutive_failures: int) -> bool:
++    """Wait out one backoff period. True when the worker must stop now."""
++    delay = _backoff_delay(consecutive_failures)
++    logger.warning(
++        "redis unavailable; backing off %.1fs (consecutive failures %d)",
++        delay,
++        consecutive_failures,
++    )
++    return _interruptible_sleep(delay)
++
++
++def _recover(queue: AnalysisQueue) -> None:
++    """One idempotent recovery pass over the processing list.
++
++    Run at startup and again after a Redis outage, so payloads a worker could
++    not acknowledge while Redis was down are reclassified once it is reachable:
++    terminal jobs are discarded, genuinely abandoned ones requeued. The
++    recovery itself skips fresh ``running`` jobs, so it never steals live work.
++    """
++    session = get_session()
++    try:
++        recovered = queue.recover_abandoned(session)
++    finally:
++        session.close()
++    if recovered:
++        logger.info("analysis worker recovered %d abandoned job(s)", recovered)
++
++
+ def _complete_reprocessing_hook(db: Any, job: Any) -> None:
+     """BE-021 §17: when a job that a reprocessing request delegated to
+     finishes, mark that request COMPLETED. Failure-isolated — governance
+@@ -197,22 +271,47 @@ def _complete_vision_job(db, job: Any) -> None:
+ def run_worker() -> None:
+     queue = AnalysisQueue()
+     logger.info("analysis worker started")
+-    # Recover at startup: only genuinely abandoned messages (stale/missing
+-    # started_at, queued-but-unacknowledged) predate this worker, so no live
+-    # job is stolen. Recovery itself skips fresh ``running`` jobs, so it is
+-    # also safe to invoke periodically without stealing concurrent work.
+-    session = get_session()
+-    try:
+-        recovered = queue.recover_abandoned(session)
+-    finally:
+-        session.close()
+-    if recovered:
+-        logger.info("analysis worker recovered %d abandoned job(s)", recovered)
++    failures = 0
++    # The startup recovery pass runs as the loop's first guarded action rather
++    # than before it: an outage that begins while this process is starting must
++    # be backed off like any other, not raised out of an unprotected call site.
++    # Recovering is safe to repeat: only genuinely abandoned messages (stale or
++    # missing started_at, queued-but-unacknowledged) predate this worker, and
++    # recovery itself skips fresh ``running`` jobs, so no live job is stolen.
++    requeue_needs_recovery = True
+     try:
+         while not _shutdown_requested:
+-            message = queue.dequeue(timeout=5)
+-            if message is not None:
++            try:
++                if requeue_needs_recovery:
++                    # Redis just came back after an outage: reclassify whatever
++                    # was left un-acknowledged while it was down.
++                    _recover(queue)
++                    requeue_needs_recovery = False
++                message = queue.dequeue(timeout=5)
++            except TRANSIENT_REDIS_ERRORS:
++                failures += 1
++                requeue_needs_recovery = True
++                if _await_redis_retry(failures):
++                    break
++                continue
++            if message is None:
++                continue
++            try:
+                 process_message(message, queue)
++            except TRANSIENT_REDIS_ERRORS:
++                # The acknowledgement (or the retry requeue) could not reach
++                # Redis. The payload is left in the processing list, which is
++                # exactly the state a crashed worker leaves behind: the job is
++                # never acknowledged early, and the next recovery pass either
++                # discards it (terminal) or requeues it (abandoned).
++                failures += 1
++                requeue_needs_recovery = True
++                if _await_redis_retry(failures):
++                    break
++                continue
++            if failures:
++                logger.info("redis reachable again after %d backoff(s)", failures)
++                failures = 0
+     finally:
+         # Reached on a SIGTERM-flagged stop and on Ctrl-C alike. Per-message DB
+         # sessions are already closed by process_message; this releases the

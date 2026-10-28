@@ -1,0 +1,1151 @@
+diff --git a/backend/core/config.py b/backend/core/config.py
+index aed4b3e8..7170f29c 100644
+--- a/backend/core/config.py
++++ b/backend/core/config.py
+@@ -83,13 +83,16 @@ class Settings(BaseSettings):
+         return origins or ["*"]
+ 
+     @model_validator(mode="after")
+-    def _validate_production_secrets(self):
+-        """Refuse a development-default JWT secret in a production deployment.
++    def _validate_production_settings(self):
++        """Refuse any insecure development default in a production deployment.
+ 
+         Fails at ``Settings()`` construction — i.e. at import time, before any
+         request is served — so a misconfigured production process cannot start.
+-        Development, testing and staging keep the permissive default; the value
+-        is never echoed into the error.
++        These are the settings BE-032R closed for ``jwt_secret`` and BE-037
++        extends to the rest of the security-critical surface: each default is
++        safe for local work but silently dangerous if it reaches production.
++        Development, testing and staging keep the permissive defaults; no secret
++        value is ever echoed into the error.
+         """
+         if self.environment.strip().lower() in {"production", "prod"}:
+             secret = self.jwt_secret or ""
+@@ -99,6 +102,30 @@ class Settings(BaseSettings):
+                     f"least {MIN_JWT_SECRET_LENGTH} characters (the development default "
+                     "and blank values are rejected). The secret value is not shown here."
+                 )
++            # Authentication posture: development mode lets anonymous requests
++            # bypass authorization, so production must be explicitly enforcing.
++            if self.auth_mode.strip().lower() != "enforcing":
++                raise ValueError(
++                    "auth_mode must be 'enforcing' in production (got "
++                    f"{self.auth_mode!r}); the development mode accepts anonymous "
++                    "requests and bypasses authorization."
++                )
++            # Development bearer tokens are non-secret identifiers and must be
++            # disabled alongside enforcing mode for any real deployment.
++            if self.auth_dev_tokens_enabled:
++                raise ValueError(
++                    "auth_dev_tokens_enabled must be false in production: the "
++                    "development tokens are non-secret identifiers."
++                )
++            # With allow_credentials on (see backend/app/main.py), a wildcard
++            # origin makes the middleware echo back any caller's Origin, so every
++            # website could read authenticated responses.
++            if "*" in self.cors_origin_list:
++                raise ValueError(
++                    "cors_allow_origins must be an explicit origin allowlist in "
++                    "production; the wildcard '*' is unsafe because credentials are "
++                    "enabled, so list the real frontend origins instead."
++                )
+         return self
+ 
+     class Config:
+diff --git a/backend/services/webhook.py b/backend/services/webhook.py
+index 1ed7eb14..da2a4486 100644
+--- a/backend/services/webhook.py
++++ b/backend/services/webhook.py
+@@ -5,6 +5,8 @@ import hmac
+ import ipaddress
+ import logging
+ import socket
++import urllib.error
++import urllib.request
+ from datetime import datetime, timedelta, timezone
+ from typing import Any
+ from urllib.parse import urlparse
+@@ -113,6 +115,76 @@ def is_url_safe(url: str) -> bool:
+         return False
+ 
+ 
++# ---------------------------------------------------------------------------
++# SSRF-safe transport (closes BE-036-D1)
++# ---------------------------------------------------------------------------
++
++#: Hard outbound timeout for a single webhook POST. Kept here so the delivery
++#: path and its tests share one value.
++WEBHOOK_DELIVERY_TIMEOUT_SECONDS = 10
++
++
++class WebhookRedirectError(ValueError):
++    """Raised when a webhook endpoint answers with an HTTP redirect.
++
++    It subclasses ``ValueError`` deliberately: ``validate_webhook_url`` already
++    signals an SSRF rejection with ``ValueError``, and the delivery worker turns
++    any ``ValueError`` into a permanent, non-retried failure. A redirect belongs
++    in that same bucket — following it is exactly the bypass BE-036-D1 reported,
++    because ``urllib``'s default opener transparently follows 3xx responses and
++    would then connect to a destination that never passed SSRF validation.
++    """
++
++
++class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
++    """Refuse every redirect instead of following it.
++
++    ``redirect_request`` is what the base handler calls before it opens a second
++    connection; raising here means the socket to the redirect target is never
++    created. ``handler_order`` is set below the default redirect handler's
++    (700) so, when ``build_opener`` installs both, this one is consulted first
++    and short-circuits the follow.
++    """
++
++    handler_order = 699
++
++    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D102
++        raise WebhookRedirectError(
++            f"Webhook endpoint returned HTTP {code} redirect to {newurl!r}; "
++            "redirects are rejected so a validated destination cannot "
++            "redirect toward a prohibited address (BE-036-D1)."
++        )
++
++
++#: A dedicated opener. Using a scoped opener (rather than ``install_opener``)
++#: keeps redirect rejection to webhook delivery and never mutates the
++#: process-global ``urlopen`` behaviour other code may rely on.
++NO_REDIRECT_OPENER = urllib.request.build_opener(_NoRedirectHandler())
++
++
++def deliver_webhook(
++    url: str,
++    payload_bytes: bytes,
++    headers: dict[str, str],
++    timeout: int = WEBHOOK_DELIVERY_TIMEOUT_SECONDS,
++) -> int:
++    """Validate then POST a webhook through the redirect-refusing opener.
++
++    The literal endpoint URL is re-validated on every attempt (DNS may have
++    changed since subscription time) and the request is issued through
++    ``NO_REDIRECT_OPENER``, so a 3xx response raises ``WebhookRedirectError``
++    instead of silently connecting to a new, unvalidated destination. Returns
++    the final HTTP status code for a 2xx response; raises ``urllib.error.*`` for
++    transport/HTTP-status outcomes and ``ValueError`` (``WebhookRedirectError``
++    or the SSRF validator) for security rejections — the caller maps those.
++    """
++    validate_webhook_url(url)
++    req = urllib.request.Request(url, data=payload_bytes, headers=headers, method="POST")
++    req.timeout = timeout
++    with NO_REDIRECT_OPENER.open(req) as resp:
++        return resp.status
++
++
+ # ---------------------------------------------------------------------------
+ # HMAC Signing
+ # ---------------------------------------------------------------------------
+diff --git a/backend/workers/webhook_worker.py b/backend/workers/webhook_worker.py
+index 3808d426..a6298cb0 100644
+--- a/backend/workers/webhook_worker.py
++++ b/backend/workers/webhook_worker.py
+@@ -13,7 +13,6 @@ import argparse
+ import json
+ import logging
+ import sys
+-import urllib.request
+ import urllib.error
+ from datetime import datetime, timezone
+ 
+@@ -23,10 +22,12 @@ from backend.services import audit_ledger as audit_service
+ from backend.services.webhook import (
+     build_webhook_payload,
+     compute_next_webhook_attempt,
++    deliver_webhook,
+     is_retryable_status,
+     sign_payload,
+     utc_now,
+-    validate_webhook_url,
++    WebhookRedirectError,
++    WEBHOOK_DELIVERY_TIMEOUT_SECONDS,
+     MAX_DELIVERY_ATTEMPTS,
+ )
+ 
+@@ -169,20 +170,25 @@ def _attempt_delivery(db, delivery) -> None:
+     error_msg = None
+ 
+     try:
+-        # Validate URL each delivery (SSRF protection; never follow redirects)
+-        validate_webhook_url(sub.endpoint_url)
+-        req = urllib.request.Request(sub.endpoint_url, data=payload_bytes, headers=headers,
+-                                     method="POST")
+-        with urllib.request.urlopen(req, timeout=10) as resp:
+-            status_code = resp.status
++        # Re-validate the literal URL each attempt and deliver through the
++        # redirect-refusing opener: a 3xx now raises WebhookRedirectError
++        # instead of silently connecting to an unvalidated destination
++        # (BE-036-D1). deliver_webhook applies the outbound timeout.
++        status_code = deliver_webhook(
++            sub.endpoint_url, payload_bytes, headers,
++            timeout=WEBHOOK_DELIVERY_TIMEOUT_SECONDS,
++        )
+     except urllib.error.HTTPError as exc:
+         status_code = exc.code
+         error_msg = f"HTTP {exc.code}: {exc.reason}"
+     except urllib.error.URLError as exc:
+         error_msg = f"URLError: {exc.reason}"
+     except ValueError as exc:
+-        error_msg = f"SSRF blocked: {exc}"
+-        # Permanent failure — do not retry
++        # Covers both the SSRF validator and a refused redirect
++        # (WebhookRedirectError is a ValueError). Both are permanent: the
++        # destination is unsafe, so retrying cannot help and must not re-send.
++        kind = "Redirect rejected" if isinstance(exc, WebhookRedirectError) else "SSRF blocked"
++        error_msg = f"{kind}: {exc}"
+         integration_repo.update_webhook_delivery(
+             db, delivery,
+             status="FAILED",
+diff --git a/docs/BE-037 Final Backend Production Deployment and Acceptance Report.md b/docs/BE-037 Final Backend Production Deployment and Acceptance Report.md
+new file mode 100644
+index 00000000..446547fe
+--- /dev/null
++++ b/docs/BE-037 Final Backend Production Deployment and Acceptance Report.md	
+@@ -0,0 +1,359 @@
++# BE-037 — Final Backend Production Deployment and Acceptance Report
++
++**Date:** 2026-10-11
++**Milestone:** BE-037 (final planned backend milestone; no successor per §20)
++**Operator:** Backend engineering agent
++**Verdict:** **BLOCKED — FINAL ACCEPTANCE NOT GRANTED**
++
++---
++
++## A. Executive verdict
++
++`BLOCKED — FINAL ACCEPTANCE NOT GRANTED`.
++
++Every safely executable BE-037 requirement is **implemented, tested, and independently re-verified
++against the live development database**. The security-critical inherited finding **BE-036-D1
++(webhook redirect / SSRF) is CLOSED** with mandatory regression coverage in the actual request path,
++and the production configuration fail-fast is extended beyond JWT to the other documented-unsafe
++defaults. The full backend regression suite is green at `862 passed / 1 skipped / 0 failed`.
++
++Final acceptance is **not** granted for exactly one structural reason, not a defect: **there is no
++confirmed production deployment target, no production secret store, and no authorized production
++host in this environment.** `ACCEPTED — PRODUCTION DEPLOYED AND VERIFIED` requires that a real
++production target has been positively identified and deployed to (§19 first checkbox, §15.A). None
++exists here — verified by enumeration in Phase 6, not assumed. §1 and §10.3 are explicit that this
++state must be reported as **BLOCKED**, not disguised as conditional acceptance, and §20 forbids
++opening a successor milestone to absorb it.
++
++**What is genuinely done vs. what is blocked:**
++
++| BE-037 objective | Status |
++| --- | --- |
++| Close BE-036-D1 webhook redirect/SSRF in the request path + regression tests | **DONE (verified)** |
++| Webhook worker reliability / concurrency / crash-recovery assessment | **DONE (assessed; no defect under the one-shot model; reclaim atomicity pinned)** |
++| Production configuration & secret validator | **DONE (config-level; fail-fast tested)** |
++| Runtime vs migration identity, least privilege | **DONE (re-measured live `pofa_dev`)** |
++| Database schema / migration state | **DONE (`t0u1v2w3x030` re-measured live)** |
++| Audit-integrity enforcement & append-only | **DONE (re-measured live; `known_historical_only` 7/0/0)** |
++| Full regression | **DONE (`862 / 1 / 0`)** |
++| Ops runbook + rollback procedure | **DONE (documented)** |
++| Final security review | **DONE** |
++| **Deploy API + worker to a confirmed production target** | **BLOCKED — no production target/host exists** |
++| **Inject production JWT secret via approved store** | **BLOCKED — no production secret store exists** |
++| **Production health / smoke / operational verification** | **BLOCKED — nothing to smoke-test against** |
++
++**Exact unblock action:** a deployment owner must (1) positively identify and provide an authorized
++production host and database, (2) stand up an approved production secret store and inject a distinct
++`JWT_SECRET` (≥32 chars) plus separate runtime (`poa_runtime`) and migration credentials, then (3)
++execute the runbook in this report (Section G) against that target and re-run the Section F smoke
++matrix. Until then BE-037 stays final-but-blocked.
++
++---
++
++## B. Actual environment matrix
++
++Re-measured during BE-037; secrets redacted. The table records **only** environments actually
++observed — no production row is invented.
++
++| Environment | Role | Identity observed | Migration revision | Ledger | Verification performed in BE-037 |
++| --- | --- | --- | --- | --- | --- |
++| `pofa_test` (PostgreSQL 15 / `pofa_db`) | Disposable pytest target | harness `postgres` (via `TEST_DATABASE_URL`) | `t0u1v2w3x030` | n/a (fixture) | Full unit+integration suite `862 / 1 / 0`; SSRF/redirect, worker, config, anchored-verify, enforcement tests |
++| `pofa_dev` (`pofa_db`) | **Live development** runtime | `poa_runtime` via `get_session()` — `current_user=poa_runtime`, `current_database=pofa_dev` | `t0u1v2w3x030` | **6023 rows**, seq 1→6059 | Read-only re-measurement: privileges, `verify_chain_classified`, checkpoint; owner-identity read of `alembic_version` |
++| Staging | — | **Not present** | — | — | None discovered |
++| Production | — | **Not present** | — | — | None discovered (see §F / Section G blocker) |
++
++**Live `pofa_dev` least-privilege boundary (measured 2026-10-11, read-only):**
++`poa_runtime` table privileges on `audit_ledger_events` → SELECT **yes**, INSERT **yes**, UPDATE
++**no**, DELETE **no**, TRUNCATE **no**; SELECT on `alembic_version` **denied**. Role flags:
++`poa_runtime` `rolsuper=false` `rolcanlogin=true`; `postgres` `rolsuper=true`. Runtime identity is
++non-owner and cannot read or mutate migration bookkeeping or audit history.
++
++**Integrity classification (measured live, `verify_chain_classified`, baseline
++`pofa-dev-pre-be030-test-cleanup@1`):** `valid=false` (findings stay visible), `checked_events=6023`,
++`failures=7`; `classification.status=known_historical_only`, `degraded=false`, **7 known gaps /
++0 new gaps / 0 hard anomalies**; checkpoint rows=6023, min_seq=1, tail_event_hash `c1c012687c44…`.
++No event deleted, renumbered, or fabricated; the seven documented historical gap ranges remain
++visible as *known*, exactly as BE-030 → BE-036 recorded.
++
++---
++
++## C. Change inventory
++
++All changes are **in-scope for BE-037 and currently uncommitted** (no commit/push performed — see
++Section J).
++
++**Implementation**
++- `backend/services/webhook.py` — **added the SSRF-safe transport** that closes BE-036-D1:
++  `WEBHOOK_DELIVERY_TIMEOUT_SECONDS=10`, `WebhookRedirectError(ValueError)`,
++  `_NoRedirectHandler(HTTPRedirectHandler, handler_order=699)` whose `redirect_request` **raises
++  before a second socket is opened**, the scoped `NO_REDIRECT_OPENER`, and
++  `deliver_webhook(url, payload_bytes, headers, timeout)` which re-validates the literal URL every
++  attempt and issues the POST through the redirect-refusing opener. Uses only stdlib `urllib` — no
++  new dependency (§6.2).
++- `backend/workers/webhook_worker.py` — `_attempt_delivery` now calls `deliver_webhook(...)` instead
++  of `urllib.request.urlopen`. The `except ValueError` branch distinguishes
++  `WebhookRedirectError` ("Redirect rejected") from the SSRF validator ("SSRF blocked"); **both are
++  permanent FAILED, not retried**. Dropped the now-unused bare `validate_webhook_url`/`urllib.request`
++  imports (validation moved into `deliver_webhook`). `get_session()` interface from BE-036 preserved.
++- `backend/core/config.py` — `_validate_production_secrets` → `_validate_production_settings`. Keeps
++  the BE-032R JWT guard and adds three production-only fail-fast checks alongside it:
++  `auth_mode` must be `"enforcing"`, `auth_dev_tokens_enabled` must be `False`, and `"*"` must not be
++  in `cors_origin_list` (safe because `main.py` runs CORS with `allow_credentials=True`). Dev /
++  staging / testing keep the permissive defaults; **no secret value is echoed** in any message.
++
++**Tests**
++- `tests/unit/test_be037_webhook_redirect_ssrf.py` — **24 new tests, no DB.** Real `OpenerDirector`
++  with a recording fake transport. Proves that for every prohibited redirect target (loopback v4/v6,
++  private 10/172.16/192.168, link-local, `169.254.169.254`, CGNAT `100.64/10`, IPv6 ULA
++  `fd00::5`/`fd00:ec2::254`, localhost) a `WebhookRedirectError` is raised **and the prohibited
++  address is never connected** (`transport.connects == [VALID_ENDPOINT]`). Covers HTTPS→HTTP downgrade,
++  public→public (reject-all contract), codes 301/302/303/307/308, bounded chains (0 follows), ordinary
++  2xx passthrough, and a **control** test proving the unfixed default opener *would* have followed the
++  redirect (so the fix is real, not a tautology). `deliver_webhook` tests assert the timeout is set,
++  SSRF is blocked before any connect, and `WebhookRedirectError` is a `ValueError`.
++- `tests/integration/test_be036_webhook_worker.py` — the egress recorder now monkeypatches
++  `webhook_service.NO_REDIRECT_OPENER.open` (asserting `req.timeout==10`), matching the new request
++  path. Two new tests: `test_redirect_rejected_fails_permanently_and_is_not_retried` (delivery →
++  `FAILED`, `last_error` starts with "Redirect rejected", `sweep_retries` re-selects it 0 times,
++  exactly one `WEBHOOK_DELIVERY_FAILED` audit row, subscription not force-disabled) and
++  `test_interrupted_attempt_is_reclaimable_not_stranded` (a mid-attempt rollback leaves the row
++  `PENDING`, i.e. re-claimable, not orphaned).
++- `tests/unit/test_configuration_and_logging.py` — `_safe_production()` helper; 5 new/updated tests:
++  production requires `auth_mode=enforcing`; forbids dev bearer tokens; forbids wildcard CORS
++  (parametrized over `["*", "", "https://app.invalid.example,*"]`); still accepts a strong JWT; and
++  the no-secret-echo test is retained.
++
++**Docs**
++- This report; and a new §10 reconciliation section appended to
++  `docs/Backend Technical Debt and Deferred Fixes Backlog.md`.
++
++---
++
++## D. Inherited-finding closure
++
++| Finding | Original problem | BE-037 verified status | Final disposition |
++| --- | --- | --- | --- |
++| **BE-036-D1** | `urlopen` follows HTTP 3xx → validated destination could redirect to a prohibited address (SSRF bypass). | **Fixed and proven in the actual request path** — redirect raises before the second connect; 24 unit + 1 worker-integration tests + control. | **CLOSED** |
++| **D-PFD** | Migrate live `pofa_dev` to enforcement revision `t0u1v2w3x030`. | Re-measured live: `alembic_version=t0u1v2w3x030`, enforcement objects present (append-only tests green). | **CLOSED for dev; production NOT APPLICABLE (no prod DB).** Confirm on the real prod target when one exists (Section G). |
++| **F-05** | Least-privilege runtime identity; resist TRUNCATE/etc. | Re-measured live `poa_runtime`: SELECT+INSERT only, UPDATE/DELETE/TRUNCATE denied, `alembic_version` read denied, non-superuser. | **CLOSED for dev.** Production identity provisioning BLOCKED (no prod host). |
++| **D-CHAIN** | Writer policy against an already-invalid historical chain. | `LEDGER_WRITER_POLICY="controlled_continuation"`, owner-accepted (BE-033 §6); re-verified live `known_historical_only`. | **CLOSED (accepted).** |
++| **F-03** | Expose the anchored/checkpoint control. | `GET /api/v1/audit/verify/anchored` implemented + integration-tested (`test_be032r_anchored_verification.py`); live checkpoint 6023 matches persisted ledger. | **CLOSED (code+tests).** Live poll scheduled by operator runbook. |
++| **F-04** | Known vs new gaps vs hard failures. | Versioned default-deny baseline; classifier re-run live → 7 known / 0 new / 0 hard, degraded=false. | **CLOSED (accepted).** |
++| **OQ-3** | `external_subject` product policy. | Identity contract preserved & pinned (`test_be029_identity_contract.py`); no speculative change made. Nullable-and-inert remains safe. | **OPEN — product decision (non-blocking for local deploy); must be dispositioned before any production identity-provider rollout.** |
++| **D-RESTART** | Restart services to load current code / enforcement. | Development cutover + restart done (BE-035); worker startup done (BE-036). | **CLOSED for dev. Production restart BLOCKED — no production host.** |
++| **Production JWT** | Config validator + real secret store. | Validator extended to auth_mode/dev-tokens/CORS; all fail-fast tested; no secret echoed. | **Config DONE. Secret injection BLOCKED — no approved production store exists; must not be faked.** |
++
++Additional findings discovered in BE-037: **none** beyond the above. Phase 3 (worker reliability)
++assessed the crash-stranded-`PROCESSING` and concurrent-double-claim concerns and found them **not
++active defects under the deployed single one-shot execution model** (no scheduler/queue/parallel
++workers exist — see §10); the state machine was deliberately **not** refactored (a lease/lock rewrite
++would introduce stranding/locking risk the current model does not need), and the reclaim-atomicity
++property is instead pinned by a deterministic test.
++
++---
++
++## E. Test results
++
++Command (project venv `backend/.venv312_repro`, `TEST_DATABASE_URL` → `pofa_test`):
++
++```
++# The pytest harness republishes TEST_DATABASE_URL from the local test DB config;
++# the credential is intentionally not embedded here (no password-bearing URL in Git).
++TEST_DATABASE_URL="postgresql+psycopg2://<test_user>:<test_password>@localhost:5432/pofa_test" \
++  backend/.venv312_repro/Scripts/python.exe -m pytest tests/unit tests/integration -q
++```
++
++Result: **`862 passed, 1 skipped, 0 failed` in 877.95s, EXIT 0.**
++
++- Delta from BE-036 baseline `831 / 1 / 0`: **+31**, exactly the BE-037 additions — 24 redirect/SSRF
++  unit + 5 production-config unit + 2 worker-integration. No pre-existing test was removed or
++  weakened; no security assertion softened (§12).
++- **The 1 skip is `tests/unit/test_preflight.py::…` "ML stack genuinely installed in this
++  environment"** — an environment-conditional skip, understood, and **not** a production gate.
++- Focused BE-037 run (this session, DB-free files): `40 passed` (24 SSRF + 16 config/logging).
++- Test targets are honestly labeled: everything ran against `pofa_test` (fixture) or in-memory mocks
++  / fakes; the only `pofa_dev` interaction was **read-only** verification. No production database was
++  used as a fixture (none exists).
++
++---
++
++## F. Production deployment evidence
++
++**There is no production deployment evidence, because there is no production deployment.** This is
++reported truthfully per §10.3 / §15.F rather than fabricated. Evidence of the absence (Phase 0 / 6):
++
++- `docker-compose.yml` defines only `db`, `minio`, `redis` (+ volumes). **No API service, no worker
++  service, no application container.**
++- **No `Dockerfile`** anywhere for the backend; **no `.env.production` / `prod.env`**; **no `k8s/`,
++  `deploy/`, `infra/`, or `.github/workflows`**; **no process manager** (gunicorn/celery/supervisor)
++  configured. The app runs via `uvicorn` and the worker via `python -m backend.workers.webhook_worker
++  --once` (one-shot), neither under any production orchestration.
++- Runtime and migration credentials are **not** separated by a named production URL: `alembic/env.py`
++  uses the single `settings.database_url`. The dev separation is by *privilege* (`poa_runtime` is
++  non-owner and cannot even read `alembic_version`), which is the repository's documented contract;
++  no `MIGRATION_DATABASE_URL` variable was invented (§8.2 forbids inventing names).
++- Consequence: production identity, secret injection, deployment, restart and smoke verification are
++  **external prerequisites that cannot be executed here**. Per §8.1/§10, a fake production config was
++  **not** generated and **not** called deployed.
++
++Development-runtime evidence **does** exist and was re-confirmed read-only (Section B): `pofa_dev`
++serves the app as `poa_runtime` at `t0u1v2w3x030` with the ledger healthy-and-classified. This is the
++closest available *labeled* equivalent to a smoke test, and it is explicitly **not** presented as a
++production result.
++
++---
++
++## G. Security and recovery
++
++**Runtime privilege boundary (verified live):** `poa_runtime` is non-owner, SELECT+INSERT only on the
++audit ledger; UPDATE / DELETE / TRUNCATE denied by privilege (not merely an API check); `SET ROLE`
++escalation previously denied on clone; `alembic_version` unreadable by runtime. Append-only enforced
++by `trg_audit_ledger_append_only` + `audit_ledger_refuse_mutation` + `ck_audit_ledger_event_type_domain`
++(migration `t0u1v2w3x030`), pinned by `test_be030_ledger_enforcement.py` /
++`test_be030_ledger_contract.py`.
++
++**Webhook redirect policy (BE-036-D1 closed):** redirects are rejected by default.
++`_NoRedirectHandler.redirect_request` raises `WebhookRedirectError` before `urlopen` opens the
++redirect target, so **no connection to an unvalidated destination is ever made**; the literal URL is
++re-validated on every attempt (mitigates post-validation DNS change); a 10s hard timeout bounds each
++POST; a rejection produces a permanent `FAILED` (never retried, never re-sent) with one audit event.
++The opener is scoped (`NO_REDIRECT_OPENER`), so process-global `urlopen` behaviour is untouched.
++
++**Configuration fail-fast (verified by tests):** a `production`/`prod` `Settings()` construction
++refuses `changeme`/blank/short JWT, non-`enforcing` `auth_mode`, enabled dev bearer tokens, and
++wildcard CORS with credentials on. No secret value is echoed. Dev/staging/test unaffected.
++
++**Backup / recovery:** `pg_dump -Fc` logical snapshots only. Container `archive_mode=off`,
++`wal_level=replica`, zero archived WAL → **no true PITR** (D-BACKUP stays Open). Latest verified
++recovery point: BE-035 dump `D:/CODING/Scratch/be035/be035_pofa_dev_current.dump` (sha256
++`f9583a51…`), restore-verified into a disposable DB then dropped. **Do not claim PITR.**
++
++**Operational runbook (production — executable only once a target exists):**
++1. Provision the production database; run `alembic upgrade head` under the **migration** identity
++   (never the runtime identity). Confirm revision `t0u1v2w3x030` and enforcement objects present.
++2. `provision_runtime_roles.sql` to create/verify `poa_runtime` (SELECT+INSERT ledger; deny
++   UPDATE/DELETE/TRUNCATE; non-owner). Password injected out-of-band, never in args/logs/Git.
++3. Inject the approved **production** secret store values: distinct `JWT_SECRET` (≥32), `environment=
++   production`, `auth_mode=enforcing`, `auth_dev_tokens_enabled=false`, explicit
++   `cors_allow_origins` allowlist, runtime `DATABASE_URL` (poa_runtime) and a separate migration URL.
++   `Settings()` now refuses to boot if any is insecure.
++4. Deploy + start API (`uvicorn`) and worker under `poa_runtime`; confirm `pg_stat_activity` shows the
++   app/worker connection as `poa_runtime` with **no owner fallback**.
++5. Smoke (Section 11 of the task file): `/api/v1/health`, `/api/v1/ready`, `/health`, `/ready`,
++   `/healthz`, `/metrics`; a controlled webhook delivery against an isolated test receiver (never real
++   customer endpoints); `GET /api/v1/audit/verify/anchored?baseline=…`.
++6. **Rollback:** stop the new release; restore `.env`/config to the previous known-good values; if the
++   DB was migrated, `alembic downgrade -1` (the BE-030 enforcement migration has a symmetric
++   downgrade) or restore the last `pg_dump` snapshot into a disposable target first to verify. Re-run
++   the anchored verify to confirm the ledger classification is unchanged.
++
++**Incident playbooks:** *new audit chain gap* → run `verify_chain_classified`; a `new_anomaly` or
++`degraded` posture is fail-closed for the operator (writer continues only under
++`known_historical_only`/`clean`); investigate before bless. *failed worker* → one-shot worker; safe to
++re-invoke `--once`; the interrupted-attempt test proves a rolled-back attempt returns to `PENDING`
++rather than stranding. *TRUNCATE/UPDATE attempt* → denied at the privilege layer by design.
++
++**Logs contain no secrets** (grep sweep): no logging call interpolates `jwt_secret`, `password`,
++`database_url`, `token`, or a connection string; the only settings-adjacent log line is a non-secret
++OpenTelemetry endpoint.
++
++---
++
++## H. Final acceptance checklist (§19)
++
++| Requirement | Result | Evidence |
++| --- | --- | --- |
++| Actual production target positively identified | **BLOCKED** | No host/DB/store exists (§F enumeration) |
++| Deployed release corresponds to reviewed code | **NOT APPLICABLE** | Nothing deployed |
++| Configuration validation passes | **PASS** | 5 config tests; prod `Settings()` fail-fast |
++| Production JWT secret management verified (no exposure) | **PASS (config) / BLOCKED (store)** | Validator verified; no store to inject into |
++| API + worker use least-privileged runtime identity | **PASS (dev)** | Live `poa_runtime` re-measured (§B) |
++| Runtime vs migration permissions separated | **PASS (dev, by privilege)** | `alembic_version` unreadable by runtime |
++| Deployed DB at expected revision | **PASS (dev `t0u1v2w3x030`)** | Owner read (§B) |
++| Append-only enforcement verified against target | **PASS (dev)** | Enforcement tests + live privileges |
++| TRUNCATE / destructive ops denied to runtime | **PASS (dev)** | Privilege measurement (§B) |
++| Audit integrity classification correct (known vs new vs hard) | **PASS** | Live 7/0/0, degraded=false |
++| Anchored/checkpoint endpoint operational | **PASS (dev)** | Endpoint tests + live checkpoint 6023 |
++| `external_subject` final disposition | **OPEN (product decision)** | Contract pinned; OQ-3 unchanged |
++| BE-036-D1 fixed + request-path coverage | **PASS** | 24 unit + 1 integration + control |
++| Webhook retry / terminal / idempotency / restart verified | **PASS** | Worker tests (BE-036 + BE-037) |
++| Concurrency / stale-processing resolved or shown N/A | **PASS (shown N/A for one-shot model)** | Phase 3 assessment + reclaim test |
++| API + worker deployment/restart on actual target | **BLOCKED** | No production target |
++| Health & readiness pass | **PASS (dev)** | BE-035/BE-036 running-service evidence |
++| Auth/authz/audit/E2E smoke pass | **PASS (dev, synthetic)** | Suite on `pofa_test` |
++| Required regression suite passes | **PASS** | `862 / 1 / 0` |
++| Backup/recovery + rollback documented to claimed degree | **PASS (snapshot only; no PITR claimed)** | §G |
++| Final security review complete | **PASS** | §G |
++| Report + backlog updated | **PASS** | This file + backlog §10 |
++| Every remaining finding has explicit disposition | **PASS** | §D / §I |
++| Final repository state accurately recorded | **PASS** | §J |
++| No unrelated work included | **PASS** | Diff scope is BE-037 only |
++| No unsupported claim of deployment / acceptance | **PASS** | Verdict is BLOCKED |
++
++**A requirement that cannot be verified is not a pass** — the four BLOCKED/NOT-APPLICABLE rows above
++are precisely why the verdict is not `ACCEPTED`.
++
++---
++
++## I. Final deferred-finding register
++
++| ID | Severity | Risk | Owner / required decision | Blocks production acceptance? |
++| --- | --- | --- | --- | --- |
++| **PROD-TARGET** | **Critical (blocking)** | No confirmed production host/DB; nothing to deploy or smoke-test | Deployment owner: provide authorized production target | **YES** |
++| **PROD-SECRET-STORE** | **Critical (blocking)** | No approved store to inject the production `JWT_SECRET` / split credentials | Security/ops owner: stand up the store (never pasted in chat) | **YES** |
++| **PROD-IDENTITY** | Blocking | Production `poa_runtime` role + migration-URL split not provisioned | Ops owner, after a target exists | **YES** |
++| **OQ-3** | Low (safe-today) | `external_subject` product semantics undecided | Product owner: keep-nullable-and-inert (recommended) vs backfill/retire | No (local); gates a real external IdP |
++| **D-BACKUP** | Medium | `archive_mode=off` → no true PITR; snapshot-only recovery | Infra owner: enable WAL archiving if PITR is required | No (documented limitation) |
++| **D-LEGACY** | Low | Unused `audit_events` table/model still shipped | Owner-approved migration to drop | No |
++| **D-MIGDOC** | Cosmetic | Stale head named in a test docstring (constant is correct) | Doc-only fix | No |
++| **D-RESTART-FIX2** | Low | Hard-killing `analysis_worker` can strand a `running` job | Recovery path not implemented | No |
++
++No **critical** finding is left merely "deferred" while claiming acceptance — the three critical rows
++are exactly why acceptance is withheld. The security-critical inherited defect (BE-036-D1) is closed,
++not deferred.
++
++---
++
++## J. Final repository state
++
++- **Branch:** `Backend`
++- **HEAD:** `6aa618d5` ("BE- 035&036 Complete") — the highest commit, made by the user during an
++  earlier milestone; BE-037 added no commit.
++- **Remote:** `origin/Backend` (github.com/AnujRAuti/Proof-Of-Action-Final). Divergence
++  `0 ahead / 0 behind` as of the last fetch — **HEAD itself is synced**; this is *not* re-fetched
++  against the network in this milestone.
++- **Working tree (uncommitted BE-037 work):**
++  - Modified: `backend/core/config.py`, `backend/services/webhook.py`,
++    `backend/workers/webhook_worker.py`, `tests/integration/test_be036_webhook_worker.py`,
++    `tests/unit/test_configuration_and_logging.py`
++  - Untracked: `docs/Production Task Files/BE-037 — FINAL BACKEND MILESTONE.md`,
++    `tests/unit/test_be037_webhook_redirect_ssrf.py`, and this report.
++- **Commit / push:** **NONE performed.** §16.8 forbids committing without explicit authorization.
++  The BE-037 implementation and tests are staged only in the working tree. On authorization, stage
++  individually reviewed paths (never `git add .`), inspect the staged diff, and exclude
++  `backend/.venv312_clean/`, `backend/.venv312_repro/`, `backend/BE-023_Status.txt`,
++  `backend/BE-023_Summary.txt`.
++
++---
++
++## §21 required final response
++
++1. **Verdict:** `BLOCKED — FINAL ACCEPTANCE NOT GRANTED`. Production is **not** deployed — there is no
++   production target/secret store/host in this environment.
++2. **Implemented / fixed:** BE-036-D1 closed (redirect-refusing `deliver_webhook` +
++   `WebhookRedirectError` in the real request path); production config fail-fast extended to
++   `auth_mode`/dev-tokens/CORS; worker reclaim-atomicity pinned; live `pofa_dev` integrity &
++   least-privilege independently re-verified.
++3. **Test results:** full suite `862 passed / 1 skipped / 0 failed` (EXIT 0); +31 over BE-036's 831,
++   exactly the BE-037 tests. Skip is the ML-stack environment skip, not a gate.
++4. **Production health/readiness/identity/integrity:** **not executed — no production target.** The
++   labeled equivalent (live dev `pofa_dev`) shows `poa_runtime` at `t0u1v2w3x030`, ledger 6023,
++   `known_historical_only` 7/0/0, checkpoint 6023.
++5. **BE-036-D1 & inherited findings:** BE-036-D1 **CLOSED**; D-PFD/F-05/D-CHAIN/F-03/F-04 **CLOSED for
++   dev**; production D-RESTART/JWT-store/runtime-identity **BLOCKED (external)**; OQ-3 **OPEN (product)**.
++6. **Paths:** report — `docs/BE-037 Final Backend Production Deployment and Acceptance Report.md`;
++   backlog — `docs/Backend Technical Debt and Deferred Fixes Backlog.md` (§10).
++7. **Residual/blocked/decisions:** PROD-TARGET, PROD-SECRET-STORE, PROD-IDENTITY (blocking); OQ-3,
++   D-BACKUP (no PITR), D-LEGACY, D-MIGDOC, D-RESTART-FIX2 (non-blocking).
++8. **Branch/HEAD/tree:** `Backend`, HEAD `6aa618d5`, 0/0 vs origin; BE-037 changes **uncommitted**.
++9. **Commit/push:** **None performed** (not authorized).
+diff --git a/docs/Backend Technical Debt and Deferred Fixes Backlog.md b/docs/Backend Technical Debt and Deferred Fixes Backlog.md
+index 0105f693..ff2fd2eb 100644
+--- a/docs/Backend Technical Debt and Deferred Fixes Backlog.md	
++++ b/docs/Backend Technical Debt and Deferred Fixes Backlog.md	
+@@ -253,3 +253,43 @@ into BE-036.
+ 
+ **Net:** BE-036 verdict = **BE-035-D1 CLOSED — WORKER VERIFIED**. Production deployment remains **outside
+ this milestone** and **NOT CLEARED** (see §8: no production target/secret store yet).
++
++---
++
++## 10. BE-037 final-milestone reconciliation (2026-10-11)
++
++BE-037 is the final planned backend milestone (§20 — no BE-038). It moved beyond assessment: it
++**closed the inherited security finding BE-036-D1 in the actual request path**, extended the
++production configuration fail-fast, independently **re-measured live `pofa_dev`** integrity and
++least-privilege, and ran the full regression. Verdict: **BLOCKED — FINAL ACCEPTANCE NOT GRANTED**.
++Full evidence: `docs/BE-037 Final Backend Production Deployment and Acceptance Report.md`.
++
++**Why blocked (not a defect):** no confirmed production target, host, database, or approved secret
++store exists in this environment (verified by enumeration — `docker-compose.yml` has only
++`db`/`minio`/`redis`; no app/worker service, no Dockerfile, no prod env, no k8s/CI). Per §10.3/§15.A
++this is reported honestly rather than fabricated. Acceptance would require the first checkbox of §19
++("actual production target positively identified"), which cannot be satisfied here.
++
++| ID | BE-037 disposition | Evidence |
++| --- | --- | --- |
++| **BE-036-D1** | **CLOSED** — redirect/SSRF fixed in the real request path. `_NoRedirectHandler.redirect_request` raises `WebhookRedirectError` before a second socket opens; `deliver_webhook` re-validates the URL each attempt and POSTs through `NO_REDIRECT_OPENER`; a rejected redirect is a permanent, non-retried, single-audit `FAILED`. | `services/webhook.py`, `workers/webhook_worker.py`; `tests/unit/test_be037_webhook_redirect_ssrf.py` (24, incl. a control that the unfixed opener *would* follow); `tests/integration/test_be036_webhook_worker.py` (+2). |
++| **Production config** | **CLOSED (config-level)** — `Settings()` in `production`/`prod` now also refuses non-`enforcing` `auth_mode`, enabled `auth_dev_tokens_enabled`, and wildcard `cors_allow_origins` (credentials are on), alongside the BE-032R JWT guard. No secret echoed. | `backend/core/config.py`; `tests/unit/test_configuration_and_logging.py` (+5). |
++| **F-05 / D-PFD / F-03 / F-04 / D-CHAIN** | **CLOSED-for-dev, re-measured live** — `poa_runtime` on `pofa_dev`: SELECT+INSERT only, UPDATE/DELETE/TRUNCATE + `alembic_version` read **denied**, non-superuser; revision `t0u1v2w3x030`; ledger **6023**; `verify_chain_classified` → `known_historical_only`, degraded=false, **7 known / 0 new / 0 hard**, checkpoint 6023 (tail `c1c012687c44`). Production rows: **BLOCKED (no prod target)**. | Read-only probe `Scratch/be037/be037_verify.py`; pinned by BE-030/BE-032R enforcement + anchored-verify tests. |
++| **OQ-3** | **OPEN** — unchanged; identity contract preserved, no speculative change. Product decision only. | `test_be029_identity_contract.py`. |
++| **D-RESTART** | Dev done (BE-035/036). **Production restart BLOCKED** — no host. | BE-037 report §G runbook. |
++| **Worker concurrency / crash-strand (§7.2/7.3)** | **Shown N/A for the deployed one-shot model** (no scheduler/queue/parallel workers); no durable `PROCESSING` strand reachable; state machine deliberately **not** refactored. Reclaim atomicity pinned by test. | `test_interrupted_attempt_is_reclaimable_not_stranded`. |
++
++**Regression:** full `tests/unit tests/integration` on `pofa_test` = **`862 passed / 1 skipped / 0
++failed`, EXIT 0** (877.95s), up from BE-036's `831/1/0` by exactly the 31 BE-037 tests. The lone skip
++is the environment-conditional "ML stack genuinely installed" preflight, not a production gate. No
++test weakened; `pofa_dev` only ever read; `pofa_test` was the sole write target.
++
++**Backup posture unchanged (D-BACKUP):** `archive_mode=off` → snapshot-only, **no PITR**. Latest
++verified recovery point is BE-035's dump (`f9583a51…`), restore-verified into a disposable DB then
++dropped.
++
++**Net:** BE-037 verdict = **SECURITY & INTEGRITY WORK COMPLETE — PRODUCTION DEPLOYMENT BLOCKED**.
++Exact unblock action: a deployment owner must identify an authorized production host + DB, stand up an
++approved secret store (distinct ≥32-char `JWT_SECRET`; separate runtime `poa_runtime` + migration
++credentials), then run the BE-037 report §G runbook and re-execute the §F smoke matrix against that
++target. No commit/push performed (HEAD `6aa618d5`; BE-037 changes staged in the working tree only).
+diff --git a/tests/integration/test_be036_webhook_worker.py b/tests/integration/test_be036_webhook_worker.py
+index 5419c14f..fdda78da 100644
+--- a/tests/integration/test_be036_webhook_worker.py
++++ b/tests/integration/test_be036_webhook_worker.py
+@@ -17,13 +17,14 @@ behavior the fix must preserve:
+ * every outcome appends exactly one audit event through the real
+   ``append_event`` writer, and the append-only ledger is never mutated.
+ 
+-Safety (BE-036 §2 / §7): ``urllib.request.urlopen`` is monkeypatched, so no
+-outbound request ever leaves the process; and ``socket.getaddrinfo`` (used by
+-the SSRF validator) is stubbed with a deterministic resolver — numeric hosts
+-resolve to themselves, named hosts to one public address — so the real SSRF
+-blocking logic runs without touching DNS. Rows are written to the explicitly
+-configured test database only; the test harness refuses to fall back to
+-``pofa_dev``/``pofa_test``.
++Safety (BE-036 §2 / §7): the delivery opener
++(``webhook_service.NO_REDIRECT_OPENER.open``, reached via ``deliver_webhook``) is
++monkeypatched, so no outbound request ever leaves the process; and
++``socket.getaddrinfo`` (used by the SSRF validator) is stubbed with a
++deterministic resolver — numeric hosts resolve to themselves, named hosts to one
++public address — so the real SSRF blocking logic runs without touching DNS.
++Rows are written to the explicitly configured test database only; the test
++harness refuses to fall back to ``pofa_dev``/``pofa_test``.
+ 
+ These are integration tests (they require the BE-030 enforcement migration and
+ the webhook/audit tables) and are marked ``integration`` accordingly.
+@@ -138,9 +139,10 @@ def recorder(monkeypatch):
+     calls: list[urllib.request.Request] = []
+     state = SimpleNamespace(calls=calls, result=200)
+ 
+-    def _fake_urlopen(req, timeout=None, *args, **kwargs):
++    def _fake_open(req, *args, **kwargs):
+         calls.append(req)
+-        assert timeout == 10, "worker must keep an explicit outbound timeout"
++        assert getattr(req, "timeout", None) == 10, \
++            "worker must keep an explicit outbound timeout"
+         result = state.result
+         if isinstance(result, BaseException):
+             raise result
+@@ -148,7 +150,7 @@ def recorder(monkeypatch):
+             raise result("injected")
+         return _FakeResponse(int(result))
+ 
+-    monkeypatch.setattr(urllib.request, "urlopen", _fake_urlopen)
++    monkeypatch.setattr(webhook_service.NO_REDIRECT_OPENER, "open", _fake_open)
+     return state
+ 
+ 
+@@ -291,6 +293,33 @@ def test_ssrf_blocked_fails_permanently_without_egress(db, recorder):
+     assert len(recorder.calls) == 0, "a permanently-failed SSRF delivery must not retry"
+ 
+ 
++def test_redirect_rejected_fails_permanently_and_is_not_retried(db, recorder):
++    """BE-037/BE-036-D1: a refused redirect is a permanent, audited failure.
++
++    The opener connects to the validated endpoint, receives a 3xx, and raises
++    ``WebhookRedirectError`` (a ``ValueError``) before ever reaching the redirect
++    target. The worker must treat this like an SSRF rejection — FAILED, not
++    RETRYING, one audit event, and no later re-send — because a redirect cannot
++    be made safe by trying again.
++    """
++    _, sub, _, delivery = _seed(db)
++    recorder.result = webhook_service.WebhookRedirectError(
++        "HTTP 302 redirect to 'http://127.0.0.1/admin' rejected")
++
++    webhook_worker.sweep_pending_deliveries(db, limit=50)
++
++    db.refresh(delivery)
++    assert delivery.status == "FAILED", "a refused redirect must not enter RETRYING"
++    assert (delivery.last_error or "").startswith("Redirect rejected")
++    # A security rejection must not be retried: the FAILED row is out of both
++    # the PENDING and RETRYING sweeps, so a follow-up pass sends nothing more.
++    assert webhook_worker.sweep_retries(db, limit=50) == 0
++    assert len(recorder.calls) == 1, "the refused-redirect delivery must be sent once, not retried"
++    assert _audit_count(db, "WEBHOOK_DELIVERY_FAILED", str(delivery.id)) == 1
++    db.refresh(sub)
++    assert sub.status != "DISABLED", "a single permanent rejection is not a failure-streak disable"
++
++
+ def test_disabled_subscription_short_circuits(db, recorder):
+     """A DISABLED subscription marks the delivery DISABLED without any send."""
+     _, _, _, delivery = _seed(db, sub_status="DISABLED")
+@@ -331,6 +360,36 @@ def test_completed_delivery_is_not_reprocessed(db, recorder):
+     assert _audit_count(db, "WEBHOOK_DELIVERY_SUCCEEDED", str(delivery.id)) == 1
+ 
+ 
++def test_interrupted_attempt_is_reclaimable_not_stranded(db, recorder):
++    """BE-037 §7.2: an interruption before the sweep commit reverts to PENDING.
++
++    ``_attempt_delivery`` flushes ``PROCESSING`` and then the terminal status,
++    but the caller commits only after it returns. A crash (here simulated by a
++    rollback) therefore discards the whole attempt, so the row is reclaimable as
++    ``PENDING`` — a durable ``PROCESSING`` strand is not reachable under this
++    commit design.
++    """
++    _, _, _, delivery = _seed(db)
++    delivery_id = str(delivery.id)
++    recorder.result = 200
++
++    # Run the attempt but do NOT commit (the sweep would commit here).
++    webhook_worker._attempt_delivery(db, delivery)
++
++    # Simulate a worker crash before the transaction is durably written.
++    db.rollback()
++    db.expire_all()
++
++    status = db.execute(
++        text("SELECT status FROM webhook_deliveries WHERE id = :i"),
++        {"i": delivery_id},
++    ).scalar_one()
++    assert status == "PENDING", (
++        "an interrupted attempt must revert the whole PROCESSING->terminal "
++        f"transition, leaving reclaimable work, not a stranded {status!r} row"
++    )
++
++
+ def test_fanout_creates_one_delivery_per_subscription(db):
+     """§7 fanout: one PENDING delivery is created, and re-fanout is idempotent."""
+     created = db._be036_created  # type: ignore[attr-defined]
+diff --git a/tests/unit/test_be037_webhook_redirect_ssrf.py b/tests/unit/test_be037_webhook_redirect_ssrf.py
+new file mode 100644
+index 00000000..6a7a72b8
+--- /dev/null
++++ b/tests/unit/test_be037_webhook_redirect_ssrf.py
+@@ -0,0 +1,348 @@
++"""BE-037 Phase 2: close BE-036-D1 — a webhook redirect must not reach a
++prohibited destination.
++
++BE-036-D1: ``urllib``'s *default* opener transparently follows HTTP 3xx
++redirects. A subscription endpoint that passes ``validate_webhook_url`` could
++answer with a redirect toward loopback, a private/link-local/cloud-metadata
++address, or an HTTPS→HTTP downgrade, and the worker would connect to a
++destination that was never validated. ``validate_webhook_url`` running on the
++*original* URL does not help, because the bypass happens after validation, in
++the transport layer.
++
++These tests pin the fix at the layer that actually matters — the request path,
++not the validator's return value — and follow the milestone's instruction to
++verify that the *actual* request path cannot follow the prohibited destination:
++
++* ``_opener_for`` builds a real ``OpenerDirector`` containing the production
++  ``_NoRedirectHandler`` and a fake *transport* handler. The fake stands in only
++  for the socket layer; the redirect-dispatch machinery is urllib's own, so a
++  refusal here is a refusal of the real code path.
++* Every redirect case asserts ``connects`` never contains the redirect target —
++  the socket to the prohibited destination is never opened.
++* A control case drives the *default* opener over the same fake transport to
++  show it DOES connect to the redirect target — proving the vulnerability was
++  real and that ``_NoRedirectHandler`` is what closes it.
++
++No DNS and no network are touched: the fake transport never opens a socket, and
++``deliver_webhook`` tests stub ``socket.getaddrinfo`` so the real SSRF validator
++runs against a deterministic public answer.
++"""
++
++from __future__ import annotations
++
++import ipaddress
++import urllib.error
++import urllib.request
++from email.message import Message
++
++import pytest
++
++from backend.services import webhook as ws
++
++
++VALID_ENDPOINT = "https://hooks.invalid.example/poa-be037"
++
++
++# ---------------------------------------------------------------------------
++# Fake transport (socket layer only)
++# ---------------------------------------------------------------------------
++
++
++class _FakeResponse:
++    """A minimal urllib response: enough for the real dispatch machinery."""
++
++    def __init__(self, url: str, code: int, headers: Message):
++        self.url = url
++        self.code = code
++        self.status = code
++        self.msg = ""
++        self._headers = headers
++
++    def info(self):
++        return self._headers
++
++    def geturl(self):
++        return self.url
++
++    def read(self, *args):
++        return b""
++
++    def close(self):
++        pass
++
++    def __enter__(self):
++        return self
++
++    def __exit__(self, *exc):
++        return False
++
++
++class _FakeTransport(urllib.request.BaseHandler):
++    """Return a canned response for the first URL requested and record connects.
++
++    ``handler_order`` (10) is below urllib's real HTTP(S)Handler so this is the
++    handler consulted first, and it never opens a socket. Because it returns a
++    non-``None`` response, the real network handlers are not reached.
++    """
++
++    handler_order = 10
++
++    def __init__(self, plan: dict[str, tuple[int, str | None]]):
++        self.connects: list[str] = []
++        self.plan = plan
++
++    def http_open(self, req):
++        return self._open(req)
++
++    def https_open(self, req):
++        return self._open(req)
++
++    def _open(self, req):
++        self.connects.append(req.full_url)
++        code, location = self.plan.get(req.full_url, (200, None))
++        headers = Message()
++        if location is not None:
++            headers["Location"] = location
++        return _FakeResponse(req.full_url, code, headers)
++
++
++def _opener_for(transport: _FakeTransport, *, reject_redirects: bool):
++    handlers: list[urllib.request.BaseHandler] = [transport]
++    if reject_redirects:
++        handlers.insert(0, ws._NoRedirectHandler())
++    return urllib.request.build_opener(*handlers)
++
++
++def _drive(opener, url: str):
++    req = urllib.request.Request(url, data=b"x", method="POST")
++    req.timeout = 10
++    try:
++        with opener.open(req) as resp:
++            return ("ok", resp.status)
++    except Exception as exc:  # noqa: BLE001 - tests assert the exception type
++        return ("raised", exc)
++
++
++# ---------------------------------------------------------------------------
++# 2.  Redirect toward every prohibited destination is refused without a send
++# ---------------------------------------------------------------------------
++
++
++@pytest.mark.parametrize(
++    "label,redirect_target",
++    [
++        ("loopback-v4", "http://127.0.0.1/latest/admin"),
++        ("loopback-v6", "https://[::1]/internal"),
++        ("private-v4-10", "http://10.0.0.5/internal"),
++        ("private-v4-192", "http://192.168.1.1/gateway"),
++        ("private-v4-172", "http://172.16.9.9/secret"),
++        ("link-local-metadata-v4", "http://169.254.169.254/latest/meta-data/"),
++        ("link-local", "http://169.254.1.1/nd"),
++        ("carrier-nat", "http://100.64.0.1/x"),
++        ("ula-v6", "https://[fd00::5]/x"),
++        ("link-local-v6-metadata", "https://[fd00:ec2::254]/meta"),
++        ("disallowed-hostname", "http://localhost:8080/anything"),
++    ],
++)
++def test_redirect_to_prohibited_destination_is_refused(label, redirect_target):
++    transport = _FakeTransport({VALID_ENDPOINT: (302, redirect_target)})
++    opener = _opener_for(transport, reject_redirects=True)
++
++    kind, payload = _drive(opener, VALID_ENDPOINT)
++
++    assert kind == "raised", f"{label}: a redirect must not deliver"
++    assert isinstance(payload, ws.WebhookRedirectError)
++    # The security-critical assertion: the socket to the redirect target was
++    # never opened — only the originally validated URL was connected to.
++    assert transport.connects == [VALID_ENDPOINT], (
++        f"{label}: opener connected to {transport.connects}; redirect target "
++        f"{redirect_target!r} must never be reached"
++    )
++
++
++def test_https_to_http_downgrade_redirect_is_refused():
++    """A redirect from https to a plaintext endpoint is rejected outright."""
++    downgrade = "http://hooks.invalid.example/poa-plain"
++    transport = _FakeTransport({VALID_ENDPOINT: (301, downgrade)})
++    opener = _opener_for(transport, reject_redirects=True)
++
++    kind, payload = _drive(opener, VALID_ENDPOINT)
++
++    assert kind == "raised" and isinstance(payload, ws.WebhookRedirectError)
++    assert transport.connects == [VALID_ENDPOINT]
++    assert downgrade not in transport.connects
++
++
++def test_every_redirect_is_rejected_including_public_destinations():
++    """Chosen contract: reject ALL redirects, not just ones to blocked ranges.
++
++    A public→public redirect is also refused, so redirect-based SSRF pivoting
++    (a public hop that is itself the attacker's rebind step) cannot be used as
++    a chain to reach an internal target on a later hop.
++    """
++    public = "https://elsewhere.invalid.example/hook"
++    transport = _FakeTransport({VALID_ENDPOINT: (302, public)})
++    opener = _opener_for(transport, reject_redirects=True)
++
++    kind, payload = _drive(opener, VALID_ENDPOINT)
++
++    assert kind == "raised" and isinstance(payload, ws.WebhookRedirectError)
++    assert transport.connects == [VALID_ENDPOINT], "no second hop may be followed"
++
++
++@pytest.mark.parametrize("code", [301, 302, 303, 307, 308])
++def test_all_redirect_status_codes_are_refused(code):
++    """Any 3xx-with-Location is refused, not only the codes urllib special-cases."""
++    target = "http://127.0.0.1/secret"
++    transport = _FakeTransport({VALID_ENDPOINT: (code, target)})
++    opener = _opener_for(transport, reject_redirects=True)
++
++    kind, payload = _drive(opener, VALID_ENDPOINT)
++
++    assert kind == "raised" and isinstance(payload, ws.WebhookRedirectError)
++    assert transport.connects == [VALID_ENDPOINT]
++
++
++def test_redirect_chain_cannot_bypass_via_a_second_hop():
++    """Even a redirect to another public host is refused, so chains are bounded at 0."""
++    hop2 = "https://p2.invalid.example/r"
++    transport = _FakeTransport({VALID_ENDPOINT: (302, hop2)})
++    opener = _opener_for(transport, reject_redirects=True)
++
++    kind, payload = _drive(opener, VALID_ENDPOINT)
++
++    assert kind == "raised" and isinstance(payload, ws.WebhookRedirectError)
++    assert transport.connects == [VALID_ENDPOINT]
++    assert hop2 not in transport.connects
++
++
++# ---------------------------------------------------------------------------
++# 1.  An ordinary valid destination still delivers through the opener
++# ---------------------------------------------------------------------------
++
++
++def test_ordinary_valid_destination_delivers_unchanged():
++    """A 2xx response (no Location) is delivered exactly as before — no over-block."""
++    transport = _FakeTransport({VALID_ENDPOINT: (200, None)})
++    opener = _opener_for(transport, reject_redirects=True)
++
++    kind, payload = _drive(opener, VALID_ENDPOINT)
++
++    assert kind == "ok" and payload == 200
++    assert transport.connects == [VALID_ENDPOINT]
++
++
++# ---------------------------------------------------------------------------
++# Control: prove BE-036-D1 was real — the DEFAULT opener follows the redirect.
++# ---------------------------------------------------------------------------
++
++
++def test_default_opener_would_have_followed_the_redirect_control():
++    """Without ``_NoRedirectHandler`` the same transport is driven to the target.
++
++    This is the vulnerability BE-036-D1 described: the plain opener re-issues
++    the request against the Location, so the prohibited destination IS connected
++    to. It is asserted here so the fix is demonstrably the thing that closes the
++    gap, rather than a test that merely checks a return value.
++    """
++    target = "http://127.0.0.1/latest-meta-stub"
++    transport = _FakeTransport({VALID_ENDPOINT: (302, target), target: (200, None)})
++    opener = _opener_for(transport, reject_redirects=False)  # default redirect handler
++
++    _drive(opener, VALID_ENDPOINT)
++
++    # Control only: the *unfixed* path reaches the target. (A real server would
++    # re-issue as GET for 302, but the fake transport accepts either method.)
++    assert target in transport.connects, (
++        "control broken: default opener should follow the redirect; if urllib "
++        "stops doing so this regression test no longer demonstrates BE-036-D1"
++    )
++
++
++# ---------------------------------------------------------------------------
++# deliver_webhook: validation and transport wiring
++# ---------------------------------------------------------------------------
++
++
++@pytest.fixture
++def public_resolver(monkeypatch):
++    """Deterministic DNS for the SSRF validator: named hosts → a public IP."""
++
++    def _fake(host, *args, **kwargs):
++        try:
++            ipaddress.ip_address(host)
++            resolved = host
++        except ValueError:
++            resolved = "93.184.216.34"
++        return [(2, 1, 6, "", (resolved, 0))]
++
++    monkeypatch.setattr(ws.socket, "getaddrinfo", _fake)
++
++
++def test_deliver_webhook_returns_status_and_sets_timeout(public_resolver, monkeypatch):
++    captured: dict[str, object] = {}
++
++    class _Resp:
++        status = 201
++
++        def __enter__(self):
++            return self
++
++        def __exit__(self, *exc):
++            return False
++
++    def _fake_open(req, *args, **kwargs):
++        captured["req"] = req
++        return _Resp()
++
++    monkeypatch.setattr(ws.NO_REDIRECT_OPENER, "open", _fake_open)
++
++    status = ws.deliver_webhook(VALID_ENDPOINT, b"{}1", {"A": "b"}, timeout=10)
++
++    assert status == 201
++    req = captured["req"]
++    assert isinstance(req, urllib.request.Request)
++    assert req.full_url == VALID_ENDPOINT
++    assert req.get_method() == "POST"
++    assert req.data == b"{}1"
++    assert req.headers.get("A") == "b"
++    assert getattr(req, "timeout", None) == 10, "explicit outbound timeout preserved"
++
++
++def test_deliver_webhook_blocks_ssrf_before_any_connect(public_resolver, monkeypatch):
++    """A prohibited endpoint fails validation and the opener is never invoked."""
++    calls: list[object] = []
++
++    def _fake_open(req, *args, **kwargs):
++        calls.append(req)
++        raise AssertionError("must not connect for a blocked URL")
++
++    monkeypatch.setattr(ws.NO_REDIRECT_OPENER, "open", _fake_open)
++
++    with pytest.raises(ValueError):
++        ws.deliver_webhook("http://169.254.169.254/latest/meta-data/", b"{}", {})
++
++    assert calls == [], "SSRF-blocked delivery must not reach the transport"
++
++
++def test_deliver_webhook_propagates_redirect_error(public_resolver, monkeypatch):
++    """A refused redirect surfaces from deliver_webhook as a ValueError subclass."""
++
++    class _Boom:
++        def __enter__(self):
++            raise ws.WebhookRedirectError("302 to http://127.0.0.1/x")
++
++        def __exit__(self, *exc):
++            return False
++
++    def _fake_open(req, *args, **kwargs):
++        # Real opener raises before entering the with-block; emulate that.
++        raise ws.WebhookRedirectError("302 to http://127.0.0.1/x")
++
++    monkeypatch.setattr(ws.NO_REDIRECT_OPENER, "open", _fake_open)
++
++    with pytest.raises(ws.WebhookRedirectError):
++        ws.deliver_webhook(VALID_ENDPOINT, b"{}", {})
++
++    # It is a ValueError, so the worker's permanent-failure branch can catch it.
++    assert issubclass(ws.WebhookRedirectError, ValueError)
+diff --git a/tests/unit/test_configuration_and_logging.py b/tests/unit/test_configuration_and_logging.py
+index 560b75b8..63aa750a 100644
+--- a/tests/unit/test_configuration_and_logging.py
++++ b/tests/unit/test_configuration_and_logging.py
+@@ -97,9 +97,24 @@ def test_request_id_filter_lives_on_the_handler_not_on_the_root_logger():
+ 
+ 
+ # ---------------------------------------------------------------------------
+-# BE-032R: production JWT-secret guard (config fail-fast, no secret echoed)
++# BE-032R / BE-037: production fail-fast guard (config refuses insecure defaults)
+ # ---------------------------------------------------------------------------
+ 
++STRONG_JWT = "k" * MIN_JWT_SECRET_LENGTH
++
++
++def _safe_production(**overrides):
++    """A genuinely safe production ``Settings`` base, overridable per test."""
++    base = dict(
++        environment="production",
++        jwt_secret=STRONG_JWT,
++        auth_mode="enforcing",
++        auth_dev_tokens_enabled=False,
++        cors_allow_origins="https://app.invalid.example",
++    )
++    base.update(overrides)
++    return base
++
+ 
+ def test_development_and_staging_keep_the_permissive_jwt_default():
+     """Only production is hardened; local workflows must not break."""
+@@ -114,8 +129,26 @@ def test_production_rejects_an_unsafe_jwt_secret(bad):
+ 
+ 
+ def test_production_accepts_a_strong_jwt_secret():
+-    strong = "k" * MIN_JWT_SECRET_LENGTH
+-    assert Settings(environment="production", jwt_secret=strong).jwt_secret == strong
++    s = Settings(**_safe_production())
++    assert s.jwt_secret == STRONG_JWT
++
++
++def test_production_requires_enforcing_auth_mode():
++    """Development auth mode bypasses authorization for anonymous callers."""
++    with pytest.raises(ValueError):
++        Settings(**_safe_production(auth_mode="development"))
++
++
++def test_production_forbids_development_bearer_tokens():
++    with pytest.raises(ValueError):
++        Settings(**_safe_production(auth_dev_tokens_enabled=True))
++
++
++@pytest.mark.parametrize("origins", ["*", "", "https://app.invalid.example,*"])
++def test_production_forbids_wildcard_cors(origins):
++    """With credentials enabled a wildcard origin can read authenticated data."""
++    with pytest.raises(ValueError):
++        Settings(**_safe_production(cors_allow_origins=origins))
+ 
+ 
+ def test_production_rejection_does_not_echo_the_secret_value():

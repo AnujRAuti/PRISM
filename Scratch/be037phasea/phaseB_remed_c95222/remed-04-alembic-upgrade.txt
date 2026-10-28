@@ -1,0 +1,28 @@
+INFO  [alembic.env] Alembic target database: be037rem_app
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> bb4bf0dd8fb7, initial migration
+INFO  [alembic.runtime.migration] Running upgrade bb4bf0dd8fb7 -> c6e8a9d4b001, add BE-003 evidence upload fields
+INFO  [alembic.runtime.migration] Running upgrade c6e8a9d4b001 -> d7f3b2a1c004, add BE-004 evidence fingerprints
+INFO  [alembic.runtime.migration] Running upgrade d7f3b2a1c004 -> e8a4c6d2b005, add BE-005 analysis job lifecycle fields
+INFO  [alembic.runtime.migration] Running upgrade e8a4c6d2b005 -> f9b5d7e3c006, add BE-006 duplicate intelligence fields
+INFO  [alembic.runtime.migration] Running upgrade f9b5d7e3c006 -> a1b2c3d4e008, add BE-008 claim temporal boundaries
+INFO  [alembic.runtime.migration] Running upgrade a1b2c3d4e008 -> b2c3d4e5f009, add BE-009 vision intelligence (job_type + vision_detections)
+INFO  [alembic.runtime.migration] Running upgrade b2c3d4e5f009 -> c3d4e5f6a010, add BE-010 evidence graph (graph_nodes + graph_relationships)
+INFO  [alembic.runtime.migration] Running upgrade c3d4e5f6a010 -> d4e5f6a7b011, add BE-011 fusion engine (runs, signals, assessments, priorities, configs)
+INFO  [alembic.runtime.migration] Running upgrade d4e5f6a7b011 -> e5f6a7b8c012, add BE-012 explainability (explanation_runs)
+INFO  [alembic.runtime.migration] Running upgrade e5f6a7b8c012 -> f6a7b8c9d013, add BE-013 review cases (cases, generation configs/runs, events)
+INFO  [alembic.runtime.migration] Running upgrade f6a7b8c9d013 -> g7b8c9d0e014, add BE-014 evidence requests (requests, items, events)
+INFO  [alembic.runtime.migration] Running upgrade g7b8c9d0e014 -> h8c9d0e1f015, add BE-015 tamper-evident audit ledger (audit_ledger_events)
+INFO  [alembic.runtime.migration] Running upgrade h8c9d0e1f015 -> i9d0e1f2g016, add BE-016 authentication and authorization foundation
+INFO  [alembic.runtime.migration] Running upgrade i9d0e1f2g016 -> j0e1f2g3h017, add BE-017 retention and data governance
+INFO  [alembic.runtime.migration] Running upgrade j0e1f2g3h017 -> k1f2g3h4i018, add BE-018 notifications and event delivery
+INFO  [alembic.runtime.migration] Running upgrade k1f2g3h4i018 -> l2g3h4i5j019, BE-019: external integrations and API client platform.
+INFO  [alembic.runtime.migration] Running upgrade l2g3h4i5j019 -> m3n4o5p6q021, BE-021: dispute, correction & intelligence invalidation governance.
+INFO  [alembic.runtime.migration] Running upgrade m3n4o5p6q021 -> n4o5p6q7r022, BE-022: publication, transparency & public evidence governance.
+INFO  [alembic.runtime.migration] Running upgrade n4o5p6q7r022 -> o5p6q7r8s025, BE-025: database-enforced assignment scope/ID matrix (M1).
+INFO  [alembic.runtime.migration] Running upgrade o5p6q7r8s025 -> p6q7r8s9t026, BE-026: field operations and offline evidence capture tables.
+INFO  [alembic.runtime.migration] Running upgrade p6q7r8s9t026 -> q7r8s9t0u027, BE-028: the three indexes the models declared but no migration created.
+INFO  [alembic.runtime.migration] Running upgrade q7r8s9t0u027 -> r8s9t0u1v028, BE-029 (1/2): archive, then retire, the synthetic user-identity residue.
+INFO  [alembic.runtime.migration] Running upgrade r8s9t0u1v028 -> s9t0u1v2w029, BE-029 (2/2): make users.username / users.email unique in the database.
+INFO  [alembic.runtime.migration] Running upgrade s9t0u1v2w029 -> t0u1v2w3x030, BE-030: append-only enforcement + event-type domain CHECK for the audit ledger.

@@ -1,0 +1,8 @@
+=== name-colliding disposable databases, created inside THIS run's cluster only ===
+CREATE DATABASE
+CREATE DATABASE
+--- confirm they are empty and belong to the disposable server (port 15432) ---
+db=pofa_dev tables=0 port=15432-disposable
+db=pofa_test tables=0 port=15432-disposable
+--- the PROTECTED cluster still answers its own pofa_dev (read-only count, unchanged) ---
+db=pofa_dev port=5432-protected tables=75

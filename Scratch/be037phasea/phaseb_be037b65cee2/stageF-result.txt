@@ -1,0 +1,49 @@
+=== F0  bootstrap an authorized disposable principal (FIELD_OFFICER) ===
+PASS  F0 create disposable test user  | HTTP 201 (expected 201) 
+PASS  F0 grant FIELD_OFFICER (evidence.create)  | HTTP 201 (expected 201) 
+
+=== F1  upload through the supported application flow ===
+   synthetic PNG generated in-container: 1538 bytes
+PASS  F1 POST /api/v1/evidence accepts the synthetic image  | HTTP 201 {"evidence_id": "7eb6c37c-d388-4c7a-9876-187579fa20ab", "status": "uploaded", "storage_key": "quarantine/7eb6c37c-d388-4c7a-9876-187579fa20ab/original", "content_type": "image/png", "size": 1538}
+   evidence_id= 7eb6c37c-d388-4c7a-9876-187579fa20ab storage_key= quarantine/7eb6c37c-d388-4c7a-9876-187579fa20ab/original size= 1538 api_status= uploaded
+
+=== F2  metadata returned by the API ===
+PASS  F2 GET /evidence/{id} returns metadata  | HTTP 200
+PASS  F2 stored status is the quarantine state (not 'trusted')  | db status=uploaded_quarantine api status=uploaded
+PASS  F2 metadata agrees with the upload result  | size 1538 / 1538 / 1538
+
+=== F3  presigned download returns exactly the uploaded bytes ===
+PASS  F3 download URL issued after authorization  | HTTP 200 keys=['download_url', 'evidence_id', 'expires_in']
+PASS  F3 presigned URL points at the disposable MinIO service only  | http://minio:9000/be037b65cee2-quarantine/quarantine/7eb6c37c-d388-4c7a-9876-187579fa20ab/original
+PASS  F3 downloaded bytes equal the uploaded bytes  | fetched 1538 bytes, sha match=True
+
+=== F4  rejected inputs (MIME / malformed / empty / oversized) ===
+PASS  F4 disallowed declared MIME rejected with 415  | HTTP 415 (expected 415) 
+PASS  F4 malformed payload with an image MIME rejected with 415  | HTTP 415 (expected 415) 
+FAIL  F4 signature/declared-type mismatch rejected with 415  | HTTP 201 (expected 415) {"evidence_id": "b0105ec8-d82a-45a4-b3b3-b147d703f55d", "status": "uploaded", "storage_key": "quarantine/b0105ec8-d82a-45a4-b3b3-b147d703f55d/original", "content_type": "image/png", "size": 1351}
+PASS  F4 empty payload rejected with 400  | HTTP 400 (expected 400) 
+PASS  F4 oversized payload rejected with 413  | HTTP 413 (expected 413) 
+
+=== F5  no valid evidence record without its object ===
+PASS  F5 unknown evidence id is 404 (no phantom record)  | HTTP 404
+
+=== F6  geospatial write/read path on the created evidence ===
+PASS  F6 valid coordinates accepted  | HTTP 200 (expected 200) 
+PASS  F6 out-of-range latitude rejected  | HTTP 422 (expected 422) 
+PASS  F6 out-of-range longitude rejected  | HTTP 422 (expected 422) 
+PASS  F6 PostGIS nearby query returns the located evidence  | HTTP 200 ids=['7eb6c37c-d388-4c7a-9876-187579fa20ab']
+
+=== F7  retention evaluation is non-destructive (disposable data) ===
+FAIL  F7 retention evaluate answers for the synthetic evidence  | HTTP 422 {"detail": [{"type": "enum", "loc": ["body", "resource_type"], "msg": "Input should be 'EVIDENCE', 'ANALYSIS_RESULT', 'FUSION_RUN', 'REVIEW_CASE', 'EVIDENCE_REQUEST' or 'AUDIT_LEDGER_EVENT'", "input": "evidence", "ctx": {"expected": "'EVIDE
+PASS  F7 evidence record still present after evaluation (no deletion performed)  | HTTP 200
+
+=== IDS for the report ===
+EVIDENCE_ID=7eb6c37c-d388-4c7a-9876-187579fa20ab
+STORAGE_KEY=quarantine/7eb6c37c-d388-4c7a-9876-187579fa20ab/original
+USER_ID=8dc93dec-423e-4e5c-9855-ba78d99eebad
+PROJECT_OWNER=8dc93dec-423e-4e5c-9855-ba78d99eebad
+
+=== SUMMARY ===
+FAILING CHECK: F4 signature/declared-type mismatch rejected with 415 | HTTP 201 (expected 415) {"evidence_id": "b0105ec8-d82a-45a4-b3b3-b147d703f55d", "status": "uploaded", "storage_key": "quarantine/b0105ec8-d82a-45a4-b3b3-b147d703f55d/original", "content_type": "image/png", "size": 1351}
+FAILING CHECK: F7 retention evaluate answers for the synthetic evidence | HTTP 422 {"detail": [{"type": "enum", "loc": ["body", "resource_type"], "msg": "Input should be 'EVIDENCE', 'ANALYSIS_RESULT', 'FUSION_RUN', 'REVIEW_CASE', 'EVIDENCE_REQUEST' or 'AUDIT_LEDGER_EVENT'", "input": "evidence", "ctx": {"expected": "'EVIDE
+F_RESULT: total=21 pass=19 fail=2

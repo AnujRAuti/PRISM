@@ -1,0 +1,34 @@
+=== docker baseline (pre-creation for run 7c1f1) ===
+utc=2026-10-13T16:48:03Z
+--- containers (all, incl. exited) ---
+7949c9980816|pofa_db|garapadev/postgres-postgis-pgvector:15-stable|Up 11 hours|0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+1810626e8683|pofa_minio_init|quay.io/minio/mc:latest|Exited (0) 2 weeks ago|
+29b684e82d7c|pofa_redis|redis:7-alpine|Up 11 hours|0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+54fce2fccd46|pofa_minio|quay.io/minio/minio:latest|Up 3 hours|0.0.0.0:9000-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp
+--- volumes ---
+DRIVER    VOLUME NAME
+local     53d73830397a014f1a50263c48a77cd123df6cc2cc798521b7c8596cdaa64401
+local     35393f31e3261a8303fa830841fc6497e1b31f140881f92cc71ac1a12703c758
+local     86901abfdac566d47f9695a60221be82f3c02f3c8a68ca28e55f3dc9d51d5105
+local     bdfa6f08253d9049c56b3fc6b35c7cec69387ccd2b250c3fd4d6225a1fc44014
+local     proof-of-action-final_db_data
+local     proof-of-action-final_minio_data
+--- networks ---
+NETWORK ID     NAME                            DRIVER    SCOPE
+0666e1e8662b   bridge                          bridge    local
+76a03d6f04d0   host                            host      local
+9c8d914e052c   none                            null      local
+77d8a8245370   proof-of-action-final_default   bridge    local
+--- images ---
+839b0e63c0ff poa-backend:be037a 3.06GB
+294b683cb724 alpine:latest 13MB
+ff02b58f971e redis:7-alpine 57.8MB
+14cea493d9a3 quay.io/minio/minio:latest 241MB
+a7fe349ef4bd quay.io/minio/mc:latest 117MB
+6ebf83d85b52 garapadev/postgres-postgis-pgvector:15-stable 902MB
+--- resources matching this run's planned prefix be037fin (must be EMPTY) ---
+no be037fin containers
+no be037fin volumes
+no be037fin networks
+--- images referenced by this project's compose (no pull/build performed) ---
+poa-backend:be037a

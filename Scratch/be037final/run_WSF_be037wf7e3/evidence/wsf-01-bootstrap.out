@@ -1,0 +1,10 @@
+[22:24:20] health: {'be037wf7e3_db': 'healthy\n', 'be037wf7e3_redis': 'healthy\n', 'be037wf7e3_minio': 'healthy\n'}
+[22:24:21] identity: labelled=True volumes=3 networks=1
+[22:24:21] protected unchanged: {'pofa_db': {'same_id': True, 'same_created': True, 'same_restart_count': True, 'state': 'running'}, 'pofa_redis': {'same_id': True, 'same_created': True, 'same_restart_count': True, 'state': 'running'}, 'pofa_minio': {'same_id': True, 'same_created': True, 'same_restart_count': True, 'state': 'running'}}
+[22:24:21] first boot: ['plpgsql 1.0', 'postgis 3.4.2', 'vector 0.7.4'] relations=1 vendor_demo=False
+[22:24:29] alembic upgrade head rc=0
+[22:24:54] alembic_version=[('t0u1v2w3x030',)] tables=73 alembic_check_rc=0
+[22:25:08] buckets: {'be037wf7e3-quarantine': 'created', 'be037wf7e3-evidence': 'created'}
+[22:25:09] runtime role self-check: [(True, False, False, False, False, False, False)]
+[22:25:21] catalogue seed rc=0 ['CATALOGUE before=(0, 0, 0) after=(6, 69, 131)']
+[22:25:21] wrote evidence/wsf-01-bootstrap.json

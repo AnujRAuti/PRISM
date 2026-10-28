@@ -1,0 +1,1453 @@
+{
+  "run_id": "be037wf7e3",
+  "phases": [],
+  "started_at": "2026-10-14T22:59:31+0530",
+  "image_provenance": {
+    "inspect_rc": 0,
+    "weight_files_found": [],
+    "cache_listing": [
+      "ls: cannot access '/root/.cache': Permission denied",
+      "ls: cannot access '/home/appuser/.cache': No such file or directory"
+    ],
+    "model_weights_present_in_image": false
+  },
+  "api_dev": {
+    "docker_run_rc": 0,
+    "id": "e3bd690b9b16256b36d0bd67a436d0c68cdd38414ad6991ca4762a4512d15c0a",
+    "id_short": "e3bd690b9b16",
+    "created": "2026-10-14T17:29:33.371685633Z",
+    "state": "running",
+    "restart_count": "0",
+    "auth_mode": "development",
+    "dev_tokens": true,
+    "environment": "development",
+    "ready_probe": {
+      "status": 200,
+      "body": "{\"status\":\"healthy\",\"timestamp\":1791998981.1273243,\"checks\":{\"application\":{\"status\":\"healthy\",\"message\":\"Application is running\",\"required\":false},\"postgresql\":{\"status\":\"healthy\",\"message\":\"PostgreSQL connection successful\",\"required\":true},\"redis\":{\"status\":\"healthy\",\"message\":\"Redis connection s"
+    }
+  },
+  "bootstrap": {
+    "shape": "AUTH_MODE=development (anonymous bypass)",
+    "steps": [
+      {
+        "label": "create user wf_admin",
+        "path": "/api/v1/auth/users",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create user wf_officer_a",
+        "path": "/api/v1/auth/users",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create user wf_officer_b",
+        "path": "/api/v1/auth/users",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create user wf_citizen_a",
+        "path": "/api/v1/auth/users",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create user wf_intake",
+        "path": "/api/v1/auth/users",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create org A",
+        "path": "/api/v1/auth/organizations",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create org B",
+        "path": "/api/v1/auth/organizations",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create project A",
+        "path": "/api/v1/projects",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create project B",
+        "path": "/api/v1/projects",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "scope project A",
+        "status": 200,
+        "expected": 200,
+        "met": true
+      },
+      {
+        "label": "scope project B",
+        "status": 200,
+        "expected": 200,
+        "met": true
+      },
+      {
+        "label": "role GLOBAL ADMINISTRATOR",
+        "path": "/api/v1/auth/users/7787a626-8933-4901-8699-0308f625655d/roles",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "role ORG FIELD_OFFICER A",
+        "path": "/api/v1/auth/users/ec562c58-b649-4d9c-9e89-142d91ddb325/roles",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "role ORG FIELD_OFFICER B",
+        "path": "/api/v1/auth/users/a07d1b55-a9fd-4a8d-8d24-0470d6a4b56c/roles",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "role ORG CITIZEN A",
+        "path": "/api/v1/auth/users/663a7bd8-94c9-4b2d-932d-d217f0689117/roles",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "role GLOBAL FIELD_OFFICER intake",
+        "path": "/api/v1/auth/users/79ee8075-860d-4f00-a302-8d932e1d4a56/roles",
+        "status": 201,
+        "expected": 201,
+        "met": true
+      },
+      {
+        "label": "create client full_a",
+        "path": "/api/v1/integrations/clients",
+        "status": 201,
+        "expected": 201,
+        "met": true,
+        "secret_returned_once": true,
+        "client_id": "be4aa4fe-5be3-4144-a952-1a9bc30433c4",
+        "scopes": [
+          "intelligence.reprocess",
+          "evidence.read",
+          "evidence.create",
+          "evidence.update_context"
+        ],
+        "project_scoped": true
+      },
+      {
+        "label": "create client read_only_a",
+        "path": "/api/v1/integrations/clients",
+        "status": 201,
+        "expected": 201,
+        "met": true,
+        "secret_returned_once": true,
+        "client_id": "a672d54f-09aa-4658-bf13-72b99b10a76a",
+        "scopes": [
+          "evidence.read"
+        ],
+        "project_scoped": true
+      },
+      {
+        "label": "create client full_b",
+        "path": "/api/v1/integrations/clients",
+        "status": 201,
+        "expected": 201,
+        "met": true,
+        "secret_returned_once": true,
+        "client_id": "8af65c3f-e102-418e-80aa-e76e0739e9d0",
+        "scopes": [
+          "intelligence.reprocess",
+          "evidence.read",
+          "evidence.create",
+          "evidence.update_context"
+        ],
+        "project_scoped": true
+      },
+      {
+        "label": "create client intake",
+        "path": "/api/v1/integrations/clients",
+        "status": 201,
+        "expected": 201,
+        "met": true,
+        "secret_returned_once": true,
+        "client_id": "71894a38-6155-40cb-9362-67e5968579ba",
+        "scopes": [
+          "evidence.create",
+          "evidence.read",
+          "evidence.update_context",
+          "intelligence.reprocess"
+        ],
+        "project_scoped": false
+      },
+      {
+        "label": "create client audit_global",
+        "path": "/api/v1/integrations/clients",
+        "status": 201,
+        "expected": 201,
+        "met": true,
+        "secret_returned_once": true,
+        "client_id": "26bd65bc-35b5-4cef-b75a-e098c7e0a948",
+        "scopes": [
+          "audit.read"
+        ],
+        "project_scoped": false
+      },
+      {
+        "label": "create client audit_project",
+        "path": "/api/v1/integrations/clients",
+        "status": 201,
+        "expected": 201,
+        "met": true,
+        "secret_returned_once": true,
+        "client_id": "ee0f6fd4-55c5-4101-9dc0-758f13d7d80f",
+        "scopes": [
+          "audit.read"
+        ],
+        "project_scoped": true
+      }
+    ],
+    "api_client_contract": {
+      "integrations_clients_returns_secret_once": true,
+      "auth_clients_status": 201,
+      "auth_clients_response_has_secret_field": false,
+      "auth_clients_response_keys": [
+        "id",
+        "name",
+        "project_id",
+        "scopes",
+        "status"
+      ]
+    },
+    "created_ids": {
+      "wf_admin": "7787a626-8933-4901-8699-0308f625655d",
+      "wf_officer_a": "ec562c58-b649-4d9c-9e89-142d91ddb325",
+      "wf_officer_b": "a07d1b55-a9fd-4a8d-8d24-0470d6a4b56c",
+      "wf_citizen_a": "663a7bd8-94c9-4b2d-932d-d217f0689117",
+      "wf_intake": "79ee8075-860d-4f00-a302-8d932e1d4a56",
+      "org_a": "f0becee6-221c-405e-8582-42a8a709c769",
+      "org_b": "f6eaa01a-c9b9-4835-a98f-2abdca1e1bde",
+      "project_a": "c2e97af6-f94f-461a-8113-3de47dbbca25",
+      "project_b": "2e62de1c-4890-4fd8-9bc0-8e58159a31fa"
+    },
+    "clients_created": [
+      "audit_global",
+      "audit_project",
+      "full_a",
+      "full_b",
+      "intake",
+      "read_only_a"
+    ]
+  },
+  "identity_ids": {
+    "wf_admin": "7787a626-8933-4901-8699-0308f625655d",
+    "wf_officer_a": "ec562c58-b649-4d9c-9e89-142d91ddb325",
+    "wf_officer_b": "a07d1b55-a9fd-4a8d-8d24-0470d6a4b56c",
+    "wf_citizen_a": "663a7bd8-94c9-4b2d-932d-d217f0689117",
+    "wf_intake": "79ee8075-860d-4f00-a302-8d932e1d4a56",
+    "org_a": "f0becee6-221c-405e-8582-42a8a709c769",
+    "org_b": "f6eaa01a-c9b9-4835-a98f-2abdca1e1bde",
+    "project_a": "c2e97af6-f94f-461a-8113-3de47dbbca25",
+    "project_b": "2e62de1c-4890-4fd8-9bc0-8e58159a31fa"
+  },
+  "api_enforcing_devtokens_off": {
+    "docker_run_rc": 0,
+    "id": "7c41e0c850a0fd7dc672a401c578d79b08142b2a7ba46f72c84e58ae3dae8e5e",
+    "id_short": "7c41e0c850a0",
+    "created": "2026-10-14T17:29:42.992530716Z",
+    "state": "running",
+    "restart_count": "0",
+    "auth_mode": "enforcing",
+    "dev_tokens": false,
+    "environment": "development",
+    "ready_probe": {
+      "status": 200,
+      "body": "{\"status\":\"healthy\",\"timestamp\":1791998990.7085164,\"checks\":{\"application\":{\"status\":\"healthy\",\"message\":\"Application is running\",\"required\":false},\"postgresql\":{\"status\":\"healthy\",\"message\":\"PostgreSQL connection successful\",\"required\":true},\"redis\":{\"status\":\"healthy\",\"message\":\"Redis connection s"
+    }
+  },
+  "f1_dev_tokens_off": {
+    "shape": "AUTH_MODE=enforcing, AUTH_DEV_TOKENS_ENABLED=false",
+    "cases": [
+      {
+        "case": "authorised evidence upload (creates the object)",
+        "request": "POST /api/v1/evidence",
+        "expected_status": 201,
+        "observed_status": 201,
+        "met": true,
+        "body_excerpt": {
+          "evidence_id": "237e8930-cb79-463f-85a4-600c7d91f08f",
+          "status": "uploaded",
+          "storage_key": "quarantine/237e8930-cb79-463f-85a4-600c7d91f08f/original",
+          "content_type": "image/jpeg",
+          "size": 3796
+        },
+        "bytes": 3796
+      },
+      {
+        "case": "project-scoped client attaches context to evidence it uploaded",
+        "request": "PATCH /api/v1/evidence/237e8930-cb79-463f-85a4-600c7d91f08f/context",
+        "expected_status": 404,
+        "observed_status": 404,
+        "met": true,
+        "detail": {
+          "detail": "Not found"
+        },
+        "design_rule": "RESOURCE_UNSCOPEABLE -> 404 unless GLOBAL grant"
+      },
+      {
+        "case": "client without evidence.update_context attaches context",
+        "request": "PATCH /api/v1/evidence/237e8930-cb79-463f-85a4-600c7d91f08f/context",
+        "expected_status": 403,
+        "observed_status": 403,
+        "met": true,
+        "detail": {
+          "detail": "Forbidden"
+        }
+      },
+      {
+        "case": "GLOBAL-scope intake client attaches evidence to project A",
+        "request": "PATCH /api/v1/evidence/237e8930-cb79-463f-85a4-600c7d91f08f/context",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail": {
+          "evidence_id": "237e8930-cb79-463f-85a4-600c7d91f08f",
+          "project_id": "c2e97af6-f94f-461a-8113-3de47dbbca25",
+          "claim_id": null
+        },
+        "db_side_effect": {}
+      },
+      {
+        "case": "anonymous enqueue",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 401,
+        "observed_status": 401,
+        "met": true,
+        "detail_excerpt": "Authentication required",
+        "db_before": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "invalid bearer",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 401,
+        "observed_status": 401,
+        "met": true,
+        "detail_excerpt": "Invalid credentials",
+        "db_before": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "dev-user token while dev tokens disabled",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 401,
+        "observed_status": 401,
+        "met": true,
+        "detail_excerpt": "Invalid credentials",
+        "db_before": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "client with unknown secret",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 401,
+        "observed_status": 401,
+        "met": true,
+        "detail_excerpt": "Invalid credentials",
+        "db_before": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "client without intelligence.reprocess",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 403,
+        "observed_status": 403,
+        "met": true,
+        "detail_excerpt": "Forbidden",
+        "db_before": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "cross-organisation client (B on A evidence)",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 404,
+        "observed_status": 404,
+        "met": true,
+        "detail_excerpt": "Not found",
+        "db_before": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "authorised enqueue (GLOBAL intake client)",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 202,
+        "observed_status": 202,
+        "met": true,
+        "detail_excerpt": null,
+        "db_before": {
+          "analysis_jobs": 0,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 1,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 1,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "enqueue by the project-A client (evidence now projected)",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 202,
+        "observed_status": 202,
+        "met": true,
+        "detail_excerpt": null,
+        "db_before": {
+          "analysis_jobs": 1,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 1,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "malformed job id",
+        "request": "GET /api/v1/analysis/jobs/not-a-uuid",
+        "expected_status": 422,
+        "observed_status": 422,
+        "met": true,
+        "detail_excerpt": "Invalid resource identifier",
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "absent job id (valid uuid)",
+        "request": "GET /api/v1/analysis/jobs/52648a9a-24ad-4c19-a289-6f81696f84ba",
+        "expected_status": 404,
+        "observed_status": 404,
+        "met": true,
+        "detail_excerpt": "Not found",
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "authorised job read",
+        "request": "GET /api/v1/analysis/jobs/28b2c73d-9a03-48fc-9567-70d9a04ad08a",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail_excerpt": null,
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "anchored verify, global-scope audit.read client",
+        "request": "GET /api/v1/audit/verify/anchored?baseline=none",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail_excerpt": null,
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "anchored verify, project-scope audit.read client",
+        "request": "GET /api/v1/audit/verify/anchored?baseline=none",
+        "expected_status": 403,
+        "observed_status": 403,
+        "met": true,
+        "detail_excerpt": "Forbidden",
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "anchored verify, client without audit.read",
+        "request": "GET /api/v1/audit/verify/anchored?baseline=none",
+        "expected_status": 403,
+        "observed_status": 403,
+        "met": true,
+        "detail_excerpt": "Forbidden",
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "anchored verify, unknown baseline name",
+        "request": "GET /api/v1/audit/verify/anchored?baseline=does-not-exist",
+        "expected_status": 422,
+        "observed_status": 422,
+        "met": true,
+        "detail_excerpt": "Unknown baseline 'does-not-exist'; registered baselines: ['none', 'pofa-dev-pre-be030-test-cleanup']",
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "anchored verify, anonymous",
+        "request": "GET /api/v1/audit/verify/anchored",
+        "expected_status": 401,
+        "observed_status": 401,
+        "met": true,
+        "detail_excerpt": "Authentication required",
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "health surface anonymous /health",
+        "request": "GET /health",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail_excerpt": null,
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "ready surface anonymous /ready",
+        "request": "GET /ready",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail_excerpt": null,
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      },
+      {
+        "case": "api docs/openapi reachable",
+        "request": "GET /openapi.json",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail_excerpt": null,
+        "db_before": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_after": {
+          "analysis_jobs": 2,
+          "evidence_rows": 1,
+          "audit_rows": 21,
+          "evidence_by_status": {
+            "uploaded_quarantine": 1
+          }
+        },
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 1
+        }
+      }
+    ],
+    "enqueued_job_id": "28b2c73d-9a03-48fc-9567-70d9a04ad08a",
+    "all_expected_met": true,
+    "rejected_cases": [
+      "project-scoped client attaches context to evidence it uploaded",
+      "client without evidence.update_context attaches context",
+      "anonymous enqueue",
+      "invalid bearer",
+      "dev-user token while dev tokens disabled",
+      "client with unknown secret",
+      "client without intelligence.reprocess",
+      "cross-organisation client (B on A evidence)",
+      "malformed job id",
+      "absent job id (valid uuid)",
+      "anchored verify, project-scope audit.read client",
+      "anchored verify, client without audit.read",
+      "anchored verify, unknown baseline name",
+      "anchored verify, anonymous"
+    ],
+    "rejected_cases_with_row_growth": [],
+    "no_row_created_for_rejected_requests": true
+  },
+  "api_enforcing_devtokens_on": {
+    "docker_run_rc": 0,
+    "id": "a5bbdd9d5f86669bb07b3cebf75027d232948993ad7de277117923053a8c47f5",
+    "id_short": "a5bbdd9d5f86",
+    "created": "2026-10-14T17:30:00.297799711Z",
+    "state": "running",
+    "restart_count": "0",
+    "auth_mode": "enforcing",
+    "dev_tokens": true,
+    "environment": "development",
+    "ready_probe": {
+      "status": 200,
+      "body": "{\"status\":\"healthy\",\"timestamp\":1791999007.8309643,\"checks\":{\"application\":{\"status\":\"healthy\",\"message\":\"Application is running\",\"required\":false},\"postgresql\":{\"status\":\"healthy\",\"message\":\"PostgreSQL connection successful\",\"required\":true},\"redis\":{\"status\":\"healthy\",\"message\":\"Redis connection s"
+    }
+  },
+  "f1_dev_tokens_on": {
+    "shape": "AUTH_MODE=enforcing, AUTH_DEV_TOKENS_ENABLED=true",
+    "context_permission_holders_measured": {
+      "audit.read": [
+        "ADMINISTRATOR",
+        "REVIEWER",
+        "SUPERVISOR"
+      ],
+      "evidence.create": [
+        "CITIZEN",
+        "FIELD_OFFICER"
+      ],
+      "evidence.update_context": [
+        "FIELD_OFFICER"
+      ],
+      "intelligence.reprocess": [
+        "FIELD_OFFICER",
+        "SUPERVISOR"
+      ]
+    },
+    "cases": [
+      {
+        "case": "user upload (FIELD_OFFICER, evidence.create)",
+        "request": "POST /api/v1/evidence",
+        "expected_status": 201,
+        "observed_status": 201,
+        "met": true,
+        "bytes": 3862
+      },
+      {
+        "case": "ORG-scope FIELD_OFFICER attaches context to unprojected evidence",
+        "expected_status": 404,
+        "observed_status": 404,
+        "met": true,
+        "detail": {
+          "detail": "Not found"
+        },
+        "design_rule": "RESOURCE_UNSCOPEABLE -> 404 unless GLOBAL grant"
+      },
+      {
+        "case": "GLOBAL ADMINISTRATOR attaches evidence to project A",
+        "expected_status": 403,
+        "observed_status": 403,
+        "met": true,
+        "detail": {
+          "detail": "Forbidden"
+        },
+        "design_rule": "NO_PERMISSION -> 403; the seeded catalogue grants evidence.update_context only to FIELD_OFFICER (see context_permission_holders measured in this run)"
+      },
+      {
+        "case": "GLOBAL FIELD_OFFICER (intake) attaches evidence to project A",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail": {
+          "evidence_id": "66d18660-8d5f-416e-9de2-a0cfba3e0889",
+          "project_id": "c2e97af6-f94f-461a-8113-3de47dbbca25",
+          "claim_id": null
+        }
+      },
+      {
+        "case": "dev-user enqueue (officer A, permission in org scope)",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 202,
+        "observed_status": 202,
+        "met": true,
+        "detail_excerpt": null,
+        "db_side_effect": {
+          "analysis_jobs": 1,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "dev-user CITIZEN (no intelligence.reprocess)",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 403,
+        "observed_status": 403,
+        "met": true,
+        "detail_excerpt": "Forbidden",
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "dev-user officer B on A evidence (cross-org)",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 404,
+        "observed_status": 404,
+        "met": true,
+        "detail_excerpt": "Not found",
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "unknown dev-user id",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 401,
+        "observed_status": 401,
+        "met": true,
+        "detail_excerpt": "Invalid credentials",
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "officer B reading an A job",
+        "request": "GET /api/v1/analysis/jobs/7f05ed32-cb6d-4781-a735-27fb9f7a1a4f",
+        "expected_status": 404,
+        "observed_status": 404,
+        "met": true,
+        "detail_excerpt": "Not found",
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "officer A reading its own job",
+        "request": "GET /api/v1/analysis/jobs/7f05ed32-cb6d-4781-a735-27fb9f7a1a4f",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail_excerpt": null,
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "malformed evidence id in enqueue body",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 422,
+        "observed_status": 422,
+        "met": true,
+        "detail_excerpt": "Invalid evidence ID",
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "invalid job_type literal",
+        "request": "POST /api/v1/analysis/jobs",
+        "expected_status": 422,
+        "observed_status": 422,
+        "met": true,
+        "detail_excerpt": [
+          {
+            "type": "literal_error",
+            "loc": [
+              "body",
+              "job_type"
+            ],
+            "msg": "Input should be 'fingerprint' or 'vision'",
+            "input": "telepathy",
+            "ctx": {
+              "expected": "'fingerprint' or 'vision'"
+            }
+          }
+        ],
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "dev-user ADMINISTRATOR on anchored verify",
+        "request": "GET /api/v1/audit/verify/anchored?baseline=none",
+        "expected_status": 200,
+        "observed_status": 200,
+        "met": true,
+        "detail_excerpt": null,
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      },
+      {
+        "case": "dev-user CITIZEN on anchored verify",
+        "request": "GET /api/v1/audit/verify/anchored?baseline=none",
+        "expected_status": 403,
+        "observed_status": 403,
+        "met": true,
+        "detail_excerpt": "Forbidden",
+        "db_side_effect": {
+          "analysis_jobs": 0,
+          "evidence_rows": 0,
+          "audit_rows": 0
+        },
+        "evidence_by_status_after": {
+          "uploaded_quarantine": 2
+        }
+      }
+    ],
+    "all_expected_met": true,
+    "cross_org_job_read_body": {
+      "status": 404,
+      "contains_result": false,
+      "keys": [
+        "detail"
+      ]
+    },
+    "cross_org_row_created": 0
+  },
+  "observation_wsf_obs_1": {
+    "title": "Client-driven ingest requires a GLOBAL grant for the context step",
+    "measured": [
+      {
+        "phase": "dev_tokens_off",
+        "case": "project-scoped client attaches context to evidence it uploaded",
+        "expected": 404,
+        "observed": 404
+      },
+      {
+        "phase": "dev_tokens_off",
+        "case": "client without evidence.update_context attaches context",
+        "expected": 403,
+        "observed": 403
+      },
+      {
+        "phase": "dev_tokens_off",
+        "case": "GLOBAL-scope intake client attaches evidence to project A",
+        "expected": 200,
+        "observed": 200
+      },
+      {
+        "phase": "dev_tokens_on",
+        "case": "ORG-scope FIELD_OFFICER attaches context to unprojected evidence",
+        "expected": 404,
+        "observed": 404
+      },
+      {
+        "phase": "dev_tokens_on",
+        "case": "GLOBAL ADMINISTRATOR attaches evidence to project A",
+        "expected": 403,
+        "observed": 403
+      },
+      {
+        "phase": "dev_tokens_on",
+        "case": "GLOBAL FIELD_OFFICER (intake) attaches evidence to project A",
+        "expected": 200,
+        "observed": 200
+      }
+    ],
+    "mechanism": "resolve_resource_scope() reports no project for an unprojected evidence (backend/services/authorization.py:1003), can() answers RESOURCE_UNSCOPEABLE, and enforce() maps that to 404 (backend/security/authorization.py:163). The rule is unit-pinned by tests/unit/test_authorization.py::test_unscoped_resource_requires_global, so fail-closed here is intended behaviour, not a regression.",
+    "consequence": "an integrator holding only project- or organization-scoped permissions can upload bytes but can never attach them to its own project, so every real ingestion needs a paired GLOBAL intake credential. POST /api/v1/evidence accepts no project or claim field, so there is no single-call alternative. No existing test covers this path: every context-attach test runs under the development bypass.",
+    "classification": "Observation / design gap for the owner, not a security defect"
+  },
+  "f3_end_to_end": {
+    "queue": "be037wf7e3:analysis:jobs",
+    "local_sha256": "190812dba57251a8aafd82fe7a0ed2e3d28a624126573690fd24aef83ff46b2c",
+    "local_bytes": 3984,
+    "upload": {
+      "request": "POST /api/v1/evidence",
+      "expected": 201,
+      "status": 201,
+      "met": true,
+      "response_keys": [
+        "content_type",
+        "evidence_id",
+        "size",
+        "status",
+        "storage_key"
+      ],
+      "status_field": "uploaded",
+      "storage_key": "quarantine/a75a3d32-e0b0-454c-8183-1d9a3f7b5cb2/original",
+      "content_type": "image/jpeg",
+      "size": 3984
+    },
+    "context_attach": {
+      "expected": 200,
+      "status": 200,
+      "met": true,
+      "body": {
+        "evidence_id": "a75a3d32-e0b0-454c-8183-1d9a3f7b5cb2",
+        "project_id": "c2e97af6-f94f-461a-8113-3de47dbbca25",
+        "claim_id": null
+      }
+    },
+    "enqueue": {
+      "expected": 202,
+      "status": 202,
+      "met": true,
+      "job_id": "c3149df0-9c4a-45d7-a17f-2fad684b3fe2",
+      "job_status": "queued"
+    },
+    "worker_container": {
+      "docker_run_rc": 0,
+      "id": "fde64bffff7a29e7981570166579a63ff409343c399080f4303dc42379d5e972",
+      "id_short": "fde64bffff7a",
+      "state": "running",
+      "restart_count": "0"
+    },
+    "status_sequence_as_seen_by_the_api": [
+      "queued",
+      "running",
+      "completed"
+    ],
+    "job_final_via_api": {
+      "status": 200,
+      "job_status": "completed",
+      "attempt_count": 1,
+      "error": null,
+      "has_result": true,
+      "completed_at": "2026-10-14T17:30:26.215473Z"
+    },
+    "job_final_in_database": [
+      "completed",
+      1,
+      null,
+      true
+    ],
+    "stored_result": {
+      "exists": true,
+      "phash": "907355f348275675",
+      "phash_status": "success",
+      "sha256": "190812dba57251a8aafd82fe7a0ed2e3d28a624126573690fd24aef83ff46b2c",
+      "sha256_matches_local_bytes": true,
+      "embedding_column_null": true,
+      "embedding_status": "unavailable",
+      "embedding_error_present": true,
+      "embedding_error_excerpt": "Can't load image processor for 'openai/clip-vit-base-patch32'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherw",
+      "semantic_matches": 0,
+      "perceptual_matches": 0
+    },
+    "inference_limitation": {
+      "model_weights_present_in_image": false,
+      "downloads_performed_by_this_run": false,
+      "reason": "HF_HUB_OFFLINE=1 and TRANSFORMERS_OFFLINE=1 are set on every container this run starts, and the image contains no weights, so the embedding path takes its documented 'unavailable' branch. A fingerprint job therefore completes with real perceptual hashing and NO semantic vector: the stored result records the loader failure instead of fabricating a vector.",
+      "what_full_inference_would_need": "an explicit owner decision to allow an outbound weight download, or a pre-seeded read-only model cache volume mounted into the container."
+    },
+    "minio_object": {
+      "bucket": "be037wf7e3-quarantine",
+      "key": "quarantine/a75a3d32-e0b0-454c-8183-1d9a3f7b5cb2/original",
+      "content_length": 3984,
+      "bytes_equal_local": true,
+      "sha256_equal_local": true
+    },
+    "evidence_row": [
+      "uploaded_quarantine",
+      "quarantine/a75a3d32-e0b0-454c-8183-1d9a3f7b5cb2/original",
+      "190812dba57251a8aafd82fe7a0ed2e3d28a624126573690fd24aef83ff46b2c",
+      3984,
+      "image/jpeg",
+      "c2e97af6-f94f-461a-8113-3de47dbbca25"
+    ],
+    "download_endpoint": {
+      "expected": 200,
+      "status": 200,
+      "met": true,
+      "url_issued": true,
+      "expires_in": 900,
+      "evidence_id_matches": true
+    },
+    "audit_events_for_this_flow": [
+      [
+        "API_CLIENT_CREATED",
+        6
+      ],
+      [
+        "USER_CREATED",
+        5
+      ],
+      [
+        "ROLE_ASSIGNED",
+        5
+      ],
+      [
+        "EVIDENCE_UPLOADED",
+        3
+      ],
+      [
+        "PROJECT_SCOPE_CHANGED",
+        2
+      ],
+      [
+        "ORGANIZATION_CREATED",
+        2
+      ]
+    ],
+    "queue_lengths_after": {
+      "main": 0,
+      "processing": 0
+    },
+    "database_identities_in_use": [
+      [
+        "be037wf7e3_runtime",
+        "",
+        2
+      ],
+      [
+        "postgres",
+        "",
+        1
+      ]
+    ]
+  },
+  "f3_inference_measurement": {
+    "inspect_rc": 0,
+    "weight_files_found": [],
+    "cache_listing": [
+      "ls: cannot access '/root/.cache': Permission denied",
+      "ls: cannot access '/home/appuser/.cache': No such file or directory"
+    ],
+    "model_weights_present_in_image": false
+  },
+  "ledger_app_side": {
+    "rc": 0,
+    "identity": "be037wf7e3_runtime",
+    "verify": {
+      "valid": true,
+      "checked_events": 23,
+      "first_sequence": 1,
+      "last_sequence": 23,
+      "failures": []
+    },
+    "published_checkpoint_digest": {
+      "rows": 23,
+      "min_sequence": 1,
+      "max_sequence": 23,
+      "tail_event_hash": "2fd1e31e3898ba69344ff1f19a08445710e62f7375d2d7ea73a53c29908bd381",
+      "tail_previous_hash": "3d8723d7e84f5016ca6ec0ea330266a89e05aff606e1a8fd67ea913dbdae5fbf"
+    },
+    "tail": [
+      "LEDGER {\"verify\": {\"valid\": true, \"checked_events\": 23, \"first_sequence\": 1, \"last_sequence\": 23, \"failures\": []}, \"checkpoint\": {\"rows\": 23, \"min_sequence\": 1, \"max_sequence\": 23, \"tail_event_hash\": \"2fd1e31e3898ba69344ff1f19a08445710e62f7375d2d7ea73a53c29908bd381\", \"tail_previous_hash\": \"3d8723d7e84f5016ca6ec0ea330266a89e05aff606e1a8fd67ea913dbdae5fbf\"}, \"identity\": \"be037wf7e3_runtime\"}"
+    ]
+  },
+  "finished_at": "2026-10-14T23:00:35+0530"
+}

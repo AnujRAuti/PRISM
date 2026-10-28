@@ -1,0 +1,39 @@
+=== PRE-creation baseline of protected resources — 2026-10-13T06:59:09Z ===
+--- running containers (names/status incl health) ---
+7949c9980816 pofa_db Up 44 minutes
+29b684e82d7c pofa_redis Up 44 minutes
+54fce2fccd46 pofa_minio Up 44 minutes
+--- per-container identity (live datastores) ---
+pofa_db id=7949c99808161e138c35489a9d34928b873cfcd4cead9eb0f00fb37261033baf
+pofa_db state=running started=2026-10-13T06:15:07.152331657Z restarts=0 policy=unless-stopped
+pofa_db mounts=bind:->/docker-entrypoint-initdb.d volume:proof-of-action-final_db_data->/var/lib/postgresql/data 
+template parsing error: template: :1: unexpected "," in range
+pofa_redis id=29b684e82d7c9b2818fc1a3d0f48415ab78f923ec7e063150208d275bd767af5
+pofa_redis state=running started=2026-10-13T06:15:07.077129515Z restarts=0 policy=unless-stopped
+pofa_redis mounts=volume:53d73830397a014f1a50263c48a77cd123df6cc2cc798521b7c8596cdaa64401->/data 
+template parsing error: template: :1: unexpected "," in range
+pofa_minio id=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd
+pofa_minio state=running started=2026-10-13T06:15:07.080287176Z restarts=0 policy=unless-stopped
+pofa_minio mounts=volume:proof-of-action-final_minio_data->/data 
+template parsing error: template: :1: unexpected "," in range
+pofa_minio_init id=1810626e8683cdeba6ecc7301ae59a24ad791cd33324000fc55a525b2dfdda96
+pofa_minio_init state=exited started=2026-09-25T13:35:25.525328874Z restarts=0 policy=no
+pofa_minio_init mounts=
+template parsing error: template: :1: unexpected "," in range
+--- live volumes ---
+local 53d73830397a014f1a50263c48a77cd123df6cc2cc798521b7c8596cdaa64401
+local bdfa6f08253d9049c56b3fc6b35c7cec69387ccd2b250c3fd4d6225a1fc44014
+local proof-of-action-final_db_data
+local proof-of-action-final_minio_data
+--- live networks ---
+0666e1e8662b bridge INTERNAL
+76a03d6f04d0 host INTERNAL
+9c8d914e052c none INTERNAL
+77d8a8245370 proof-of-action-final_default INTERNAL
+--- all containers incl stopped ---
+7949c9980816 pofa_db Up 44 minutes
+1810626e8683 pofa_minio_init Exited (0) 2 weeks ago
+29b684e82d7c pofa_redis Up 44 minutes
+54fce2fccd46 pofa_minio Up 44 minutes
+--- disk ---
+D:              276G  162G  114G  59% /d

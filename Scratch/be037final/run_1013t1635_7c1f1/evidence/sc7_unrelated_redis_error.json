@@ -1,0 +1,23 @@
+{
+  "alive": false,
+  "backoff_warnings_emitted": 0,
+  "exit_code": 1,
+  "scenario": "S7 unrelated Redis command error propagates",
+  "setup": "ANALYSIS_QUEUE_NAME points at a key holding a Redis string",
+  "tail": [
+    "  File \"D:\\CODING\\Projects\\Proof-Of-Action-Final\\backend\\.venv312_repro\\Lib\\site-packages\\redis\\client.py\", line 1270, in <lambda>",
+    "    lambda: self._send_command_parse_response(",
+    "            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "  File \"D:\\CODING\\Projects\\Proof-Of-Action-Final\\backend\\.venv312_repro\\Lib\\site-packages\\redis\\client.py\", line 1246, in _send_command_parse_response",
+    "    return self.parse_response(conn, command_name, **options)",
+    "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "  File \"D:\\CODING\\Projects\\Proof-Of-Action-Final\\backend\\.venv312_repro\\Lib\\site-packages\\redis\\client.py\", line 1286, in parse_response",
+    "    response = connection.read_response()",
+    "               ^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "  File \"D:\\CODING\\Projects\\Proof-Of-Action-Final\\backend\\.venv312_repro\\Lib\\site-packages\\redis\\connection.py\", line 905, in read_response",
+    "    raise response",
+    "redis.exceptions.ResponseError: WRONGTYPE Operation against a key holding the wrong kind of value"
+  ],
+  "traceback_present": true,
+  "wrongtype_present": true
+}

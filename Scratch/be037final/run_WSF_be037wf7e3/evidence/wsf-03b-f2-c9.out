@@ -1,0 +1,7 @@
+[08:19:11] running F2 cases: ['c9']
+[08:19:12] started be037wf7e3_f2_c9 id=cb3f06260357
+[08:20:34] c9 cycle 1 stated delays=[3.7, 6.5, 14.0]
+[08:21:51] c9 cycle 2 stated delays=[3.7, 6.5, 14.0, 22.6, 40.2]
+[08:23:07] c9 cycle 3 stated delays=[3.7, 6.5, 14.0, 22.6, 40.2, 151.9]
+[08:24:40] recorded f2_c9
+[08:24:40] c9 done in 328.8s

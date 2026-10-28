@@ -1,0 +1,5 @@
+current_database: be037rem_app
+analysis_jobs grouped by status (status, rows, total attempts):
+   ('failed', 9, 27)
+non-terminal jobs: 0
+audit ledger rows written by this run: 194

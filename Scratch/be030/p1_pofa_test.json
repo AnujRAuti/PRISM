@@ -1,0 +1,95 @@
+{
+ "requested_database": "pofa_test",
+ "server_database": "pofa_test",
+ "postgres_version": "PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1) on x86_64-pc-linux-gnu",
+ "alembic_version_num": [
+  "s9t0u1v2w029"
+ ],
+ "ledger": {
+  "rows": 38261,
+  "min_sequence": 1,
+  "max_sequence": 38261,
+  "distinct_sequences": 38261,
+  "span": 38261,
+  "span_minus_count": 0
+ },
+ "event_type_counts": {
+  "null_event_type": 0,
+  "distinct_event_types": 71,
+  "rows": 38261
+ },
+ "out_of_domain_event_types": [],
+ "column_types": {
+  "event_hash": "character varying",
+  "event_type": "character varying",
+  "metadata": "json",
+  "payload": "json",
+  "previous_hash": "character varying",
+  "sequence_number": "bigint"
+ },
+ "triggers": [],
+ "rules": [],
+ "policies": [],
+ "constraints": [
+  {
+   "name": "audit_ledger_events_pkey",
+   "definition": "PRIMARY KEY (id)"
+  },
+  {
+   "name": "uq_audit_ledger_sequence",
+   "definition": "UNIQUE (sequence_number)"
+  }
+ ],
+ "row_security": {
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ "privileges": {
+  "role": "postgres",
+  "update_priv": true,
+  "delete_priv": true,
+  "table_owner": "postgres"
+ },
+ "missing_ranges": [],
+ "missing_total": 0,
+ "verify_chain": {
+  "full_range": {
+   "valid": true,
+   "checked_events": 38261,
+   "first_sequence": 1,
+   "last_sequence": 38261,
+   "failure_count": 0,
+   "failures_by_class": {},
+   "first_failures": [],
+   "duration_seconds": 9.503
+  },
+  "window_last_500": {
+   "valid": true,
+   "checked_events": 500,
+   "first_sequence": 37762,
+   "last_sequence": 38261,
+   "failure_count": 0,
+   "failures_by_class": {},
+   "first_failures": [],
+   "duration_seconds": 0.136
+  },
+  "window_last_1": {
+   "valid": true,
+   "checked_events": 1,
+   "first_sequence": 38261,
+   "last_sequence": 38261,
+   "failure_count": 0,
+   "failures_by_class": {},
+   "first_failures": [],
+   "duration_seconds": 0.007
+  }
+ },
+ "drift": {
+  "operations": 2,
+  "mentions_ledger": false,
+  "operation_details": [
+   "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assignments>",
+   "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assignments>), "
+  ]
+ }
+}

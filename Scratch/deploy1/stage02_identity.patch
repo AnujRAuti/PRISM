@@ -1,0 +1,2876 @@
+commit 61762341136bda866cddc08e3c6adad90b5a1bdf
+Author: AnujRAuti <anujauti17@gmail.com>
+Date:   Sat Oct 17 00:02:29 2026 +0530
+
+    cleanup#4
+
+diff --git a/.env.example b/.env.example
+index 7a3e2300..faafeaa3 100644
+--- a/.env.example
++++ b/.env.example
+@@ -112,7 +112,35 @@ CORS_ALLOW_ORIGINS=*
+ # rejected with 401. Set enforcing for any shared/production deployment.
+ AUTH_MODE=development
+ # Development bearer tokens (non-secret identifiers). Disable alongside
+-# AUTH_MODE=enforcing when OIDC/OAuth2 integration lands.
++# AUTH_MODE=enforcing: with AUTH_OIDC_ENABLED=true below, human callers have a
++# real credential and these tokens are the only thing being turned off.
+ AUTH_DEV_TOKENS_ENABLED=true
+ 
++# Stage 02 human identity: verify the signed-in user's own access token locally
++# against the identity provider's published key set. Off by default, so an
++# existing deployment is unchanged until these are set. The browser sends the
++# user's token; it never sees an API-client secret.
++# The values below are public provider metadata, not secrets — the private
++# material stays with the provider. Set AUTH_OIDC_ISSUER and AUTH_OIDC_JWKS_URI
++# to exactly what the provider publishes (for Supabase: the project URL plus
++# /auth/v1, and its /.well-known/jwks.json), and keep AUTH_OIDC_AUDIENCE at the
++# provider's access-token audience ("authenticated" on Supabase).
++# AUTH_OIDC_ENABLED=true
++# AUTH_OIDC_ISSUER=https://<project-ref>.supabase.co/auth/v1
++# AUTH_OIDC_JWKS_URI=https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json
++# AUTH_OIDC_AUDIENCE=authenticated
++# Algorithms accepted from a token header. Comma-separated; only asymmetric
++# families are allowed — 'none' and any HMAC (HS*) algorithm is refused at
++# startup and at verification.
++# AUTH_OIDC_ALGORITHMS=RS256
++# The (identity_provider, external_subject) pair this service matches a token's
++# `sub` against in the users table. There is NO auto-provisioning: an
++# administrator creates and grants the account first, or the sign-in gets a 401
++# telling the user to ask for a role.
++# AUTH_OIDC_IDENTITY_PROVIDER=supabase
++# How long the fetched key set is reused, so the provider is not hit per request
++# (floor 30s). An unknown `kid` triggers at most one refetch per 30s, which is
++# how a key rotation is picked up without restarting.
++# AUTH_OIDC_JWKS_TTL_SECONDS=300
++
+ # Notes: Ensure PostGIS and pgvector extensions are available in the database.
+diff --git a/backend/api/v1/endpoints/context.py b/backend/api/v1/endpoints/context.py
+index 40d56433..5a0c973f 100644
+--- a/backend/api/v1/endpoints/context.py
++++ b/backend/api/v1/endpoints/context.py
+@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
+ 
+ from backend.db.models import Activity, Claim, Evidence, Project, User
+ from backend.db.session import get_db
++from backend.security.attribution import derive_actor
+ from backend.security.authentication import get_current_principal, is_development_bypass
+ from backend.security.authorization import (
+     filter_by_project_scope,
+@@ -112,8 +113,13 @@ def create_activity(
+     principal: Principal = Depends(require("activity.create", "project", "project_id")),
+ ) -> Activity:
+     _require_project(project_id, db)
+-    _require_user(request.actor_id, db, "Actor")
+-    activity = Activity(project_id=str(project_id), actor_id=str(request.actor_id) if request.actor_id else None, verb=request.verb, details=request.details)
++    actor = derive_actor(principal, request.actor_id)
++    if principal.principal_type == "API_CLIENT":
++        # activities.actor_id is a foreign key to users.id, so an API client's
++        # own id may never be written there; the row records no actor instead.
++        actor = None
++    _require_user(actor, db, "Actor")
++    activity = Activity(project_id=str(project_id), actor_id=str(actor) if actor else None, verb=request.verb, details=request.details)
+     db.add(activity)
+     db.commit()
+     db.refresh(activity)
+diff --git a/backend/api/v1/endpoints/correction.py b/backend/api/v1/endpoints/correction.py
+index d1e2c1a1..0bac540c 100644
+--- a/backend/api/v1/endpoints/correction.py
++++ b/backend/api/v1/endpoints/correction.py
+@@ -24,6 +24,7 @@ from backend.schemas.correction import (
+     CorrectionResponse,
+     CorrectionStatus,
+ )
++from backend.security.attribution import derive_actor
+ from backend.security.authentication import get_current_principal, is_development_bypass
+ from backend.security.authorization import enforce, require, visible_project_ids
+ from backend.services import correction as correction_service
+@@ -77,10 +78,10 @@ def _event_item(event) -> CorrectionEventItem:
+     )
+ 
+ 
+-def _actor(principal: Principal, request_actor: UUID | None) -> str | None:
+-    if request_actor is not None:
+-        return str(request_actor)
+-    return principal.principal_id
++def _actor(principal: Principal, request_actor: UUID | None, *,
++           field: str = "actor_id") -> str | None:
++    """The authenticated principal is the actor; the body may only restate it."""
++    return derive_actor(principal, request_actor, field=field)
+ 
+ 
+ @router.post(
+@@ -99,7 +100,7 @@ def create_correction(
+     if not is_development_bypass(principal):
+         resource = resolve_resource_scope(db, "evidence", str(payload.target_id))
+         enforce(principal, "correction.create", resource, request)
+-    requester = _actor(principal, payload.requester_id)
++    requester = _actor(principal, payload.requester_id, field="requester_id")
+     if requester is None:
+         raise HTTPException(status_code=401, detail="Authentication required")
+     try:
+@@ -246,7 +247,7 @@ def approve_correction(
+         require("correction.approve", "correction_request", "correction_id")
+     ),
+ ) -> CorrectionResponse:
+-    resolver = _actor(principal, request.resolver_id)
++    resolver = _actor(principal, request.resolver_id, field="resolver_id")
+     try:
+         return _item(
+             correction_service.approve_correction(
+@@ -272,7 +273,7 @@ def reject_correction(
+         require("correction.approve", "correction_request", "correction_id")
+     ),
+ ) -> CorrectionResponse:
+-    resolver = _actor(principal, request.resolver_id)
++    resolver = _actor(principal, request.resolver_id, field="resolver_id")
+     try:
+         return _item(
+             correction_service.reject_correction(
+@@ -298,7 +299,7 @@ def apply_correction(
+         require("correction.apply", "correction_request", "correction_id")
+     ),
+ ) -> CorrectionResponse:
+-    applicant = _actor(principal, request.applied_by if request else None)
++    applicant = _actor(principal, request.applied_by if request else None, field="applied_by")
+     try:
+         correction, _invalidation, _reprocessing = correction_service.apply_correction(
+             db, str(correction_id), applied_by=applicant
+diff --git a/backend/api/v1/endpoints/dispute.py b/backend/api/v1/endpoints/dispute.py
+index 2278709d..4d22e7a7 100644
+--- a/backend/api/v1/endpoints/dispute.py
++++ b/backend/api/v1/endpoints/dispute.py
+@@ -27,6 +27,7 @@ from backend.schemas.dispute import (
+     DisputeTargetType,
+     DisputeWithdrawRequest,
+ )
++from backend.security.attribution import derive_actor
+ from backend.security.authentication import get_current_principal, is_development_bypass
+ from backend.security.authorization import enforce, require, visible_project_ids
+ from backend.services import dispute as dispute_service
+@@ -88,11 +89,10 @@ def _event_item(event) -> DisputeEventItem:
+     )
+ 
+ 
+-def _actor(principal: Principal, request_actor: UUID | None) -> str | None:
+-    """Explicit actor wins; otherwise the authenticated principal."""
+-    if request_actor is not None:
+-        return str(request_actor)
+-    return principal.principal_id
++def _actor(principal: Principal, request_actor: UUID | None, *,
++           field: str = "actor_id") -> str | None:
++    """The authenticated principal is the actor; the body may only restate it."""
++    return derive_actor(principal, request_actor, field=field)
+ 
+ 
+ def _enforce_target_scope(
+@@ -124,7 +124,7 @@ def create_dispute(
+     _enforce_target_scope(
+         db, principal, request, payload.target_type.value, payload.target_id
+     )
+-    initiator = _actor(principal, payload.initiator_id)
++    initiator = _actor(principal, payload.initiator_id, field="initiator_id")
+     if initiator is None:
+         raise HTTPException(status_code=401, detail="Authentication required")
+     try:
+@@ -317,7 +317,7 @@ def resolve_dispute(
+     db: Session = Depends(get_db),
+     principal: Principal = Depends(require("dispute.resolve", "dispute", "dispute_id")),
+ ) -> DisputeResponse:
+-    resolved_by = _actor(principal, request.resolved_by)
++    resolved_by = _actor(principal, request.resolved_by, field="resolved_by")
+     if resolved_by is None:
+         raise HTTPException(status_code=401, detail="Authentication required")
+     try:
+diff --git a/backend/api/v1/endpoints/evidence_request.py b/backend/api/v1/endpoints/evidence_request.py
+index 2b1bff0b..d6bc1691 100644
+--- a/backend/api/v1/endpoints/evidence_request.py
++++ b/backend/api/v1/endpoints/evidence_request.py
+@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
+ 
+ from backend.core.config import settings
+ from backend.db.session import get_db
++from backend.security.attribution import derive_actor
+ from backend.schemas.evidence_request import (
+     EvidenceRequestCreate,
+     EvidenceRequestDeclineRequest,
+@@ -74,7 +75,8 @@ def create_request(
+             recipient_id=str(payload.recipient_id),
+             instructions=payload.instructions,
+             items=[item.model_dump() for item in payload.items],
+-            requester_id=str(payload.requester_id) if payload.requester_id else None,
++            requester_id=derive_actor(
++                principal, payload.requester_id, field="requester_id"),
+             due_at=payload.due_at,
+             priority=payload.priority.value,
+             project_id=str(payload.project_id) if payload.project_id else None,
+@@ -197,7 +199,8 @@ def issue_request(
+         require("evidence_request.issue", "evidence_request", "request_id")),
+ ):
+     try:
+-        request = request_service.issue_request(db, str(request_id))
++        request = request_service.issue_request(
++            db, str(request_id), derive_actor(principal))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+@@ -219,7 +222,7 @@ def acknowledge_request(
+     try:
+         request = request_service.acknowledge_request(
+             db, str(request_id),
+-            str(payload.actor_id) if payload and payload.actor_id else None,
++            derive_actor(principal, payload.actor_id if payload else None),
+         )
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+@@ -241,7 +244,7 @@ def link_evidence(
+ ):
+     try:
+         item, created = request_service.link_evidence(
+-            db, str(request_id), str(evidence_id), None,
++            db, str(request_id), str(evidence_id), derive_actor(principal),
+             str(item_id) if item_id else None,
+         )
+         request = request_service.get_request(db, str(request_id))
+@@ -270,7 +273,8 @@ async def submit_evidence(
+     data = await file.read(settings.max_upload_size + 1)
+     try:
+         evidence, item, created = request_service.submit_evidence(
+-            db, str(request_id), data, file.filename or "unnamed", declared_type, None,
++            db, str(request_id), data, file.filename or "unnamed", declared_type,
++            derive_actor(principal),
+         )
+         request = request_service.get_request(db, str(request_id))
+     except ValueError as error:
+@@ -295,7 +299,8 @@ def accept_item(
+         require("evidence_request.respond", "evidence_request", "request_id")),
+ ):
+     try:
+-        return _item(request_service.accept_item(db, str(request_id), str(item_id)))
++        return _item(request_service.accept_item(
++            db, str(request_id), str(item_id), derive_actor(principal)))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+@@ -315,7 +320,8 @@ def reject_item(
+         require("evidence_request.respond", "evidence_request", "request_id")),
+ ):
+     try:
+-        return _item(request_service.reject_item(db, str(request_id), str(item_id)))
++        return _item(request_service.reject_item(
++            db, str(request_id), str(item_id), derive_actor(principal)))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+@@ -335,7 +341,9 @@ def decline_request(
+         require("evidence_request.respond", "evidence_request", "request_id")),
+ ):
+     try:
+-        request = request_service.decline_request(db, str(request_id), payload.reason)
++        request = request_service.decline_request(
++            db, str(request_id), payload.reason,
++            derive_actor(principal, payload.actor_id))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+@@ -355,7 +363,8 @@ def cancel_request(
+         require("evidence_request.issue", "evidence_request", "request_id")),
+ ):
+     try:
+-        request = request_service.cancel_request(db, str(request_id))
++        request = request_service.cancel_request(
++            db, str(request_id), derive_actor(principal))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+@@ -375,7 +384,8 @@ def expire_request(
+         require("evidence_request.issue", "evidence_request", "request_id")),
+ ):
+     try:
+-        request = request_service.expire_request(db, str(request_id))
++        request = request_service.expire_request(
++            db, str(request_id), derive_actor(principal))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+diff --git a/backend/api/v1/endpoints/governance.py b/backend/api/v1/endpoints/governance.py
+index 0e79b9f7..afc2a0a0 100644
+--- a/backend/api/v1/endpoints/governance.py
++++ b/backend/api/v1/endpoints/governance.py
+@@ -21,6 +21,7 @@ from backend.schemas.governance import (
+     ReprocessRequest,
+     ReprocessResponse,
+ )
++from backend.security.attribution import derive_actor
+ from backend.security.authentication import get_current_principal, is_development_bypass
+ from backend.security.authorization import enforce, require
+ from backend.services import governance as governance_service
+@@ -64,10 +65,10 @@ def _require_target_scope(action: str):
+     return dependency
+ 
+ 
+-def _actor(principal: Principal, request_actor: UUID | None) -> str | None:
+-    if request_actor is not None:
+-        return str(request_actor)
+-    return principal.principal_id
++def _actor(principal: Principal, request_actor: UUID | None, *,
++           field: str = "actor_id") -> str | None:
++    """The authenticated principal is the actor; the body may only restate it."""
++    return derive_actor(principal, request_actor, field=field)
+ 
+ 
+ def _invalidation_item(invalidation) -> InvalidationResponse:
+@@ -153,7 +154,7 @@ def invalidate(
+     db: Session = Depends(get_db),
+     principal: Principal = Depends(_require_target_scope("intelligence.invalidate")),
+ ) -> InvalidationResponse:
+-    actor = _actor(principal, request.invalidated_by)
++    actor = _actor(principal, request.invalidated_by, field="invalidated_by")
+     if actor is None:
+         raise HTTPException(status_code=401, detail="Authentication required")
+     try:
+@@ -215,7 +216,7 @@ def reprocess(
+             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+             detail="Only evidence targets can be reprocessed",
+         )
+-    requester = _actor(principal, request.requested_by)
++    requester = _actor(principal, request.requested_by, field="requested_by")
+     if requester is None:
+         raise HTTPException(status_code=401, detail="Authentication required")
+     try:
+diff --git a/backend/api/v1/endpoints/retention.py b/backend/api/v1/endpoints/retention.py
+index 9520357c..3b97af23 100644
+--- a/backend/api/v1/endpoints/retention.py
++++ b/backend/api/v1/endpoints/retention.py
+@@ -26,6 +26,7 @@ from backend.schemas.retention import (
+     RetentionResourceType,
+     RetentionStateValue,
+ )
++from backend.security.attribution import derive_actor
+ from backend.security.authentication import get_current_principal
+ from backend.security.authorization import enforce, require, require_global
+ from backend.services import retention as retention_service
+@@ -461,7 +462,7 @@ def release_hold(
+     try:
+         row = retention_service.release_hold(
+             db, str(hold_id), payload.release_reason,
+-            released_by=str(payload.released_by) if payload.released_by else _actor(principal))
++            released_by=derive_actor(principal, payload.released_by, field="released_by"))
+     except (ValueError, LookupError) as error:
+         status_code = 404 if isinstance(error, LookupError) else 422
+         raise HTTPException(status_code=status_code, detail=str(error)) from error
+diff --git a/backend/api/v1/endpoints/review_case.py b/backend/api/v1/endpoints/review_case.py
+index abaabdce..a558d649 100644
+--- a/backend/api/v1/endpoints/review_case.py
++++ b/backend/api/v1/endpoints/review_case.py
+@@ -22,6 +22,7 @@ from backend.schemas.review_case import (
+     ReviewCaseResponse,
+ )
+ from backend.services import review_case as case_service
++from backend.security.attribution import derive_actor
+ from backend.security.authentication import get_current_principal, is_development_bypass
+ from backend.security.authorization import require, visible_project_ids
+ from backend.services.authorization import Principal
+@@ -180,7 +181,7 @@ def assign_case(
+                 db,
+                 str(case_id),
+                 str(request.assigned_to) if request.assigned_to else None,
+-                str(request.actor_id) if request.actor_id else None,
++                derive_actor(principal, request.actor_id),
+             )
+         )
+     except ValueError as error:
+@@ -201,7 +202,8 @@ def investigate_case(
+         require("review_case.investigate", "review_case", "case_id")),
+ ) -> ReviewCaseResponse:
+     try:
+-        return _case_item(case_service.start_investigation(db, str(case_id)))
++        return _case_item(case_service.start_investigation(
++            db, str(case_id), derive_actor(principal)))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+@@ -226,7 +228,7 @@ def record_decision(
+                 str(case_id),
+                 request.decision.value,
+                 request.rationale,
+-                str(request.decided_by) if request.decided_by else None,
++                derive_actor(principal, request.decided_by, field="decided_by"),
+             )
+         )
+     except ValueError as error:
+@@ -253,7 +255,7 @@ def escalate_case(
+                 str(case_id),
+                 str(request.escalated_to),
+                 request.reason,
+-                str(request.actor_id) if request.actor_id else None,
++                derive_actor(principal, request.actor_id),
+             )
+         )
+     except ValueError as error:
+@@ -273,7 +275,8 @@ def resolve_case(
+     principal: Principal = Depends(require("review_case.resolve", "review_case", "case_id")),
+ ) -> ReviewCaseResponse:
+     try:
+-        return _case_item(case_service.resolve_case(db, str(case_id)))
++        return _case_item(case_service.resolve_case(
++            db, str(case_id), derive_actor(principal)))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+@@ -291,7 +294,8 @@ def reopen_case(
+     principal: Principal = Depends(require("review_case.reopen", "review_case", "case_id")),
+ ) -> ReviewCaseResponse:
+     try:
+-        return _case_item(case_service.reopen_case(db, str(case_id)))
++        return _case_item(case_service.reopen_case(
++            db, str(case_id), derive_actor(principal)))
+     except ValueError as error:
+         raise HTTPException(status_code=422, detail=str(error)) from error
+     except LookupError as error:
+diff --git a/backend/core/config.py b/backend/core/config.py
+index 74a164c5..fb4a0ef7 100644
+--- a/backend/core/config.py
++++ b/backend/core/config.py
+@@ -101,6 +101,21 @@ class Settings(BaseSettings):
+     # Production OIDC/OAuth2 integration must disable this.
+     auth_dev_tokens_enabled: bool = True
+ 
++    # Stage 02 — trusted human identity (Supabase Auth, verified locally over
++    # JWKS). Off by default so an unconfigured deployment keeps the existing
++    # service-credential-only posture; enabling it is what lets a browser send
++    # the reviewer's own sign-in token instead of a service secret.
++    auth_oidc_enabled: bool = False
++    auth_oidc_issuer: str = ""
++    auth_oidc_jwks_uri: str = ""
++    auth_oidc_audience: str = "authenticated"
++    # The users.identity_provider value a verified token's `sub` is looked up under.
++    auth_oidc_identity_provider: str = "supabase"
++    # Only asymmetric algorithms are accepted; a JWKS entry using any other
++    # `alg` is refused, which is what blocks key-type confusion attacks.
++    auth_oidc_algorithms: str = "RS256"
++    auth_oidc_jwks_ttl_seconds: int = 300
++
+     # BE-020 Observability Configuration
+     otel_enabled: bool = False
+     otel_service_name: str = "poa-backend"
+@@ -172,6 +187,41 @@ class Settings(BaseSettings):
+                 )
+         return self
+ 
++    @model_validator(mode="after")
++    def _validate_oidc_settings(self):
++        """A switched-on but half-configured identity verifier must not start.
++
++        ``AUTH_OIDC_ENABLED=true`` with a blank issuer or JWKS address would
++        accept nothing while looking like it accepts something, which is worse
++        than leaving it off. Checked in every environment, not only production:
++        the failure mode is identical. No configured value is echoed in full.
++        """
++        if not self.auth_oidc_enabled:
++            return self
++        for field, label in ((self.auth_oidc_issuer, "auth_oidc_issuer"),
++                             (self.auth_oidc_jwks_uri, "auth_oidc_jwks_uri")):
++            value = (field or "").strip()
++            if not value:
++                raise ValueError(f"{label} must be set when auth_oidc_enabled is true")
++            if not value.lower().startswith("https://"):
++                raise ValueError(
++                    f"{label} must be an https:// address when auth_oidc_enabled is true"
++                )
++        if not (self.auth_oidc_audience or "").strip():
++            raise ValueError("auth_oidc_audience must not be blank when OIDC is enabled")
++        algorithms = [a.strip() for a in (self.auth_oidc_algorithms or "").split(",") if a.strip()]
++        if not algorithms:
++            raise ValueError("auth_oidc_algorithms must list at least one algorithm")
++        # Only asymmetric signing families are accepted; "none" and the HMAC
++        # family would let a key material forged from the public JWKS pass.
++        if any(not a[:2] in {"RS", "ES", "PS"} for a in algorithms):
++            raise ValueError(
++                "auth_oidc_algorithms may only contain asymmetric algorithms "
++                f"(RS*/ES*/PS*); {sum(1 for a in algorithms if not a[:2] in {'RS', 'ES', 'PS'})} "
++                "refused entry(ies) are not accepted."
++            )
++        return self
++
+     class Config:
+         env_file = ".env"
+ 
+diff --git a/backend/schemas/context.py b/backend/schemas/context.py
+index f04c9182..67381136 100644
+--- a/backend/schemas/context.py
++++ b/backend/schemas/context.py
+@@ -30,7 +30,12 @@ class ProjectListResponse(BaseModel):
+ 
+ 
+ class ActivityCreate(BaseModel):
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated user principal; the actor is derived "
++                    "from the credential. API clients record no actor, because "
++                    "activities.actor_id references users.",
++    )
+     verb: str = Field(min_length=1, max_length=128)
+     details: dict | None = None
+ 
+diff --git a/backend/schemas/correction.py b/backend/schemas/correction.py
+index 0a2718bc..693ed650 100644
+--- a/backend/schemas/correction.py
++++ b/backend/schemas/correction.py
+@@ -50,7 +50,8 @@ class CorrectionCreateRequest(BaseModel):
+     reason: str = Field(min_length=1, max_length=20000)
+     requester_id: UUID | None = Field(
+         default=None,
+-        description="Requester; defaults to the authenticated principal",
++        description="Must equal the authenticated principal; the requester is derived "
++                    "from the credential and a conflicting value is refused.",
+     )
+ 
+ 
+@@ -59,19 +60,27 @@ class CorrectionDecisionRequest(BaseModel):
+ 
+     rationale: str = Field(min_length=1, max_length=20000)
+     resolver_id: UUID | None = Field(
+-        default=None, description="Resolver; defaults to the authenticated principal"
++        default=None,
++        description="Must equal the authenticated principal; the resolver is derived "
++                    "from the credential and a conflicting value is refused.",
+     )
+ 
+ 
+ class CorrectionApplyRequest(BaseModel):
+     applied_by: UUID | None = Field(
+-        default=None, description="Applicant; defaults to the authenticated principal"
++        default=None,
++        description="Must equal the authenticated principal; who applied the correction "
++                    "is derived from the credential, never from this field.",
+     )
+ 
+ 
+ class CorrectionCancelRequest(BaseModel):
+     reason: str = Field(min_length=1, max_length=20000)
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+ 
+ 
+ class CorrectionResponse(BaseModel):
+diff --git a/backend/schemas/dispute.py b/backend/schemas/dispute.py
+index 91c2cde0..30fba2de 100644
+--- a/backend/schemas/dispute.py
++++ b/backend/schemas/dispute.py
+@@ -44,19 +44,28 @@ class DisputeCreateRequest(BaseModel):
+     description: str | None = Field(default=None, max_length=20000)
+     initiator_id: UUID | None = Field(
+         default=None,
+-        description="Initiator; defaults to the authenticated principal",
++        description="Must equal the authenticated principal; the initiator is derived "
++                    "from the credential and a conflicting value is refused.",
+     )
+ 
+ 
+ class DisputeAssignRequest(BaseModel):
+     assigned_to: UUID
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+ 
+ 
+ class DisputeEscalateRequest(BaseModel):
+     escalated_to: UUID
+     reason: str = Field(min_length=1, max_length=20000)
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+ 
+ 
+ class DisputeResolveRequest(BaseModel):
+@@ -64,7 +73,8 @@ class DisputeResolveRequest(BaseModel):
+     rationale: str = Field(min_length=1, max_length=20000)
+     resolved_by: UUID | None = Field(
+         default=None,
+-        description="Resolver; defaults to the authenticated principal",
++        description="Must equal the authenticated principal; resolutions are attributed "
++                    "to the credential, never to this field.",
+     )
+ 
+ 
+@@ -73,12 +83,18 @@ class DisputeRejectRequest(BaseModel):
+ 
+     rationale: str = Field(min_length=1, max_length=20000)
+     actor_id: UUID | None = Field(
+-        default=None, description="Actor; defaults to the authenticated principal"
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
+     )
+ 
+ 
+ class DisputeWithdrawRequest(BaseModel):
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+ 
+ 
+ class DisputeResponse(BaseModel):
+diff --git a/backend/schemas/evidence_request.py b/backend/schemas/evidence_request.py
+index 17ec4605..a0ede95a 100644
+--- a/backend/schemas/evidence_request.py
++++ b/backend/schemas/evidence_request.py
+@@ -47,7 +47,11 @@ class EvidenceRequestCreate(BaseModel):
+     recipient_id: UUID
+     instructions: str = Field(min_length=1, max_length=8000)
+     items: list[EvidenceRequestItemCreate] = Field(min_length=1, max_length=50)
+-    requester_id: UUID | None = None
++    requester_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the requester is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+     due_at: AwareDatetime | None = Field(
+         default=None, description="Timezone-aware deadline; naive timestamps rejected"
+     )
+@@ -115,7 +119,11 @@ class EvidenceRequestHistoryResponse(BaseModel):
+ 
+ class EvidenceRequestDeclineRequest(BaseModel):
+     reason: str = Field(min_length=1, max_length=2000)
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+ 
+ 
+ class EvidenceRequestLinkResponse(BaseModel):
+@@ -125,4 +133,8 @@ class EvidenceRequestLinkResponse(BaseModel):
+ 
+ 
+ class EvidenceRequestResponseAction(BaseModel):
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+diff --git a/backend/schemas/governance.py b/backend/schemas/governance.py
+index 80654128..76ebb3da 100644
+--- a/backend/schemas/governance.py
++++ b/backend/schemas/governance.py
+@@ -39,7 +39,8 @@ class InvalidationRequest(BaseModel):
+     reason: str = Field(min_length=1, max_length=20000)
+     invalidated_by: UUID | None = Field(
+         default=None,
+-        description="Actor; defaults to the authenticated principal",
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
+     )
+     reprocess: bool = Field(
+         default=True,
+@@ -100,7 +101,8 @@ class ReprocessRequest(BaseModel):
+     reason: str = Field(min_length=1, max_length=20000)
+     requested_by: UUID | None = Field(
+         default=None,
+-        description="Requester; defaults to the authenticated principal",
++        description="Must equal the authenticated principal; the requester is derived "
++                    "from the credential and a conflicting value is refused.",
+     )
+ 
+ 
+diff --git a/backend/schemas/retention.py b/backend/schemas/retention.py
+index 82b6c109..ead63769 100644
+--- a/backend/schemas/retention.py
++++ b/backend/schemas/retention.py
+@@ -174,7 +174,11 @@ class HoldCreate(BaseModel):
+ 
+ class HoldRelease(BaseModel):
+     release_reason: str = Field(min_length=1, max_length=4000)
+-    released_by: UUID | None = None
++    released_by: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the releaser is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+ 
+ 
+ class HoldResponse(BaseModel):
+diff --git a/backend/schemas/review_case.py b/backend/schemas/review_case.py
+index 24ef363a..f9d46ca1 100644
+--- a/backend/schemas/review_case.py
++++ b/backend/schemas/review_case.py
+@@ -103,19 +103,31 @@ class CaseAssignmentRequest(BaseModel):
+     assigned_to: UUID | None = Field(
+         default=None, description="Null unassigns an ASSIGNED case back to OPEN"
+     )
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+ 
+ 
+ class CaseDecisionRequest(BaseModel):
+     decision: CaseDecision
+     rationale: str = Field(min_length=1)
+-    decided_by: UUID | None = None
++    decided_by: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; decisions are attributed "
++                    "to the credential, never to this field.",
++    )
+ 
+ 
+ class CaseEscalationRequest(BaseModel):
+     escalated_to: UUID
+     reason: str = Field(min_length=1)
+-    actor_id: UUID | None = None
++    actor_id: UUID | None = Field(
++        default=None,
++        description="Must equal the authenticated principal; the actor is derived "
++                    "from the credential and a conflicting value is refused.",
++    )
+ 
+ 
+ class CaseGenerationConfigurationCreate(BaseModel):
+diff --git a/backend/security/attribution.py b/backend/security/attribution.py
+new file mode 100644
+index 00000000..e647073f
+--- /dev/null
++++ b/backend/security/attribution.py
+@@ -0,0 +1,56 @@
++"""Stage 02 actor attribution: the authenticated principal is the only actor.
++
++Decision makers and audit actors must come from the verified principal, so a
++caller may not record an action under someone else's name. Request bodies may
++still carry ``actor_id`` / ``decided_by`` / ``resolved_by`` (older integrations
++send them), but such a value only restates the caller's own identity: anything
++else is refused before any row is written.
++
++Development mode is the single exception and it is deliberate: an *anonymous*
++request there has no verified identity to derive from, and
++``AUTH_MODE=development`` already bypasses authorization wholesale. Under
++``AUTH_MODE=enforcing`` — the deployed posture — ``resolve_principal`` returns
++401 before a handler runs, so this branch is unreachable.
++"""
++
++import logging
++
++from fastapi import HTTPException, status
++
++from backend.security.authentication import is_development_bypass
++from backend.services.authorization import Principal
++
++logger = logging.getLogger(__name__)
++
++
++def derive_actor(principal: Principal, supplied: object | None = None, *,
++                 field: str = "actor_id") -> str | None:
++    """Return the actor id to persist, derived from ``principal``.
++
++    ``supplied`` is the caller-provided value read from the request body; it is
++    validated, never trusted. ``None`` means the request carried no actor field.
++    """
++    verified = principal.principal_id if principal.authenticated else None
++    if supplied is None:
++        return verified
++    text = str(supplied)
++    if verified is None:
++        if is_development_bypass(principal):
++            return text
++        raise HTTPException(
++            status_code=status.HTTP_401_UNAUTHORIZED,
++            detail="Authentication required to be recorded as the actor",
++        )
++    if text != str(verified):
++        logger.warning(
++            "attribution_refused field=%s principal_type=%s reason=ACTOR_MISMATCH",
++            field, principal.principal_type,
++        )
++        raise HTTPException(
++            status_code=status.HTTP_403_FORBIDDEN,
++            detail=(
++                f"{field} must identify the authenticated principal; "
++                "actors are derived from credentials, never from the request body"
++            ),
++        )
++    return verified
+diff --git a/backend/security/authentication.py b/backend/security/authentication.py
+index ee1b387b..f0c81ed2 100644
+--- a/backend/security/authentication.py
++++ b/backend/security/authentication.py
+@@ -3,9 +3,11 @@
+ Development bearer tokens (``dev-user-<uuid>``, ``dev-client-<uuid>``) are
+ non-secret identifiers accepted only when explicitly enabled for
+ development/testing. They must never be treated as production
+-authentication; production OIDC/OAuth2 plugs into ``resolve_principal``
+-later. Anonymous requests are permitted only in development mode;
+-enforcing mode rejects them (401) and never falls back silently.
++authentication. Production has two real paths: an integration uses its
++API-client credential, and a human signs in with an identity-provider token that
++``backend/security/oidc.py`` verifies locally over JWKS (stage 02) and maps onto
++a provisioned ``users`` row. Anonymous requests are permitted only in development
++mode; enforcing mode rejects them (401) and never falls back silently.
+ """
+ 
+ import logging
+@@ -26,6 +28,7 @@ from backend.services.authorization import (
+     resolve_user_principal,
+     system_principal,
+ )
++from backend.security.oidc import OIDCError, looks_like_jwt, resolve_oidc_principal
+ 
+ 
+ logger = logging.getLogger(__name__)
+@@ -66,6 +69,18 @@ def resolve_principal(request: Request, db: Session) -> Principal:
+         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                             detail="Invalid credentials")
+ 
++    if settings.auth_oidc_enabled and looks_like_jwt(token):
++        try:
++            return resolve_oidc_principal(db, token)
++        except OIDCError as error:
++            if error.reason == "NO_LINKED_USER":
++                raise HTTPException(
++                    status_code=status.HTTP_401_UNAUTHORIZED,
++                    detail="No account is linked to this sign-in; ask an "
++                           "administrator to grant your user a role.") from error
++            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
++                                detail="Invalid credentials") from error
++
+     if not settings.auth_dev_tokens_enabled:
+         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                             detail="Invalid credentials")
+diff --git a/backend/security/oidc.py b/backend/security/oidc.py
+new file mode 100644
+index 00000000..e64975b6
+--- /dev/null
++++ b/backend/security/oidc.py
+@@ -0,0 +1,184 @@
++"""Stage 02 — a reviewer signs in as themselves, and this proves it locally.
++
++The browser holds the user's own access token from the identity provider
++(Supabase Auth today); the service credential never leaves the server. Trust is
++anchored on the provider's published JWKS: the signature, algorithm, issuer,
++audience and lifetime are all verified here, in this process, before any
++authorization decision is made. Nothing about a token is logged, and the key set
++is cached so the provider is not fetched per request.
++
++Refusals are raised as :class:`OIDCError` with a reason code; the HTTP layer maps
++them to 401 and the reason is what reaches the security log.
++"""
++
++import logging
++import threading
++import time
++
++import httpx
++import jwt
++from jwt import PyJWK
++from sqlalchemy.orm import Session
++
++from backend.core.config import settings
++from backend.db.models import User
++from backend.services.authorization import Principal, resolve_user_principal
++
++logger = logging.getLogger(__name__)
++
++#: Symmetric (``oct``) entries are never accepted as verification keys: a public
++#: key set that also carried a shared secret would let a caller forge a token the
++#: service then trusts.
++ALLOWED_KEY_TYPES = {"RSA", "EC", "OKP"}
++
++_lock = threading.Lock()
++_keys: dict[str, tuple[float, dict[str, PyJWK]]] = {}
++_last_forced_refresh: dict[str, float] = {}
++
++#: A token whose ``kid`` is unknown is worth one refetch per this window, so a
++#: key rotation does not need a restart but a flood of bad tokens cannot turn
++#: into a flood of outbound requests.
++REFRESH_COOLDOWN_SECONDS = 30.0
++
++
++class OIDCError(Exception):
++    """A verification refusal. The reason is safe to log; the token never is."""
++
++    def __init__(self, reason: str) -> None:
++        super().__init__(reason)
++        self.reason = reason
++
++
++def allowed_algorithms() -> list[str]:
++    return [a.strip() for a in (settings.auth_oidc_algorithms or "").split(",") if a.strip()]
++
++
++def _fetch_key_set(uri: str) -> dict:
++    """One GET against the provider's published key set."""
++    response = httpx.get(uri, timeout=(3.0, 5.0), headers={"Accept": "application/json"})
++    response.raise_for_status()
++    return response.json()
++
++
++def _index(payload: dict) -> dict[str, PyJWK]:
++    algorithms = set(allowed_algorithms())
++    indexed: dict[str, PyJWK] = {}
++    for entry in payload.get("keys", []) or []:
++        if str(entry.get("kty", "")) not in ALLOWED_KEY_TYPES:
++            continue
++        declared = str(entry.get("alg", ""))
++        if declared and declared not in algorithms:
++            continue
++        kid = str(entry.get("kid", ""))
++        if not kid:
++            continue
++        try:
++            indexed[kid] = PyJWK(entry)
++        except Exception:  # a malformed entry must not poison the whole set
++            logger.warning("oidc_jwks_key_skipped kid=%s", kid)
++    return indexed
++
++
++def signing_keys(*, force_refresh: bool = False) -> dict[str, PyJWK]:
++    """The provider's verification keys, cached for ``auth_oidc_jwks_ttl_seconds``."""
++    uri = settings.auth_oidc_jwks_uri
++    now = time.monotonic()
++    with _lock:
++        cached = _keys.get(uri)
++        if cached and cached[0] > now and not force_refresh:
++            return cached[1]
++        if force_refresh:
++            last = _last_forced_refresh.get(uri, 0.0)
++            if now - last < REFRESH_COOLDOWN_SECONDS:
++                if cached:
++                    return cached[1]
++                raise OIDCError("KEY_SET_UNAVAILABLE")
++            _last_forced_refresh[uri] = now
++        try:
++            payload = _fetch_key_set(uri)
++        except (httpx.HTTPError, ValueError) as error:
++            # Serve the previous (still unexpired) key set rather than turning a
++            # provider hiccup into an outage for every signed-in reviewer.
++            if cached and cached[0] > now:
++                logger.warning("oidc_jwks_refresh_failed_using_stale=True")
++                return cached[1]
++            logger.warning("oidc_jwks_unavailable")
++            raise OIDCError("KEY_SET_UNAVAILABLE") from error
++        fresh = _index(payload)
++        _keys[uri] = (now + max(30, int(settings.auth_oidc_jwks_ttl_seconds)), fresh)
++        return fresh
++
++
++def verify_token(token: str) -> dict:
++    """Return the verified claims, or raise :class:`OIDCError`."""
++    try:
++        header = jwt.get_unverified_header(token)
++    except jwt.PyJWTError as error:
++        raise OIDCError("MALFORMED_TOKEN") from error
++    algorithms = allowed_algorithms()
++    declared = str(header.get("alg", ""))
++    if declared not in algorithms:
++        logger.warning("oidc_refused reason=ALGORITHM_REFUSED")
++        raise OIDCError("ALGORITHM_REFUSED")
++    kid = str(header.get("kid", ""))
++    key = signing_keys().get(kid)
++    if key is None:
++        key = signing_keys(force_refresh=True).get(kid)
++    if key is None:
++        logger.warning("oidc_refused reason=UNKNOWN_KEY_ID")
++        raise OIDCError("UNKNOWN_KEY_ID")
++    try:
++        claims = jwt.decode(
++            token,
++            key=key.key,
++            algorithms=algorithms,
++            audience=settings.auth_oidc_audience,
++            issuer=settings.auth_oidc_issuer,
++            leeway=30.0,
++            options={"require": ["exp", "iat", "sub", "aud", "iss"]},
++        )
++    except jwt.PyJWTError as error:
++        logger.warning("oidc_refused reason=TOKEN_REJECTED")
++        raise OIDCError("TOKEN_REJECTED") from error
++    # Some providers issue refresh tokens as JWTs with the same issuer and
++    # audience. A refresh token is not proof of a signed-in session.
++    if str(claims.get("use", "")) == "refresh":
++        logger.warning("oidc_refused reason=REFRESH_TOKEN")
++        raise OIDCError("REFRESH_TOKEN")
++    return claims
++
++
++def resolve_oidc_principal(db: Session, token: str) -> Principal:
++    """Map a verified token onto the internal PoA user it belongs to.
++
++    The link is the pair the ``users`` table already stores — ``identity_provider``
++    plus ``external_subject`` — and there is deliberately no auto-provisioning:
++    a sign-in nobody has granted a role to would resolve to a principal with no
++    permissions, so an account is created by an administrator first.
++    """
++    subject = str(verify_token(token)["sub"])
++    user = (
++        db.query(User)
++        .filter(User.identity_provider == settings.auth_oidc_identity_provider,
++                User.external_subject == subject)
++        .one_or_none()
++    )
++    if user is None:
++        logger.warning("oidc_refused reason=NO_LINKED_USER")
++        raise OIDCError("NO_LINKED_USER")
++    principal = resolve_user_principal(db, str(user.id))
++    if not principal.authenticated or principal.status != "ACTIVE":
++        logger.warning("oidc_refused reason=PRINCIPAL_NOT_ACTIVE")
++        raise OIDCError("PRINCIPAL_NOT_ACTIVE")
++    return principal
++
++
++def looks_like_jwt(token: str) -> bool:
++    return token.count(".") == 2 and all(part for part in token.split("."))
++
++
++def reset_key_cache() -> None:
++    """Drop the cached key sets (used by tests and after a provider rotation)."""
++    with _lock:
++        _keys.clear()
++        _last_forced_refresh.clear()
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 4b476e26..49a2cda9 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -40,6 +40,17 @@ x-app-environment: &app-environment
+   CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
+   AUTH_MODE: ${AUTH_MODE:-development}
+   AUTH_DEV_TOKENS_ENABLED: ${AUTH_DEV_TOKENS_ENABLED:-true}
++  # Stage 02 human identity (backend/security/oidc.py). Disabled by default; the
++  # defaults below are the same as backend/core/config.py, so a stack that sets
++  # nothing behaves exactly as before. These are public provider metadata, not
++  # secrets - see .env.example for what each one must point at.
++  AUTH_OIDC_ENABLED: ${AUTH_OIDC_ENABLED:-false}
++  AUTH_OIDC_ISSUER: ${AUTH_OIDC_ISSUER:-}
++  AUTH_OIDC_JWKS_URI: ${AUTH_OIDC_JWKS_URI:-}
++  AUTH_OIDC_AUDIENCE: ${AUTH_OIDC_AUDIENCE:-authenticated}
++  AUTH_OIDC_IDENTITY_PROVIDER: ${AUTH_OIDC_IDENTITY_PROVIDER:-supabase}
++  AUTH_OIDC_ALGORITHMS: ${AUTH_OIDC_ALGORITHMS:-RS256}
++  AUTH_OIDC_JWKS_TTL_SECONDS: ${AUTH_OIDC_JWKS_TTL_SECONDS:-300}
+ 
+ services:
+   db:
+diff --git "a/docs/Backend Acceptance Audit Register \342\200\224 2026-10-16.md" "b/docs/Backend Acceptance Audit Register \342\200\224 2026-10-16.md"
+index 2001d12c..79c0829a 100644
+--- "a/docs/Backend Acceptance Audit Register \342\200\224 2026-10-16.md"	
++++ "b/docs/Backend Acceptance Audit Register \342\200\224 2026-10-16.md"	
+@@ -18,15 +18,15 @@ surface and not the rest.
+ 
+ | # | Requirement | Verdict | Evidence |
+ |---|---|---|---|
+-| 1.1 | Every endpoint requires authentication in the deployed mode | **FAIL** | Live 181-route sweep of `GET /openapi.json` on the VM against the running API. Guarded routes answer `401` anonymously; **9 routes answer `404`/`422`, i.e. the handler executed**: `backend/api/v1/endpoints/context.py:107,118,125,134,148,155,164,257,262` (project activities POST/GET/get-one, claims POST/GET/get-one/PATCH, `/evidence/nearby`, `/projects/{id}/evidence/nearby`). Decisive anonymous probe on the deployment: `GET /api/v1/evidence/nearby?latitude=-6.2&longitude=106.8&radius=5000` → **`200 {"items":[],"limit":50,"offset":0,"total":0}`** (a served query, not a refusal), while `GET /api/v1/projects` and `GET /api/v1/review-cases` → `401 {"detail":"Authentication required"}`, and `GET /api/v1/projects/<random-uuid>/activities` → `404 {"detail":"Project not found"}`. None of those nine signatures declares a `principal` dependency, and `_require_project()` (`context.py:42`) only checks existence. |
+-| 1.2 | A reviewer can sign in as themselves | **FAIL — absent** | No JWT/OIDC verification exists anywhere under `backend/` (zero hits for `jwt.decode`, PyJWT, `python-jose`, `jwks`, issuer/audience validation). `/api/v1/auth` is admin CRUD only — no login, token or callback route. `settings.jwt_secret` is validated in production mode but never read by auth code. |
+-| 1.3 | Browser never holds a privileged API-client secret | **FAIL** | Consequence of 1.2: in `AUTH_MODE=enforcing` + `AUTH_DEV_TOKENS_ENABLED=false` the only credential the deployed API accepts is `<client_id>:<secret>` (`backend/security/authentication.py:52-67`). A frontend could integrate today only by embedding that secret, which is prohibited. |
+-| 1.4 | Caller cannot forge the actor identity | **FAIL** | `_actor(principal, request_actor)` returns "explicit actor wins" in `correction.py:80-83`, `dispute.py:91-95`, `governance.py:67-70`; direct body values at `review_case.py:183` (assignee), `review_case.py:229` (`decided_by`), `review_case.py:256`, `evidence_request.py:222`, `retention.py:464`, `context.py:60,78,110-111,137`. A holder of `review_case.decide` can attribute a decision to another user. |
++| 1.1 | Every endpoint requires authentication in the deployed mode | **FAIL → FIXED (verified 2026-10-16)** | Live 181-route sweep of `GET /openapi.json` on the VM against the running API. Guarded routes answer `401` anonymously; **9 routes answer `404`/`422`, i.e. the handler executed**: `backend/api/v1/endpoints/context.py:107,118,125,134,148,155,164,257,262` (project activities POST/GET/get-one, claims POST/GET/get-one/PATCH, `/evidence/nearby`, `/projects/{id}/evidence/nearby`). Decisive anonymous probe on the deployment: `GET /api/v1/evidence/nearby?latitude=-6.2&longitude=106.8&radius=5000` → **`200 {"items":[],"limit":50,"offset":0,"total":0}`** (a served query, not a refusal), while `GET /api/v1/projects` and `GET /api/v1/review-cases` → `401 {"detail":"Authentication required"}`, and `GET /api/v1/projects/<random-uuid>/activities` → `404 {"detail":"Project not found"}`. None of those nine signatures declares a `principal` dependency, and `_require_project()` (`context.py:42`) only checks existence. **FIXED → VERIFIED (stage 02, committed `6a430c74`):** every one of the nine routes now declares a `require(...)` dependency with the resource it acts on — `project.create` (unscoped), `project.read`/`project.update`/`claim.*` scoped by `project_id`, `activity.create`/`activity.read` scoped by `project_id`, `evidence.update_context` scoped by `evidence_id`, and both nearby routes behind `evidence.read` (global-scope variant requires the permission in any scope, project variant enforces project scope server-side); `list_projects` stays on `get_current_principal` + `filter_by_project_scope`. Proven by `tests/integration/test_stage02_context_route_authz.py` (5 tests: anonymous 401 on each formerly-open route, and an authenticated caller still needing the right project scope) — passing in the 967-test run below. |
++| 1.2 | A reviewer can sign in as themselves | **FAIL → FIXED (verified 2026-10-16)** | Original finding: no JWT/OIDC verification exists anywhere under `backend/` (zero hits for `jwt.decode`, PyJWT, `python-jose`, `jwks`, issuer/audience validation). `/api/v1/auth` is admin CRUD only — no login, token or callback route. `settings.jwt_secret` is validated in production mode but never read by auth code. **FIXED → VERIFIED (stage 02, uncommitted — staged at the time of writing):** `backend/security/oidc.py` verifies the caller's own access token in this process against the provider's published key set — signature, `kid`, algorithm allowlist, issuer, audience, `exp`/`iat`, and a refusal of refresh tokens and of `oct` (symmetric) key material — with the key set cached under a TTL and one bounded forced refetch per 30s so a rotation needs no restart and a flood of bad tokens cannot become a flood of outbound requests. A verified `sub` is mapped to the internal account through the pair `users(identity_provider, external_subject)` that BE-016/BE-029 already stored; there is deliberately **no auto-provisioning**, so an unknown subject gets a `401` that tells it to ask an administrator for a role. `resolve_principal` calls it before the development-token gate (`backend/security/authentication.py:72-82`), so the path is live on the existing guarded routes with no per-endpoint change. The whole feature is opt-in (`AUTH_OIDC_ENABLED=false` default) and `backend/core/config.py` refuses a half-configured or unsafe provider at startup in **any** environment (blank/non-HTTPS issuer or JWKS URI, blank audience, empty algorithm list, `none` or any `HS*` algorithm). Dependencies pinned in `requirements.txt`: `PyJWT[crypto]`, `cryptography`, `httpx`. Proven by `tests/unit/test_stage02_oidc_verification.py` (27, including a hand-built HS256 token signed with the provider's own public PEM, an `alg:none` token, an unknown `kid`, an expired token, a wrong audience/issuer, a planted `oct` entry and a key rotation) and `tests/integration/test_stage02_reviewer_identity.py` (12) — both in the 1006-test run below, with the key set served locally so no test touches the network. |
++| 1.3 | Browser never holds a privileged API-client secret | **FAIL → FIXED (verified 2026-10-16)** | Original finding: consequence of 1.2: in `AUTH_MODE=enforcing` + `AUTH_DEV_TOKENS_ENABLED=false` the only credential the deployed API accepts is `<client_id>:<secret>` (`backend/security/authentication.py:52-67`). A frontend could integrate today only by embedding that secret, which is prohibited. **FIXED → VERIFIED (stage 02):** the prohibition is now satisfiable — `test_a_signed_in_reviewer_is_attributed_to_themselves` completes a real decision with only the reviewer's own bearer token in that posture, and `test_development_tokens_stay_refused_while_the_provider_is_enabled` proves the new path does not reopen the development door (`dev-user-…` → `401`, same account accepted with its own token). A human caller needs no service secret; the `<client_id>:<secret>` path stays for server-to-server integrations only. **Not yet true on the VM:** `AUTH_OIDC_*` is unset there, so the deployed API still accepts no human credential until the owner configures a provider (`.env.example` documents the seven keys; the issuer and JWKS URI are public provider metadata, not secrets). |
++| 1.4 | Caller cannot forge the actor identity | **FAIL → FIXED (verified 2026-10-16)** | Original finding: `_actor(principal, request_actor)` returned "explicit actor wins" in `correction.py:80-83`, `dispute.py:91-95`, `governance.py:67-70`; direct body values at `review_case.py:183` (assignee), `review_case.py:229` (`decided_by`), `review_case.py:256`, `evidence_request.py:222`, `retention.py:464`, `context.py:60,78,110-111,137`. A holder of `review_case.decide` could attribute a decision to another user. **FIXED → VERIFIED (stage 02, uncommitted at the time of writing):** one policy point — `backend/security/attribution.py::derive_actor` — now sits behind every actor-bearing write in `review_case.py`, `correction.py`, `dispute.py`, `governance.py`, `retention.py`, `evidence_request.py` and `context.py`. It returns the authenticated principal's own id, refuses 403 with the field named when the body points at anyone else (logging `attribution_refused … reason=ACTOR_MISMATCH`), and refuses 401 when an unauthenticated caller in `enforcing` mode tries to name an actor; omitting the field attributes the credential. The request-body actor fields remain accepted-but-verified and their schema descriptions now state the rule (regenerated into `openapi.json`, 155 paths / 181 operations unchanged). One documented exception, deliberate: an anonymous principal under `auth_mode=development` still gets its supplied text, which is what keeps the pre-existing development-mode suite honest about the mode it runs in. API clients writing `activities.actor_id` are recorded with no actor rather than their client id, because that column is a foreign key to `users.id`. |
+ | 1.5 | Cross-project / cross-organization access is denied | **PARTIAL** | Tests exist and pass: `test_authorization.py::test_project_isolation:237`, `::test_organization_isolation:260`, `::test_unit_scope_narrowing:281`, `test_be026::test_assignment_rejects_context_from_another_project:515`, `::test_cross_organization_assignment_denial:584`. But they exercise user paths with development tokens (see 1.7). |
+-| 1.6 | Suspended / disabled principals are denied over HTTP | **PARTIAL** | Unit level: `tests/unit/test_authorization.py::test_disabled_principals_denied_despite_permissions:31`. HTTP level: only `DISABLED` is proven (`test_authorization.py::test_enforcing_mode_rejects_anonymous_bad_and_disabled:206`). No HTTP test puts a user in `SUSPENDED`. |
+-| 1.7 | The suite runs in the production credential posture | **FAIL** | `tests/conftest.py` never sets `auth_mode`, so the whole authorization suite inherits `development` + dev tokens. Exactly one test asserts the production posture (`test_dev_tokens_disabled_rejects_tokens:227`) and it checks nothing beyond a `401`. |
+-| 1.8 | Object-level (BOLA) reads are proven denied | **PARTIAL** | Evidence: covered (`test_authorization.py::test_evidence_download_protection:529`, `::test_cross_project_graph_redaction:571`). Review-case and decision retrieval by an authenticated foreign principal: **not covered** — the probes in `test_review_case.py:538,582` send no auth header, which in development mode means anonymous-bypass, i.e. the test proves nothing about identity. |
+-| 1.9 | Impersonation has a regression test | **FAIL** | No test asserts `decided_by`/`actor_id` equals the authenticated principal. |
++| 1.6 | Suspended / disabled principals are denied over HTTP | **PARTIAL → FIXED for SUSPENDED (verified 2026-10-16)** | Original finding: unit level: `tests/unit/test_authorization.py::test_disabled_principals_denied_despite_permissions:31`. HTTP level: only `DISABLED` is proven (`test_authorization.py::test_enforcing_mode_rejects_anonymous_bad_and_disabled:206`). No HTTP test puts a user in `SUSPENDED`. **CLOSED for `SUSPENDED` (stage 02):** `tests/integration/test_stage02_reviewer_identity.py::test_a_suspended_reviewers_token_is_refused` grants a suspended account the role and the project scope, presents a token the verifier accepts, and asserts `401 Invalid credentials` with the case row untouched — so the refusal is the account state, not a bad token or a missing grant. `DISABLED` remains proven only through the older dev-token path. |
++| 1.7 | The suite runs in the production credential posture | **PARTIAL (improved 2026-10-16)** | Original finding: `tests/conftest.py` never sets `auth_mode`, so the whole authorization suite inherits `development` + dev tokens. Exactly one test asserted the production posture (`test_dev_tokens_disabled_rejects_tokens:227`) and it checked nothing beyond a `401`. **ADDED (stage 02):** 27 tests now pin the deployed posture with an autouse fixture and restore it afterwards — `test_stage02_context_route_authz.py` (5), `test_stage02_metrics_authz.py` (4), `test_stage02_actor_attribution.py` (6) on `auth_mode=enforcing`, plus `test_stage02_reviewer_identity.py` (12) on `auth_mode=enforcing` **and** `auth_dev_tokens_enabled=false` **and** the identity provider enabled, which is exactly the VM's environment plus one working human credential. **Still open:** `conftest.py` keeps its development default, so the pre-existing authorization suite (1.5, 1.8) still runs against dev tokens; that is now a test-harness migration rather than a missing capability, because a verifiable human credential exists. |
++| 1.8 | Object-level (BOLA) reads are proven denied | **PARTIAL (improved 2026-10-16)** | Original finding: covered (`test_authorization.py::test_evidence_download_protection:529`, `::test_cross_project_graph_redaction:571`). Review-case and decision retrieval by an authenticated foreign principal: **not covered** — the probes in `test_review_case.py:538,582` send no auth header, which in development mode means anonymous-bypass, i.e. the test proves nothing about identity. **ADDED (stage 02):** `test_stage02_reviewer_identity.py::test_a_signed_in_reviewer_cannot_reach_a_foreign_project` signs in as a real mapped user and reads another project's case (row proven to exist), then reads its own project's case on the same route — so the refusal can only come from scope. The older `test_review_case.py` probes are still written without a credential and still prove nothing about identity. |
++| 1.9 | Impersonation has a regression test | **FAIL → FIXED (verified 2026-10-16)** | Original finding: no test asserted `decided_by`/`actor_id` equals the authenticated principal. **FIXED → VERIFIED (stage 02):** `tests/unit/test_actor_attribution.py` (6) pins the policy point itself — omitted field → credential, restated own id → credential, another id → `403` naming the field, a `UUID` value comparing equal to the string principal id, unauthenticated-in-`enforcing` with a supplied actor → `401`, and the development-mode anonymous passthrough. `tests/integration/test_stage02_actor_attribution.py` (6) drives it over HTTP against the real API on a disposable database, with every refusal paired against a same-caller success and a row-count check so the assertion cannot pass vacuously: forged `decided_by` → 403 with the case row still `("INVESTIGATING", None, None)` and no new history event; omitted and restated both attribute the credential and write exactly one `DECISION_RECORDED` event for it; the transition chain's recorded actors are now complete (`ASSIGNED`, `INVESTIGATION_STARTED`, `DECISION_RECORDED`, `RESOLVED` — the first and second previously recorded none); forged decline actor → 403 then correct attribution; forged activity actor → 403 with no `Activity` row written; an API client gets 201 with `actor_id IS NULL` and is refused when it names a human. The pre-existing contract that *rewarded* forging was updated rather than deleted: `test_governance.py::test_authorization_isolation_across_projects` now raises project B's dispute as a second real human (`reviewer_b`) instead of posting a mismatched `initiator_id`, and asserts the derived attribution landed. No assertion was weakened to reach green. |
+ 
+ ## 2. Evidence-to-decision lifecycle — CRITICAL
+ 
+@@ -36,7 +36,7 @@ surface and not the rest.
+ | 2.2 | Uploader identity is recorded in the audit trail | **FAIL** | The ingestion path appends `EVIDENCE_UPLOADED` with `actor_id=None` (`services/evidence_ingestion.py:118-129`); same for `evidence_graph.py:196-202,248-258` and `fusion.py:825-831`. The ledger row cannot answer "who put this here". |
+ | 2.3 | Quarantined evidence is never treated as verified | **FAIL** | Quarantine is a bucket location, not an enforced state: `Evidence.status` is written once at insert (`endpoints/evidence.py:53,72`) and never updated; no `VERIFIED` value exists in the domain; no read path filters on status (`vision.py:32-34`, `duplicate_intelligence.py:75-81`); quarantined bytes are presign-downloadable to any reader with `evidence.read` (`evidence.py:76-77`). Only `publication.py:423-426` consumes status. |
+ | 2.4 | Object / database / checksum / retrieval-permission agreement holds | **UNVERIFIED** | A checksum is computed at upload and stored, but there is no reconciliation that re-reads the object and compares, and nothing detects a record whose bytes were replaced or lost. Needs a verification probe before this can be called pass or fail. |
+-| 2.5 | Decisions persist with rationale, actor, timestamp, history | **PARTIAL** | Persistence and history are implemented and tested; attribution is wrong by construction (1.4). |
++| 2.5 | Decisions persist with rationale, actor, timestamp, history | **PARTIAL** | Persistence and history are implemented and tested. Attribution was wrong by construction (1.4) — **closed in stage 02**, so decision and transition actors are now the authenticated credential and the transition chain records actors it previously left blank. Still PARTIAL because the *uploader* behind the evidence being decided on is absent (2.2). |
+ | 2.6 | A retry or a lost response does not duplicate | **FAIL** (except field sync) | `POST /evidence` has no dedupe key — `ingest_evidence` mints `uuid4()` (`:96`) and commits (`:130`), so a client retry creates a second evidence record. `POST /integrations/evidence` declares `Idempotency-Key` (`:389`) but never calls `_check_idempotency`/`record_idempotency` (`:392-457`). Decision submission has no payload dedupe. Genuinely strong: `/field/sync` — unique `(user_id, client_operation_id)` + `request_hash`, replay returns the stored outcome (`field_operations.py:1700-1727`). |
+ 
+ ## 3. Backups and proven recovery — CRITICAL
+@@ -66,11 +66,11 @@ surface and not the rest.
+ | # | Requirement | Verdict | Evidence |
+ |---|---|---|---|
+ | 5.1 | Request-rate limiting | **FAIL** | No limiter anywhere in `backend/`; cross-worker/Redis-backed limiting absent. Note `main.py:107` gates `/metrics` exposure, not traffic. |
+-| 5.2 | `/metrics` is not anonymous | **FAIL** | Measured on the VM: unauthenticated `GET /metrics` returns 3 537 lines of Prometheus text (HTTP and GC counters). |
++| 5.2 | `/metrics` is not anonymous | **FAIL → FIXED (verified 2026-10-16)** | Measured on the VM: unauthenticated `GET /metrics` returned 3 537 lines of Prometheus text (HTTP and GC counters). **FIXED → VERIFIED (stage 02, committed `6a430c74`):** `GET /metrics` is now guarded by `Depends(require("metrics.read"))` (`backend/app/main.py:107-112`), a permission deliberately held by no baseline role and grantable only to a scoped API client, while `/health`, `/ready` and `/healthz` stay anonymous so the load balancer needs no credential. Proven by `tests/integration/test_stage02_metrics_authz.py` (4 tests: anonymous `401` with no `# HELP` in the body, `403` for an authenticated human lacking the permission, `200` for a scoped scraper, and the no-baseline-role invariant) — passing in the 967-test run below. |
+ | 5.3 | Request and upload size limits at the transport | **PARTIAL** | Pagination is capped (`le=100` on list routes) and the upload limit is enforced in-handler (`config.py:83`, `evidence_ingestion.py:91` → `413`), but there is no body-size cap at the server/proxy layer, and some list-building queries are unbounded (`retention.py:163-171,207`, `evidence_request.py:178-184`; `auth.py:544-548` slices only for display). |
+ | 5.4 | Database timeouts and pool bounds | **FAIL** | `backend/db/session.py:42` creates the engine with no `statement_timeout`, no pool size ceiling and no pool recycle. |
+ | 5.5 | Workers: retries, failed/stale/duplicate jobs, dead-letter | **PARTIAL** | Analysis queue timeouts are configured and proven (`test_be037c_*`), webhook retry/auto-disable tested (BE-036); but a corrupt payload is silently dropped with no dead-letter record (`analysis_worker.py:307-309`), and the queue-depth gauges have no caller. |
+-| 5.6 | Structured logs contain no tokens, secrets, presigned URLs or raw evidence | **FAIL** | Redaction exists but only covers OpenTelemetry span attributes: `observability/tracing.py:204,245,270,293` call `redact_sensitive_data`, gated by `settings.observability_redact_sensitive` and reachable only inside `if settings.otel_enabled:` (`app/main.py:123-125`) — and the deployed `.env` sets no `OTEL_*`/observability key (measured), so `otel_enabled` stays at its `False` default (`core/config.py:105`) and that path never runs on the VM at all. The ordinary log stream has no redaction either — `core/logging.py:18-29` (`setup_logging`) attaches only a `RequestIdFilter`, no processor, and all four worker entrypoints configure `logging.basicConfig` directly (`analysis_worker.py:408`, `notification_worker.py:85`, `webhook_worker.py:288`, `retention_worker.py:42`), bypassing even that setup. Anything a `logger.*` call interpolates reaches stdout verbatim. |
++| 5.6 | Structured logs contain no tokens, secrets, presigned URLs or raw evidence | **FAIL → FIXED (verified 2026-10-16)** | Original finding: redaction existed only for OpenTelemetry span attributes (`observability/tracing.py:204,245,270,293`), gated by `settings.observability_redact_sensitive` and reachable only inside `if settings.otel_enabled:` (`app/main.py:123-125`) — and the deployed `.env` sets no `OTEL_*` key (measured), so that path never ran on the VM. The ordinary log stream had no redaction: `core/logging.py` attached only a `RequestIdFilter`, and all four worker entrypoints called `logging.basicConfig` directly, bypassing even that. Anything a `logger.*` call interpolated reached stdout verbatim. **FIXED → VERIFIED (stage 02, committed `6a430c74`):** `backend/core/logging.py` now installs a `RedactingFormatter` on the shared root handler, scrubbing the *rendered* line so message, interpolated args and exception text are all covered (`scrub_secrets`, five shape-based scrubbers: key/value secrets using the telemetry catalogue's key names so the two paths cannot drift, `scheme://user:pass@host` connection strings, presigned/S3 query credentials, bare `Bearer …`, and bare `eyJ…` JWTs). `setup_logging()` is called by `app/main.py:22` and by all four worker entrypoints (`analysis_worker.py:409`, `notification_worker.py:86`, `retention_worker.py:43`, `webhook_worker.py:289`), replacing the `basicConfig` calls. Proven by `tests/unit/test_stage02_log_redaction.py` (4 test functions, **13 collected cases** — the credential-shape test is parametrized: credential shapes scrubbed, operational detail *not* scrubbed as collateral damage, args and exception text scrubbed at the formatter, and `setup_logging` installing the scrubber on the shared handler) — passing in the 967-test run below. Note this is defence-in-depth, not a claim that secrets should ever be logged: the scrubbers match text shapes, so a novel credential format can still pass through. |
+ | 5.7 | Request IDs end-to-end | **PARTIAL** | Generated and echoed as a response header (measured live); the middleware trusts a client-supplied header verbatim (`core/middleware.py:9`) and error bodies do not carry the ID (`main.py:74`). |
+ | 5.8 | Repeatable health check / alert | **FAIL** | `/ready` answers correctly, but nothing schedules it and no alert exists. |
+ 
+@@ -93,7 +93,7 @@ self-check `insert=t update=f delete=f truncate=f`), and workers sweep without e
+ | # | Requirement | Verdict | Evidence |
+ |---|---|---|---|
+ | 7.1 | OpenAPI contract reviewed and current | **PASS (operation set) / PARTIAL (bodies)** | Measured: the live deployed `/openapi.json` and the committed `openapi.json` both carry **155 paths / 181 operations**, with 0 operations present only live and 0 only in the committed copy. The snapshot is not stale at the route level. Not compared: request/response schema bodies, so a changed field set could still be invisible here — the repo has no gate that regenerates and diffs this file. |
+-| 7.2 | Reviewer request/response schemas defined | **PARTIAL** | Schemas exist per endpoint; there is no reviewer-facing subset document, because there is no reviewer identity (1.2). |
++| 7.2 | Reviewer request/response schemas defined | **PARTIAL** | Schemas exist per endpoint. A reviewer-facing subset document still does not exist — the original reason (no reviewer identity, 1.2) is gone, since stage 02 supplied a verifiable sign-in, so this is now a documentation task rather than a blocked one. |
+ | 7.3 | Repeatable end-to-end smoke test | **PARTIAL** | Proven steps exist (credential bootstrap via the app's own service, `GET /api/v1/projects` `401` anonymous vs `200` authenticated, health endpoints, `/ready` postgresql healthy) but as ad-hoc scratch scripts, not one committed command. |
+ | 7.4 | Migrations verified on a disposable database first | **PASS** | Two fresh disposable databases were created and migrated to `v2w3x4y5z032` with 75 tables this session; earlier clone proofs remain valid. |
+ | 7.5 | Reproducible deployment from a pinned commit with config supplied securely | **PARTIAL** | VM runs commit `1e8ecd16`; `.env` is mode 600 with rotated secrets, secrets never printed. Not reproducible: the MinIO image had to be smuggled (`docker save`/`load`), and the production Compose overrides live on the VM, not in the repository. |
+@@ -114,16 +114,21 @@ Blocking, in order of risk:
+    they return nothing because `poa_prod` has no user data; the moment projects, claims and
+    geotagged evidence exist, `GET /evidence/nearby` hands any anonymous caller evidence IDs,
+    project IDs and coordinates across every project. This is the cheapest Critical gap to
+-   close and needs no design decision.
++   close and needs no design decision. **— CLOSED (stage 02, `6a430c74`; see row 1.1.)**
+ 2. **1.2/1.3 — no human identity path.** A Reviewer website cannot be built honestly on top
+    of the current backend without either adding a JWT/OIDC verifier in `resolve_principal` or
+-   putting an API-client secret in the browser, which is prohibited.
++   putting an API-client secret in the browser, which is prohibited. **— CLOSED in code
++   (stage 02, verifier + 39 tests, uncommitted at the time of writing); the remaining action
++   is the owner's: set the `AUTH_OIDC_*` keys and provision the reviewer accounts, because
++   until then the deployed API accepts no human credential.**
+ 3. **1.4/2.2 — attribution is forgeable and often absent.** A tamper-evident ledger whose
+-   actor column is chosen by the caller records *a* story, not *the* story.
++   actor column is chosen by the caller records *a* story, not *the* story. **— 1.4 CLOSED
++   (stage 02, uncommitted at the time of writing); 2.2 (uploader identity) still open.**
+ 4. **2.3/2.6 — quarantine is cosmetic and retries duplicate.** Both are data-integrity
+    defects that get worse with volume, not better.
+ 5. **5.1/5.2/5.6 — no rate limiting, anonymous `/metrics`, and redaction that covers only
+-   OTel spans** (the plain log stream is unprotected).
++   OTel spans** (the plain log stream is unprotected). **— 5.2 and 5.6 CLOSED (stage 02,
++   `6a430c74`); 5.1 rate limiting still open (stage 03).**
+ 
+ Requirements 4.1 and 4.6 cannot be closed by code at all — they are owner decisions plus one
+ approved reboot.
+@@ -141,6 +146,22 @@ approved reboot.
+ | VM reboot test | approve one `sudo reboot` of the live VM to close 4.6 | Briefly takes the deployment down. |
+ | Backup destination | where the second, off-laptop copy lives | Cost and durability trade-off. |
+ 
++### Decisions taken (2026-10-16)
++
++| Decision | Owner's call | Consequence |
++|---|---|---|
++| Reviewer identity | **Supabase Auth**, with trusted JWT/JWKS verification in `resolve_principal` | Adds an outbound JWKS fetch and a signature-verifying dependency; maps the verified subject onto a `users` row through `identity_provider`/`external_subject`. |
++| Caller-supplied actor fields | **Always derive from the authenticated principal** — a conflicting `decided_by`/`actor_id` is refused, the fields are not removed | Shipped as `backend/security/attribution.py` (row 1.4): omit → credential, mismatch → `403`, unauthenticated-with-an-actor in enforcing mode → `401`. |
++| `/metrics` | Permission **through the existing authorization layer** (`metrics.read` via `require(...)`) | No new mechanism; liveness/readiness stay anonymous (row 5.2). |
++| Idempotency | **Enforce the documented keys** with deterministic replay and reject conflicting reuse | Starts with evidence ingestion, then decision submissions (row 2.6, open). |
++| Quarantine | **Enforce a real lifecycle and authorization policy** | Needs a migration plus a read-path filter, and an owner call on backfilling existing rows (row 2.3, open). |
++| Public ingress | **Keep it private** while security is being fixed; HTTPS only when a remotely hosted frontend exists | No port is opened and no domain claimed as secure yet. |
++| VM reboot test | **Wait** until the recovery steps are documented and approved | Row 4.6 stays open by decision, not by omission. |
++| Model weights | **Deferred** | Rows 6.x stay unverified; no outbound weight fetch happened. |
++
++Still open: **the off-laptop backup destination** — the only owner call in that table with no
++answer yet.
++
+ ## Results
+ 
+ ### Full suite, run correctly armed against a disposable database
+@@ -163,6 +184,45 @@ Reconciled against the earlier unarmed baseline (`1 failed, 919 passed, 14 skipp
+ 
+ Total collected is unchanged at 934, so nothing was deselected between the two runs.
+ 
++### Stage 02 remediation run (2026-10-16)
++
++Command: `python armfull.py suite`, same armed disposable stack as above (`poa_disp_suite` /
++`poa_disp_owner`, `poa_disp_redis`, `poa_disp_minio`, `poa_disp_pg` probe). No `pofa_dev` or
++`pofa_test` read or written.
++
++**967 passed, 1 skipped, 0 failed** — exit code 0, 447.80s (`suite214.log`), after the
++principal-derived attribution tranche.
++
++**1006 passed, 1 skipped, 0 failed** — exit code 0, 453.23s (`suite213.log`), after the
++reviewer-identity tranche. This is the current figure.
++
++Arithmetic, all four figures measured with `armfull.py suite --collect-only` rather than
++inferred:
++
++| Step | Collected | What moved |
++|---|---|---|
++| Stage-01 armed run (`1e8ecd16`) | 933 passed + 1 skipped | as recorded above. |
++| After the route/`/metrics`/redaction tranche (`6a430c74`) | 955 passed + 1 skipped | **+22** = 5 `test_stage02_context_route_authz.py` + 4 `test_stage02_metrics_authz.py` + **13** `test_stage02_log_redaction.py` (4 test functions, one of them parametrized over credential shapes). |
++| After principal-derived attribution | 967 passed + 1 skipped | **+12** = 6 `tests/unit/test_actor_attribution.py` + 6 `tests/integration/test_stage02_actor_attribution.py`. |
++| After reviewer identity via the provider key set (this run, uncommitted) | 1006 passed + 1 skipped | **+39** = 27 `tests/unit/test_stage02_oidc_verification.py` (19 test functions: 18 plain + one startup-validation function parametrized over 9 refused configurations) + 12 `tests/integration/test_stage02_reviewer_identity.py`. `--collect-only` reports the two files at 27 and 12. |
++
++The single skip is unchanged in both runs
++(`tests/unit/test_preflight.py::test_ml_missing_never_becomes_available_without_importer` —
++it skips *because* the interpreter genuinely imports the ML stack). Nothing was deselected and
++no existing assertion was relaxed; the one existing test whose contract the attribution change
++invalidated was rewritten to use two real callers instead of a forged actor (row 1.9).
++
++**What this run does not prove.** Inbound token verification is no longer untested, but every
++one of those 39 tests serves its **own locally generated key set** — so none of them proves
++that the real provider's issuer string, JWKS URL or audience value is the one this backend
++will accept. That check is owed against a live configured provider before row 1.2 can be
++called closed *on the deployment* rather than closed in code (stage 02 step 5, task #217).
++Also still untested or unfixed: request-rate limiting (5.1) and `statement_timeout` (5.4);
++quarantine remains cosmetic (2.3); the evidence uploader is still recorded with `actor_id=None`
++(2.2); and advertised `Idempotency-Key` behaviour is still not implemented (2.6). A green
++suite over those rows is
++silence, not evidence.
++
+ ### What this green result does and does not mean
+ 
+ It means the implemented behaviour is self-consistent at HEAD `1e8ecd16` on a disposable
+@@ -177,3 +237,16 @@ test anywhere asserts that a mismatched or absent actor is rejected or overridde
+ closing 1.4 will require changing what these tests expect, not just adding new ones. A
+ passing suite over an untested requirement is silence, not evidence; a passing suite over a
+ tested-but-wrong requirement is a lock on the wrong contract.
++
++**Superseded on 2026-10-16 (stage 02, rows 1.4/1.9).** The claim that *no* test asserts a
++mismatched or absent actor is rejected is no longer true — `tests/unit/test_actor_attribution.py`
++and `tests/integration/test_stage02_actor_attribution.py` do exactly that, in the `enforcing`
++posture. One honest caveat remains, and the two kinds differ:
++`test_authorization.py:406-412` sends the supervisor's own token with `decided_by` set to that
++same id, so it is a correct attribution test and would pass in either posture;
++`test_review_case.py:372-378` and `test_audit_ledger.py:505-512` send **no `Authorization`
++header at all** and post a bare `uuid4()` that names no user, so they pass today only because
++`conftest.py` leaves them in the development posture where the anonymous bypass forwards the
++supplied text — and `review_cases.decided_by` has no foreign key, so the row stores an actor id
++that does not exist. That is a lead for the 1.7 suite-wide re-fixture, not evidence that
++impersonation still works against a real credential.
+diff --git a/openapi.json b/openapi.json
+index 0d3d96da..4120f602 100644
+--- a/openapi.json
++++ b/openapi.json
+@@ -4172,7 +4172,7 @@
+     "/api/v1/auth/roles": {
+       "get": {
+         "summary": "List roles (requires role.manage)",
+-        "description": "Report-only enumeration. Returns a bare list ordered by name and intentionally carries no {items,limit,offset,total} envelope (unlike /users, /organizations and /units); limit/offset slice the list but a truncated page is not distinguishable from a complete one. Owner decision BE-030 \u00a716: keep the bare-list shape for these fixed vocabulary enumerations.",
++        "description": "Report-only enumeration. Returns a bare list ordered by name and intentionally carries no {items,limit,offset,total} envelope (unlike /users, /organizations and /units); limit/offset slice the list but a truncated page is not distinguishable from a complete one. Owner decision BE-030 §16: keep the bare-list shape for these fixed vocabulary enumerations.",
+         "operationId": "list_roles_api_v1_auth_roles_get",
+         "parameters": [
+           {
+@@ -4236,7 +4236,7 @@
+     "/api/v1/auth/permissions": {
+       "get": {
+         "summary": "List permissions (requires role.manage)",
+-        "description": "Report-only enumeration. Returns a bare list ordered by name and, like /roles, intentionally carries no {items,limit,offset,total} envelope; a truncated page is not distinguishable from a complete one. Owner decision BE-030 \u00a716: keep the bare-list shape for these fixed vocabulary enumerations.",
++        "description": "Report-only enumeration. Returns a bare list ordered by name and, like /roles, intentionally carries no {items,limit,offset,total} envelope; a truncated page is not distinguishable from a complete one. Owner decision BE-030 §16: keep the bare-list shape for these fixed vocabulary enumerations.",
+         "operationId": "list_permissions_api_v1_auth_permissions_get",
+         "parameters": [
+           {
+@@ -9870,7 +9870,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated user principal; the actor is derived from the credential. API clients record no actor, because activities.actor_id references users."
+           },
+           "verb": {
+             "type": "string",
+@@ -10738,7 +10739,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -10774,7 +10776,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Decided By"
++            "title": "Decided By",
++            "description": "Must equal the authenticated principal; decisions are attributed to the credential, never to this field."
+           }
+         },
+         "type": "object",
+@@ -10806,7 +10809,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -11205,7 +11209,7 @@
+               }
+             ],
+             "title": "Applied By",
+-            "description": "Applicant; defaults to the authenticated principal"
++            "description": "Must equal the authenticated principal; who applied the correction is derived from the credential, never from this field."
+           }
+         },
+         "type": "object",
+@@ -11229,7 +11233,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -11287,7 +11292,7 @@
+               }
+             ],
+             "title": "Requester Id",
+-            "description": "Requester; defaults to the authenticated principal"
++            "description": "Must equal the authenticated principal; the requester is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -11317,7 +11322,7 @@
+               }
+             ],
+             "title": "Resolver Id",
+-            "description": "Resolver; defaults to the authenticated principal"
++            "description": "Must equal the authenticated principal; the resolver is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -11735,7 +11740,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -11783,7 +11789,7 @@
+               }
+             ],
+             "title": "Initiator Id",
+-            "description": "Initiator; defaults to the authenticated principal"
++            "description": "Must equal the authenticated principal; the initiator is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -11817,7 +11823,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -11968,7 +11975,7 @@
+               }
+             ],
+             "title": "Actor Id",
+-            "description": "Actor; defaults to the authenticated principal"
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -12010,7 +12017,7 @@
+               }
+             ],
+             "title": "Resolved By",
+-            "description": "Resolver; defaults to the authenticated principal"
++            "description": "Must equal the authenticated principal; resolutions are attributed to the credential, never to this field."
+           }
+         },
+         "type": "object",
+@@ -12244,7 +12251,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -12468,7 +12476,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Requester Id"
++            "title": "Requester Id",
++            "description": "Must equal the authenticated principal; the requester is derived from the credential and a conflicting value is refused."
+           },
+           "due_at": {
+             "anyOf": [
+@@ -12569,7 +12578,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -12954,7 +12964,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Actor Id"
++            "title": "Actor Id",
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -15793,7 +15804,8 @@
+                 "type": "null"
+               }
+             ],
+-            "title": "Released By"
++            "title": "Released By",
++            "description": "Must equal the authenticated principal; the releaser is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+@@ -16118,7 +16130,7 @@
+               }
+             ],
+             "title": "Invalidated By",
+-            "description": "Actor; defaults to the authenticated principal"
++            "description": "Must equal the authenticated principal; the actor is derived from the credential and a conflicting value is refused."
+           },
+           "reprocess": {
+             "type": "boolean",
+@@ -17899,7 +17911,7 @@
+           "status"
+         ],
+         "title": "PublicClaimResponse",
+-        "description": "\u00a723: public claims expose the approved statement and safe dates only."
++        "description": "§23: public claims expose the approved statement and safe dates only."
+       },
+       "PublicEvidenceDetailResponse": {
+         "properties": {
+@@ -18073,7 +18085,7 @@
+           "derivative_type"
+         ],
+         "title": "PublicMediaResponse",
+-        "description": "\u00a719: media is served by public ID; the storage key is never exposed."
++        "description": "§19: media is served by public ID; the storage key is never exposed."
+       },
+       "PublicProjectDetailResponse": {
+         "properties": {
+@@ -18223,7 +18235,7 @@
+           "publication_version"
+         ],
+         "title": "PublicProvenance",
+-        "description": "\u00a725 public-safe provenance: no credentials, workers, or audit payloads."
++        "description": "§25 public-safe provenance: no credentials, workers, or audit payloads."
+       },
+       "PublicPublicationResponse": {
+         "properties": {
+@@ -18279,7 +18291,7 @@
+           "status"
+         ],
+         "title": "PublicPublicationResponse",
+-        "description": "\u00a717: the PUBLISHED version snapshot is the source of truth."
++        "description": "§17: the PUBLISHED version snapshot is the source of truth."
+       },
+       "PublicationAuthorizationLevel": {
+         "type": "string",
+@@ -18306,7 +18318,7 @@
+           "UNAVAILABLE_PUBLIC_DERIVATIVE"
+         ],
+         "title": "PublicationBlocker",
+-        "description": "\u00a711 structured releasability blockers (never collapsed to NOT_ALLOWED)."
++        "description": "§11 structured releasability blockers (never collapsed to NOT_ALLOWED)."
+       },
+       "PublicationCreateRequest": {
+         "properties": {
+@@ -19121,7 +19133,7 @@
+               }
+             ],
+             "title": "Requested By",
+-            "description": "Requester; defaults to the authenticated principal"
++            "description": "Must equal the authenticated principal; the requester is derived from the credential and a conflicting value is refused."
+           }
+         },
+         "type": "object",
+diff --git a/requirements.txt b/requirements.txt
+index 39475ca5..47455c0f 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -21,6 +21,12 @@ Pillow==10.0.0
+ imagehash==4.3.1
+ numpy==1.26.2
+ exifread==3.0.0
++
++# Stage 02 — human identity: verify the reviewer's own access token locally
++PyJWT[crypto]==2.15.1
++cryptography==50.0.2
++httpx==0.28.1
++
+ torch==2.8.0
+ transformers==4.56.2
+ ultralytics==8.4.155
+diff --git a/tests/integration/test_governance.py b/tests/integration/test_governance.py
+index f2c76bfe..0336fb05 100644
+--- a/tests/integration/test_governance.py
++++ b/tests/integration/test_governance.py
+@@ -1573,6 +1573,10 @@ def test_authorization_isolation_across_projects():
+     supervisor_a = setup_user()
+     owner_b = setup_user()
+     supervisor_b = setup_user()
++    # §12 keeps the dispute initiator out of the review, and #214 derives that
++    # initiator from the credential, so project B needs two humans: one to
++    # raise the dispute and one to review it.
++    reviewer_b = setup_user()
+     administrator = setup_user()
+     project_a = api_create_project(str(owner_a.id), "BE-021 project A")
+     project_b = api_create_project(str(owner_b.id), "BE-021 project B")
+@@ -1583,9 +1587,11 @@ def test_authorization_isolation_across_projects():
+     process(evidence_b["evidence_id"])
+     assign(str(supervisor_a.id), "SUPERVISOR", "PROJECT", project_a["id"])
+     assign(str(supervisor_b.id), "SUPERVISOR", "PROJECT", project_b["id"])
++    assign(str(reviewer_b.id), "REVIEWER", "PROJECT", project_b["id"])
+     assign(str(administrator.id), "ADMINISTRATOR", "GLOBAL", None)
+     headers_a = headers_for(str(supervisor_a.id))
+     headers_b = headers_for(str(supervisor_b.id))
++    headers_reviewer_b = headers_for(str(reviewer_b.id))
+     headers_admin = headers_for(str(administrator.id))
+     try:
+         dispute_a = client.post(
+@@ -1603,13 +1609,13 @@ def test_authorization_isolation_across_projects():
+                 "target_type": "EVIDENCE",
+                 "target_id": evidence_b["evidence_id"],
+                 "reason": "challenge inside project B",
+-                # Explicit initiator distinct from the reviewing supervisor:
+-                # §12 forbids the dispute initiator from reviewing it, so leaving
+-                # this unset would make supervisor_b both requester and reviewer.
+-                "initiator_id": str(owner_b.id),
++                # No initiator_id: §12 forbids the dispute initiator from
++                # reviewing it, and #214 derives the initiator from the
++                # credential, so reviewer_b raises it and supervisor_b reviews.
+             },
+-            headers=headers_b,
++            headers=headers_reviewer_b,
+         ).json()
++        assert dispute_b["initiator_id"] == str(reviewer_b.id)
+ 
+         # Out-of-scope resources are indistinguishable from absent (404).
+         assert (
+@@ -1695,7 +1701,7 @@ def test_authorization_isolation_across_projects():
+     finally:
+         cleanup(
+             [str(owner_a.id), str(supervisor_a.id), str(owner_b.id),
+-             str(supervisor_b.id), str(administrator.id)],
++             str(supervisor_b.id), str(reviewer_b.id), str(administrator.id)],
+             [project_a["id"], project_b["id"]],
+             [evidence_a["evidence_id"], evidence_b["evidence_id"]],
+         )
+diff --git a/tests/integration/test_stage02_actor_attribution.py b/tests/integration/test_stage02_actor_attribution.py
+new file mode 100644
+index 00000000..112cded6
+--- /dev/null
++++ b/tests/integration/test_stage02_actor_attribution.py
+@@ -0,0 +1,403 @@
++"""Stage 02-3: nobody can sign an action with someone else's identity.
++
++Audit register row 1.4 measured decision makers and audit actors taken straight
++from the request body. ``review_cases.decided_by`` and the two event tables have
++no foreign key to ``users``, so a caller could name *any* id and the row
++accepted it; six lifecycle transitions went the other way and recorded no actor
++at all. Every test here pins ``auth_mode=enforcing`` — the deployed posture —
++because under the development default an anonymous caller bypasses the very
++policy these tests measure.
++
++Non-vacuity: each ``403`` is paired with the same caller succeeding on the same
++route with only the actor field omitted, so the refusal can only come from that
++field's value and never from a missing row, a missing grant or a typo. And each
++"nothing was written" claim compares real row counts.
++"""
++
++from uuid import uuid4
++
++import pytest
++from fastapi.testclient import TestClient
++
++from backend.app.main import app
++from backend.core.config import settings
++from backend.db.models import (
++    Activity,
++    ApiClient,
++    EvidenceRequest,
++    EvidenceRequestEvent,
++    Notification,
++    Project,
++    ReviewCase,
++    ReviewCaseEvent,
++    User,
++    UserRoleAssignment,
++)
++from backend.db.session import get_session
++from backend.services import authorization as auth_service
++
++
++client = TestClient(app)
++
++
++@pytest.fixture(autouse=True)
++def enforcing():
++    original = settings.auth_mode
++    settings.auth_mode = "enforcing"
++    try:
++        session = get_session()
++        try:
++            auth_service.ensure_default_catalogue(session)
++        finally:
++            session.close()
++        yield
++    finally:
++        settings.auth_mode = original
++
++
++def user_headers(user_id: str) -> dict:
++    return {"Authorization": f"Bearer dev-user-{user_id}"}
++
++
++def api_client_headers(client_id: str) -> dict:
++    return {"Authorization": f"Bearer dev-client-{client_id}"}
++
++
++def new_user(label: str) -> str:
++    session = get_session()
++    try:
++        row = User(username=f"attrib-{label}-{uuid4().hex[:8]}",
++                   email=f"{uuid4().hex[:8]}@stage02.test")
++        session.add(row)
++        session.commit()
++        return str(row.id)
++    finally:
++        session.close()
++
++
++def new_project(owner_id: str) -> str:
++    session = get_session()
++    try:
++        row = Project(name=f"attrib {uuid4().hex[:6]}", owner_id=owner_id)
++        session.add(row)
++        session.commit()
++        return str(row.id)
++    finally:
++        session.close()
++
++
++def new_api_client(label: str, scopes: list[str]) -> str:
++    session = get_session()
++    try:
++        row = ApiClient(name=f"attrib-{label}-{uuid4().hex[:8]}", scopes=scopes,
++                        status="ACTIVE")
++        session.add(row)
++        session.commit()
++        return str(row.id)
++    finally:
++        session.close()
++
++
++def grant(user_id: str, role: str, scope_type: str = "GLOBAL",
++          project_id: str | None = None) -> None:
++    session = get_session()
++    try:
++        kwargs = {"project_id": project_id} if project_id else {}
++        auth_service.assign_role(session, user_id=user_id, role_name=role,
++                                 scope_type=scope_type, **kwargs)
++        session.commit()
++    finally:
++        session.close()
++
++
++def seed_case(project_id: str, status: str) -> str:
++    """A workflow row, created directly: this module tests attribution only."""
++    session = get_session()
++    try:
++        row = ReviewCase(project_id=project_id, origin="AUTHORIZED_USER", status=status)
++        session.add(row)
++        session.commit()
++        return str(row.id)
++    finally:
++        session.close()
++
++
++def seed_request(project_id: str, requester_id: str, status: str = "OPEN") -> str:
++    session = get_session()
++    try:
++        row = EvidenceRequest(project_id=project_id, requester_id=requester_id,
++                              recipient_id=requester_id, instructions="Second photo",
++                              status=status)
++        session.add(row)
++        session.commit()
++        return str(row.id)
++    finally:
++        session.close()
++
++
++def case_row(case_id: str):
++    session = get_session()
++    try:
++        row = session.query(ReviewCase).filter(ReviewCase.id == case_id).one()
++        return row.status, row.decided_by, row.decision
++    finally:
++        session.close()
++
++
++def request_row(request_id: str):
++    session = get_session()
++    try:
++        row = session.query(EvidenceRequest).filter(EvidenceRequest.id == request_id).one()
++        return row.status, row.requester_id
++    finally:
++        session.close()
++
++
++def case_history(case_id: str) -> list[tuple[str, str | None]]:
++    return _history(ReviewCaseEvent, ReviewCaseEvent.case_id, case_id)
++
++
++def request_history(request_id: str) -> list[tuple[str, str | None]]:
++    return _history(EvidenceRequestEvent, EvidenceRequestEvent.request_id, request_id)
++
++
++def _history(model, column, parent_id: str) -> list[tuple[str, str | None]]:
++    session = get_session()
++    try:
++        rows = session.query(model).filter(column == parent_id).order_by(
++            model.created_at, model.id).all()
++        return [(row.event_type, row.actor_id) for row in rows]
++    finally:
++        session.close()
++
++
++def activity_row(activity_id: str):
++    session = get_session()
++    try:
++        row = session.query(Activity).filter(Activity.id == activity_id).one()
++        return row.actor_id, row.verb
++    finally:
++        session.close()
++
++
++def count(model, column, value: str) -> int:
++    session = get_session()
++    try:
++        return session.query(model).filter(column == value).count()
++    finally:
++        session.close()
++
++
++def cleanup(*, users=(), projects=(), cases=(), requests=(), clients=(),
++            activities=()) -> None:
++    """FK-safe order: children (events) up to the parents, then users last."""
++    session = get_session()
++    try:
++        if cases:
++            session.query(ReviewCaseEvent).filter(
++                ReviewCaseEvent.case_id.in_(cases)).delete(synchronize_session=False)
++            session.query(ReviewCase).filter(
++                ReviewCase.id.in_(cases)).delete(synchronize_session=False)
++        if requests:
++            session.query(EvidenceRequestEvent).filter(
++                EvidenceRequestEvent.request_id.in_(requests)).delete(
++                    synchronize_session=False)
++            session.query(EvidenceRequest).filter(
++                EvidenceRequest.id.in_(requests)).delete(synchronize_session=False)
++        if activities:
++            session.query(Activity).filter(
++                Activity.id.in_(activities)).delete(synchronize_session=False)
++        if users:
++            session.query(Notification).filter(
++                Notification.recipient_id.in_(users)).delete(synchronize_session=False)
++            session.query(UserRoleAssignment).filter(
++                UserRoleAssignment.user_id.in_(users)).delete(synchronize_session=False)
++        if projects:
++            session.query(Project).filter(
++                Project.id.in_(projects)).delete(synchronize_session=False)
++        if users:
++            session.query(User).filter(User.id.in_(users)).delete(
++                synchronize_session=False)
++        if clients:
++            session.query(ApiClient).filter(
++                ApiClient.id.in_(clients)).delete(synchronize_session=False)
++        session.commit()
++    finally:
++        session.close()
++
++
++DECISION_BODY = {"decision": "INCONCLUSIVE", "rationale": "needs a field visit"}
++
++
++def test_forged_decided_by_is_refused_and_writes_nothing():
++    owner = new_user("owner")
++    supervisor = new_user("supervisor")
++    victim = new_user("victim")
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    url = f"/api/v1/review-cases/{case_id}/decision"
++    try:
++        grant(supervisor, "SUPERVISOR")
++        # Non-vacuity: the case really is decidable and the forged id really is
++        # a user, so a refusal below cannot be a not-found or a bad payload.
++        assert case_row(case_id) == ("INVESTIGATING", None, None)
++        events_before = len(case_history(case_id))
++
++        forged = client.post(url, json={**DECISION_BODY, "decided_by": victim},
++                             headers=user_headers(supervisor))
++        assert forged.status_code == 403, forged.text
++        assert "decided_by" in forged.json()["detail"]
++        assert case_row(case_id) == ("INVESTIGATING", None, None)
++        assert len(case_history(case_id)) == events_before
++
++        # The same caller, the same route, only the actor field dropped.
++        allowed = client.post(url, json=DECISION_BODY, headers=user_headers(supervisor))
++        assert allowed.status_code == 200, allowed.text
++        assert case_row(case_id)[0] == "DECISION_PENDING"
++    finally:
++        cleanup(users=[owner, supervisor, victim], projects=[project_id],
++                cases=[case_id])
++
++
++def test_omitted_and_restated_actors_both_attribute_the_credential():
++    owner = new_user("owner")
++    supervisor = new_user("supervisor")
++    project_id = new_project(owner)
++    cases, ids = [], []
++    try:
++        grant(supervisor, "SUPERVISOR")
++        headers = user_headers(supervisor)
++
++        omitted = seed_case(project_id, "INVESTIGATING")
++        cases.append(omitted)
++        first = client.post(f"/api/v1/review-cases/{omitted}/decision",
++                            json=DECISION_BODY, headers=headers)
++        assert first.status_code == 200, first.text
++        assert case_row(omitted)[1] == supervisor
++
++        # A caller who restates their own identity is believed, not blocked.
++        restated = seed_case(project_id, "INVESTIGATING")
++        cases.append(restated)
++        second = client.post(f"/api/v1/review-cases/{restated}/decision",
++                             json={**DECISION_BODY, "decided_by": supervisor},
++                             headers=headers)
++        assert second.status_code == 200, second.text
++        assert case_row(restated)[1] == supervisor
++
++        for case_id in cases:
++            recorded = [actor for event, actor in case_history(case_id)
++                        if event == "DECISION_RECORDED"]
++            assert recorded == [supervisor]
++    finally:
++        cleanup(users=[owner, supervisor], projects=[project_id], cases=cases)
++
++
++def test_transitions_that_recorded_no_actor_now_record_the_principal():
++    """investigate/resolve/reopen and assign took no actor at all before #214."""
++    owner = new_user("owner")
++    supervisor = new_user("supervisor")
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "OPEN")
++    try:
++        grant(supervisor, "SUPERVISOR")
++        headers = user_headers(supervisor)
++        assert client.post(f"/api/v1/review-cases/{case_id}/assign",
++                           json={"assigned_to": supervisor},
++                           headers=headers).status_code == 200
++        assert client.post(f"/api/v1/review-cases/{case_id}/investigate",
++                           headers=headers).status_code == 200
++        assert client.post(f"/api/v1/review-cases/{case_id}/decision",
++                           json=DECISION_BODY, headers=headers).status_code == 200
++        assert client.post(f"/api/v1/review-cases/{case_id}/resolve",
++                           headers=headers).status_code == 200
++
++        history = case_history(case_id)
++        assert [event for event, _ in history] == [
++            "ASSIGNED", "INVESTIGATION_STARTED", "DECISION_RECORDED", "RESOLVED"]
++        unattributed = [event for event, actor in history if actor != supervisor]
++        assert unattributed == [], f"events without the credential: {unattributed}"
++    finally:
++        cleanup(users=[owner, supervisor], projects=[project_id], cases=[case_id])
++
++
++def test_forged_decline_actor_is_refused_then_decline_attributes_the_credential():
++    """The decline endpoint used to ignore payload.actor_id entirely."""
++    owner = new_user("owner")
++    responder = new_user("responder")
++    victim = new_user("victim")
++    project_id = new_project(owner)
++    request_id = seed_request(project_id, victim)
++    url = f"/api/v1/evidence-requests/{request_id}/decline"
++    try:
++        grant(responder, "SUPERVISOR")
++        assert request_row(request_id) == ("OPEN", victim)
++        events_before = len(request_history(request_id))
++
++        forged = client.post(url, json={"reason": "out of range", "actor_id": victim},
++                             headers=user_headers(responder))
++        assert forged.status_code == 403, forged.text
++        assert "actor_id" in forged.json()["detail"]
++        assert request_row(request_id) == ("OPEN", victim)
++        assert len(request_history(request_id)) == events_before
++
++        allowed = client.post(url, json={"reason": "out of range"},
++                              headers=user_headers(responder))
++        assert allowed.status_code == 200, allowed.text
++        assert request_row(request_id)[0] == "DECLINED"
++        recorded = [actor for event, actor in request_history(request_id)
++                    if event == "DECLINED"]
++        assert recorded == [responder]
++    finally:
++        cleanup(users=[owner, responder, victim], projects=[project_id],
++                requests=[request_id])
++
++
++def test_forged_activity_actor_is_refused_and_writes_no_row():
++    owner = new_user("owner")
++    officer = new_user("officer")
++    victim = new_user("victim")
++    project_id = new_project(owner)
++    url = f"/api/v1/projects/{project_id}/activities"
++    created_ids = []
++    try:
++        grant(officer, "FIELD_OFFICER", "PROJECT", project_id)
++        before = count(Activity, Activity.project_id, project_id)
++
++        forged = client.post(url, json={"actor_id": victim, "verb": "inspected",
++                                        "details": {}}, headers=user_headers(officer))
++        assert forged.status_code == 403, forged.text
++        assert "actor_id" in forged.json()["detail"]
++        assert count(Activity, Activity.project_id, project_id) == before
++
++        allowed = client.post(url, json={"verb": "inspected", "details": {}},
++                              headers=user_headers(officer))
++        assert allowed.status_code == 201, allowed.text
++        created_ids.append(allowed.json()["id"])
++        assert activity_row(allowed.json()["id"]) == (officer, "inspected")
++    finally:
++        cleanup(users=[owner, officer, victim], projects=[project_id],
++                activities=created_ids)
++
++
++def test_an_api_client_never_writes_an_actor_into_the_user_foreign_key():
++    """activities.actor_id references users, so a machine caller records none."""
++    owner = new_user("owner")
++    victim = new_user("victim")
++    project_id = new_project(owner)
++    integration = new_api_client("integrations", ["activity.create"])
++    url = f"/api/v1/projects/{project_id}/activities"
++    created_ids = []
++    try:
++        anonymousish = client.post(url, json={"verb": "ingested", "details": {}},
++                                   headers=api_client_headers(integration))
++        assert anonymousish.status_code == 201, anonymousish.text
++        created_ids.append(anonymousish.json()["id"])
++        assert activity_row(anonymousish.json()["id"])[0] is None
++
++        # A machine credential may not claim a human either.
++        forged = client.post(url, json={"actor_id": victim, "verb": "ingested"},
++                             headers=api_client_headers(integration))
++        assert forged.status_code == 403, forged.text
++    finally:
++        cleanup(users=[owner, victim], projects=[project_id], clients=[integration],
++                activities=created_ids)
+diff --git a/tests/integration/test_stage02_reviewer_identity.py b/tests/integration/test_stage02_reviewer_identity.py
+new file mode 100644
+index 00000000..b8d42540
+--- /dev/null
++++ b/tests/integration/test_stage02_reviewer_identity.py
+@@ -0,0 +1,478 @@
++"""Stage 02-2: a reviewer signs in as themselves, and that is the identity used.
++
++Audit register rows 1.2/1.3 measured the opposite: the only credential an
++``enforcing`` deployment accepted was an API-client ``client_id:secret``, which a
++browser may never hold, so there was no way for a human reviewer to act on the
++API at all. These tests run the deployed posture end to end — ``auth_mode=
++enforcing``, ``auth_dev_tokens_enabled=false``, the identity provider enabled —
++and drive real routes with an access token signed by a key set the tests serve
++locally, so nothing here reaches the network.
++
++Two halves, both required. The identity half: a mapped reviewer completes a
++workflow action and the row records *their* id, while an unlinked subject, an
++expired token, a suspended account, a development token and no token at all are
++each refused before any handler runs. The authority half: a verified identity is
++not a permission — the same signed-in reviewer is denied an action their role
++lacks and denied another project's case, each paired with the same caller
++succeeding where they are granted, so a refusal can only come from the grant.
++
++Non-vacuity follows the same rule as the rest of stage 02: every refusal below
++is checked against rows and grants that genuinely exist, and every "nothing was
++written" claim compares real row counts.
++"""
++
++import json
++import time
++from uuid import uuid4
++
++import jwt
++import pytest
++from cryptography.hazmat.primitives.asymmetric import rsa
++from fastapi.testclient import TestClient
++from jwt.algorithms import RSAAlgorithm
++
++from backend.app.main import app
++from backend.core.config import settings
++from backend.db.models import (
++    Project,
++    ReviewCase,
++    ReviewCaseEvent,
++    User,
++    UserRoleAssignment,
++)
++from backend.db.session import get_session
++from backend.security import oidc
++from backend.services import authorization as auth_service
++
++
++client = TestClient(app)
++
++ISSUER = "https://poa-reviewer.supabase.co/auth/v1"
++JWKS_URI = ISSUER + "/.well-known/jwks.json"
++AUDIENCE = "authenticated"
++PROVIDER = "supabase"
++KID = "stage02-signing-key"
++
++#: The five settings a deployed backend would read from ``.env``.
++IDENTITY_SETTINGS = (
++    "auth_mode", "auth_dev_tokens_enabled", "auth_oidc_enabled",
++    "auth_oidc_issuer", "auth_oidc_jwks_uri", "auth_oidc_audience",
++    "auth_oidc_identity_provider", "auth_oidc_algorithms",
++    "auth_oidc_jwks_ttl_seconds",
++)
++
++
++@pytest.fixture(scope="module")
++def signing_key():
++    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
++    jwk = json.loads(RSAAlgorithm.to_jwk(private_key.public_key()))
++    jwk["kid"] = KID
++    jwk["alg"] = "RS256"
++    return private_key, jwk
++
++
++@pytest.fixture(autouse=True)
++def production_identity(signing_key, monkeypatch):
++    """Enforcing, no development tokens, identity provider live on a local key set."""
++    private_key, jwk = signing_key
++    before = {name: getattr(settings, name) for name in IDENTITY_SETTINGS}
++    settings.auth_mode = "enforcing"
++    settings.auth_dev_tokens_enabled = False
++    settings.auth_oidc_enabled = True
++    settings.auth_oidc_issuer = ISSUER
++    settings.auth_oidc_jwks_uri = JWKS_URI
++    settings.auth_oidc_audience = AUDIENCE
++    settings.auth_oidc_identity_provider = PROVIDER
++    settings.auth_oidc_algorithms = "RS256"
++    settings.auth_oidc_jwks_ttl_seconds = 300
++    monkeypatch.setattr(oidc, "_fetch_key_set", lambda uri: {"keys": [jwk]})
++    oidc.reset_key_cache()
++    session = get_session()
++    try:
++        auth_service.ensure_default_catalogue(session)
++    finally:
++        session.close()
++    try:
++        yield private_key
++    finally:
++        for name, value in before.items():
++            setattr(settings, name, value)
++        oidc.reset_key_cache()
++
++
++def bearer(token: str) -> dict:
++    return {"Authorization": f"Bearer {token}"}
++
++
++def access_token(private_key, subject: str, **overrides) -> str:
++    now = int(time.time())
++    claims = {
++        "sub": subject, "iss": ISSUER, "aud": AUDIENCE,
++        "iat": now, "exp": now + 300,
++    }
++    claims.update(overrides)
++    return jwt.encode(claims, private_key, algorithm="RS256",
++                      headers={"kid": KID})
++
++
++def new_reviewer(auth_subject: str | None, *, label: str = "reviewer",
++                 status: str = "ACTIVE", provider: str = PROVIDER) -> str:
++    """A PoA account, the way an administrator provisions one: linked first."""
++    session = get_session()
++    try:
++        row = User(username=f"ident-{label}-{uuid4().hex[:8]}",
++                   email=f"{uuid4().hex[:8]}@stage02.test",
++                   external_subject=auth_subject, identity_provider=provider,
++                   status=status)
++        session.add(row)
++        session.commit()
++        return str(row.id)
++    finally:
++        session.close()
++
++
++def new_owner() -> str:
++    """An unlinked local account, only needed to satisfy projects.owner_id."""
++    return new_reviewer(None, label="owner", provider="local")
++
++
++def new_project(owner_id: str) -> str:
++    session = get_session()
++    try:
++        row = Project(name=f"ident {uuid4().hex[:6]}", owner_id=owner_id)
++        session.add(row)
++        session.commit()
++        return str(row.id)
++    finally:
++        session.close()
++
++
++def grant(user_id: str, role: str, scope_type: str = "GLOBAL",
++          project_id: str | None = None) -> None:
++    session = get_session()
++    try:
++        kwargs = {"project_id": project_id} if project_id else {}
++        auth_service.assign_role(session, user_id=user_id, role_name=role,
++                                 scope_type=scope_type, **kwargs)
++        session.commit()
++    finally:
++        session.close()
++
++
++def seed_case(project_id: str, status: str) -> str:
++    session = get_session()
++    try:
++        row = ReviewCase(project_id=project_id, origin="AUTHORIZED_USER",
++                         status=status)
++        session.add(row)
++        session.commit()
++        return str(row.id)
++    finally:
++        session.close()
++
++
++def case_row(case_id: str):
++    session = get_session()
++    try:
++        row = session.query(ReviewCase).filter(ReviewCase.id == case_id).one()
++        return row.status, row.decided_by
++    finally:
++        session.close()
++
++
++def case_actors(case_id: str, event_type: str) -> list[str | None]:
++    session = get_session()
++    try:
++        rows = session.query(ReviewCaseEvent).filter(
++            ReviewCaseEvent.case_id == case_id,
++            ReviewCaseEvent.event_type == event_type).all()
++        return [row.actor_id for row in rows]
++    finally:
++        session.close()
++
++
++def cleanup(*, users=(), projects=(), cases=()) -> None:
++    """FK-safe order: events, then cases, then grants/projects, then users."""
++    session = get_session()
++    try:
++        if cases:
++            session.query(ReviewCaseEvent).filter(
++                ReviewCaseEvent.case_id.in_(cases)).delete(
++                    synchronize_session=False)
++            session.query(ReviewCase).filter(
++                ReviewCase.id.in_(cases)).delete(synchronize_session=False)
++        if users:
++            session.query(UserRoleAssignment).filter(
++                UserRoleAssignment.user_id.in_(users)).delete(
++                    synchronize_session=False)
++        if projects:
++            session.query(Project).filter(
++                Project.id.in_(projects)).delete(synchronize_session=False)
++        if users:
++            session.query(User).filter(User.id.in_(users)).delete(
++                synchronize_session=False)
++        session.commit()
++    finally:
++        session.close()
++
++
++DECISION_BODY = {"decision": "INCONCLUSIVE", "rationale": "needs a field visit"}
++
++
++def decision_url(case_id: str) -> str:
++    return f"/api/v1/review-cases/{case_id}/decision"
++
++
++def read_url(case_id: str) -> str:
++    return f"/api/v1/review-cases/{case_id}"
++
++
++# ---------------------------------------------------------------------------
++# the identity half: a reviewer's own token is enough, and is the recorded actor
++# ---------------------------------------------------------------------------
++
++
++def test_a_signed_in_reviewer_is_attributed_to_themselves(production_identity):
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject)
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", project_id)
++        # Non-vacuity: the case is decidable and the caller is granted, so the
++        # 200 below can only come from the identity path working.
++        assert case_row(case_id) == ("INVESTIGATING", None)
++
++        response = client.post(decision_url(case_id), json=DECISION_BODY,
++                               headers=bearer(access_token(private_key, subject)))
++        assert response.status_code == 200, response.text
++        assert case_row(case_id) == ("DECISION_PENDING", reviewer)
++        assert case_actors(case_id, "DECISION_RECORDED") == [reviewer]
++    finally:
++        cleanup(users=[owner, reviewer], projects=[project_id], cases=[case_id])
++
++
++def test_the_verified_identity_beats_a_forged_actor_field(production_identity):
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject)
++    colleague = new_reviewer(str(uuid4()), label="colleague")
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", project_id)
++        headers = bearer(access_token(private_key, subject))
++
++        forged = client.post(decision_url(case_id),
++                             json={**DECISION_BODY, "decided_by": colleague},
++                             headers=headers)
++        assert forged.status_code == 403, forged.text
++        assert "decided_by" in forged.json()["detail"]
++        assert case_row(case_id) == ("INVESTIGATING", None)
++        assert case_actors(case_id, "DECISION_RECORDED") == []
++
++        allowed = client.post(decision_url(case_id), json=DECISION_BODY,
++                              headers=headers)
++        assert allowed.status_code == 200, allowed.text
++        assert case_row(case_id) == ("DECISION_PENDING", reviewer)
++    finally:
++        cleanup(users=[owner, reviewer, colleague], projects=[project_id],
++                cases=[case_id])
++
++
++def test_no_credential_at_all_is_still_refused(production_identity):
++    owner = new_owner()
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        assert case_row(case_id)[0] == "INVESTIGATING"
++        assert client.get(read_url(case_id)).status_code == 401
++        assert client.post(decision_url(case_id), json=DECISION_BODY).status_code == 401
++    finally:
++        cleanup(users=[owner], projects=[project_id], cases=[case_id])
++
++
++def test_development_tokens_stay_refused_while_the_provider_is_enabled(
++        production_identity):
++    """The identity path must not quietly reopen the development door."""
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject)
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", project_id)
++        dev = bearer(f"dev-user-{reviewer}")
++        assert client.get(read_url(case_id), headers=dev).status_code == 401
++        assert client.post(decision_url(case_id), json=DECISION_BODY,
++                           headers=dev).status_code == 401
++        # The very same account is accepted when it presents its own token.
++        assert client.get(read_url(case_id), headers=bearer(
++            access_token(private_key, subject))).status_code == 200
++    finally:
++        cleanup(users=[owner, reviewer], projects=[project_id], cases=[case_id])
++
++
++# ---------------------------------------------------------------------------
++# the identity half, refusals: each is the layer that stops it, not the row
++# ---------------------------------------------------------------------------
++
++
++def test_a_valid_token_with_no_linked_account_is_refused_without_writing(
++        production_identity):
++    private_key = production_identity
++    owner = new_owner()
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        response = client.post(decision_url(case_id), json=DECISION_BODY,
++                               headers=bearer(access_token(private_key, str(uuid4()))))
++        assert response.status_code == 401, response.text
++        assert "No account is linked" in response.json()["detail"]
++        assert case_row(case_id) == ("INVESTIGATING", None)
++        assert case_actors(case_id, "DECISION_RECORDED") == []
++    finally:
++        cleanup(users=[owner], projects=[project_id], cases=[case_id])
++
++
++def test_an_expired_token_for_a_mapped_reviewer_is_refused(production_identity):
++    """The account exists and is granted; only the token has run out."""
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject)
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    now = int(time.time())
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", project_id)
++        assert client.get(read_url(case_id), headers=bearer(
++            access_token(private_key, subject))).status_code == 200
++
++        expired = client.get(read_url(case_id), headers=bearer(access_token(
++            private_key, subject, iat=now - 7200, exp=now - 3600)))
++        assert expired.status_code == 401, expired.text
++        assert "No account is linked" not in expired.json()["detail"]
++    finally:
++        cleanup(users=[owner, reviewer], projects=[project_id], cases=[case_id])
++
++
++def test_a_suspended_reviewers_token_is_refused(production_identity):
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject, status="SUSPENDED")
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", project_id)
++        response = client.post(decision_url(case_id), json=DECISION_BODY,
++                               headers=bearer(access_token(private_key, subject)))
++        assert response.status_code == 401, response.text
++        assert response.json()["detail"] == "Invalid credentials"
++        assert case_row(case_id) == ("INVESTIGATING", None)
++    finally:
++        cleanup(users=[owner, reviewer], projects=[project_id], cases=[case_id])
++
++
++def test_a_token_signed_for_another_audience_is_refused(production_identity):
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject)
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", project_id)
++        response = client.get(read_url(case_id), headers=bearer(access_token(
++            private_key, subject, aud="service-role")))
++        assert response.status_code == 401, response.text
++    finally:
++        cleanup(users=[owner, reviewer], projects=[project_id], cases=[case_id])
++
++
++def test_a_refresh_token_is_not_accepted_as_a_signed_in_session(
++        production_identity):
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject)
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", project_id)
++        response = client.get(read_url(case_id), headers=bearer(access_token(
++            private_key, subject, use="refresh")))
++        assert response.status_code == 401, response.text
++    finally:
++        cleanup(users=[owner, reviewer], projects=[project_id], cases=[case_id])
++
++
++def test_a_link_is_per_provider_so_the_same_subject_cannot_cross_over(
++        production_identity):
++    """users(external_subject) is only unique together with its provider."""
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject, label="supabase-side")
++    other = new_reviewer(subject, label="other-side", provider="another-provider")
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", project_id)
++        # Granted as `reviewer`, so this resolves to reviewer's id, never other's.
++        response = client.post(decision_url(case_id), json=DECISION_BODY,
++                               headers=bearer(access_token(private_key, subject)))
++        assert response.status_code == 200, response.text
++        assert case_row(case_id) == ("DECISION_PENDING", reviewer)
++        assert case_row(case_id)[1] != other
++    finally:
++        cleanup(users=[owner, reviewer, other], projects=[project_id],
++                cases=[case_id])
++
++
++# ---------------------------------------------------------------------------
++# the authority half: a verified identity is not a permission
++# ---------------------------------------------------------------------------
++
++
++def test_a_signed_in_reviewer_still_lacks_ungranted_actions(production_identity):
++    """REVIEWER may read and investigate a case, never decide it."""
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject)
++    project_id = new_project(owner)
++    case_id = seed_case(project_id, "INVESTIGATING")
++    try:
++        grant(reviewer, "REVIEWER", "PROJECT", project_id)
++        headers = bearer(access_token(private_key, subject))
++        assert client.get(read_url(case_id), headers=headers).status_code == 200
++        denied = client.post(decision_url(case_id), json=DECISION_BODY, headers=headers)
++        assert denied.status_code == 403, denied.text
++        assert case_row(case_id) == ("INVESTIGATING", None)
++    finally:
++        cleanup(users=[owner, reviewer], projects=[project_id], cases=[case_id])
++
++
++def test_a_signed_in_reviewer_cannot_reach_a_foreign_project(production_identity):
++    private_key = production_identity
++    owner = new_owner()
++    subject = str(uuid4())
++    reviewer = new_reviewer(subject)
++    mine, theirs = new_project(owner), new_project(owner)
++    their_case = seed_case(theirs, "INVESTIGATING")
++    my_case = seed_case(mine, "INVESTIGATING")
++    try:
++        grant(reviewer, "SUPERVISOR", "PROJECT", mine)
++        headers = bearer(access_token(private_key, subject))
++        assert client.get(read_url(their_case), headers=headers).status_code in (403, 404)
++        # Same caller, same route, only the project differs.
++        assert client.get(read_url(my_case), headers=headers).status_code == 200
++    finally:
++        cleanup(users=[owner, reviewer], projects=[mine, theirs],
++                cases=[their_case, my_case])
+diff --git a/tests/unit/test_actor_attribution.py b/tests/unit/test_actor_attribution.py
+new file mode 100644
+index 00000000..4a154cbf
+--- /dev/null
++++ b/tests/unit/test_actor_attribution.py
+@@ -0,0 +1,74 @@
++"""Unit tests for the single actor-attribution policy point (Stage 02-3).
++
++The HTTP surface is covered by ``tests/integration/test_stage02_actor_attribution.py``;
++what lives here are the branches that endpoint guards make unreachable in one
++mode or another — the development-bypass exception and the refusal to credit an
++unauthenticated caller — so the docstring in ``backend/security/attribution.py``
++stays a measured claim instead of a promise.
++"""
++
++from uuid import uuid4
++
++import pytest
++from fastapi import HTTPException
++
++from backend.core.config import settings
++from backend.security.attribution import derive_actor
++from backend.services.authorization import Principal
++
++
++def user_principal(user_id: str) -> Principal:
++    return Principal(principal_id=user_id, principal_type="USER",
++                     authenticated=True, status="ACTIVE")
++
++
++def anonymous_principal() -> Principal:
++    return Principal(principal_id=None, principal_type="ANONYMOUS",
++                     authenticated=False, status="ANONYMOUS")
++
++
++@pytest.fixture
++def enforcing(monkeypatch):
++    monkeypatch.setattr(settings, "auth_mode", "enforcing")
++
++
++@pytest.fixture
++def development(monkeypatch):
++    monkeypatch.setattr(settings, "auth_mode", "development")
++
++
++def test_missing_actor_field_is_filled_from_the_credential(enforcing):
++    assert derive_actor(user_principal("principal-1")) == "principal-1"
++    assert derive_actor(user_principal("principal-1"), None, field="decided_by") == "principal-1"
++
++
++def test_restatement_of_the_callers_own_id_is_accepted(enforcing):
++    assert derive_actor(user_principal("principal-1"), "principal-1") == "principal-1"
++
++
++def test_naming_someone_else_is_refused_before_any_write(enforcing):
++    victim = str(uuid4())
++    with pytest.raises(HTTPException) as refusal:
++        derive_actor(user_principal("principal-1"), victim, field="decided_by")
++    assert refusal.value.status_code == 403
++    assert "decided_by" in refusal.value.detail
++
++
++def test_a_uuid_value_matches_the_string_principal_id(enforcing):
++    from uuid import UUID
++
++    principal_id = str(uuid4())
++    assert derive_actor(user_principal(principal_id), UUID(principal_id)) == principal_id
++
++
++def test_an_unauthenticated_caller_may_not_be_recorded_as_an_actor(enforcing):
++    with pytest.raises(HTTPException) as refusal:
++        derive_actor(anonymous_principal(), str(uuid4()))
++    assert refusal.value.status_code == 401
++
++
++def test_development_mode_is_the_documented_exception(development):
++    """AUTH_MODE=development has no verified identity to derive from."""
++    supplied = str(uuid4())
++    assert derive_actor(anonymous_principal(), supplied) == supplied
++    assert derive_actor(anonymous_principal()) is None
+diff --git a/tests/unit/test_stage02_oidc_verification.py b/tests/unit/test_stage02_oidc_verification.py
+new file mode 100644
+index 00000000..4b603eed
+--- /dev/null
++++ b/tests/unit/test_stage02_oidc_verification.py
+@@ -0,0 +1,326 @@
++"""Stage 02-2: a reviewer's own token is verified here, and only these ways.
++
++Audit register rows 1.2/1.3 measured that no human identity path existed: the
++only credential an ``enforcing`` deployment accepted was a service
++``client_id:secret``, which a browser may never hold. This module pins the
++verifier that replaces it — signature, algorithm, issuer, audience, lifetime,
++key rotation and refusal hygiene — with a locally generated key set, so not one
++test touches the network.
++
++The refusals are the point. Each one is checked against a token that *would* be
++accepted by a naive decoder: an unsigned ``alg: none`` token, an HMAC token
++signed with the provider's own public material, an expired token, a token for a
++different audience or issuer, and a token naming a key the provider never
++published. A verifier that only ever says yes to the happy path proves nothing.
++"""
++
++import base64
++import hashlib
++import hmac
++import json
++import logging
++import time
++from uuid import uuid4
++
++import jwt
++import pytest
++from cryptography.hazmat.primitives import serialization
++from cryptography.hazmat.primitives.asymmetric import rsa
++from jwt.algorithms import RSAAlgorithm
++
++from backend.core.config import Settings
++from backend.security import oidc
++
++
++ISSUER = "https://poa-test.supabase.co/auth/v1"
++AUDIENCE = "authenticated"
++KID = "key-abc"
++
++
++@pytest.fixture(scope="module")
++def keypair():
++    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
++    public_jwk = json.loads(RSAAlgorithm.to_jwk(private_key.public_key()))
++    public_jwk["kid"] = KID
++    public_jwk["alg"] = "RS256"
++    return private_key, public_jwk
++
++
++@pytest.fixture
++def rotation_keypair():
++    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
++    public_jwk = json.loads(RSAAlgorithm.to_jwk(private_key.public_key()))
++    public_jwk["kid"] = "key-rot"
++    public_jwk["alg"] = "RS256"
++    return private_key, public_jwk
++
++
++@pytest.fixture(autouse=True)
++def configured(keypair, monkeypatch):
++    """OIDC switched on against a local key set; no outbound request ever happens."""
++    private_key, public_jwk = keypair
++    settings = {
++        "auth_oidc_enabled": True,
++        "auth_oidc_issuer": ISSUER,
++        "auth_oidc_jwks_uri": "https://poa-test.supabase.co/auth/v1/.well-known/jwks.json",
++        "auth_oidc_audience": AUDIENCE,
++        "auth_oidc_identity_provider": "supabase",
++        "auth_oidc_algorithms": "RS256",
++        "auth_oidc_jwks_ttl_seconds": 300,
++    }
++    for name, value in settings.items():
++        monkeypatch.setattr(oidc.settings, name, value)
++    oidc.reset_key_cache()
++    calls = []
++
++    def fake_fetch(uri):
++        calls.append(uri)
++        return {"keys": [public_jwk]}
++
++    monkeypatch.setattr(oidc, "_fetch_key_set", fake_fetch)
++    yield {"private_key": private_key, "jwk": public_jwk, "calls": calls}
++    oidc.reset_key_cache()
++
++
++def _b64(data: bytes) -> bytes:
++    return base64.urlsafe_b64encode(data).rstrip(b"=")
++
++
++def token(private_key, **overrides):
++    now = int(time.time())
++    claims = {
++        "sub": str(uuid4()),
++        "iss": ISSUER,
++        "aud": AUDIENCE,
++        "iat": now,
++        "exp": now + 300,
++        "email": "reviewer@example.test",
++    }
++    claims.update(overrides)
++    return jwt.encode(claims, private_key, algorithm="RS256", headers={"kid": KID})
++
++
++# ---------------------------------------------------------------------------
++# the happy path, and the caching it must not break
++# ---------------------------------------------------------------------------
++
++
++def test_a_validly_signed_token_yields_its_claims(configured):
++    claims = oidc.verify_token(token(configured["private_key"], sub="reviewer-1"))
++    assert claims["sub"] == "reviewer-1"
++    assert claims["aud"] == AUDIENCE
++
++
++def test_the_key_set_is_fetched_once_not_per_request(configured):
++    signed = token(configured["private_key"])
++    for _ in range(5):
++        oidc.verify_token(signed)
++    assert configured["calls"] == [oidc.settings.auth_oidc_jwks_uri]
++
++
++def test_no_token_material_reaches_the_log(configured, caplog):
++    signed = token(configured["private_key"])
++    with caplog.at_level(logging.WARNING):
++        for bad in (signed + "x", "not.a.jwt", "a.b.c"):
++            with pytest.raises(oidc.OIDCError):
++                oidc.verify_token(bad)
++    assert signed not in caplog.text
++    assert "reviewer@example.test" not in caplog.text
++
++
++# ---------------------------------------------------------------------------
++# every refusal a naive decoder would have accepted
++# ---------------------------------------------------------------------------
++
++
++def test_a_tampered_signature_is_refused(configured):
++    signed = token(configured["private_key"])
++    header, payload, signature = signed.split(".")
++    forged = ".".join([header, payload, "A" * len(signature)])
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(forged)
++    assert error.value.reason == "TOKEN_REJECTED"
++
++
++def test_an_unsigned_alg_none_token_is_refused(configured):
++    now = int(time.time())
++    unsigned = jwt.encode(
++        {"sub": "attacker", "iss": ISSUER, "aud": AUDIENCE, "iat": now, "exp": now + 300},
++        key=None, algorithm="none")
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(unsigned)
++    assert error.value.reason == "ALGORITHM_REFUSED"
++
++
++def test_a_token_forged_with_the_public_key_as_an_hmac_secret_is_refused(configured):
++    """The classic confusion: sign HS256 using the published RSA material.
++
++    PyJWT's own encoder refuses PEM material as an HMAC secret, so the attack
++    token is assembled by hand — a real attacker is not bound by that
++    convenience, and the verifier must still refuse what it receives.
++    """
++    now = int(time.time())
++    public_pem = configured["private_key"].public_key().public_bytes(
++        encoding=serialization.Encoding.PEM,
++        format=serialization.PublicFormat.SubjectPublicKeyInfo)
++    header = _b64(json.dumps({"alg": "HS256", "typ": "JWT", "kid": KID}).encode())
++    payload = _b64(json.dumps({
++        "sub": "attacker", "iss": ISSUER, "aud": AUDIENCE, "iat": now, "exp": now + 300,
++    }).encode())
++    signing_input = header + b"." + payload
++    signature = _b64(hmac.new(public_pem, signing_input, hashlib.sha256).digest())
++    forged = (signing_input + b"." + signature).decode()
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(forged)
++    assert error.value.reason == "ALGORITHM_REFUSED"
++
++
++def test_a_token_signed_by_an_unpublished_key_is_refused(configured, rotation_keypair):
++    other_private, _ = rotation_keypair
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(jwt.encode(
++            {"sub": "x", "iss": ISSUER, "aud": AUDIENCE,
++             "iat": int(time.time()), "exp": int(time.time()) + 300},
++            other_private, algorithm="RS256", headers={"kid": "not-published"}))
++    assert error.value.reason == "UNKNOWN_KEY_ID"
++    # An unknown kid costs exactly one refetch, so a flood of bad tokens cannot
++    # become a flood of outbound requests.
++    assert len(configured["calls"]) == 2
++
++
++def test_an_expired_token_is_refused(configured):
++    now = int(time.time())
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(token(configured["private_key"], iat=now - 7200, exp=now - 3600))
++    assert error.value.reason == "TOKEN_REJECTED"
++
++
++def test_a_token_from_another_audience_is_refused(configured):
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(token(configured["private_key"], aud="service-role"))
++    assert error.value.reason == "TOKEN_REJECTED"
++
++
++def test_a_token_from_another_issuer_is_refused(configured):
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(token(configured["private_key"], iss="https://evil.example/auth"))
++    assert error.value.reason == "TOKEN_REJECTED"
++
++
++def test_a_refresh_token_is_refused(configured):
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(token(configured["private_key"], use="refresh"))
++    assert error.value.reason == "REFRESH_TOKEN"
++
++
++def test_a_malformed_authorization_value_is_refused_without_a_fetch(configured):
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token("dev-user-11111111-1111-1111-1111-111111111111")
++    assert error.value.reason == "MALFORMED_TOKEN"
++    assert configured["calls"] == []
++
++
++def test_a_symmetric_entry_in_the_key_set_is_never_used_as_a_verification_key(
++        configured, monkeypatch):
++    planted = {"kty": "oct", "kid": "key-oct", "alg": "HS256",
++               "k": "c2VjcmV0LW1hdGVyaWFsLXBsYWNlaG9sZGVy"}
++
++    def with_planted(uri):
++        configured["calls"].append(uri)
++        return {"keys": [configured["jwk"], planted]}
++
++    monkeypatch.setattr(oidc, "_fetch_key_set", with_planted)
++    oidc.reset_key_cache()
++    assert "key-oct" not in oidc.signing_keys()
++
++
++# ---------------------------------------------------------------------------
++# key rotation and provider availability
++# ---------------------------------------------------------------------------
++
++
++def test_a_rotated_key_is_picked_up_on_the_first_unknown_kid(
++        configured, rotation_keypair, monkeypatch):
++    other_private, other_jwk = rotation_keypair
++    stages = [{"keys": [configured["jwk"]]},
++              {"keys": [configured["jwk"], other_jwk]}]
++
++    def rotating_fetch(uri):
++        configured["calls"].append(uri)
++        return stages[min(len(configured["calls"]) - 1, len(stages) - 1)]
++
++    monkeypatch.setattr(oidc, "_fetch_key_set", rotating_fetch)
++    oidc.reset_key_cache()
++    now = int(time.time())
++    claims = oidc.verify_token(jwt.encode(
++        {"sub": "rotated", "iss": ISSUER, "aud": AUDIENCE, "iat": now, "exp": now + 300},
++        other_private, algorithm="RS256", headers={"kid": "key-rot"}))
++    assert claims["sub"] == "rotated"
++    assert len(configured["calls"]) == 2
++
++
++def test_an_unreachable_provider_fails_closed(configured, monkeypatch):
++    import httpx
++
++    def down(uri):
++        configured["calls"].append(uri)
++        raise httpx.ConnectError("provider down")
++
++    oidc.reset_key_cache()
++    monkeypatch.setattr(oidc, "_fetch_key_set", down)
++    with pytest.raises(oidc.OIDCError) as error:
++        oidc.verify_token(token(configured["private_key"]))
++    assert error.value.reason == "KEY_SET_UNAVAILABLE"
++
++
++def test_a_still_fresh_key_set_carries_a_request_through_a_provider_hiccup(
++        configured, monkeypatch):
++    import httpx
++
++    oidc.verify_token(token(configured["private_key"]))  # fills the cache
++
++    def down(uri):
++        raise httpx.ConnectError("provider down")
++
++    monkeypatch.setattr(oidc, "_fetch_key_set", down)
++    claims = oidc.verify_token(token(configured["private_key"]))
++    assert claims["aud"] == AUDIENCE
++
++
++# ---------------------------------------------------------------------------
++# configuration: a half-configured verifier must refuse to start
++# ---------------------------------------------------------------------------
++
++
++@pytest.mark.parametrize("overrides", [
++    {"auth_oidc_issuer": ""},
++    {"auth_oidc_jwks_uri": ""},
++    {"auth_oidc_issuer": "http://insecure.example/auth"},
++    {"auth_oidc_jwks_uri": "http://insecure.example/jwks.json"},
++    {"auth_oidc_audience": "  "},
++    {"auth_oidc_algorithms": "none"},
++    {"auth_oidc_algorithms": "HS256"},
++    {"auth_oidc_algorithms": "RS256,HS256"},
++    {"auth_oidc_algorithms": ""},
++])
++def test_enabling_oidc_without_usable_settings_is_refused_at_startup(overrides):
++    base = dict(auth_oidc_enabled=True, auth_oidc_issuer=ISSUER,
++                auth_oidc_jwks_uri="https://poa-test.supabase.co/auth/v1/.well-known/jwks.json",
++                auth_oidc_audience=AUDIENCE, auth_oidc_algorithms="RS256")
++    base.update(overrides)
++    with pytest.raises(ValueError):
++        Settings(**base)
++
++
++def test_oidc_stays_opt_in_and_unconfigured_settings_are_accepted():
++    """An integration-only deployment must keep starting with no OIDC config."""
++    quiet = Settings(auth_oidc_enabled=False, auth_oidc_issuer="", auth_oidc_jwks_uri="",
++                     auth_oidc_algorithms="none")
++    assert quiet.auth_oidc_enabled is False
++
++
++def test_asymmetric_families_are_all_acceptable_configuration():
++    configured = Settings(auth_oidc_enabled=True, auth_oidc_issuer=ISSUER,
++                          auth_oidc_jwks_uri="https://poa-test.supabase.co/jwks.json",
++                          auth_oidc_algorithms="RS256, ES256, PS256")
++    assert configured.auth_oidc_algorithms == "RS256, ES256, PS256"

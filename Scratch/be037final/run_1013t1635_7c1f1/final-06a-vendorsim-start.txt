@@ -1,0 +1,3 @@
+=== A/B bootstrap proof: same image, vendor init instead of the repo mount ===
+--- create the throwaway simulator (no volume, --rm, this run's name) ---
+92714979d3b44ad41e8ec409b724064bd2f064809467218e8e4fc5399953fca4

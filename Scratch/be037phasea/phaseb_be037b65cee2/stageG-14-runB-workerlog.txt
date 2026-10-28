@@ -1,0 +1,30 @@
+ERROR:__main__:reprocessing completion hook failed job_id=dc8ed508-cbe2-4739-a401-122235684602
+Traceback (most recent call last):
+  File "/app/backend/workers/analysis_worker.py", line 55, in _complete_reprocessing_hook
+    governance_service.complete_reprocessing(
+  File "/app/backend/services/governance.py", line 684, in complete_reprocessing
+    raise LookupError("Reprocessing request not found")
+LookupError: Reprocessing request not found
+ERROR:__main__:reprocessing completion hook failed job_id=f19f9177-3808-4213-b128-75cba7c7c9a4
+Traceback (most recent call last):
+  File "/app/backend/workers/analysis_worker.py", line 55, in _complete_reprocessing_hook
+    governance_service.complete_reprocessing(
+  File "/app/backend/services/governance.py", line 684, in complete_reprocessing
+    raise LookupError("Reprocessing request not found")
+LookupError: Reprocessing request not found
+ERROR:__main__:reprocessing completion hook failed job_id=5be75539-f310-42f9-aba7-5c192b602097
+Traceback (most recent call last):
+  File "/app/backend/workers/analysis_worker.py", line 55, in _complete_reprocessing_hook
+    governance_service.complete_reprocessing(
+  File "/app/backend/services/governance.py", line 684, in complete_reprocessing
+    raise LookupError("Reprocessing request not found")
+LookupError: Reprocessing request not found
+WARNING:__main__:analysis job retried job_id=da486ea1-1abc-4f21-bfa3-e3db6ae89119
+WARNING:__main__:analysis job retried job_id=da486ea1-1abc-4f21-bfa3-e3db6ae89119
+ERROR:__main__:analysis job failed job_id=da486ea1-1abc-4f21-bfa3-e3db6ae89119
+Traceback (most recent call last):
+    raise error_class(parsed_response, operation_name)
+botocore.errorfactory.NoSuchKey: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+Traceback (most recent call last):
+    raise self._translate(error, bucket=bucket, key=key) from error
+backend.services.storage.ObjectNotFoundError: Object not found: be037b65cee2-quarantine/quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original

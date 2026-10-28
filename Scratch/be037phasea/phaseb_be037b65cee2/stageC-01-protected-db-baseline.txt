@@ -1,0 +1,32 @@
+=== PROTECTED DATABASE READ-ONLY BASELINE — 2026-10-13T07:00:56Z ===
+method: docker exec pofa_db psql -U postgres -d <db> -At -c (SELECT only; no writes)
+--- pofa_dev ---
+db=pofa_dev
+pg=PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1)
+alembic_rev=t0u1v2w3x030
+audit_ledger_events=6023
+users=1054
+projects=544
+evidence=284
+analysis_jobs=32
+webhook_events=561
+webhook_deliveries=0
+notification_deliveries=0
+idempotency_keys=0
+tables=73
+exit=0
+--- pofa_test ---
+db=pofa_test
+pg=PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1)
+alembic_rev=t0u1v2w3x030
+audit_ledger_events=53316
+users=3263
+projects=1636
+evidence=1216
+analysis_jobs=38
+webhook_events=4455
+webhook_deliveries=0
+notification_deliveries=0
+idempotency_keys=0
+tables=73
+exit=0

@@ -1,0 +1,208 @@
+[
+  {
+    "scenario": "S1 valid residue -> upgrade succeeds",
+    "looked_for": "BE-029 identity residue predicate FAILED",
+    "pre": {
+      "revision": "q7r8s9t0u027",
+      "counts": {
+        "users": 3,
+        "projects": 3,
+        "evidence": 2,
+        "activities": 0,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "post": {
+      "revision": "s9t0u1v2w029",
+      "counts": {
+        "users": 1,
+        "projects": 1,
+        "evidence": 0,
+        "activities": 0,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": 6
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "exit": 0,
+    "refused_as_expected": true
+  },
+  {
+    "scenario": "S2 shape violation: candidate owns two projects",
+    "looked_for": "owns exactly one project",
+    "pre": {
+      "revision": "q7r8s9t0u027",
+      "counts": {
+        "users": 2,
+        "projects": 3,
+        "evidence": 1,
+        "activities": 0,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "post": {
+      "revision": "q7r8s9t0u027",
+      "counts": {
+        "users": 2,
+        "projects": 3,
+        "evidence": 1,
+        "activities": 0,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "exit": 1,
+    "refused_as_expected": true,
+    "refusal_line": "- owns exactly one project: 1 violating row(s)",
+    "tail": "  - every candidate project holds evidence: 1 violating row(s)"
+  },
+  {
+    "scenario": "S3 ledger violation: candidate is a ledger actor",
+    "looked_for": "no audit ledger involvement",
+    "pre": {
+      "revision": "q7r8s9t0u027",
+      "counts": {
+        "users": 2,
+        "projects": 2,
+        "evidence": 1,
+        "activities": 0,
+        "audit_ledger_events": 1,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": "f95f052d20f37c5255f41bf1b482c2fa",
+      "span": "1-1"
+    },
+    "post": {
+      "revision": "q7r8s9t0u027",
+      "counts": {
+        "users": 2,
+        "projects": 2,
+        "evidence": 1,
+        "activities": 0,
+        "audit_ledger_events": 1,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": "f95f052d20f37c5255f41bf1b482c2fa",
+      "span": "1-1"
+    },
+    "exit": 1,
+    "refused_as_expected": true,
+    "refusal_line": "- no audit ledger involvement (actor, project or resource): 1 violating row(s)",
+    "tail": "  - no audit ledger involvement (actor, project or resource): 1 violating row(s)"
+  },
+  {
+    "scenario": "S4 reference violation: a non-candidate references the candidate",
+    "looked_for": "non-retirement reference into the set",
+    "pre": {
+      "revision": "q7r8s9t0u027",
+      "counts": {
+        "users": 2,
+        "projects": 2,
+        "evidence": 1,
+        "activities": 1,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "post": {
+      "revision": "q7r8s9t0u027",
+      "counts": {
+        "users": 2,
+        "projects": 2,
+        "evidence": 1,
+        "activities": 1,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "exit": 1,
+    "refused_as_expected": true,
+    "refusal_line": "- non-retirement reference into the set: users: activities.actor_id = 1",
+    "tail": "  - non-retirement reference into the set: users: activities.actor_id = 1"
+  },
+  {
+    "scenario": "S5 restore mismatch (archived id does not match the archive key)",
+    "exit": 1,
+    "looked_for": "keeping the archive intact",
+    "refused_as_expected": true,
+    "refusal_line": "r8s9t0u1v028_be029_retire_identity_residue_py.RetirementAborted: BE-029 downgrade restored 0 of 1 archived users rows; keeping the archive intact so no snapshot is lost",
+    "corrupted_rows": 1,
+    "pre": {
+      "revision": "s9t0u1v2w029",
+      "counts": {
+        "users": 1,
+        "projects": 1,
+        "evidence": 0,
+        "activities": 0,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": 3
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "post": {
+      "revision": "s9t0u1v2w029",
+      "counts": {
+        "users": 1,
+        "projects": 1,
+        "evidence": 0,
+        "activities": 0,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": 3
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "archive_still_holds_every_snapshot": true,
+    "nothing_restored": true,
+    "still_at_head": true
+  },
+  {
+    "scenario": "S6 missing archive",
+    "exit": 1,
+    "looked_for": "identity_retirement_archive",
+    "refused_as_expected": true,
+    "refusal_line": "psycopg2.errors.UndefinedTable: relation \"identity_retirement_archive\" does not exist",
+    "pre": {
+      "revision": "s9t0u1v2w029",
+      "counts": {
+        "users": 1,
+        "projects": 1,
+        "evidence": 0,
+        "activities": 0,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "post": {
+      "revision": "s9t0u1v2w029",
+      "counts": {
+        "users": 1,
+        "projects": 1,
+        "evidence": 0,
+        "activities": 0,
+        "audit_ledger_events": 0,
+        "identity_retirement_archive": null
+      },
+      "ledger_md5": null,
+      "span": "0-0"
+    },
+    "no_partial_restore": true,
+    "still_at_head": true
+  }
+]

@@ -1,0 +1,73 @@
+{
+  "database": "pofa_be029_assumptions",
+  "appends": {
+    "sequence_numbers": [
+      1,
+      2,
+      3
+    ],
+    "snapshot": {
+      "count": 3,
+      "sequences": [
+        1,
+        2,
+        3
+      ],
+      "tail_hash": "16a441a37a72c9b3dc75118d0f9436c05f6809f5be535ef7aa2a12d2c57b8aa7",
+      "verify": {
+        "valid": true,
+        "checked_events": 3,
+        "first_sequence": 1,
+        "last_sequence": 3,
+        "failures": []
+      }
+    },
+    "contiguous": true
+  },
+  "rollback": {
+    "max_before": 3,
+    "rows_after_rollback": 3,
+    "rolled_back_sequence": 4,
+    "next_sequence": 4,
+    "burned_a_number": false,
+    "snapshot": {
+      "count": 4,
+      "sequences": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "tail_hash": "df32c349415c5e09a425f0a6c2156cff80a5668e472495737f95857183684a01",
+      "verify": {
+        "valid": true,
+        "checked_events": 4,
+        "first_sequence": 1,
+        "last_sequence": 4,
+        "failures": []
+      }
+    }
+  },
+  "update": {
+    "refused_by_database": false,
+    "error": null,
+    "state_after_rollback": true
+  },
+  "delete": {
+    "refused_by_database": false,
+    "deleted_sequence": 2,
+    "verifier_notice": true,
+    "failures": [
+      "sequence gap before 3 (expected 2)"
+    ],
+    "count": 3
+  },
+  "writer_after_deletion": {
+    "new_sequence": 5,
+    "deleted_sequence": 2,
+    "verifier_valid": false,
+    "failures": [
+      "sequence gap before 3 (expected 2)"
+    ]
+  }
+}

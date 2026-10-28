@@ -1,0 +1,30 @@
+ events | first_seq | last_seq |            latest             
+--------+-----------+----------+-------------------------------
+     82 |         1 |       82 | 2026-10-13 08:13:49.876723+00
+(1 row)
+
+           event_type            | count 
+---------------------------------+-------
+ ROLE_ASSIGNED                   |    27
+ USER_CREATED                    |    22
+ EVIDENCE_UPLOADED               |     8
+ WEBHOOK_DELIVERY_FAILED         |     4
+ ORGANIZATION_CREATED            |     4
+ WEBHOOK_CREATED                 |     3
+ FUSION_RUN_CREATED              |     2
+ NOTIFICATION_DELIVERY_SUCCEEDED |     2
+ RETENTION_POLICY_CREATED        |     2
+ EXTERNAL_SYSTEM_CREATED         |     2
+ DISPUTE_ASSIGNED                |     1
+ DISPUTE_CREATED                 |     1
+ RESOURCE_ARCHIVED               |     1
+ WEBHOOK_DISABLED                |     1
+ RETENTION_POLICY_ACTIVATED      |     1
+ DISPUTE_ESCALATED               |     1
+(16 rows)
+
+ version_num  
+--------------
+ t0u1v2w3x030
+(1 row)
+

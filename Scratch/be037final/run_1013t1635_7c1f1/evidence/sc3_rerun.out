@@ -1,0 +1,5 @@
+[20:54:30] worker sc3_stall_during_ack pid=32384
+[20:54:38] redis pause rc=0 state=paused
+[20:55:38] redis unpause rc=0 state=running
+[20:57:44] wrote evidence\sc3_stall_during_ack.json
+[20:57:44] sc3 finished in 203.2s

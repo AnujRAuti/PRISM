@@ -1,0 +1,255 @@
+{
+  "started_at": "2026-10-15T08:49:56+0530",
+  "protected_databases_before_teardown": {
+    "pofa_dev": {
+      "identity": "pofa_dev|postgres",
+      "ledger_count": "6023",
+      "seq_lo": "1",
+      "seq_hi": "6059",
+      "users": "1054",
+      "projects": "544",
+      "evidence": "284",
+      "analysis_jobs": "32",
+      "webhook_events": "561",
+      "public_tables": "75",
+      "alembic_version": [
+        "t0u1v2w3x030"
+      ],
+      "extensions": "plpgsql,postgis,vector",
+      "exemplo_dados_tables": "0"
+    },
+    "pofa_test": {
+      "identity": "pofa_test|postgres",
+      "ledger_count": "53316",
+      "seq_lo": "1",
+      "seq_hi": "53316",
+      "users": "3263",
+      "projects": "1636",
+      "evidence": "1216",
+      "analysis_jobs": "38",
+      "webhook_events": "4455",
+      "public_tables": "75",
+      "alembic_version": [
+        "t0u1v2w3x030"
+      ],
+      "extensions": "plpgsql,postgis,vector",
+      "exemplo_dados_tables": "0"
+    }
+  },
+  "protected_containers_before_teardown": {
+    "pofa_db": {
+      "rc": 0,
+      "facts": "NAME=/pofa_db|ID=7949c99808161e138c35489a9d34928b873cfcd4cead9eb0f00fb37261033baf|CREATED=2026-09-18T18:09:18.006806062Z|STARTED=2026-10-15T02:44:48.359513413Z|RESTARTS=0|RUNNING=true|POLICY=unless-stopped"
+    },
+    "pofa_redis": {
+      "rc": 0,
+      "facts": "NAME=/pofa_redis|ID=29b684e82d7c9b2818fc1a3d0f48415ab78f923ec7e063150208d275bd767af5|CREATED=2026-09-13T16:58:41.514014662Z|STARTED=2026-10-15T02:44:48.290627392Z|RESTARTS=0|RUNNING=true|POLICY=unless-stopped"
+    },
+    "pofa_minio": {
+      "rc": 0,
+      "facts": "NAME=/pofa_minio|ID=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd|CREATED=2026-09-13T13:33:00.828947067Z|STARTED=2026-10-15T02:44:48.292795018Z|RESTARTS=0|RUNNING=true|POLICY=unless-stopped"
+    }
+  },
+  "finished_at": "2026-10-15T09:29:45+0530",
+  "_written": "D:\\CODING\\Scratch\\be037final\\run_WSF_be037wf7e3\\evidence\\wsg-07-cleanup.json",
+  "steps_executed": [
+    "teardown",
+    "teardown",
+    "verify"
+  ],
+  "resumed_at": "2026-10-15T09:29:18+0530",
+  "containers": {
+    "found": [
+      {
+        "id": "89aeb7ec998a",
+        "name": "be037fin7c1f1_db2",
+        "status": "Exited (255) About an hour ago",
+        "image": "garapadev/postgres-postgis-pgvector:15-stable",
+        "compose_project_label": ""
+      }
+    ],
+    "databases_in_run_clusters_before_removal": {
+      "be037fin7c1f1_db2": [
+        "<absent or unreachable rc=1>"
+      ]
+    },
+    "note_on_unreadable_clusters": "A stopped container cannot be exec'd into, so the sibling run's already-exited clusters are listed from that run's creation-time evidence (final-03-ownership-manifest.md, wsd_second_boot.json) instead of a post-hoc read.",
+    "removals": [
+      {
+        "name": "be037fin7c1f1_db2",
+        "identification": {
+          "rule": "created by this task's own harness",
+          "script": "D:\\CODING\\Scratch\\be037final\\run_1013t1635_7c1f1\\wsd_second_boot.py",
+          "evidence": "D:\\CODING\\Scratch\\be037final\\run_1013t1635_7c1f1\\evidence\\wsd_second_boot.json",
+          "script_names_this_container": true,
+          "evidence_recorded_container": "be037fin7c1f1_db2",
+          "evidence_docker_run_rc": 0,
+          "live_id": "89aeb7ec998aaf88ae49ac13fa95f7ed2a6a2e0a665822a25026e594c7e9d035",
+          "live_created": "2026-10-14T15:38:13.902674208Z",
+          "live_image": "garapadev/postgres-postgis-pgvector:15-stable",
+          "identified": true
+        }
+      },
+      {
+        "name": "be037fin7c1f1_db2",
+        "rm_rc": 0,
+        "rm_output": "be037fin7c1f1_db2",
+        "still_present_after": false
+      }
+    ]
+  },
+  "volumes": {
+    "listed": [
+      "be037fin7c1f1_db2_data"
+    ],
+    "unexpected_not_removed": [],
+    "removals": [
+      {
+        "name": "be037fin7c1f1_db2_data",
+        "rc": 0,
+        "out": "be037fin7c1f1_db2_data"
+      }
+    ],
+    "listed_after": []
+  },
+  "networks": {
+    "listed": [],
+    "unexpected_not_removed": [],
+    "removals": [],
+    "listed_after": []
+  },
+  "host_ports_free_after": {
+    "15442": true,
+    "16389": true,
+    "19010": true,
+    "19011": true,
+    "18080": true,
+    "18081": true,
+    "15432": true,
+    "15433": true,
+    "16379": true,
+    "19000": true,
+    "19001": true
+  },
+  "image": {
+    "listed": "5f6224ec2790|13 hours ago|3.06GB",
+    "rc": 0,
+    "containers_using_it": [],
+    "decision": "RETAINED and reported. It is a deterministic build of committed code, contains no secrets, and deleting a ~10 GB image the owner may still want for a rebuild is not a resource this task was asked to reclaim."
+  },
+  "protected_containers_after_teardown": {
+    "pofa_db": {
+      "rc": 0,
+      "facts": "NAME=/pofa_db|ID=7949c99808161e138c35489a9d34928b873cfcd4cead9eb0f00fb37261033baf|CREATED=2026-09-18T18:09:18.006806062Z|STARTED=2026-10-15T02:44:48.359513413Z|RESTARTS=0|RUNNING=true|POLICY=unless-stopped"
+    },
+    "pofa_redis": {
+      "rc": 0,
+      "facts": "NAME=/pofa_redis|ID=29b684e82d7c9b2818fc1a3d0f48415ab78f923ec7e063150208d275bd767af5|CREATED=2026-09-13T16:58:41.514014662Z|STARTED=2026-10-15T02:44:48.290627392Z|RESTARTS=0|RUNNING=true|POLICY=unless-stopped"
+    },
+    "pofa_minio": {
+      "rc": 0,
+      "facts": "NAME=/pofa_minio|ID=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd|CREATED=2026-09-13T13:33:00.828947067Z|STARTED=2026-10-15T02:44:48.292795018Z|RESTARTS=0|RUNNING=true|POLICY=unless-stopped"
+    }
+  },
+  "protected_databases_after_teardown": {
+    "pofa_dev": {
+      "identity": "pofa_dev|postgres",
+      "ledger_count": "6023",
+      "seq_lo": "1",
+      "seq_hi": "6059",
+      "users": "1054",
+      "projects": "544",
+      "evidence": "284",
+      "analysis_jobs": "32",
+      "webhook_events": "561",
+      "public_tables": "75",
+      "alembic_version": [
+        "t0u1v2w3x030"
+      ],
+      "extensions": "plpgsql,postgis,vector",
+      "exemplo_dados_tables": "0"
+    },
+    "pofa_test": {
+      "identity": "pofa_test|postgres",
+      "ledger_count": "53316",
+      "seq_lo": "1",
+      "seq_hi": "53316",
+      "users": "3263",
+      "projects": "1636",
+      "evidence": "1216",
+      "analysis_jobs": "38",
+      "webhook_events": "4455",
+      "public_tables": "75",
+      "alembic_version": [
+        "t0u1v2w3x030"
+      ],
+      "extensions": "plpgsql,postgis,vector",
+      "exemplo_dados_tables": "0"
+    }
+  },
+  "containers_remaining_matching_run_ids": [],
+  "volumes_remaining_matching_run_ids": [],
+  "networks_remaining": [
+    "bridge",
+    "host",
+    "none",
+    "proof-of-action-final_default"
+  ],
+  "credential_file_scrub": {
+    "files": [
+      {
+        "path": "D:\\CODING\\Scratch\\be037final\\run_WSF_be037wf7e3\\be037wf7e3.compose.yml",
+        "identified_by": "filename embeds a run id created by this task (be037wf7e3.compose.yml); wsf-00-manifest-before.json / final-03-ownership-manifest.md record the resource names as absent before creation",
+        "size_bytes": 3286,
+        "mtime_local": "2026-10-14T22:14:17",
+        "credential_variable_names_present": [
+          "POSTGRES_PASSWORD",
+          "MINIO_ROOT_PASSWORD"
+        ],
+        "state": "deleted"
+      },
+      {
+        "path": "D:\\CODING\\Scratch\\be037final\\run_WSF_be037wf7e3\\f2-worker.env",
+        "identified_by": "filename embeds a run id created by this task (f2-worker.env); wsf-00-manifest-before.json / final-03-ownership-manifest.md record the resource names as absent before creation",
+        "size_bytes": 763,
+        "mtime_local": "2026-10-15T08:19:12",
+        "credential_variable_names_present": [
+          "S3_SECRET_KEY",
+          "S3_ACCESS_KEY",
+          "DATABASE_URL"
+        ],
+        "state": "deleted"
+      },
+      {
+        "path": "D:\\CODING\\Scratch\\be037final\\run_1013t1635_7c1f1\\be037fin7c1f1.compose.yml",
+        "identified_by": "filename embeds a run id created by this task (be037fin7c1f1.compose.yml); wsf-00-manifest-before.json / final-03-ownership-manifest.md record the resource names as absent before creation",
+        "size_bytes": 3339,
+        "mtime_local": "2026-10-13T22:30:08",
+        "credential_variable_names_present": [
+          "POSTGRES_PASSWORD",
+          "MINIO_ROOT_PASSWORD"
+        ],
+        "state": "deleted"
+      },
+      {
+        "path": "D:\\CODING\\Scratch\\be037final\\run_1013t1635_7c1f1\\worker-container.env",
+        "identified_by": "filename embeds a run id created by this task (worker-container.env); wsf-00-manifest-before.json / final-03-ownership-manifest.md record the resource names as absent before creation",
+        "size_bytes": 771,
+        "mtime_local": "2026-10-14T21:25:13",
+        "credential_variable_names_present": [
+          "S3_SECRET_KEY",
+          "S3_ACCESS_KEY",
+          "DATABASE_URL"
+        ],
+        "state": "deleted"
+      }
+    ],
+    "deleted": [
+      "D:\\CODING\\Scratch\\be037final\\run_WSF_be037wf7e3\\be037wf7e3.compose.yml",
+      "D:\\CODING\\Scratch\\be037final\\run_WSF_be037wf7e3\\f2-worker.env",
+      "D:\\CODING\\Scratch\\be037final\\run_1013t1635_7c1f1\\be037fin7c1f1.compose.yml",
+      "D:\\CODING\\Scratch\\be037final\\run_1013t1635_7c1f1\\worker-container.env"
+    ],
+    "note": "Harness scripts, evidence JSON and the run manifests are kept as the audit trail; only credential-bearing files are removed. No secret value is written into this evidence."
+  }
+}

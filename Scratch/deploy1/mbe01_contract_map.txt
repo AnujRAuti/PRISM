@@ -1,0 +1,187 @@
+live contract: 155 paths, 181 operations -> mbe01_live_openapi.json
+committed snapshot: 155 paths
+
+FRONTEND CALL -> BACKEND ROUTE
+  MISS  GET /audit/anchors/{}/verification             -> no matching operation
+  OK    GET /audit/events                              -> /api/v1/audit/events
+  OK    GET /audit/events/{}                           -> /api/v1/audit/events/{event_id}
+  OK    GET /auth/me                                   -> /api/v1/auth/me
+  OK    GET /auth/organizations                        -> /api/v1/auth/organizations, /api/v1/auth/organizations
+  OK    GET /auth/permissions                          -> /api/v1/auth/permissions
+  OK    GET /auth/roles                                -> /api/v1/auth/roles
+  OK    GET /auth/users                                -> /api/v1/auth/users, /api/v1/auth/users
+  OK    GET /auth/users/{}                             -> /api/v1/auth/users/{user_id}
+  OK    GET /evidence/nearby                           -> /api/v1/evidence/nearby, /api/v1/evidence/{evidence_id}
+  OK    GET /evidence/{}                               -> /api/v1/evidence/nearby, /api/v1/evidence/{evidence_id}
+  OK    GET /evidence/{}/download                      -> /api/v1/evidence/{evidence_id}/download
+  OK    GET /evidence/{}/vision                        -> /api/v1/evidence/{evidence_id}/vision
+  OK    GET /graph/evidence/{}                         -> /api/v1/graph/{node_type}/{entity_id}
+  OK    GET /graph/{}/{}                               -> /api/v1/graph/relationships/{relationship_id}, /api/v1/graph/{node_type}/{entity_id}
+  OK    GET /health                                    -> /api/v1/health
+  ROOT  GET /metrics                                   -> /metrics (NOT under /api/v1)
+  OK    GET /projects                                  -> /api/v1/projects, /api/v1/projects
+  OK    GET /projects/{}                               -> /api/v1/projects/{project_id}, /api/v1/projects/{project_id}
+  OK    GET /projects/{}/activities                    -> /api/v1/projects/{project_id}/activities, /api/v1/projects/{project_id}/activities
+  OK    GET /public/evidence/{}                        -> /api/v1/public/evidence/{public_id}
+  OK    GET /public/projects                           -> /api/v1/public/projects
+  OK    GET /public/projects/{}                        -> /api/v1/public/projects/{public_id}
+  OK    GET /public/projects/{}/evidence               -> /api/v1/public/projects/{public_id}/evidence
+  OK    GET /ready                                     -> /api/v1/ready
+  OK    GET /review-cases                              -> /api/v1/review-cases
+  OK    GET /review-cases/{}                           -> /api/v1/review-cases/configurations, /api/v1/review-cases/{case_id}
+  OK    PATCH /evidence/{}/context                     -> /api/v1/evidence/{evidence_id}/context
+  OK    PATCH /evidence/{}/location                    -> /api/v1/evidence/{evidence_id}/location
+  OK    PATCH /projects/{}                             -> /api/v1/projects/{project_id}, /api/v1/projects/{project_id}
+  OK    POST /auth/projects/{}/ownership               -> /api/v1/auth/projects/{project_id}/ownership
+  OK    POST /auth/users                               -> /api/v1/auth/users, /api/v1/auth/users
+  OK    POST /evidence                                 -> /api/v1/evidence
+  OK    POST /graph/relationships                      -> /api/v1/graph/relationships
+  OK    POST /projects                                 -> /api/v1/projects, /api/v1/projects
+  OK    POST /projects/{}/activities                   -> /api/v1/projects/{project_id}/activities, /api/v1/projects/{project_id}/activities
+  OK    POST /review-cases/{}/escalate                 -> /api/v1/review-cases/from-fusion/{fusion_run_id}, /api/v1/review-cases/{case_id}/escalate
+  OK    POST /review-cases/{}/reopen                   -> /api/v1/review-cases/from-fusion/{fusion_run_id}, /api/v1/review-cases/{case_id}/reopen
+  OK    POST /review-cases/{}/resolve                  -> /api/v1/review-cases/from-fusion/{fusion_run_id}, /api/v1/review-cases/{case_id}/resolve
+
+37 matched, 1 root-mounted only, 1 missing
+
+OPERATIONS THE FRONTEND NEVER CALLS:
+   DELETE /api/v1/auth/users/{user_id}/roles/{assignment_id}
+   GET /api/v1/analysis/jobs/{job_id}
+   GET /api/v1/audit/verify
+   GET /api/v1/audit/verify/anchored
+   GET /api/v1/auth/organizations/{organization_id}
+   GET /api/v1/auth/organizations/{organization_id}/units
+   GET /api/v1/auth/units/{unit_id}
+   GET /api/v1/auth/users/{user_id}/roles
+   GET /api/v1/corrections
+   GET /api/v1/corrections/{correction_id}
+   GET /api/v1/corrections/{correction_id}/history
+   GET /api/v1/disputes
+   GET /api/v1/disputes/{dispute_id}
+   GET /api/v1/disputes/{dispute_id}/history
+   GET /api/v1/evidence-requests
+   GET /api/v1/evidence-requests/{request_id}
+   GET /api/v1/evidence-requests/{request_id}/history
+   GET /api/v1/explanations/fusion/{fusion_run_id}
+   GET /api/v1/explanations/{target_type}/{target_id}
+   GET /api/v1/field/assignments
+   GET /api/v1/field/assignments/{assignment_id}
+   GET /api/v1/field/captures/{client_operation_id}
+   GET /api/v1/field/operations
+   GET /api/v1/field/work
+   GET /api/v1/fusion/runs/{run_id}
+   GET /api/v1/fusion/{target_type}/{target_id}
+   GET /api/v1/fusion/{target_type}/{target_id}/history
+   GET /api/v1/governance/invalidations/{invalidation_id}
+   GET /api/v1/governance/{target_type}/{target_id}/dependencies
+   GET /api/v1/integrations/clients
+   GET /api/v1/integrations/clients/{client_id}
+   GET /api/v1/integrations/events
+   GET /api/v1/integrations/references
+   GET /api/v1/integrations/systems
+   GET /api/v1/integrations/webhooks
+   GET /api/v1/notifications
+   GET /api/v1/notifications/preferences
+   GET /api/v1/notifications/unread-count
+   GET /api/v1/notifications/{id}
+   GET /api/v1/notifications/{id}/deliveries
+   GET /api/v1/projects/{project_id}/activities/{activity_id}
+   GET /api/v1/projects/{project_id}/claims
+   GET /api/v1/projects/{project_id}/claims/{claim_id}
+   GET /api/v1/projects/{project_id}/evidence/nearby
+   GET /api/v1/public/projects/{public_id}/activities
+   GET /api/v1/public/projects/{public_id}/claims
+   GET /api/v1/public/publications/{public_id}
+   GET /api/v1/publications
+   GET /api/v1/publications/policies
+   GET /api/v1/publications/policies/{policy_id}
+   GET /api/v1/publications/{publication_id}
+   GET /api/v1/publications/{publication_id}/eligibility
+   GET /api/v1/retention/holds
+   GET /api/v1/retention/holds/{hold_id}
+   GET /api/v1/retention/operations
+   GET /api/v1/retention/policies
+   GET /api/v1/retention/policies/{policy_id}
+   GET /api/v1/retention/policies/{policy_id}/history
+   GET /api/v1/retention/resources/{resource_type}/{resource_id}
+   GET /api/v1/review-cases/{case_id}/history
+   GET /health
+   GET /healthz
+   GET /ready
+   PATCH /api/v1/auth/organizations/{organization_id}
+   PATCH /api/v1/auth/projects/{project_id}/scope
+   PATCH /api/v1/auth/units/{unit_id}
+   PATCH /api/v1/auth/users/{user_id}/status
+   PATCH /api/v1/field/assignments/{assignment_id}/status
+   PATCH /api/v1/integrations/webhooks/{subscription_id}
+   PATCH /api/v1/notifications/preferences
+   PATCH /api/v1/projects/{project_id}/claims/{claim_id}
+   POST /api/v1/analysis/jobs
+   POST /api/v1/analysis/temporal/{evidence_id}
+   POST /api/v1/auth/clients
+   POST /api/v1/auth/organizations/{organization_id}/units
+   POST /api/v1/auth/users/{user_id}/roles
+   POST /api/v1/corrections
+   POST /api/v1/corrections/{correction_id}/apply
+   POST /api/v1/corrections/{correction_id}/approve
+   POST /api/v1/corrections/{correction_id}/cancel
+   POST /api/v1/corrections/{correction_id}/reject
+   POST /api/v1/corrections/{correction_id}/start-review
+   POST /api/v1/disputes
+   POST /api/v1/disputes/{dispute_id}/assign
+   POST /api/v1/disputes/{dispute_id}/escalate
+   POST /api/v1/disputes/{dispute_id}/reject
+   POST /api/v1/disputes/{dispute_id}/resolve
+   POST /api/v1/disputes/{dispute_id}/start-review
+   POST /api/v1/disputes/{dispute_id}/withdraw
+   POST /api/v1/evidence-requests
+   POST /api/v1/evidence-requests/{request_id}/acknowledge
+   POST /api/v1/evidence-requests/{request_id}/cancel
+   POST /api/v1/evidence-requests/{request_id}/decline
+   POST /api/v1/evidence-requests/{request_id}/evidence/{evidence_id}
+   POST /api/v1/evidence-requests/{request_id}/expire
+   POST /api/v1/evidence-requests/{request_id}/issue
+   POST /api/v1/evidence-requests/{request_id}/items/{item_id}/accept
+   POST /api/v1/evidence-requests/{request_id}/items/{item_id}/reject
+   POST /api/v1/evidence-requests/{request_id}/submissions
+   POST /api/v1/explanations/fusion/{fusion_run_id}
+   POST /api/v1/field/assignments
+   POST /api/v1/field/operations/{operation_id}/resolve
+   POST /api/v1/field/sessions
+   POST /api/v1/field/sessions/{session_id}/close
+   POST /api/v1/field/sync
+   POST /api/v1/fusion/configurations
+   POST /api/v1/fusion/{target_type}/{target_id}
+   POST /api/v1/governance/{target_type}/{target_id}/invalidate
+   POST /api/v1/governance/{target_type}/{target_id}/reprocess
+   POST /api/v1/integrations/claims
+   POST /api/v1/integrations/clients
+   POST /api/v1/integrations/clients/{client_id}/credentials
+   POST /api/v1/integrations/credentials/{credential_id}/revoke
+   POST /api/v1/integrations/evidence
+   POST /api/v1/integrations/references
+   POST /api/v1/integrations/systems
+   POST /api/v1/integrations/webhooks
+   POST /api/v1/notifications/read-all
+   POST /api/v1/notifications/{id}/read
+   POST /api/v1/projects/{project_id}/claims
+   POST /api/v1/publications
+   POST /api/v1/publications/policies
+   POST /api/v1/publications/{publication_id}/approve
+   POST /api/v1/publications/{publication_id}/publish
+   POST /api/v1/publications/{publication_id}/reject
+   POST /api/v1/publications/{publication_id}/submit-review
+   POST /api/v1/publications/{publication_id}/unpublish
+   POST /api/v1/retention/archive/{resource_type}/{resource_id}
+   POST /api/v1/retention/delete/{resource_type}/{resource_id}
+   POST /api/v1/retention/evaluate
+   POST /api/v1/retention/holds
+   POST /api/v1/retention/holds/{hold_id}/cancel
+   POST /api/v1/retention/holds/{hold_id}/release
+   POST /api/v1/retention/policies
+   POST /api/v1/retention/policies/versions/{version_id}/activate
+   POST /api/v1/retention/policies/{policy_id}/versions
+   POST /api/v1/retention/restore/{resource_type}/{resource_id}
+   POST /api/v1/review-cases/{case_id}/assign
+   POST /api/v1/review-cases/{case_id}/decision
+   POST /api/v1/review-cases/{case_id}/investigate

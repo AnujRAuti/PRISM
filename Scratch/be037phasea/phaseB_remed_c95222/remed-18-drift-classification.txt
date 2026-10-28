@@ -1,0 +1,97 @@
+EXTENSION_OWNED_TABLES (repo exclusion list) = ['spatial_ref_sys']
+
+=== disposable target (this run) ===
+current_database=be037rem_app current_user=be037rem_owner
+alembic_version=t0u1v2w3x030
+pg_extension=['fuzzystrmatch', 'plpgsql', 'postgis', 'postgis_tiger_geocoder', 'postgis_topology', 'vector']
+spatial_ref_sys rows=8500
+total diff operations=69
+unexplained (verdict.new)=67
+  NEW remove_index|addrfeat|idx_addrfeat_geom_gist
+  NEW remove_index|addrfeat|idx_addrfeat_tlid
+  NEW remove_index|addrfeat|idx_addrfeat_zipl
+  NEW remove_index|addrfeat|idx_addrfeat_zipr
+  NEW remove_index|addr|idx_tiger_addr_tlid_statefp
+  NEW remove_index|addr|idx_tiger_addr_zip
+  NEW remove_index|county_lookup|county_lookup_name_idx
+  NEW remove_index|county_lookup|county_lookup_state_idx
+  NEW remove_index|countysub_lookup|countysub_lookup_name_idx
+  NEW remove_index|countysub_lookup|countysub_lookup_state_idx
+  NEW remove_index|county|idx_tiger_county
+  NEW remove_index|cousub|tige_cousub_the_geom_gist
+  NEW remove_index|direction_lookup|direction_lookup_abbrev_idx
+  NEW remove_index|edges|idx_edges_tlid
+  NEW remove_index|edges|idx_tiger_edges_countyfp
+  NEW remove_index|edges|idx_tiger_edges_the_geom_gist
+  NEW remove_index|exemplo_dados|idx_exemplo_embedding
+  NEW remove_index|exemplo_dados|idx_exemplo_localizacao
+  NEW remove_index|faces|idx_tiger_faces_countyfp
+  NEW remove_index|faces|idx_tiger_faces_tfid
+  NEW remove_index|faces|tiger_faces_the_geom_gist
+  NEW remove_index|featnames|idx_tiger_featnames_lname
+  NEW remove_index|featnames|idx_tiger_featnames_snd_name
+  NEW remove_index|featnames|idx_tiger_featnames_tlid_statefp
+  NEW remove_index|place_lookup|place_lookup_name_idx
+  NEW remove_index|place_lookup|place_lookup_state_idx
+  NEW remove_index|place|tiger_place_the_geom_gist
+  NEW remove_index|secondary_unit_lookup|secondary_unit_lookup_abbrev_idx
+  NEW remove_index|state|idx_tiger_state_the_geom_gist
+  NEW remove_index|street_type_lookup|street_type_lookup_abbrev_idx
+  NEW remove_table|None|addr
+  NEW remove_table|None|addrfeat
+  NEW remove_table|None|bg
+  NEW remove_table|None|county
+  NEW remove_table|None|county_lookup
+  NEW remove_table|None|countysub_lookup
+  NEW remove_table|None|cousub
+  NEW remove_table|None|direction_lookup
+  NEW remove_table|None|edges
+  NEW remove_table|None|exemplo_dados
+  NEW remove_table|None|faces
+  NEW remove_table|None|featnames
+  NEW remove_table|None|geocode_settings
+  NEW remove_table|None|geocode_settings_default
+  NEW remove_table|None|layer
+  NEW remove_table|None|loader_lookuptables
+  NEW remove_table|None|loader_platform
+  NEW remove_table|None|loader_variables
+  NEW remove_table|None|pagc_gaz
+  NEW remove_table|None|pagc_lex
+  NEW remove_table|None|pagc_rules
+  NEW remove_table|None|place
+  NEW remove_table|None|place_lookup
+  NEW remove_table|None|secondary_unit_lookup
+  NEW remove_table|None|state
+  NEW remove_table|None|state_lookup
+  NEW remove_table|None|street_type_lookup
+  NEW remove_table|None|tabblock
+  NEW remove_table|None|tabblock20
+  NEW remove_table|None|topology
+  NEW remove_table|None|tract
+  NEW remove_table|None|zcta5
+  NEW remove_table|None|zip_lookup
+  NEW remove_table|None|zip_lookup_all
+  NEW remove_table|None|zip_lookup_base
+  NEW remove_table|None|zip_state
+  NEW remove_table|None|zip_state_loc
+baseline entries no longer observed (verdict.resolved)=0
+remove_table entries=['remove_table|None|topology', 'remove_table|None|zip_lookup', 'remove_table|None|tract', 'remove_table|None|place_lookup', 'remove_table|None|countysub_lookup'] ... total=37
+
+=== documented shared test database ===
+current_database=pofa_test current_user=postgres
+alembic_version=t0u1v2w3x030
+pg_extension=['plpgsql', 'postgis', 'vector']
+spatial_ref_sys rows=8500
+total diff operations=2
+unexplained (verdict.new)=0
+baseline entries no longer observed (verdict.resolved)=0
+remove_table entries=[] ... total=0
+probe exit=0
+
+### guard classification probe
+PROTECTED_DATABASE_NAMES = ['pofa_dev', 'pofa_test']
+CONTEXT_VERIFICATION = 'verification'
+
+disposable target (this run): guard returned 'be037rem_app' (no refusal)
+
+documented shared test database: guard raised ProtectedDatabaseError -> Verification context resolved to protected database 'pofa_test'; refusing to run.

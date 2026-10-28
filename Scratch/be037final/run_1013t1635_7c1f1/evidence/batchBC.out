@@ -1,0 +1,44 @@
+=== sc4 ===
+[20:32:45] worker sc4_blackhole_during_idle_dequeue pid=3200
+[20:32:51] redis pause rc=0 state=paused
+[20:33:02] redis unpause rc=0 state=running
+[20:34:59] wrote evidence\sc4_blackhole_during_idle_dequeue.json
+[20:34:59] sc4 finished in 134.1s
+rc=0
+=== sc3 ===
+[20:38:49] worker sc3_stall_during_ack pid=7760
+[20:38:52] redis pause rc=0 state=paused
+[20:39:04] redis unpause rc=0 state=running
+[20:41:14] wrote evidence\sc3_stall_during_ack.json
+[20:41:14] sc3 finished in 373.8s
+rc=0
+=== sc5 ===
+[20:41:29] redis stop rc=0 state=exited
+[20:41:29] worker sc5_restore_with_queued_jobs pid=6844
+[20:41:38] redis start rc=0 state=running
+[20:42:45] wrote evidence\sc5_restore_with_queued_jobs.json
+[20:42:45] sc5 finished in 88.7s
+rc=0
+=== sc6 ===
+[20:42:47] worker sc6_repeated_outages pid=29736
+[20:42:51] redis stop rc=0 state=exited
+[20:43:10] redis start rc=0 state=running
+[20:43:17] redis stop rc=0 state=exited
+[20:43:36] redis start rc=0 state=running
+[20:43:42] redis stop rc=0 state=exited
+[20:44:01] redis start rc=0 state=running
+[20:44:08] redis stop rc=0 state=exited
+[20:44:27] redis start rc=0 state=running
+[20:45:37] wrote evidence\sc6_repeated_outages.json
+[20:45:37] sc6 finished in 171.2s
+rc=0
+=== sc10 ===
+[20:45:50] worker sc10_recovery_classification_matrix pid=18728
+[20:46:44] wrote evidence\sc10_recovery_classification.json
+[20:46:44] sc10 finished in 65.4s
+rc=0
+=== sc9 ===
+[20:46:54] worker sc9_reprocessing_hook pid=11440 (DEBUG)
+[20:48:01] wrote evidence\sc9_reprocessing_hook.json
+[20:48:01] sc9 finished in 76.4s
+rc=0

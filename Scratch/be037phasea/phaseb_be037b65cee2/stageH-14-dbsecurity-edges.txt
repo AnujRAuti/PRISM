@@ -1,0 +1,25 @@
+=== H17 superuser-only catalogue views ===
+   pg_authid read: REFUSED [InsufficientPrivilege] permission denied for table pg_authid
+PASS  H17 the runtime cannot read pg_authid (the real credential hash view), and is refused for the right reason  | [InsufficientPrivilege] permission denied for table pg_authid
+   read enforcement fn body: REFUSED [UndefinedColumn] column "role_name" does not exist
+   (informational) reading the enforcement function definition: REFUSED
+
+=== H18 ordinary business tables: what the runtime identity is trusted to do ===
+   delete one org (rolled back): ALLOWED (-1 rows)
+   SCOPE STATEMENT: this is ALLOWED BY DESIGN. The F-05 grant shape gives the runtime full DML on ordinary tables; only audit_ledger_events (and alembic_version) are INSERT-only. Append-only therefore protects the ledger, not the business rows it describes.
+   no-op update on a business table: ALLOWED (-1 rows)
+PASS  H18 the runtime keeps normal write access to business tables (by design; statement rolled back, nothing persisted)  | [None] -1 rows
+   ledger head: ALLOWED [(87, 87)]
+PASS  H18 after every write attempt above the ledger is still 87 rows at head 87  | [(87, 87)]
+
+=== H19 is any of this row-level security, or only grants + application code? ===
+   RLS-enabled tables: ALLOWED []
+   tables with ROW SECURITY enabled: []
+PASS  H19 no table uses PostgreSQL row-level security — multi-tenant scoping is an application-layer control, so a DB-level privilege finding would not be mitigated by RLS  | []
+   policies: ALLOWED []
+   RLS policies present: []
+   trigger names: ALLOWED [('trg_audit_ledger_append_only',)]
+PASS  H19 exactly the one expected trigger, trg_audit_ledger_append_only  | [('trg_audit_ledger_append_only',)]
+
+=== SUMMARY ===
+H4_RESULT: total=5 pass=5 fail=0

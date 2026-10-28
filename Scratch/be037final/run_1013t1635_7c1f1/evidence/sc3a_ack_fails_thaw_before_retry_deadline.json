@@ -1,0 +1,51 @@
+{
+  "ack_outage_warning": [],
+  "again_log_entry": null,
+  "completion_lines": [
+    [
+      69.31199999997625,
+      "INFO:__main__:analysis job completed job_id=38431844-8990-44ca-900c-6a33b3bdcb70"
+    ]
+  ],
+  "configured_socket_timeout_s": 8.0,
+  "contents_after": {
+    "main": [],
+    "processing": []
+  },
+  "db_committed_while_frozen_at_worker_clock_s": 56.06,
+  "final_lists": {
+    "main": 0,
+    "processing": 0
+  },
+  "fixture": {
+    "bytes": 68049,
+    "evidence_id": "fb90c12a-a6ab-4d3e-8528-5efab01191d6",
+    "job_id": "38431844-8990-44ca-900c-6a33b3bdcb70",
+    "storage_key": "quarantine/fb90c12a-a6ab-4d3e-8528-5efab01191d6/original"
+  },
+  "frozen_at_worker_clock_s": 68.06199999997625,
+  "frozen_past_socket_timeout_s": 12,
+  "job_running_at_worker_clock_s": 8.48,
+  "job_state_after": {
+    "attempt_count": 2,
+    "error": null,
+    "result_rows": 1,
+    "status": "completed"
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 0
+  },
+  "recovery_lines": [],
+  "scenario": "S3 stall without a clean disconnect, across the acknowledgement",
+  "worker_alive_while_frozen": true,
+  "worker_final": {
+    "again_lines": [],
+    "alive_at_measurement": true,
+    "backoff_warnings": [],
+    "exit_code": null,
+    "log_lines": 4,
+    "pid": 32384,
+    "recovery_lines": []
+  }
+}

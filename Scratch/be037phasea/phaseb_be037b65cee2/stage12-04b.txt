@@ -1,0 +1,2142 @@
+/data/pofa-quarantine:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-12 16:34 .
+drwxr-xr-x   5 root root  4096 2026-09-13 13:31 ..
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 quarantine
+
+/data/pofa-quarantine/quarantine:
+total 676
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 .
+drwxr-xr-x   3 root root  4096 2026-10-12 16:34 ..
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 01442bfd-c86d-403f-a8bd-81af6df214ef
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 014d85c0-2f3c-463b-aa2f-d6d37d02e542
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 03f4b89f-85f0-41f7-b315-982d51dbe2fc
+drwxr-xr-x   3 root root  4096 2026-09-27 13:47 062de8f5-c066-4177-8bab-1bd96a91b3b1
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 06856219-cffa-459c-9c63-718c331531c6
+drwxr-xr-x   3 root root  4096 2026-09-27 14:14 07cd6d30-ef3b-4c27-a4c6-f5c684c1f7a1
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 07fd4cc4-0682-416a-9e90-faaa04db660f
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 08e2dd71-3783-4f8e-a72b-a9874673f85b
+drwxr-xr-x   3 root root  4096 2026-09-27 13:46 0c09339f-4e49-4ddc-9848-a47cbc08c1b7
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 10042fa0-1d7c-47fd-babc-4112eba2c4ef
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 11492532-6116-4100-a70b-64f51a00fd30
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 14f65804-2145-4815-8709-9cad6f89dee6
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 18a14798-bc89-401b-9b47-ffb570ae4f2f
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 1a548cc0-bf4b-4e5a-92f8-cb70b9a95d7d
+drwxr-xr-x   3 root root  4096 2026-09-27 13:41 1c6a6ac1-1619-4cf8-99c6-3983c4c5fab7
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 1cd61fac-aa13-4a99-a70f-a4cb445cc19a
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 1db467a8-f686-4b8c-a8c0-d20a03986a58
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 22805e73-643f-4509-b9d4-383755807900
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 24f91180-1bef-44ae-9b29-dbc7a4b1c962
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 258aee1f-6f33-4163-bde0-6d6868b1a4a5
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 25a3b4fc-d8a6-4299-945d-0212ddfb7992
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 264e403c-0043-417d-b9e5-0959fe3ad66b
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 265558fe-0aa1-4910-98a3-5ac0e46bcb0d
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 27e3164e-8fd3-414e-8b23-3220e7e17f7a
+drwxr-xr-x   3 root root  4096 2026-09-27 14:17 2b0f09d7-b3bc-4660-965c-55e8f5fa6b50
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 2bc9db0f-9ec4-49c5-9857-a06c4b117db0
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 2c1d3100-0ccf-4e7e-b30d-52065ba7be48
+drwxr-xr-x   3 root root  4096 2026-09-27 13:48 2d59bce9-f30e-4049-9362-833d66dd842f
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 2dd108e0-d951-4765-ac43-aa2801df3a0c
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 2e85faa4-9943-4f0c-902e-f64dd2050135
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 33305f9e-1aa3-47a3-93b1-c6cfabb86d24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:14 3355d33f-8da8-42da-b58d-c9411879ff78
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 3467b450-8e9e-45e0-b640-3c4370f2e560
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 35ae94b0-9d1c-4b27-be37-2ce1b0b2f7c3
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 37e621d8-5e9d-41a0-b972-e80cbbb38b58
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 39c1f147-b870-4310-b7f8-0ee785dca4bd
+drwxr-xr-x   3 root root  4096 2026-09-27 14:17 3a19f434-ef76-4442-bc59-bd9de24fcd6c
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 3b94a433-df3d-4764-be57-d692e327b80f
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 3bee0bea-449f-4428-82a8-d569999a03c7
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 3e8a6a68-fa81-4b81-9519-479a53ef28a3
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 40dbed11-4a9b-4016-a6f0-0efcb7779317
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 41b82888-d8e7-41dc-a449-e52685ed43f4
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 42b4a043-4c65-4367-aaec-d2700003ebd2
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 44c8f5d6-da54-40e0-9383-03137df4a56f
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 45da4b0e-48ef-491c-86e2-538e5342e223
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 46dc8bb6-a832-4720-8889-5995d0ef5b55
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 49420a18-7341-4557-9fc3-20bc23f93cae
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 4a3bd161-1936-455f-b4d1-32084eeaff11
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 4b51edc0-ee84-4242-b5c0-27e36d675774
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 4da4e1f4-327c-4c78-8a42-eb70572551c0
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 4dbac009-4bd5-40ae-9dec-b7dd4c82e95e
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 4eba25e1-c545-451c-bf36-19e4f523a5bf
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 4ef726d2-1886-4f58-83db-f95e2402383e
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 4f35750f-19aa-4574-8fce-22c9fa70917b
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 4f876400-97cf-48f1-ab2a-c5d31b820836
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 4fcc4f2e-75ab-4526-a5cf-74bce02606e6
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 50e36624-306d-4ac9-bbba-4fe9284f65bc
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 51789137-9d4d-4d66-a5d3-1e554b91ab92
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 51bcecd9-1e20-4c9e-a892-575b2449fb59
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 52b54162-d3e6-43cf-8193-a01c1e17bace
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 5488081e-4963-4700-a05b-090a1ed45026
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 570b9029-f378-47da-be97-703ed64ee10b
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 5875de0d-ce1b-4609-9340-92c90b84dde2
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 59406709-9788-4bfe-b9d7-b2a8796ba009
+drwxr-xr-x   3 root root  4096 2026-09-27 13:46 59cd38c9-d179-4974-823e-44782e10b988
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 5dbee03e-cfab-45e8-8d36-aad4ee42fa25
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 5ee09ae7-13b5-4a08-b393-9101ff771df4
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 60a54a5a-89b9-493b-a5cc-63ada68da367
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 62c00f46-cea9-4427-915c-9debc93cabda
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 62ef0334-68b2-46e3-965b-2eecba923417
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 649f6a43-4d97-446c-9368-5257e4b5342f
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 66ba34b7-cb68-44f7-9f28-52cb69e57069
+drwxr-xr-x   3 root root  4096 2026-09-14 17:48 698cdf42-d6d9-4c19-aebf-200ce8ea01c8
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 6a062bf0-7f58-4d03-88b7-36ae9de0a0e4
+drwxr-xr-x   3 root root  4096 2026-09-27 14:18 6efb223c-3604-494e-a0f2-b9c73c06d7d2
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 6fd21ebc-b65e-49e0-bce2-bc5d8b3a3d7f
+drwxr-xr-x   3 root root  4096 2026-09-14 17:49 6fd9e174-5183-438a-b1d6-075db2bde426
+drwxr-xr-x   3 root root  4096 2026-09-27 14:04 70e3fd85-ed6a-40f7-a9f3-35b43e4a62f8
+drwxr-xr-x   3 root root  4096 2026-09-27 10:00 71dec912-bcfe-4949-8003-6e020e2471c9
+drwxr-xr-x   3 root root  4096 2026-10-10 12:43 7347ee41-d51f-4929-a4f6-3d22b8dbcfbd
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 7444c972-eb55-4e29-80bf-cdcaa86303e1
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 78880427-7cb4-42b3-836d-d5637c4336db
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 7bd05216-5e3d-46eb-b901-24e7f88b0b44
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 7f9d1747-3bc2-4dff-9299-9c88f351d8e6
+drwxr-xr-x   3 root root  4096 2026-10-10 12:43 8042f4cf-3cee-4375-bdf3-d39ef32b3bee
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 81abb161-8428-467f-a400-332292a3e9f8
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 82d12bec-2646-4170-a7da-6e84db311743
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 83de956a-5a36-4646-ad0a-b011224a1d11
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 85b378d5-8719-42b9-ad23-f3f68699774e
+drwxr-xr-x   3 root root  4096 2026-09-27 13:48 85b4fe72-dca1-4c1f-8f94-6a71ee1404a7
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 85c049e8-80b6-42ff-bf66-30bc868cfd0e
+drwxr-xr-x   3 root root  4096 2026-09-20 07:30 8712ae4c-cc83-4a93-b65d-b3b5758400a7
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 872cb425-76df-4f52-802d-b4865784f293
+drwxr-xr-x   3 root root  4096 2026-09-27 14:03 8767dd28-7099-4e8f-b0fb-916db4315936
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 8b9582f1-c62a-422f-9f05-c89ccb2061bb
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 8c6729e7-1e5a-48c5-931d-598a0c1b06ee
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 8c800cfc-3bff-4881-b89d-120fcb7d014a
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 8e348c20-b3d8-4fcf-bd27-369c3b63c8cf
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 906267c8-1b9c-4452-907c-eed543824e0b
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 97cb2387-76b6-4cda-bdd1-238f280cef7c
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 983919a7-e3d7-4c4c-9037-2ccef1a13ff4
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 9973d646-065b-404c-a37c-bfdc0f854f19
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 9b05534e-5620-40df-bb33-97a80ec07ad5
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 9b3af4da-38a0-4f84-be31-269a0b015a2e
+drwxr-xr-x   3 root root  4096 2026-09-27 14:17 9e20503d-e6fe-4f79-81a0-aa9edfb82bd2
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 9ec70cdf-a4d9-4c15-9c31-f37a3883a206
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 9f326380-ab3e-44d6-b66e-a1753bfd933c
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 a3d12a36-512c-422f-b38a-155334a43539
+drwxr-xr-x   3 root root  4096 2026-09-20 07:30 a49d56b3-afdc-4948-8fe0-43f201cd0b84
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 a917bb8c-9730-490c-869f-e7d5ddaa179f
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 aa3db540-ee5a-454b-9a80-fd62da919504
+drwxr-xr-x   3 root root  4096 2026-09-27 14:14 ac48964c-f736-440f-b952-e6aeb2b18dc2
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 ad443e81-555a-4a99-b65f-d9a28b578f77
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 ad51a6ea-dd12-4ed4-8b14-3d3405a87535
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 aeb2f922-495d-4a72-87de-f0b5decdea37
+drwxr-xr-x   3 root root  4096 2026-10-11 16:52 af9e616f-6608-49ba-a721-44f780b93266
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 b150a7b4-97f4-40de-9d0c-c7d4636cab14
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 b57ea39a-1542-4e82-848f-459adba33a38
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 b6754177-4cd2-4acf-8472-0d8cad135032
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 b68e27f8-362f-405d-b06c-758c7d5e4868
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 b9a27795-83d3-4cd9-aa91-7cc8dd79ddc0
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 bbbd8939-57d7-4c02-9adf-ef7ccc3f4afa
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 bde42a49-ad23-488f-ba18-0c1009536719
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 bf0aa63e-3dcd-4afc-86ce-bdb3a47c6790
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 bf37df48-a580-495b-bf83-c4eb20b1704e
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 bfac0d4c-8c6a-4323-ac92-328ac6f5ecd8
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 c712ed66-75c0-46c3-94ea-04b7ecd020b7
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 c76c8387-c0da-405e-ba22-773f2ed8afb9
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 c9052beb-7299-4a3a-8021-ab3d5c109877
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 cbce558d-ea1c-402d-87fa-37edd4773162
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 cc0eeefc-9c72-412d-b76b-a646114deeac
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 cc5e1e87-a8de-4875-b0b0-3fa82b590948
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 cc6f0d1d-29b4-4d21-8b55-07058b7719b9
+drwxr-xr-x   3 root root  4096 2026-09-27 13:45 d27248b7-f22f-410d-9e36-4c0dc5203010
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 d3415d77-23cd-4bee-b421-ae2d8027560a
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 d3f20c0a-cb38-4b75-a4d1-f4b5aa830260
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 d42c85e8-a618-4292-8bd9-df6b402b8fef
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 d470a215-4b7a-4531-8662-5e6bca726b7b
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 d50b08ce-5725-4f7b-a3f3-c5ac7782b233
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 d93ef499-9586-46e8-a23a-453e160ca2c5
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 d96fc307-6ffa-46de-b408-5899c92640ae
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 dc60c1ed-7c51-43a3-ac61-2107c23b81f4
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 de93a4c2-26e8-4eb4-a1a1-d015362aed85
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 df05f024-3013-4ff4-904a-ec121fd72ff8
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 e0f97cd1-e5a3-49cb-b377-2a556b367011
+drwxr-xr-x   3 root root  4096 2026-09-14 17:14 e863b85d-5ba9-4a00-be68-2668af1e0684
+drwxr-xr-x   3 root root  4096 2026-09-27 14:04 e95b8fc5-3974-4b6f-8c89-aadcf329fbe1
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 e995d49a-5375-49b5-96a9-61e75fcbb396
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 ea1717ba-7707-452e-a8f2-1d9f57503f9c
+drwxr-xr-x   3 root root  4096 2026-09-20 07:30 ea85e592-ec0b-44c1-a03f-6d0e49c4bae5
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 eae0a92d-bfa0-4513-9125-ee7b6bbb22c6
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 ed044207-978a-48f0-ac7a-1a0f63519f04
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 ed7cc587-d239-495e-a448-b3549921fb97
+drwxr-xr-x   3 root root  4096 2026-09-14 17:50 f01361c2-976c-4b0e-8235-e902a88fca43
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 f17ac819-fc6b-4203-bdbb-f321b44222e2
+drwxr-xr-x   3 root root  4096 2026-10-01 15:54 f21bb8d1-612f-49f2-9360-1e3b1bf42987
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 f24e4dc7-0e5b-4136-a03e-d418eb7e1f7e
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 f5b44ee9-82ea-40d7-bd62-8144898c915e
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 f7aed273-5bba-48fd-9713-e55ed61dee62
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 f841969c-1f60-42ba-85a9-b80872b9ea0d
+drwxr-xr-x   3 root root  4096 2026-09-27 14:15 f93e7e1e-4494-40cd-917b-0d1c8830fa17
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 fa49cb64-0e0f-4fbc-ae41-a88f9be86b48
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 faeb7108-64b9-43a7-b9c9-11aab54698da
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 fb09c67f-60f3-426f-92aa-3c46db48aa89
+
+/data/pofa-quarantine/quarantine/01442bfd-c86d-403f-a8bd-81af6df214ef:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/01442bfd-c86d-403f-a8bd-81af6df214ef/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/014d85c0-2f3c-463b-aa2f-d6d37d02e542:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:03 original
+
+/data/pofa-quarantine/quarantine/014d85c0-2f3c-463b-aa2f-d6d37d02e542/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:03 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:03 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:03 xl.meta
+
+/data/pofa-quarantine/quarantine/03f4b89f-85f0-41f7-b315-982d51dbe2fc:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/03f4b89f-85f0-41f7-b315-982d51dbe2fc/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/062de8f5-c066-4177-8bab-1bd96a91b3b1:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 13:47 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 13:47 original
+
+/data/pofa-quarantine/quarantine/062de8f5-c066-4177-8bab-1bd96a91b3b1/original:
+total 88
+drwxr-xr-x 2 root root  4096 2026-09-27 13:47 .
+drwxr-xr-x 3 root root  4096 2026-09-27 13:47 ..
+-rw-r--r-- 1 root root 81121 2026-09-27 13:47 xl.meta
+
+/data/pofa-quarantine/quarantine/06856219-cffa-459c-9c63-718c331531c6:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:50 original
+
+/data/pofa-quarantine/quarantine/06856219-cffa-459c-9c63-718c331531c6/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:50 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:50 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:50 xl.meta
+
+/data/pofa-quarantine/quarantine/07cd6d30-ef3b-4c27-a4c6-f5c684c1f7a1:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:14 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:14 original
+
+/data/pofa-quarantine/quarantine/07cd6d30-ef3b-4c27-a4c6-f5c684c1f7a1/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:14 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:14 ..
+-rw-r--r-- 1 root root 1143 2026-09-27 14:14 xl.meta
+
+/data/pofa-quarantine/quarantine/07fd4cc4-0682-416a-9e90-faaa04db660f:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/07fd4cc4-0682-416a-9e90-faaa04db660f/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/08e2dd71-3783-4f8e-a72b-a9874673f85b:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/08e2dd71-3783-4f8e-a72b-a9874673f85b/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/0c09339f-4e49-4ddc-9848-a47cbc08c1b7:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 13:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 13:46 original
+
+/data/pofa-quarantine/quarantine/0c09339f-4e49-4ddc-9848-a47cbc08c1b7/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 13:46 .
+drwxr-xr-x 3 root root 4096 2026-09-27 13:46 ..
+-rw-r--r-- 1 root root 1142 2026-09-27 13:46 xl.meta
+
+/data/pofa-quarantine/quarantine/10042fa0-1d7c-47fd-babc-4112eba2c4ef:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/10042fa0-1d7c-47fd-babc-4112eba2c4ef/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/11492532-6116-4100-a70b-64f51a00fd30:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:49 original
+
+/data/pofa-quarantine/quarantine/11492532-6116-4100-a70b-64f51a00fd30/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:49 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:49 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:49 xl.meta
+
+/data/pofa-quarantine/quarantine/14f65804-2145-4815-8709-9cad6f89dee6:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:31 original
+
+/data/pofa-quarantine/quarantine/14f65804-2145-4815-8709-9cad6f89dee6/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:31 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:31 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:31 xl.meta
+
+/data/pofa-quarantine/quarantine/18a14798-bc89-401b-9b47-ffb570ae4f2f:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/18a14798-bc89-401b-9b47-ffb570ae4f2f/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/1a548cc0-bf4b-4e5a-92f8-cb70b9a95d7d:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:49 original
+
+/data/pofa-quarantine/quarantine/1a548cc0-bf4b-4e5a-92f8-cb70b9a95d7d/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:49 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:49 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:49 xl.meta
+
+/data/pofa-quarantine/quarantine/1c6a6ac1-1619-4cf8-99c6-3983c4c5fab7:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 13:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 13:41 original
+
+/data/pofa-quarantine/quarantine/1c6a6ac1-1619-4cf8-99c6-3983c4c5fab7/original:
+total 88
+drwxr-xr-x 2 root root  4096 2026-09-27 13:41 .
+drwxr-xr-x 3 root root  4096 2026-09-27 13:41 ..
+-rw-r--r-- 1 root root 81121 2026-09-27 13:41 xl.meta
+
+/data/pofa-quarantine/quarantine/1cd61fac-aa13-4a99-a70f-a4cb445cc19a:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/1cd61fac-aa13-4a99-a70f-a4cb445cc19a/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/1db467a8-f686-4b8c-a8c0-d20a03986a58:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:41 original
+
+/data/pofa-quarantine/quarantine/1db467a8-f686-4b8c-a8c0-d20a03986a58/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:41 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:41 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:41 xl.meta
+
+/data/pofa-quarantine/quarantine/22805e73-643f-4509-b9d4-383755807900:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/22805e73-643f-4509-b9d4-383755807900/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/24f91180-1bef-44ae-9b29-dbc7a4b1c962:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/24f91180-1bef-44ae-9b29-dbc7a4b1c962/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/258aee1f-6f33-4163-bde0-6d6868b1a4a5:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:31 original
+
+/data/pofa-quarantine/quarantine/258aee1f-6f33-4163-bde0-6d6868b1a4a5/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:31 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:31 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:31 xl.meta
+
+/data/pofa-quarantine/quarantine/25a3b4fc-d8a6-4299-945d-0212ddfb7992:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/25a3b4fc-d8a6-4299-945d-0212ddfb7992/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1082 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/264e403c-0043-417d-b9e5-0959fe3ad66b:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/264e403c-0043-417d-b9e5-0959fe3ad66b/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/265558fe-0aa1-4910-98a3-5ac0e46bcb0d:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/265558fe-0aa1-4910-98a3-5ac0e46bcb0d/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/27e3164e-8fd3-414e-8b23-3220e7e17f7a:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/27e3164e-8fd3-414e-8b23-3220e7e17f7a/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/2b0f09d7-b3bc-4660-965c-55e8f5fa6b50:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:17 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:17 original
+
+/data/pofa-quarantine/quarantine/2b0f09d7-b3bc-4660-965c-55e8f5fa6b50/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:17 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:17 ..
+-rw-r--r-- 1 root root 1143 2026-09-27 14:17 xl.meta
+
+/data/pofa-quarantine/quarantine/2bc9db0f-9ec4-49c5-9857-a06c4b117db0:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:50 original
+
+/data/pofa-quarantine/quarantine/2bc9db0f-9ec4-49c5-9857-a06c4b117db0/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:50 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:50 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:50 xl.meta
+
+/data/pofa-quarantine/quarantine/2c1d3100-0ccf-4e7e-b30d-52065ba7be48:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/2c1d3100-0ccf-4e7e-b30d-52065ba7be48/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/2d59bce9-f30e-4049-9362-833d66dd842f:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 13:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 13:48 original
+
+/data/pofa-quarantine/quarantine/2d59bce9-f30e-4049-9362-833d66dd842f/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 13:48 .
+drwxr-xr-x 3 root root 4096 2026-09-27 13:48 ..
+-rw-r--r-- 1 root root 1142 2026-09-27 13:48 xl.meta
+
+/data/pofa-quarantine/quarantine/2dd108e0-d951-4765-ac43-aa2801df3a0c:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/2dd108e0-d951-4765-ac43-aa2801df3a0c/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/2e85faa4-9943-4f0c-902e-f64dd2050135:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/2e85faa4-9943-4f0c-902e-f64dd2050135/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/33305f9e-1aa3-47a3-93b1-c6cfabb86d24:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/33305f9e-1aa3-47a3-93b1-c6cfabb86d24/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1082 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/3355d33f-8da8-42da-b58d-c9411879ff78:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:14 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:14 original
+
+/data/pofa-quarantine/quarantine/3355d33f-8da8-42da-b58d-c9411879ff78/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:14 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:14 ..
+-rw-r--r-- 1 root root 1143 2026-09-27 14:14 xl.meta
+
+/data/pofa-quarantine/quarantine/3467b450-8e9e-45e0-b640-3c4370f2e560:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:31 original
+
+/data/pofa-quarantine/quarantine/3467b450-8e9e-45e0-b640-3c4370f2e560/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:31 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:31 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:31 xl.meta
+
+/data/pofa-quarantine/quarantine/35ae94b0-9d1c-4b27-be37-2ce1b0b2f7c3:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:49 original
+
+/data/pofa-quarantine/quarantine/35ae94b0-9d1c-4b27-be37-2ce1b0b2f7c3/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:49 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:49 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:49 xl.meta
+
+/data/pofa-quarantine/quarantine/37e621d8-5e9d-41a0-b972-e80cbbb38b58:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/37e621d8-5e9d-41a0-b972-e80cbbb38b58/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1082 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/39c1f147-b870-4310-b7f8-0ee785dca4bd:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/39c1f147-b870-4310-b7f8-0ee785dca4bd/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1081 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/3a19f434-ef76-4442-bc59-bd9de24fcd6c:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:17 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:17 original
+
+/data/pofa-quarantine/quarantine/3a19f434-ef76-4442-bc59-bd9de24fcd6c/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:17 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:17 ..
+-rw-r--r-- 1 root root 1143 2026-09-27 14:17 xl.meta
+
+/data/pofa-quarantine/quarantine/3b94a433-df3d-4764-be57-d692e327b80f:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/3b94a433-df3d-4764-be57-d692e327b80f/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/3bee0bea-449f-4428-82a8-d569999a03c7:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:50 original
+
+/data/pofa-quarantine/quarantine/3bee0bea-449f-4428-82a8-d569999a03c7/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:50 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:50 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:50 xl.meta
+
+/data/pofa-quarantine/quarantine/3e8a6a68-fa81-4b81-9519-479a53ef28a3:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/3e8a6a68-fa81-4b81-9519-479a53ef28a3/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/40dbed11-4a9b-4016-a6f0-0efcb7779317:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/40dbed11-4a9b-4016-a6f0-0efcb7779317/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/41b82888-d8e7-41dc-a449-e52685ed43f4:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/41b82888-d8e7-41dc-a449-e52685ed43f4/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/42b4a043-4c65-4367-aaec-d2700003ebd2:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/42b4a043-4c65-4367-aaec-d2700003ebd2/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/44c8f5d6-da54-40e0-9383-03137df4a56f:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/44c8f5d6-da54-40e0-9383-03137df4a56f/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1082 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/45da4b0e-48ef-491c-86e2-538e5342e223:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/45da4b0e-48ef-491c-86e2-538e5342e223/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/46dc8bb6-a832-4720-8889-5995d0ef5b55:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/46dc8bb6-a832-4720-8889-5995d0ef5b55/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/49420a18-7341-4557-9fc3-20bc23f93cae:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/49420a18-7341-4557-9fc3-20bc23f93cae/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/4a3bd161-1936-455f-b4d1-32084eeaff11:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:03 original
+
+/data/pofa-quarantine/quarantine/4a3bd161-1936-455f-b4d1-32084eeaff11/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:03 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:03 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:03 xl.meta
+
+/data/pofa-quarantine/quarantine/4b51edc0-ee84-4242-b5c0-27e36d675774:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:38 original
+
+/data/pofa-quarantine/quarantine/4b51edc0-ee84-4242-b5c0-27e36d675774/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:38 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:38 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:38 xl.meta
+
+/data/pofa-quarantine/quarantine/4da4e1f4-327c-4c78-8a42-eb70572551c0:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/4da4e1f4-327c-4c78-8a42-eb70572551c0/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/4dbac009-4bd5-40ae-9dec-b7dd4c82e95e:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/4dbac009-4bd5-40ae-9dec-b7dd4c82e95e/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/4eba25e1-c545-451c-bf36-19e4f523a5bf:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/4eba25e1-c545-451c-bf36-19e4f523a5bf/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1081 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/4ef726d2-1886-4f58-83db-f95e2402383e:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/4ef726d2-1886-4f58-83db-f95e2402383e/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/4f35750f-19aa-4574-8fce-22c9fa70917b:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:41 original
+
+/data/pofa-quarantine/quarantine/4f35750f-19aa-4574-8fce-22c9fa70917b/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:41 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:41 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:41 xl.meta
+
+/data/pofa-quarantine/quarantine/4f876400-97cf-48f1-ab2a-c5d31b820836:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/4f876400-97cf-48f1-ab2a-c5d31b820836/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/4fcc4f2e-75ab-4526-a5cf-74bce02606e6:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/4fcc4f2e-75ab-4526-a5cf-74bce02606e6/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/50e36624-306d-4ac9-bbba-4fe9284f65bc:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/50e36624-306d-4ac9-bbba-4fe9284f65bc/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/51789137-9d4d-4d66-a5d3-1e554b91ab92:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/51789137-9d4d-4d66-a5d3-1e554b91ab92/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/51bcecd9-1e20-4c9e-a892-575b2449fb59:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:31 original
+
+/data/pofa-quarantine/quarantine/51bcecd9-1e20-4c9e-a892-575b2449fb59/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:31 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:31 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:31 xl.meta
+
+/data/pofa-quarantine/quarantine/52b54162-d3e6-43cf-8193-a01c1e17bace:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/52b54162-d3e6-43cf-8193-a01c1e17bace/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/5488081e-4963-4700-a05b-090a1ed45026:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:38 original
+
+/data/pofa-quarantine/quarantine/5488081e-4963-4700-a05b-090a1ed45026/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:38 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:38 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:38 xl.meta
+
+/data/pofa-quarantine/quarantine/570b9029-f378-47da-be97-703ed64ee10b:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/570b9029-f378-47da-be97-703ed64ee10b/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/5875de0d-ce1b-4609-9340-92c90b84dde2:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/5875de0d-ce1b-4609-9340-92c90b84dde2/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/59406709-9788-4bfe-b9d7-b2a8796ba009:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/59406709-9788-4bfe-b9d7-b2a8796ba009/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/59cd38c9-d179-4974-823e-44782e10b988:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 13:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 13:46 original
+
+/data/pofa-quarantine/quarantine/59cd38c9-d179-4974-823e-44782e10b988/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 13:46 .
+drwxr-xr-x 3 root root 4096 2026-09-27 13:46 ..
+-rw-r--r-- 1 root root 1142 2026-09-27 13:46 xl.meta
+
+/data/pofa-quarantine/quarantine/5dbee03e-cfab-45e8-8d36-aad4ee42fa25:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/5dbee03e-cfab-45e8-8d36-aad4ee42fa25/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/5ee09ae7-13b5-4a08-b393-9101ff771df4:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/5ee09ae7-13b5-4a08-b393-9101ff771df4/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/60a54a5a-89b9-493b-a5cc-63ada68da367:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:50 original
+
+/data/pofa-quarantine/quarantine/60a54a5a-89b9-493b-a5cc-63ada68da367/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:50 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:50 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:50 xl.meta
+
+/data/pofa-quarantine/quarantine/62c00f46-cea9-4427-915c-9debc93cabda:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/62c00f46-cea9-4427-915c-9debc93cabda/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1082 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/62ef0334-68b2-46e3-965b-2eecba923417:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/62ef0334-68b2-46e3-965b-2eecba923417/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/649f6a43-4d97-446c-9368-5257e4b5342f:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:31 original
+
+/data/pofa-quarantine/quarantine/649f6a43-4d97-446c-9368-5257e4b5342f/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:31 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:31 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:31 xl.meta
+
+/data/pofa-quarantine/quarantine/66ba34b7-cb68-44f7-9f28-52cb69e57069:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/66ba34b7-cb68-44f7-9f28-52cb69e57069/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/698cdf42-d6d9-4c19-aebf-200ce8ea01c8:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-14 17:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-14 17:48 original
+
+/data/pofa-quarantine/quarantine/698cdf42-d6d9-4c19-aebf-200ce8ea01c8/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-14 17:48 .
+drwxr-xr-x 3 root root 4096 2026-09-14 17:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-14 17:48 xl.meta
+
+/data/pofa-quarantine/quarantine/6a062bf0-7f58-4d03-88b7-36ae9de0a0e4:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/6a062bf0-7f58-4d03-88b7-36ae9de0a0e4/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1081 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/6efb223c-3604-494e-a0f2-b9c73c06d7d2:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:18 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:18 original
+
+/data/pofa-quarantine/quarantine/6efb223c-3604-494e-a0f2-b9c73c06d7d2/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:18 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:18 ..
+-rw-r--r-- 1 root root 1141 2026-09-27 14:18 xl.meta
+
+/data/pofa-quarantine/quarantine/6fd21ebc-b65e-49e0-bce2-bc5d8b3a3d7f:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/6fd21ebc-b65e-49e0-bce2-bc5d8b3a3d7f/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/6fd9e174-5183-438a-b1d6-075db2bde426:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-14 17:49 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-14 17:49 original
+
+/data/pofa-quarantine/quarantine/6fd9e174-5183-438a-b1d6-075db2bde426/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-14 17:49 .
+drwxr-xr-x 3 root root 4096 2026-09-14 17:49 ..
+-rw-r--r-- 1 root root 1083 2026-09-14 17:49 xl.meta
+
+/data/pofa-quarantine/quarantine/70e3fd85-ed6a-40f7-a9f3-35b43e4a62f8:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:04 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:04 original
+
+/data/pofa-quarantine/quarantine/70e3fd85-ed6a-40f7-a9f3-35b43e4a62f8/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:04 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:04 ..
+-rw-r--r-- 1 root root 1142 2026-09-27 14:04 xl.meta
+
+/data/pofa-quarantine/quarantine/71dec912-bcfe-4949-8003-6e020e2471c9:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 10:00 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 10:00 original
+
+/data/pofa-quarantine/quarantine/71dec912-bcfe-4949-8003-6e020e2471c9/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 10:00 .
+drwxr-xr-x 3 root root 4096 2026-09-27 10:00 ..
+-rw-r--r-- 1 root root 1083 2026-09-27 10:00 xl.meta
+
+/data/pofa-quarantine/quarantine/7347ee41-d51f-4929-a4f6-3d22b8dbcfbd:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:43 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:43 original
+
+/data/pofa-quarantine/quarantine/7347ee41-d51f-4929-a4f6-3d22b8dbcfbd/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:43 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:43 ..
+-rw-r--r-- 1 root root 1081 2026-10-10 12:43 xl.meta
+
+/data/pofa-quarantine/quarantine/7444c972-eb55-4e29-80bf-cdcaa86303e1:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/7444c972-eb55-4e29-80bf-cdcaa86303e1/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1081 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/78880427-7cb4-42b3-836d-d5637c4336db:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/78880427-7cb4-42b3-836d-d5637c4336db/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1081 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/7bd05216-5e3d-46eb-b901-24e7f88b0b44:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/7bd05216-5e3d-46eb-b901-24e7f88b0b44/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1082 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/7f9d1747-3bc2-4dff-9299-9c88f351d8e6:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/7f9d1747-3bc2-4dff-9299-9c88f351d8e6/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/8042f4cf-3cee-4375-bdf3-d39ef32b3bee:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:43 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:43 original
+
+/data/pofa-quarantine/quarantine/8042f4cf-3cee-4375-bdf3-d39ef32b3bee/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:43 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:43 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:43 xl.meta
+
+/data/pofa-quarantine/quarantine/81abb161-8428-467f-a400-332292a3e9f8:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/81abb161-8428-467f-a400-332292a3e9f8/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1082 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/82d12bec-2646-4170-a7da-6e84db311743:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/82d12bec-2646-4170-a7da-6e84db311743/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/83de956a-5a36-4646-ad0a-b011224a1d11:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/83de956a-5a36-4646-ad0a-b011224a1d11/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/85b378d5-8719-42b9-ad23-f3f68699774e:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/85b378d5-8719-42b9-ad23-f3f68699774e/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1081 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/85b4fe72-dca1-4c1f-8f94-6a71ee1404a7:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 13:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 13:48 original
+
+/data/pofa-quarantine/quarantine/85b4fe72-dca1-4c1f-8f94-6a71ee1404a7/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 13:48 .
+drwxr-xr-x 3 root root 4096 2026-09-27 13:48 ..
+-rw-r--r-- 1 root root 1142 2026-09-27 13:48 xl.meta
+
+/data/pofa-quarantine/quarantine/85c049e8-80b6-42ff-bf66-30bc868cfd0e:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/85c049e8-80b6-42ff-bf66-30bc868cfd0e/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/8712ae4c-cc83-4a93-b65d-b3b5758400a7:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:30 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:30 original
+
+/data/pofa-quarantine/quarantine/8712ae4c-cc83-4a93-b65d-b3b5758400a7/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:30 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:30 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:30 xl.meta
+
+/data/pofa-quarantine/quarantine/872cb425-76df-4f52-802d-b4865784f293:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/872cb425-76df-4f52-802d-b4865784f293/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/8767dd28-7099-4e8f-b0fb-916db4315936:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:03 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:03 original
+
+/data/pofa-quarantine/quarantine/8767dd28-7099-4e8f-b0fb-916db4315936/original:
+total 88
+drwxr-xr-x 2 root root  4096 2026-09-27 14:03 .
+drwxr-xr-x 3 root root  4096 2026-09-27 14:03 ..
+-rw-r--r-- 1 root root 81121 2026-09-27 14:03 xl.meta
+
+/data/pofa-quarantine/quarantine/8b9582f1-c62a-422f-9f05-c89ccb2061bb:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:41 original
+
+/data/pofa-quarantine/quarantine/8b9582f1-c62a-422f-9f05-c89ccb2061bb/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:41 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:41 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:41 xl.meta
+
+/data/pofa-quarantine/quarantine/8c6729e7-1e5a-48c5-931d-598a0c1b06ee:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/8c6729e7-1e5a-48c5-931d-598a0c1b06ee/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/8c800cfc-3bff-4881-b89d-120fcb7d014a:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:38 original
+
+/data/pofa-quarantine/quarantine/8c800cfc-3bff-4881-b89d-120fcb7d014a/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:38 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:38 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:38 xl.meta
+
+/data/pofa-quarantine/quarantine/8e348c20-b3d8-4fcf-bd27-369c3b63c8cf:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/8e348c20-b3d8-4fcf-bd27-369c3b63c8cf/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/906267c8-1b9c-4452-907c-eed543824e0b:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/906267c8-1b9c-4452-907c-eed543824e0b/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/97cb2387-76b6-4cda-bdd1-238f280cef7c:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:31 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:31 original
+
+/data/pofa-quarantine/quarantine/97cb2387-76b6-4cda-bdd1-238f280cef7c/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:31 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:31 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:31 xl.meta
+
+/data/pofa-quarantine/quarantine/983919a7-e3d7-4c4c-9037-2ccef1a13ff4:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/983919a7-e3d7-4c4c-9037-2ccef1a13ff4/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/9973d646-065b-404c-a37c-bfdc0f854f19:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:50 original
+
+/data/pofa-quarantine/quarantine/9973d646-065b-404c-a37c-bfdc0f854f19/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:50 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:50 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:50 xl.meta
+
+/data/pofa-quarantine/quarantine/9b05534e-5620-40df-bb33-97a80ec07ad5:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:49 original
+
+/data/pofa-quarantine/quarantine/9b05534e-5620-40df-bb33-97a80ec07ad5/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:49 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:49 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:49 xl.meta
+
+/data/pofa-quarantine/quarantine/9b3af4da-38a0-4f84-be31-269a0b015a2e:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/9b3af4da-38a0-4f84-be31-269a0b015a2e/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/9e20503d-e6fe-4f79-81a0-aa9edfb82bd2:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:17 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:17 original
+
+/data/pofa-quarantine/quarantine/9e20503d-e6fe-4f79-81a0-aa9edfb82bd2/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:17 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:17 ..
+-rw-r--r-- 1 root root 1143 2026-09-27 14:17 xl.meta
+
+/data/pofa-quarantine/quarantine/9ec70cdf-a4d9-4c15-9c31-f37a3883a206:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/9ec70cdf-a4d9-4c15-9c31-f37a3883a206/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/9f326380-ab3e-44d6-b66e-a1753bfd933c:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/9f326380-ab3e-44d6-b66e-a1753bfd933c/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/a3d12a36-512c-422f-b38a-155334a43539:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/a3d12a36-512c-422f-b38a-155334a43539/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/a49d56b3-afdc-4948-8fe0-43f201cd0b84:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:30 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:30 original
+
+/data/pofa-quarantine/quarantine/a49d56b3-afdc-4948-8fe0-43f201cd0b84/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:30 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:30 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:30 xl.meta
+
+/data/pofa-quarantine/quarantine/a917bb8c-9730-490c-869f-e7d5ddaa179f:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/a917bb8c-9730-490c-869f-e7d5ddaa179f/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/aa3db540-ee5a-454b-9a80-fd62da919504:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/aa3db540-ee5a-454b-9a80-fd62da919504/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/ac48964c-f736-440f-b952-e6aeb2b18dc2:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:14 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:14 original
+
+/data/pofa-quarantine/quarantine/ac48964c-f736-440f-b952-e6aeb2b18dc2/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:14 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:14 ..
+-rw-r--r-- 1 root root 1143 2026-09-27 14:14 xl.meta
+
+/data/pofa-quarantine/quarantine/ad443e81-555a-4a99-b65f-d9a28b578f77:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:49 original
+
+/data/pofa-quarantine/quarantine/ad443e81-555a-4a99-b65f-d9a28b578f77/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:49 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:49 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:49 xl.meta
+
+/data/pofa-quarantine/quarantine/ad51a6ea-dd12-4ed4-8b14-3d3405a87535:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/ad51a6ea-dd12-4ed4-8b14-3d3405a87535/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/aeb2f922-495d-4a72-87de-f0b5decdea37:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:41 original
+
+/data/pofa-quarantine/quarantine/aeb2f922-495d-4a72-87de-f0b5decdea37/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:41 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:41 ..
+-rw-r--r-- 1 root root 1082 2026-10-10 12:41 xl.meta
+
+/data/pofa-quarantine/quarantine/af9e616f-6608-49ba-a721-44f780b93266:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-11 16:52 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-11 16:52 original
+
+/data/pofa-quarantine/quarantine/af9e616f-6608-49ba-a721-44f780b93266/original:
+total 88
+drwxr-xr-x 2 root root  4096 2026-10-11 16:52 .
+drwxr-xr-x 3 root root  4096 2026-10-11 16:52 ..
+-rw-r--r-- 1 root root 81121 2026-10-11 16:52 xl.meta
+
+/data/pofa-quarantine/quarantine/b150a7b4-97f4-40de-9d0c-c7d4636cab14:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/b150a7b4-97f4-40de-9d0c-c7d4636cab14/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/b57ea39a-1542-4e82-848f-459adba33a38:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/b57ea39a-1542-4e82-848f-459adba33a38/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/b6754177-4cd2-4acf-8472-0d8cad135032:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/b6754177-4cd2-4acf-8472-0d8cad135032/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/b68e27f8-362f-405d-b06c-758c7d5e4868:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/b68e27f8-362f-405d-b06c-758c7d5e4868/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/b9a27795-83d3-4cd9-aa91-7cc8dd79ddc0:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:50 original
+
+/data/pofa-quarantine/quarantine/b9a27795-83d3-4cd9-aa91-7cc8dd79ddc0/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:50 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:50 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:50 xl.meta
+
+/data/pofa-quarantine/quarantine/bbbd8939-57d7-4c02-9adf-ef7ccc3f4afa:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/bbbd8939-57d7-4c02-9adf-ef7ccc3f4afa/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/bde42a49-ad23-488f-ba18-0c1009536719:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:41 original
+
+/data/pofa-quarantine/quarantine/bde42a49-ad23-488f-ba18-0c1009536719/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:41 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:41 ..
+-rw-r--r-- 1 root root 1082 2026-10-10 12:41 xl.meta
+
+/data/pofa-quarantine/quarantine/bf0aa63e-3dcd-4afc-86ce-bdb3a47c6790:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:49 original
+
+/data/pofa-quarantine/quarantine/bf0aa63e-3dcd-4afc-86ce-bdb3a47c6790/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:49 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:49 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:49 xl.meta
+
+/data/pofa-quarantine/quarantine/bf37df48-a580-495b-bf83-c4eb20b1704e:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/bf37df48-a580-495b-bf83-c4eb20b1704e/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/bfac0d4c-8c6a-4323-ac92-328ac6f5ecd8:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/bfac0d4c-8c6a-4323-ac92-328ac6f5ecd8/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1082 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/c712ed66-75c0-46c3-94ea-04b7ecd020b7:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:38 original
+
+/data/pofa-quarantine/quarantine/c712ed66-75c0-46c3-94ea-04b7ecd020b7/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:38 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:38 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:38 xl.meta
+
+/data/pofa-quarantine/quarantine/c76c8387-c0da-405e-ba22-773f2ed8afb9:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:03 original
+
+/data/pofa-quarantine/quarantine/c76c8387-c0da-405e-ba22-773f2ed8afb9/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:03 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:03 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:03 xl.meta
+
+/data/pofa-quarantine/quarantine/c9052beb-7299-4a3a-8021-ab3d5c109877:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/c9052beb-7299-4a3a-8021-ab3d5c109877/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/cbce558d-ea1c-402d-87fa-37edd4773162:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/cbce558d-ea1c-402d-87fa-37edd4773162/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1082 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/cc0eeefc-9c72-412d-b76b-a646114deeac:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/cc0eeefc-9c72-412d-b76b-a646114deeac/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/cc5e1e87-a8de-4875-b0b0-3fa82b590948:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/cc5e1e87-a8de-4875-b0b0-3fa82b590948/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1082 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/cc6f0d1d-29b4-4d21-8b55-07058b7719b9:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:50 original
+
+/data/pofa-quarantine/quarantine/cc6f0d1d-29b4-4d21-8b55-07058b7719b9/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:50 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:50 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:50 xl.meta
+
+/data/pofa-quarantine/quarantine/d27248b7-f22f-410d-9e36-4c0dc5203010:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 13:45 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 13:45 original
+
+/data/pofa-quarantine/quarantine/d27248b7-f22f-410d-9e36-4c0dc5203010/original:
+total 88
+drwxr-xr-x 2 root root  4096 2026-09-27 13:45 .
+drwxr-xr-x 3 root root  4096 2026-09-27 13:45 ..
+-rw-r--r-- 1 root root 81121 2026-09-27 13:45 xl.meta
+
+/data/pofa-quarantine/quarantine/d3415d77-23cd-4bee-b421-ae2d8027560a:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/d3415d77-23cd-4bee-b421-ae2d8027560a/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/d3f20c0a-cb38-4b75-a4d1-f4b5aa830260:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:41 original
+
+/data/pofa-quarantine/quarantine/d3f20c0a-cb38-4b75-a4d1-f4b5aa830260/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:41 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:41 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:41 xl.meta
+
+/data/pofa-quarantine/quarantine/d42c85e8-a618-4292-8bd9-df6b402b8fef:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/d42c85e8-a618-4292-8bd9-df6b402b8fef/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/d470a215-4b7a-4531-8662-5e6bca726b7b:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:38 original
+
+/data/pofa-quarantine/quarantine/d470a215-4b7a-4531-8662-5e6bca726b7b/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:38 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:38 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:38 xl.meta
+
+/data/pofa-quarantine/quarantine/d50b08ce-5725-4f7b-a3f3-c5ac7782b233:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/d50b08ce-5725-4f7b-a3f3-c5ac7782b233/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/d93ef499-9586-46e8-a23a-453e160ca2c5:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/d93ef499-9586-46e8-a23a-453e160ca2c5/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/d96fc307-6ffa-46de-b408-5899c92640ae:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/d96fc307-6ffa-46de-b408-5899c92640ae/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/dc60c1ed-7c51-43a3-ac61-2107c23b81f4:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/dc60c1ed-7c51-43a3-ac61-2107c23b81f4/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1082 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/de93a4c2-26e8-4eb4-a1a1-d015362aed85:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/de93a4c2-26e8-4eb4-a1a1-d015362aed85/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/df05f024-3013-4ff4-904a-ec121fd72ff8:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 16:48 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 16:48 original
+
+/data/pofa-quarantine/quarantine/df05f024-3013-4ff4-904a-ec121fd72ff8/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 16:48 .
+drwxr-xr-x 3 root root 4096 2026-09-24 16:48 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 16:48 xl.meta
+
+/data/pofa-quarantine/quarantine/e0f97cd1-e5a3-49cb-b377-2a556b367011:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:41 original
+
+/data/pofa-quarantine/quarantine/e0f97cd1-e5a3-49cb-b377-2a556b367011/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:41 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:41 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:41 xl.meta
+
+/data/pofa-quarantine/quarantine/e863b85d-5ba9-4a00-be68-2668af1e0684:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-14 17:14 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-14 17:14 original
+
+/data/pofa-quarantine/quarantine/e863b85d-5ba9-4a00-be68-2668af1e0684/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-14 17:14 .
+drwxr-xr-x 3 root root 4096 2026-09-14 17:14 ..
+-rw-r--r-- 1 root root  520 2026-09-14 17:14 xl.meta
+
+/data/pofa-quarantine/quarantine/e95b8fc5-3974-4b6f-8c89-aadcf329fbe1:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:04 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:04 original
+
+/data/pofa-quarantine/quarantine/e95b8fc5-3974-4b6f-8c89-aadcf329fbe1/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:04 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:04 ..
+-rw-r--r-- 1 root root 1142 2026-09-27 14:04 xl.meta
+
+/data/pofa-quarantine/quarantine/e995d49a-5375-49b5-96a9-61e75fcbb396:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:02 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:02 original
+
+/data/pofa-quarantine/quarantine/e995d49a-5375-49b5-96a9-61e75fcbb396/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:02 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:02 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:02 xl.meta
+
+/data/pofa-quarantine/quarantine/ea1717ba-7707-452e-a8f2-1d9f57503f9c:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:38 original
+
+/data/pofa-quarantine/quarantine/ea1717ba-7707-452e-a8f2-1d9f57503f9c/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:38 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:38 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:38 xl.meta
+
+/data/pofa-quarantine/quarantine/ea85e592-ec0b-44c1-a03f-6d0e49c4bae5:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-20 07:30 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-20 07:30 original
+
+/data/pofa-quarantine/quarantine/ea85e592-ec0b-44c1-a03f-6d0e49c4bae5/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-20 07:30 .
+drwxr-xr-x 3 root root 4096 2026-09-20 07:30 ..
+-rw-r--r-- 1 root root 1083 2026-09-20 07:30 xl.meta
+
+/data/pofa-quarantine/quarantine/eae0a92d-bfa0-4513-9125-ee7b6bbb22c6:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/eae0a92d-bfa0-4513-9125-ee7b6bbb22c6/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/ed044207-978a-48f0-ac7a-1a0f63519f04:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-24 17:46 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-24 17:46 original
+
+/data/pofa-quarantine/quarantine/ed044207-978a-48f0-ac7a-1a0f63519f04/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-24 17:46 .
+drwxr-xr-x 3 root root 4096 2026-09-24 17:46 ..
+-rw-r--r-- 1 root root 1083 2026-09-24 17:46 xl.meta
+
+/data/pofa-quarantine/quarantine/ed7cc587-d239-495e-a448-b3549921fb97:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:50 original
+
+/data/pofa-quarantine/quarantine/ed7cc587-d239-495e-a448-b3549921fb97/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:50 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:50 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:50 xl.meta
+
+/data/pofa-quarantine/quarantine/f01361c2-976c-4b0e-8235-e902a88fca43:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-14 17:50 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-14 17:50 original
+
+/data/pofa-quarantine/quarantine/f01361c2-976c-4b0e-8235-e902a88fca43/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-14 17:50 .
+drwxr-xr-x 3 root root 4096 2026-09-14 17:50 ..
+-rw-r--r-- 1 root root 1083 2026-09-14 17:50 xl.meta
+
+/data/pofa-quarantine/quarantine/f17ac819-fc6b-4203-bdbb-f321b44222e2:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 10:21 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 10:21 original
+
+/data/pofa-quarantine/quarantine/f17ac819-fc6b-4203-bdbb-f321b44222e2/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 10:21 .
+drwxr-xr-x 3 root root 4096 2026-09-25 10:21 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 10:21 xl.meta
+
+/data/pofa-quarantine/quarantine/f21bb8d1-612f-49f2-9360-1e3b1bf42987:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:54 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:54 original
+
+/data/pofa-quarantine/quarantine/f21bb8d1-612f-49f2-9360-1e3b1bf42987/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:54 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:54 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:54 xl.meta
+
+/data/pofa-quarantine/quarantine/f24e4dc7-0e5b-4136-a03e-d418eb7e1f7e:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:07 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:07 original
+
+/data/pofa-quarantine/quarantine/f24e4dc7-0e5b-4136-a03e-d418eb7e1f7e/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:07 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:07 ..
+-rw-r--r-- 1 root root 1082 2026-09-25 15:07 xl.meta
+
+/data/pofa-quarantine/quarantine/f5b44ee9-82ea-40d7-bd62-8144898c915e:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:03 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:03 original
+
+/data/pofa-quarantine/quarantine/f5b44ee9-82ea-40d7-bd62-8144898c915e/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:03 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:03 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:03 xl.meta
+
+/data/pofa-quarantine/quarantine/f7aed273-5bba-48fd-9713-e55ed61dee62:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-25 15:09 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-25 15:09 original
+
+/data/pofa-quarantine/quarantine/f7aed273-5bba-48fd-9713-e55ed61dee62/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-25 15:09 .
+drwxr-xr-x 3 root root 4096 2026-09-25 15:09 ..
+-rw-r--r-- 1 root root 1083 2026-09-25 15:09 xl.meta
+
+/data/pofa-quarantine/quarantine/f841969c-1f60-42ba-85a9-b80872b9ea0d:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 16:01 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 16:01 original
+
+/data/pofa-quarantine/quarantine/f841969c-1f60-42ba-85a9-b80872b9ea0d/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 16:01 .
+drwxr-xr-x 3 root root 4096 2026-10-01 16:01 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 16:01 xl.meta
+
+/data/pofa-quarantine/quarantine/f93e7e1e-4494-40cd-917b-0d1c8830fa17:
+total 24
+drwxr-xr-x   3 root root  4096 2026-09-27 14:15 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-09-27 14:15 original
+
+/data/pofa-quarantine/quarantine/f93e7e1e-4494-40cd-917b-0d1c8830fa17/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-09-27 14:15 .
+drwxr-xr-x 3 root root 4096 2026-09-27 14:15 ..
+-rw-r--r-- 1 root root 1141 2026-09-27 14:15 xl.meta
+
+/data/pofa-quarantine/quarantine/fa49cb64-0e0f-4fbc-ae41-a88f9be86b48:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-01 15:49 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-01 15:49 original
+
+/data/pofa-quarantine/quarantine/fa49cb64-0e0f-4fbc-ae41-a88f9be86b48/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-01 15:49 .
+drwxr-xr-x 3 root root 4096 2026-10-01 15:49 ..
+-rw-r--r-- 1 root root 1083 2026-10-01 15:49 xl.meta
+
+/data/pofa-quarantine/quarantine/faeb7108-64b9-43a7-b9c9-11aab54698da:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:38 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:38 original
+
+/data/pofa-quarantine/quarantine/faeb7108-64b9-43a7-b9c9-11aab54698da/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:38 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:38 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:38 xl.meta
+
+/data/pofa-quarantine/quarantine/fb09c67f-60f3-426f-92aa-3c46db48aa89:
+total 24
+drwxr-xr-x   3 root root  4096 2026-10-10 12:41 .
+drwxr-xr-x 166 root root 16384 2026-10-12 16:34 ..
+drwxr-xr-x   2 root root  4096 2026-10-10 12:41 original
+
+/data/pofa-quarantine/quarantine/fb09c67f-60f3-426f-92aa-3c46db48aa89/original:
+total 12
+drwxr-xr-x 2 root root 4096 2026-10-10 12:41 .
+drwxr-xr-x 3 root root 4096 2026-10-10 12:41 ..
+-rw-r--r-- 1 root root 1083 2026-10-10 12:41 xl.meta

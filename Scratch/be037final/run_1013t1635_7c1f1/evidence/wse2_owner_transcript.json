@@ -1,0 +1,120 @@
+{
+  "target": "be037fin7c1f1_app2 on 127.0.0.1:15433 (this run's cluster)",
+  "appends_made": 3,
+  "event_type_is_in_domain": true,
+  "before_verify": {
+    "valid": true,
+    "checked_events": 3,
+    "first_sequence": 1,
+    "last_sequence": 3,
+    "failures": []
+  },
+  "before_checkpoint": {
+    "rows": 3,
+    "min_sequence": 1,
+    "max_sequence": 3,
+    "tail_event_hash": "bcc421d5bfc8f6a1d1b3f29b3ebdeb01a88fc9ead4625f3c91f706d926d5c50c",
+    "tail_previous_hash": "687989063fe7cfb841fa760a023738833ded5ee0413e6504f30d69e1fbc278a6"
+  },
+  "identity": {
+    "current_user": "postgres",
+    "is_superuser": true,
+    "grants_update": true,
+    "grants_delete": true,
+    "grants_truncate": true
+  },
+  "triggers_on_ledger": [
+    {
+      "tgname": "trg_audit_ledger_append_only",
+      "tgtype": 27,
+      "row_level": true,
+      "fires_on_update": true,
+      "fires_on_delete": true,
+      "fires_on_truncate": false
+    }
+  ],
+  "owner_update": {
+    "label": "update tail row",
+    "ok": false,
+    "sqlstate": "42501",
+    "error": "append-only enforcement refuses UPDATE on the audit ledger",
+    "statements": [
+      "UPDATE audit_ledger_events SET payload = '{\"tampered\": true}'::jsonb WHERE sequence_number = 3"
+    ],
+    "elapsed_s": 0.0
+  },
+  "owner_delete": {
+    "label": "delete tail row",
+    "ok": false,
+    "sqlstate": "42501",
+    "error": "append-only enforcement refuses DELETE on the audit ledger",
+    "statements": [
+      "DELETE FROM audit_ledger_events WHERE sequence_number = 3"
+    ],
+    "elapsed_s": 0.02
+  },
+  "owner_update_via_hatch": {
+    "label": "update through SET LOCAL hatch",
+    "ok": true,
+    "statements": [
+      "SET LOCAL poa.ledger_mutation_exception = 'true'",
+      "UPDATE audit_ledger_events SET payload = '{\"tampered\": true}'::jsonb WHERE sequence_number = 3"
+    ],
+    "elapsed_s": 0.0
+  },
+  "after_hatch_verify": {
+    "valid": false,
+    "checked_events": 3,
+    "first_sequence": 1,
+    "last_sequence": 3,
+    "failures": [
+      "event_hash mismatch at sequence 3"
+    ]
+  },
+  "owner_truncate": {
+    "label": "truncate the ledger",
+    "ok": true,
+    "statements": [
+      "TRUNCATE audit_ledger_events"
+    ],
+    "elapsed_s": 0.03
+  },
+  "after_truncate_checkpoint": {
+    "rows": 0,
+    "min_sequence": null,
+    "max_sequence": null,
+    "tail_event_hash": null,
+    "tail_previous_hash": null
+  },
+  "after_truncate_verify": {
+    "valid": true,
+    "checked_events": 0,
+    "first_sequence": null,
+    "last_sequence": null,
+    "failures": []
+  },
+  "after_truncate_verify_anchored": {
+    "valid": true,
+    "checked_events": 0,
+    "first_sequence": null,
+    "last_sequence": null,
+    "failures": [],
+    "checkpoint": {
+      "rows": 0,
+      "min_sequence": null,
+      "max_sequence": null,
+      "tail_event_hash": null,
+      "tail_previous_hash": null
+    }
+  },
+  "conclusion": {
+    "trigger_refused_owner_update": true,
+    "trigger_refused_owner_delete": true,
+    "hatch_update_landed": true,
+    "tampering_detected_by_verification": true,
+    "truncate_allowed_for_owner": true,
+    "in_database_verdict_after_wipe": true,
+    "checked_events_after_wipe": 0,
+    "external_digest_disagrees": true
+  }
+}

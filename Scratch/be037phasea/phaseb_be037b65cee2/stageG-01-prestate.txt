@@ -1,0 +1,40 @@
+=== G-PRE2  queue + DB baseline + weights mount proof ===
+--- redis queue keys (disposable redis) ---
+
+0
+--- redis client list (worker connections) ---
+id=81 addr=172.19.0.10:60246 laddr=172.19.0.2:6379 fd=10 name= age=2578 idle=4 flags=b db=
+id=606 addr=127.0.0.1:45616 laddr=127.0.0.1:6379 fd=11 name= age=0 idle=0 flags=N db=0 sub
+--- analysis_queue_name default is not run-namespaced ---
+--- DB baseline counts ---
+analysis_jobs=0
+analysis_results=0
+ERROR:  relation "vision_analysis_results" does not exist
+LINE 1: SELECT 'vision_analysis='||count(*) FROM vision_analysis_res...
+                                                 ^
+notifications=0
+ERROR:  relation "notification_outbox_events" does not exist
+LINE 1: SELECT 'notification_outbox='||count(*) FROM notification_ou...
+                                                     ^
+webhook_events=0
+webhook_deliveries=0
+audit_events=30
+evidence=4
+--- yolo weights: mount + identity inside analysis worker, vs host ---
+-rwxrwxrwx 1 root root 5613764 Sep 18 18:11 /app/yolo11n.pt
+0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1  /app/yolo11n.pt
+total 6080
+-rwxr-xr-x  1 root root     263 Sep 13 13:30 README.md
+drwxr-xr-x  4 root root    4096 Oct 11 18:08 alembic
+-rwxr-xr-x  1 root root    5008 Sep 13 10:15 alembic.ini
+drwxr-xr-x 15 root root    4096 Sep 26 18:39 backend
+drwxr-xr-x  3 root root    4096 Sep 13 10:53 docker
+drwxr-xr-x  3 root root    4096 Oct 11 17:55 docs
+-rwxr-xr-x  1 root root  551957 Oct 10 11:58 openapi.json
+-rwxr-xr-x  1 root root     441 Sep 25 12:32 pytest.ini
+-rwxr-xr-x  1 root root      13 Sep 26 16:18 requirements-dev.txt
+-rwxr-xr-x  1 root root     471 Sep 26 14:05 requirements.txt
+drwxr-xr-x  2 root root    4096 Oct 11 09:12 scripts
+-rwxr-xr-x  1 root root    6115 Sep 27 10:00 test_vision_temporal_auth.py
+drwxr-xr-x  5 root root    4096 Oct 12 15:13 tests
+-rwxrwxrwx  1 root root 5613764 Sep 18 18:11 yolo11n.pt

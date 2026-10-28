@@ -1,0 +1,7 @@
+[09:29:41] protected containers re-read (after)
+[09:29:43] pofa_dev measured: {'ledger_count': '6023|1|6059|1054|544|284|32|561|75'}
+[09:29:44] pofa_test measured: {'ledger_count': '53316|1|53316|3263|1636|1216|38|4455|75'}
+[09:29:45] scrub be037wf7e3.compose.yml: deleted
+[09:29:45] scrub f2-worker.env: deleted
+[09:29:45] scrub be037fin7c1f1.compose.yml: deleted
+[09:29:45] scrub worker-container.env: deleted

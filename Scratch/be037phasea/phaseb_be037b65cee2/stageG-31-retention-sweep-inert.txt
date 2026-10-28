@@ -1,0 +1,14 @@
+=== evidence-scoped audit events (latest 6) ===
+ERROR:  column "metadata_" does not exist
+LINE 1: ...e_number, event_type, action, resource_type, left(metadata_:...
+                                                             ^
+HINT:  Perhaps you meant to reference the column "audit_ledger_events.metadata".
+
+=== state distribution (why the sweep selects nothing) ===
+  state   | has_expiry | count 
+----------+------------+-------
+ ARCHIVED | t          |     1
+(1 row)
+
+=== candidate filter as implemented ===
+0

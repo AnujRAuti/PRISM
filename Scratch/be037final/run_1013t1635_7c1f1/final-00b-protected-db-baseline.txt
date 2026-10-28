@@ -1,0 +1,54 @@
+=== protected database baseline (READ-ONLY counts) ===
+utc=2026-10-13T16:45:27Z
+guard: every session runs with default_transaction_read_only=on (writes would abort)
+columns: ledger_count seq_lo seq_hi users projects evidence analysis_jobs webhook_events public_tables
+--- pofa_dev ---
+identity: pofa_dev|postgres
+6023|1|6059|1054|544|284|32|561|75
+alembic_version: t0u1v2w3x030
+extensions: plpgsql,postgis,vector
+schemas with tables: public
+exemplo_dados tables: 0
+--- pofa_test ---
+identity: pofa_test|postgres
+53316|1|53316|3263|1636|1216|38|4455|75
+alembic_version: t0u1v2w3x030
+extensions: plpgsql,postgis,vector
+schemas with tables: public
+exemplo_dados tables: 0
+--- template1 ---
+identity: template1|postgres
+extensions: plpgsql
+schemas with tables: (none)
+exemplo_dados tables: 0
+
+=== databases present in the live cluster (names only) ===
+pofa_audit_verify
+pofa_be028_fresh
+pofa_be028_rollback
+pofa_be028_scratch
+pofa_be029_assumptions
+pofa_be029_bkpverify
+pofa_be029_control
+pofa_be029_devpost
+pofa_be029_fresh
+pofa_be029_premig_verify
+pofa_be029_rehearsal
+pofa_be029_rollback
+pofa_be029_scratch
+pofa_be030_proof
+pofa_be030_scratch
+pofa_dev
+pofa_test
+postgres
+
+=== containers this cluster belongs to (protected, read-only inspect) ===
+NAME=/pofa_db ID=7949c99808161e138c35489a9d34928b873cfcd4cead9eb0f00fb37261033baf IMAGE=sha256:6ebf83d85b522793e22c42ab31de15a199151dde07f05304f5f92f16da0898e4 CREATED=2026-09-18T18:09:18.006806062Z STARTED=2026-10-13T06:15:07.152331657Z RESTARTS=0 RUNNING=true POLICY=unless-stopped PROJECT=proof-of-action-final SERVICE=db
+NAME=/pofa_redis ID=29b684e82d7c9b2818fc1a3d0f48415ab78f923ec7e063150208d275bd767af5 IMAGE=sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf CREATED=2026-09-13T16:58:41.514014662Z STARTED=2026-10-13T06:15:07.077129515Z RESTARTS=0 RUNNING=true POLICY=unless-stopped PROJECT=proof-of-action-final SERVICE=redis
+NAME=/pofa_minio ID=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd IMAGE=sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e CREATED=2026-09-13T13:33:00.828947067Z STARTED=2026-10-13T13:51:24.897524698Z RESTARTS=0 RUNNING=true POLICY=unless-stopped PROJECT=proof-of-action-final SERVICE=minio
+
+=== current tag -> image id (compare with each container's recorded IMAGE) ===
+redis:7-alpine sha256:sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+quay.io/minio/minio:latest sha256:sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+quay.io/minio/mc:latest sha256:sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+garapadev/postgres-postgis-pgvector:15-stable sha256:sha256:6ebf83d85b522793e22c42ab31de15a199151dde07f05304f5f92f16da0898e4

@@ -1,0 +1,14 @@
+BE-037 FINAL WS-E1: read-only inspection of the protected MinIO restart history
+captured=2026-10-14T14:50:31Z
+
+name=/pofa_minio
+id=54fce2fccd46fa5b2f10daba312d1ed7bb78920918c9e620ebb111a63f45dcbd
+project=proof-of-action-final
+service=minio
+created=2026-09-13T13:33:00.828947067Z
+startedAt=2026-10-14T14:30:56.292755199Z
+restartcount=0
+restartpolicy=unless-stopped
+finishedAt=2026-10-14T14:30:54.152864667Z
+
+--- events since 2026-10-13T00:00 (die/restart only, may be empty: docker events is not persistent) ---

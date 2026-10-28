@@ -1,0 +1,90 @@
+2026-10-13T13:29:06.769990779Z INFO:__main__:analysis worker started
+2026-10-13T13:29:07.522135382Z WARNING:__main__:analysis job retried job_id=df42c0e8-55df-4fa1-bf3a-39ca152121fb
+2026-10-13T13:29:07.568938344Z WARNING:__main__:analysis job retried job_id=df42c0e8-55df-4fa1-bf3a-39ca152121fb
+2026-10-13T13:29:07.690063774Z ERROR:__main__:analysis job failed job_id=df42c0e8-55df-4fa1-bf3a-39ca152121fb
+2026-10-13T13:29:07.690098868Z Traceback (most recent call last):
+2026-10-13T13:29:07.690103109Z   File "/app/backend/services/storage.py", line 139, in get_object_bytes
+2026-10-13T13:29:07.690106588Z     response = self._client.get_object(
+2026-10-13T13:29:07.690109308Z                ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.690111919Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 606, in _api_call
+2026-10-13T13:29:07.690115201Z     return self._make_api_call(operation_name, kwargs)
+2026-10-13T13:29:07.690117771Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.690120448Z   File "/usr/local/lib/python3.12/site-packages/botocore/context.py", line 123, in wrapper
+2026-10-13T13:29:07.690122814Z     return func(*args, **kwargs)
+2026-10-13T13:29:07.690125294Z            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.690127844Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 1094, in _make_api_call
+2026-10-13T13:29:07.690130856Z     raise error_class(parsed_response, operation_name)
+2026-10-13T13:29:07.690133611Z botocore.errorfactory.NoSuchKey: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+2026-10-13T13:29:07.690136961Z 
+2026-10-13T13:29:07.690139903Z The above exception was the direct cause of the following exception:
+2026-10-13T13:29:07.690142525Z 
+2026-10-13T13:29:07.690145154Z Traceback (most recent call last):
+2026-10-13T13:29:07.690147606Z   File "/app/backend/workers/analysis_worker.py", line 170, in process_message
+2026-10-13T13:29:07.690150822Z     fingerprint = process_evidence(job.evidence_id, db)
+2026-10-13T13:29:07.690153642Z                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.690156538Z   File "/app/backend/services/fingerprinting.py", line 30, in process_evidence
+2026-10-13T13:29:07.690159658Z     data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
+2026-10-13T13:29:07.690162755Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.690165693Z   File "/app/backend/services/storage.py", line 149, in get_object_bytes
+2026-10-13T13:29:07.690168756Z     raise self._translate(error, bucket=bucket, key=key) from error
+2026-10-13T13:29:07.690171811Z backend.services.storage.ObjectNotFoundError: Object not found: pofa-quarantine/quarantine/b558de23-4168-4b21-a0b6-277634046165/original
+2026-10-13T13:29:07.734359297Z WARNING:__main__:analysis job retried job_id=0eaccd96-a9cf-49e9-a373-2ee33a282f37
+2026-10-13T13:29:07.772747733Z WARNING:__main__:analysis job retried job_id=0eaccd96-a9cf-49e9-a373-2ee33a282f37
+2026-10-13T13:29:07.864036254Z ERROR:__main__:analysis job failed job_id=0eaccd96-a9cf-49e9-a373-2ee33a282f37
+2026-10-13T13:29:07.864076580Z Traceback (most recent call last):
+2026-10-13T13:29:07.864080649Z   File "/app/backend/services/storage.py", line 139, in get_object_bytes
+2026-10-13T13:29:07.864083899Z     response = self._client.get_object(
+2026-10-13T13:29:07.864086800Z                ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.864089378Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 606, in _api_call
+2026-10-13T13:29:07.864092194Z     return self._make_api_call(operation_name, kwargs)
+2026-10-13T13:29:07.864095029Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.864097826Z   File "/usr/local/lib/python3.12/site-packages/botocore/context.py", line 123, in wrapper
+2026-10-13T13:29:07.864100916Z     return func(*args, **kwargs)
+2026-10-13T13:29:07.864103704Z            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.864106485Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 1094, in _make_api_call
+2026-10-13T13:29:07.864109199Z     raise error_class(parsed_response, operation_name)
+2026-10-13T13:29:07.864111724Z botocore.errorfactory.NoSuchKey: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+2026-10-13T13:29:07.864114378Z 
+2026-10-13T13:29:07.864116754Z The above exception was the direct cause of the following exception:
+2026-10-13T13:29:07.864119422Z 
+2026-10-13T13:29:07.864122156Z Traceback (most recent call last):
+2026-10-13T13:29:07.864124865Z   File "/app/backend/workers/analysis_worker.py", line 170, in process_message
+2026-10-13T13:29:07.864127477Z     fingerprint = process_evidence(job.evidence_id, db)
+2026-10-13T13:29:07.864130026Z                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.864132928Z   File "/app/backend/services/fingerprinting.py", line 30, in process_evidence
+2026-10-13T13:29:07.864135706Z     data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
+2026-10-13T13:29:07.864138750Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:07.864141548Z   File "/app/backend/services/storage.py", line 149, in get_object_bytes
+2026-10-13T13:29:07.864144793Z     raise self._translate(error, bucket=bucket, key=key) from error
+2026-10-13T13:29:07.864147884Z backend.services.storage.ObjectNotFoundError: Object not found: pofa-quarantine/quarantine/103ca723-7343-40d2-b388-49e14d1aef4f/original
+2026-10-13T13:29:07.900255906Z WARNING:__main__:analysis job retried job_id=e37f93f8-e59d-4365-95af-b28f940c94ed
+2026-10-13T13:29:07.945640026Z WARNING:__main__:analysis job retried job_id=e37f93f8-e59d-4365-95af-b28f940c94ed
+2026-10-13T13:29:08.027569410Z ERROR:__main__:analysis job failed job_id=e37f93f8-e59d-4365-95af-b28f940c94ed
+2026-10-13T13:29:08.027616916Z Traceback (most recent call last):
+2026-10-13T13:29:08.027622351Z   File "/app/backend/services/storage.py", line 139, in get_object_bytes
+2026-10-13T13:29:08.027627173Z     response = self._client.get_object(
+2026-10-13T13:29:08.027630878Z                ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027634550Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 606, in _api_call
+2026-10-13T13:29:08.027638654Z     return self._make_api_call(operation_name, kwargs)
+2026-10-13T13:29:08.027642345Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027645558Z   File "/usr/local/lib/python3.12/site-packages/botocore/context.py", line 123, in wrapper
+2026-10-13T13:29:08.027649380Z     return func(*args, **kwargs)
+2026-10-13T13:29:08.027652943Z            ^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027656646Z   File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 1094, in _make_api_call
+2026-10-13T13:29:08.027660912Z     raise error_class(parsed_response, operation_name)
+2026-10-13T13:29:08.027664918Z botocore.errorfactory.NoSuchKey: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+2026-10-13T13:29:08.027669001Z 
+2026-10-13T13:29:08.027672539Z The above exception was the direct cause of the following exception:
+2026-10-13T13:29:08.027676363Z 
+2026-10-13T13:29:08.027679645Z Traceback (most recent call last):
+2026-10-13T13:29:08.027683308Z   File "/app/backend/workers/analysis_worker.py", line 170, in process_message
+2026-10-13T13:29:08.027687104Z     fingerprint = process_evidence(job.evidence_id, db)
+2026-10-13T13:29:08.027690804Z                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027694254Z   File "/app/backend/services/fingerprinting.py", line 30, in process_evidence
+2026-10-13T13:29:08.027698249Z     data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
+2026-10-13T13:29:08.027703553Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T13:29:08.027707323Z   File "/app/backend/services/storage.py", line 149, in get_object_bytes
+2026-10-13T13:29:08.027711085Z     raise self._translate(error, bucket=bucket, key=key) from error
+2026-10-13T13:29:08.027715298Z backend.services.storage.ObjectNotFoundError: Object not found: pofa-quarantine/quarantine/6e53db28-4031-4100-9bd0-aa4273b9be75/original
+2026-10-13T13:30:08.631812694Z INFO:__main__:analysis worker stopping; releasing queue and database resources
+2026-10-13T13:30:08.632352796Z INFO:__main__:analysis worker stopped

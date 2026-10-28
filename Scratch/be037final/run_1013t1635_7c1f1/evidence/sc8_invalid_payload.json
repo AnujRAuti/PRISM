@@ -1,0 +1,30 @@
+{
+  "backoff_warnings_emitted": 0,
+  "contents_after": {
+    "main": [],
+    "processing": [
+      "{\"not_job_id\":1}"
+    ]
+  },
+  "exit_code": 1,
+  "lists_after": {
+    "main": 0,
+    "processing": 1
+  },
+  "scenario": "S8 malformed queue payload (observation of mandated propagation)",
+  "tail": [
+    "",
+    "Traceback (most recent call last):",
+    "  File \"<frozen runpy>\", line 198, in _run_module_as_main",
+    "  File \"<frozen runpy>\", line 88, in _run_code",
+    "  File \"D:\\CODING\\Projects\\Proof-Of-Action-Final\\backend\\workers\\analysis_worker.py\", line 381, in <module>",
+    "    run_worker()",
+    "  File \"D:\\CODING\\Projects\\Proof-Of-Action-Final\\backend\\workers\\analysis_worker.py\", line 336, in run_worker",
+    "    message = queue.dequeue(timeout=settings.analysis_dequeue_block_seconds)",
+    "              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "  File \"D:\\CODING\\Projects\\Proof-Of-Action-Final\\backend\\services\\analysis_queue.py\", line 67, in dequeue",
+    "    raise ValueError(\"Invalid analysis queue payload\") from error",
+    "ValueError: Invalid analysis queue payload"
+  ],
+  "valueerror_present": true
+}

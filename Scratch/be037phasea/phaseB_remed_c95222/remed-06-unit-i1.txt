@@ -1,0 +1,34 @@
+=== remed-06 I1 focused unit tests (host, disposable DB armed) ===
+UTC: 2026-10-13 13:14
+
+command:
+  backend/.venv312_repro/Scripts/python.exe -m pytest \
+    tests/unit/test_be037i1_analysis_worker_redis_outage.py \
+    tests/unit/test_be037a_analysis_worker_shutdown.py -q
+environment: TEST_DATABASE_URL -> disposable be037rem_app (127.0.0.1:55432),
+  REDIS_URL -> 127.0.0.1:56379, S3_ENDPOINT -> 127.0.0.1:59000 (disposable MinIO),
+  ENVIRONMENT=development. No .env target was used for any write.
+
+FIRST RUN: exit code 1 — 1 failed, 19 passed
+  tests/unit/test_be037i1_analysis_worker_redis_outage.py::
+      test_outage_during_acknowledgement_never_acks_early  FAILED
+      assert waits == [half(1)]  ->  actual [0.5, 1.0]
+  Classification: TEST-AUTHORING DEFECT (BE-037REM-C95222-T1), not an
+  implementation defect. The scripted dequeue list was
+  [message, outage(), Stop()], so after the failed acknowledgement the *next*
+  dequeue also hit the injected outage and the loop correctly took a second,
+  larger backoff. The scenario this test is meant to pin is a failed ack
+  followed by Redis being reachable again, which the script did not describe.
+  The assertions (no acknowledge, no requeue, no processing, exactly one
+  backoff, recovery pass ran, engine disposed) were all kept unchanged; only
+  the injected second outage was removed: [message, None, Stop()].
+  No test was weakened or deleted; a failing assertion was traced to a
+  mismatched fake and the fake was corrected to match the contract.
+
+SECOND RUN: exit code 0 — 20 passed, 1 warning in 3.14s
+  (13 I1 outage/backoff/shutdown tests + 7 BE-037A worker-shutdown tests)
+
+Raw tail of the passing run:
+  ....................                                             [100%]
+  20 passed, 1 warning in 3.14s
+  (warning is the pre-existing Pydantic class-based config deprecation)

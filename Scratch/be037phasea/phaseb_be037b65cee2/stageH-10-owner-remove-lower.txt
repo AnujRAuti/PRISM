@@ -1,0 +1,9 @@
+BEGIN
+SET
+DELETE 1
+COMMIT
+ rows | head | forged_left 
+------+------+-------------
+   88 |   89 |           1
+(1 row)
+

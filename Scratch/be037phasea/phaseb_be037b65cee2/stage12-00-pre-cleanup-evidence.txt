@@ -1,0 +1,85 @@
+=== STAGE 12 / step 1 — preserve evidence BEFORE any removal ===
+utc=2026-10-13T09:09:32Z
+--- full container log export (stdout+stderr, all history)
+  db           bytes=26560 lines=225
+  redis        bytes=1174 lines=17
+  minio        bytes=1918 lines=51
+  minio_init   bytes=294 lines=5
+  api          bytes=162826 lines=1594
+  analysis     bytes=54479 lines=321
+  notification bytes=68655 lines=565
+  webhook      bytes=40616 lines=559
+  retention    bytes=699 lines=6
+  client       bytes=0 lines=0
+--- ownership proof: every resource this cleanup may touch
+/be037b65cee2_db id=996ee2c6da35bd8fcca7f41c8f8c090bc09421afcd8e91536ee56e714ade5908 project=be037b65cee2 service=db config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:01:11.076005226Z state=running
+/be037b65cee2_redis id=102dacdc41aeea79105361e554f8272338a26675f38ccf5221d52cbcb6dfd561 project=be037b65cee2 service=redis config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:01:11.077057023Z state=running
+/be037b65cee2_minio id=92628fb9f86348ac5aa3e0681d59e879b7c33ef19a8acaef1c2ee296ce3530a6 project=be037b65cee2 service=minio config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:01:11.054899199Z state=running
+/be037b65cee2_minio_init id=9f030ac082f330863b120e1eebab19e1b853a2b4ce16b030a74b11e6c9a8a8e1 project=be037b65cee2 service=minio-init config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:01:11.178493209Z state=exited
+/be037b65cee2_api id=4f8c81a56b01f7d4fed95db1f20090e9132fa34999d8880900324413ae017f00 project=be037b65cee2 service=api config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:07:27.083415081Z state=running
+/be037b65cee2_analysis id=a89b917473262128daafaa0aedf8a5de0f014c510797cbd07267a50c3774fe70 project=be037b65cee2 service=analysis_worker config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:07:27.08061254Z state=running
+/be037b65cee2_notification id=0c6ff14a5f563aef00eadf2ee25ab64e29075ef33110f028af2aa4a3c3895b10 project=be037b65cee2 service=notification_worker config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:07:27.068557211Z state=running
+/be037b65cee2_webhook id=9f572ceec444518f0b67a003836ba665ff9b58f0b7c4682f185535142c99c226 project=be037b65cee2 service=webhook_worker config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:07:27.090884155Z state=running
+/be037b65cee2_retention id=5cdcf41071adf66839109135c0be8c147f882aba6ea8f077522c7b167f20f53d project=be037b65cee2 service=retention_worker config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:07:27.104099881Z state=running
+/be037b65cee2_client id=e98bb071c6c8b1ddb9a5c24d0ed574421e1f0961b0ec64383a354119a33919e3 project=be037b65cee2 service=client config_file=D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml created=2026-10-13T07:07:27.075924301Z state=running
+--- volumes
+
+template parsing error: template: :1:15: executing "" at <.ID>: map has no entry for key "ID"
+template parsing error: template: :1:15: executing "" at <.ID>: map has no entry for key "ID"
+--- network
+name=be037b65cee2_net id=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046 driver=bridge internal=true containers=be037b65cee2_notification be037b65cee2_redis be037b65cee2_api be037b65cee2_retention be037b65cee2_minio be037b65cee2_db be037b65cee2_webhook be037b65cee2_analysis be037b65cee2_client 
+--- compose projects visible to the daemon
+NAME                    STATUS              CONFIG FILES
+be037b65cee2            running(9)          D:\CODING\Scratch\be037phasea\phaseb_be037b65cee2\compose.disposable.yml
+proof-of-action-final   running(3)          D:\CODING\Projects\Proof-Of-Action-Final\docker-compose.yml,D:\CODING\Projects\POA Final\Proof-Of-Action-Final\docker-compose.yml
+--- disposable DB final state (read-only, taken now because the cluster is about to go away)
+ version_num  
+--------------
+ t0u1v2w3x030
+(1 row)
+
+ ledger | lo | hi 
+--------+----+----
+     92 |  1 | 92
+(1 row)
+
+ users 
+-------
+    25
+(1 row)
+
+ evidence 
+----------
+       11
+(1 row)
+
+ analysis_jobs 
+---------------
+             8
+(1 row)
+
+ webhook_events 
+----------------
+              3
+(1 row)
+
+ tables 
+--------
+     73
+(1 row)
+
+
+--- step 1 addendum: volumes (correct template) + disposable DB final counts
+be037b65cee2_miniodata driver=local labels=com.docker.compose.config-hash=76689ebc4bae98d4c955debfdddcf1a40cc6f5aa67b14c071c049362dfd0492e,com.docker.compose.project=be037b65cee2,com.docker.compose.version=5.5.1,com.docker.compose.volume=be037b65cee2_miniodata
+be037b65cee2_pgdata driver=local labels=com.docker.compose.config-hash=0b8824079b8f73ba7755ee914db49674c9f376f942d95359f037f2ff735d959f,com.docker.compose.project=be037b65cee2,com.docker.compose.version=5.5.1,com.docker.compose.volume=be037b65cee2_pgdata
+be037b65cee2_pgdata created=2026-10-13T07:01:10Z driver=local project=be037b65cee2
+be037b65cee2_miniodata created=2026-10-13T07:01:10Z driver=local project=be037b65cee2
+  SELECT count(*) FROM users                                                                      -> 25
+  SELECT count(*) FROM projects                                                                   -> 5
+  SELECT count(*) FROM evidence                                                                   -> 11
+  SELECT count(*) FROM analysis_jobs                                                              -> 8
+  SELECT count(*) FROM webhook_events                                                             -> 3
+  SELECT count(*) FROM audit_ledger_events                                                        -> 92
+  SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' -> 73
+--- pgdata disk usage before removal
+(no alpine pull attempted; skipped)

@@ -1,0 +1,14 @@
+=== remed-03 disposable MinIO buckets ===
+Tue Oct 13 13:12:02 UTC 2026
+command: compose run --rm minio-init (mc ls local)
+EXIT=0
+ALIAS_OK
+[2026-10-13 13:09:33 UTC]     0B pofa-evidence/
+[2026-10-13 13:09:33 UTC]     0B pofa-quarantine/
+-- quarantine objects: 0
+-- evidence objects: 0
+
+note: the ad-hoc 'docker run' variant returned Access Denied because
+      the mc image running outside the compose project resolved a different
+      MINIO_ROOT_* pair; the compose-run variant above uses the exact
+      env the minio server was started with, so it is authoritative.

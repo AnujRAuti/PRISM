@@ -1,0 +1,24 @@
+=== sc1 ===
+[20:19:56] redis stop rc=0 state=exited
+[20:19:57] worker sc1_startup_outage pid=11716
+[20:20:22] redis start rc=0 state=running
+[20:21:49] wrote evidence\sc1_startup_outage.json
+[20:21:49] sc1 finished in 115.1s
+rc=0
+=== sc2 ===
+[20:21:52] worker sc2_disconnect_during_blocked_dequeue pid=21088
+[20:21:57] redis stop rc=0 state=exited
+[20:22:01] redis start rc=0 state=running
+[20:23:22] wrote evidence\sc2_disconnect_during_blocked_dequeue.json
+[20:23:22] sc2 finished in 91.7s
+rc=0
+=== sc7 ===
+[20:23:24] worker sc7_unrelated_redis_error pid=5852
+[20:23:32] wrote evidence\sc7_unrelated_redis_error.json
+[20:23:32] sc7 finished in 8.3s
+rc=0
+=== sc8 ===
+[20:23:33] worker sc8_invalid_payload pid=11032
+[20:23:39] wrote evidence\sc8_invalid_payload.json
+[20:23:39] sc8 finished in 6.5s
+rc=0

@@ -1,0 +1,11 @@
+database          : pofa_dev
+revision          : ['n4o5p6q7r022']
+candidates        : users 40 / projects 40 / evidence 40
+ledger            : 6017 events, span [1, 6053]
+archive table     : absent
+duplicate groups  : username [{'v': 'testuser', 'n': 40}] email [{'v': 'test@example.com', 'n': 40}]
+shape checks      : owns exactly one project=0, that project is named testproj=0, every candidate project holds evidence=0, every child of a candidate project is foo.jpg=0, no audit ledger involvement (actor, project or resource)=0
+refs out of set   : activities.actor_id->users=0, audit_events.actor_id->users=0, claims.claimant_id->users=0, notification_preferences.user_id->users=0, notifications.recipient_id->users=0, review_decisions.reviewer_id->users=0, user_role_assignments.user_id->users=0, activities.project_id->projects=0, api_clients.project_id->projects=0, claims.project_id->projects=0, correction_requests.project_id->projects=0, disputes.project_id->projects=0, evidence_requests.project_id->projects=0, intelligence_invalidations.project_id->projects=0, notifications.project_id->projects=0, reprocessing_requests.project_id->projects=0, retention_holds.project_id->projects=0, retention_policies.project_id->projects=0, review_cases.project_id->projects=0, user_role_assignments.project_id->projects=0, analysis_jobs.evidence_id->evidence=0, anomalies.evidence_id->evidence=0, duplicate_matches.evidence_id->evidence=0, duplicate_matches.matched_evidence_id->evidence=0, evidence_metadata.evidence_id->evidence=0, evidence_request_items.evidence_id->evidence=0, evidence_requests.evidence_id->evidence=0, public_media_derivatives.original_evidence_id->evidence=0, reprocessing_requests.evidence_id->evidence=0, review_cases.evidence_id->evidence=0, review_decisions.evidence_id->evidence=0
+tables counted    : 69 (fingerprints recorded to preflight_phase3.json)
+
+PREFLIGHT PASSED: live state matches the reviewed target set exactly

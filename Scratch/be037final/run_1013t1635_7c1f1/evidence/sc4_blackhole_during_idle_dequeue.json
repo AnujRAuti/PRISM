@@ -1,0 +1,55 @@
+{
+  "completed_log_entry": [
+    128.8279999999795,
+    "INFO:__main__:analysis job completed job_id=2aee8d74-6159-44d4-a81b-c995749b2b4a"
+  ],
+  "configured_block_s": 3,
+  "configured_socket_timeout_s": 8.0,
+  "first_backoff_warning": [
+    13.14000000001397,
+    "WARNING:__main__:redis unavailable; backing off 3.7s (consecutive failures 1)"
+  ],
+  "fixture": {
+    "bytes": 68321,
+    "evidence_id": "f07a4220-5d20-4b48-9b7f-018d13e73cc1",
+    "job_id": "2aee8d74-6159-44d4-a81b-c995749b2b4a",
+    "storage_key": "quarantine/f07a4220-5d20-4b48-9b7f-018d13e73cc1/original"
+  },
+  "freeze_at_worker_clock_s": 4.91,
+  "job_states": {
+    "2aee8d74-6159-44d4-a81b-c995749b2b4a": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    }
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 0
+  },
+  "pre_fix_baseline_reference": "final-07-wsc-baseline-frozen-redis.json (45s budget exhausted, no reply)",
+  "scenario": "S4 blackhole during the idle blocking dequeue",
+  "seconds_freeze_to_warning": 8.23,
+  "worker_alive_after_warning": true,
+  "worker_final": {
+    "again_lines": [
+      {
+        "arrival_s": 128.83,
+        "message": "INFO:__main__:redis reachable again after 1 backoff(s)"
+      }
+    ],
+    "alive_at_measurement": true,
+    "backoff_warnings": [
+      {
+        "arrival_s": 13.14,
+        "stated_consecutive_failures": 1,
+        "stated_delay_s": 3.7
+      }
+    ],
+    "exit_code": null,
+    "log_lines": 5,
+    "pid": 3200,
+    "recovery_lines": []
+  }
+}

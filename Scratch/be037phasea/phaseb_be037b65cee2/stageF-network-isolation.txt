@@ -1,0 +1,27 @@
+=== network isolation proof ===
+--- be037b65cee2_net members (name + endpoint IP) ---
+be037b65cee2_notification 172.19.0.7/16
+be037b65cee2_redis 172.19.0.2/16
+be037b65cee2_api 172.19.0.9/16
+be037b65cee2_retention 172.19.0.8/16
+be037b65cee2_minio 172.19.0.4/16
+be037b65cee2_db 172.19.0.3/16
+be037b65cee2_webhook 172.19.0.6/16
+be037b65cee2_analysis 172.19.0.10/16
+be037b65cee2_client 172.19.0.5/16
+
+--- internal flag / published ports on each disposable container ---
+internal=true driver=bridge
+be037b65cee2_api nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[8000/tcp:[]]
+be037b65cee2_db nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[5432/tcp:[]]
+be037b65cee2_minio nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[9000/tcp:[]]
+be037b65cee2_redis nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[6379/tcp:[]]
+be037b65cee2_client nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[8000/tcp:[]]
+be037b65cee2_analysis nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[8000/tcp:[]]
+be037b65cee2_notification nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[8000/tcp:[]]
+be037b65cee2_retention nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[8000/tcp:[]]
+be037b65cee2_webhook nets=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046; ports=map[8000/tcp:[]]
+--- live containers' networks (must not include be037b65cee2_net id 7d581f96427e) ---
+pofa_db nets=77d8a8245370eb838d443abfd1410d641321dce750c9a8b2cbac94f27851bacd;
+pofa_redis nets=77d8a8245370eb838d443abfd1410d641321dce750c9a8b2cbac94f27851bacd;
+pofa_minio nets=77d8a8245370eb838d443abfd1410d641321dce750c9a8b2cbac94f27851bacd;

@@ -1,0 +1,50 @@
+=== G9a integration writes require integration.manage (valid body this time) ===
+FAIL  G9a anonymous external-system creation is rejected  | HTTP 201 {"id": "322c5646-fce5-4d2d-b803-469c76d70848", "organization_id": null, "name": "BE-037B anonymous check", "code": "ANON
+PASS  G9a external system registered as ADMINISTRATOR  | HTTP 201 {"id": "827d8f7f-2a3b-42dd-859a-ee8634d79375", "code": "BE037B_66d04a", "system_type": "OTHER", "status": "ACTIVE"}
+
+=== G9b SSRF boundary on subscription creation (real external_system_id) ===
+PASS  G9b SSRF/scheme rejection for loopback-ipv4  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL resolves to private/reserved address 127.0.0.1 \u2014 blocked for security"}
+PASS  G9b SSRF/scheme rejection for loopback-hostname  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL hostname 'localhost' is not allowed"}
+PASS  G9b SSRF/scheme rejection for docker-bridge-gateway  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL resolves to private/reserved address 172.18.0.1 \u2014 blocked for security"}
+PASS  G9b SSRF/scheme rejection for container-alias  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL resolves to private/reserved address 172.19.0.9 \u2014 blocked for security"}
+PASS  G9b SSRF/scheme rejection for db-alias  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL resolves to private/reserved address 172.19.0.3 \u2014 blocked for security"}
+PASS  G9b SSRF/scheme rejection for cloud-metadata  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL resolves to blocked metadata endpoint 169.254.169.254"}
+PASS  G9b SSRF/scheme rejection for rfc1918-10  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL resolves to private/reserved address 10.0.5.9 \u2014 blocked for security"}
+PASS  G9b SSRF/scheme rejection for rfc1918-192  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL resolves to private/reserved address 192.168.1.1 \u2014 blocked for security"}
+PASS  G9b SSRF/scheme rejection for unspecified-0000  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL resolves to private/reserved address 0.0.0.0 \u2014 blocked for security"}
+PASS  G9b SSRF/scheme rejection for file-scheme  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL scheme must be http or https, got 'file'"}
+PASS  G9b SSRF/scheme rejection for non-http-scheme  | HTTP 400 {"detail": "Invalid webhook URL: Webhook URL scheme must be http or https, got 'gopher'"}
+
+=== G9c subscriptions on non-routable TEST-NET sinks (public, unreachable here) ===
+PASS  G9c active subscription accepted for TEST-NET-1 sink  | HTTP 201 {"id": "8f88031f-b43f-4eb5-b120-f7cdd5af901e", "endpoint_url": "http://203.0.113.10:9099/hook", "status": "ACTIVE"}
+PASS  G9c second subscription disabled before fanout  | HTTP 200 status=DISABLED
+PASS  G9c unknown webhook event type rejected  | HTTP 422 {"detail": [{"type": "value_error", "loc": ["body", "subscribed_events"], "msg": "Value error, Unknown event types: {'not.a.real.event'}", "input": ["
+FAIL  G9c anonymous subscription creation rejected  | HTTP 201 {"id": "ab5ba40f-19b6-40be-93a1-e14e8a4ddabe", "external_system_id": "827d8f7f-2a3b-42dd-859a-ee8634d79375", "endpoint_u
+PASS  G9c FIELD_OFFICER cannot read subscriptions (least privilege)  | HTTP 403
+
+=== G9d recipient-facing notification read (run C timing gap closed) ===
+PASS  G9d notification created by the worker is readable by its recipient  | HTTP 200 items=1 total=1
+PASS  G9d single notification detail readable  | HTTP 200
+   OBSERVE delivery rows via API -> HTTP 403 {"detail": "Forbidden"}
+PASS  G9d recipient can mark the notification read  | HTTP 200
+   OBSERVE cross-user notification read (SUP token) -> HTTP 404
+
+=== G9e fusion run must enqueue a second webhook event for the new subscriptions ===
+PASS  G9e fusion execution accepted  | HTTP 200 run=4b7cd78a-aaa4-412c-86dc-c3f85e81b584
+
+   Waiting 75s for the running webhook worker loop (15s cadence) to sweep and attempt delivery...
+   OBSERVE subscription ab5ba40f-19b6-40be-93a1-e14e8a4ddabe status= ACTIVE endpoint= http://203.0.113.12:9099/hook consecutive_failures= 1 last_delivery_at= None
+   OBSERVE subscription 8af9da6d-3bfb-4321-9855-0750d3c3b77d status= DISABLED endpoint= http://198.51.100.10:9099/hook consecutive_failures= 0 last_delivery_at= None
+   OBSERVE subscription 8f88031f-b43f-4eb5-b120-f7cdd5af901e status= ACTIVE endpoint= http://203.0.113.10:9099/hook consecutive_failures= 1 last_delivery_at= None
+
+=== ARTIFACTS (ids only, no secrets) ===
+{
+  "external_system_id": "827d8f7f-2a3b-42dd-859a-ee8634d79375",
+  "active_subscription_id": "8f88031f-b43f-4eb5-b120-f7cdd5af901e",
+  "disabled_subscription_id": "8af9da6d-3bfb-4321-9855-0750d3c3b77d",
+  "fusion_run_id": "4b7cd78a-aaa4-412c-86dc-c3f85e81b584"
+}
+
+G_RESULT_D: total=22 pass=20 fail=2
+FAILING CHECK: G9a anonymous external-system creation is rejected | HTTP 201 {"id": "322c5646-fce5-4d2d-b803-469c76d70848", "organization_id": null, "name": "BE-037B anonymous check", "code": "ANON
+FAILING CHECK: G9c anonymous subscription creation rejected | HTTP 201 {"id": "ab5ba40f-19b6-40be-93a1-e14e8a4ddabe", "external_system_id": "827d8f7f-2a3b-42dd-859a-ee8634d79375", "endpoint_u

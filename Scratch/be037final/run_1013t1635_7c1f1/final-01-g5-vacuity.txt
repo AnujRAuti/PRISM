@@ -1,0 +1,3 @@
+OLD hook (unlinked job): records=1 levels=['ERROR'] errors=1 with_traceback=1
+NEW hook (unlinked job): records=1 levels=['DEBUG'] errors=0 with_traceback=0
+VACUITY CHECK OK: the assertion that fails for the old body passes for the new one.

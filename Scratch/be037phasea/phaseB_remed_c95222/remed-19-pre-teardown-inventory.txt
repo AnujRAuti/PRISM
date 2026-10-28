@@ -1,0 +1,13 @@
+=== remed-19 pre-teardown owned inventory 2026-10-13T14:06:52Z
+f6433f2f9c29|be037remc95222_worker_iso|Exited (137) 23 minutes ago
+be0eca0aaa07|be037remc95222_redis|Up 27 minutes (healthy)
+54c58c30ce5f|be037remc95222_api|Up 44 minutes (healthy)
+17787a191d32|be037remc95222_db|Up About an hour (healthy)
+63653cc38b6e|be037remc95222_minio|Up About an hour (healthy)
+--- volumes
+be037remc95222_miniodata
+be037remc95222_pgdata
+be037remc95222_redisdata
+--- networks
+be037remc95222_iso
+be037remc95222_net

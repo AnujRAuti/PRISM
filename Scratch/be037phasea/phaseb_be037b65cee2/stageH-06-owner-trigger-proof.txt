@@ -1,0 +1,42 @@
+BEGIN
+=== H15a owner UPDATE on the ledger, no hatch: expect the trigger to refuse ===
+DO
+=== H15b owner DELETE on the ledger, no hatch: expect the trigger to refuse ===
+psql:<stdin>:28: NOTICE:  RESULT H15a: REFUSED sqlstate=42501 : append-only enforcement refuses UPDATE on the audit ledger
+DO
+=== H15c a GRANT by the runtime is inert; the same GRANT by the owner is not ===
+psql:<stdin>:40: NOTICE:  RESULT H15b: REFUSED sqlstate=42501 : append-only enforcement refuses DELETE on the audit ledger
+DO
+=== H15d the sanctioned hatch path works for a principal that holds the grant ===
+psql:<stdin>:57: NOTICE:  RESULT H15c: owner GRANT UPDATE -> runtime privilege f -> t
+psql:<stdin>:57: NOTICE:  RESULT H15c: after REVOKE (same txn) -> f
+psql:<stdin>:71: NOTICE:  RESULT H15d: hatch UPDATE ALLOWED for a granting principal (this is the intended remediation path; rolled back below)
+DO
+ sequence_number |      event_type      
+-----------------+----------------------
+               1 | ORGANIZATION_UPDATED
+(1 row)
+
+ROLLBACK
+=== H16 post-ROLLBACK: nothing above persisted ===
+ ledger_rows | head 
+-------------+------
+          87 |   87
+(1 row)
+
+   row1_event_type    
+----------------------
+ ORGANIZATION_CREATED
+(1 row)
+
+                          ledger_acl                           
+---------------------------------------------------------------
+ {be037b_owner=arwdDxt/be037b_owner,be037b_rt=ar/be037b_owner}
+(1 row)
+
+ rt_update | rt_delete | rt_truncate | rt_insert 
+-----------+-----------+-------------+-----------
+ f         | f         | f           | t
+(1 row)
+
+=== H17 the superuser-only catalogue view really is closed to the runtime ===

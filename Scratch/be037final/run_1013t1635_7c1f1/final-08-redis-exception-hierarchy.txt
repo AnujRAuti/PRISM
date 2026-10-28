@@ -1,0 +1,27 @@
+redis-py version: 4.6.0 D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\redis\__init__.py
+ConnectionError: MRO=['ConnectionError', 'RedisError', 'Exception', 'BaseException', 'object']
+TimeoutError: MRO=['TimeoutError', 'RedisError', 'Exception', 'BaseException', 'object']
+BusyLoadingError: MRO=['BusyLoadingError', 'ConnectionError', 'RedisError', 'Exception', 'BaseException', 'object']
+AuthenticationError: MRO=['AuthenticationError', 'ConnectionError', 'RedisError', 'Exception', 'BaseException', 'object']
+ResponseError: MRO=['ResponseError', 'RedisError', 'Exception', 'BaseException', 'object']
+DataError: MRO=['DataError', 'RedisError', 'Exception', 'BaseException', 'object']
+RedisError: MRO=['RedisError', 'Exception', 'BaseException', 'object']
+
+issubclass(TimeoutError, ConnectionError) = False
+issubclass(BusyLoadingError, ConnectionError) = True
+issubclass(AuthenticationError, ConnectionError) = True
+issubclass(ConnectionError, RedisError) = True
+issubclass(TimeoutError, RedisError) = True
+issubclass(ResponseError, RedisError) = True
+issubclass(ResponseError, ConnectionError) = False
+
+Connection.__init__ timeout-related defaults:
+  socket_timeout = None
+  socket_connect_timeout = None
+  health_check_interval = 0
+  retry_on_timeout = False
+Traceback (most recent call last):
+  File "D:\CODING\Scratch\be037final\run_1013t1635_7c1f1\probe_redis_exception_hierarchy.py", line 44, in <module>
+    print(f"  {key} = {params[key].default!r}")
+                       ~~~~~~^^^^^
+KeyError: 'socket_keepalive'

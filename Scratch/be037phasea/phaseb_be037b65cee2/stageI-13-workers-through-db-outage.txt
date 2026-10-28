@@ -1,0 +1,85 @@
+=== STAGE I / did the loop workers survive the PostgreSQL outage (08:42:52-08:43:26)? ===
+evidence: PID-1 start time is unchanged from the original 07:07 creation, so none of these
+containers died and restarted during the DB outage.
+/be037b65cee2_notification started=2026-10-13T09:01:35.30107097Z restarts=0
+/be037b65cee2_webhook started=2026-10-13T09:01:57.050299871Z restarts=0
+/be037b65cee2_retention started=2026-10-13T09:02:18.849276463Z restarts=0
+/be037b65cee2_analysis started=2026-10-13T09:01:13.51027514Z restarts=0
+
+--- notification worker log lines inside the outage window
+2026-10-13T08:42:51.785682218Z INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+2026-10-13T08:43:09.263908054Z Traceback (most recent call last):
+2026-10-13T08:43:09.263943528Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 144, in __init__
+2026-10-13T08:43:09.264164339Z     self._dbapi_connection = engine.raw_connection()
+2026-10-13T08:43:09.264172078Z                              ^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T08:43:09.264174665Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3319, in raw_connection
+2026-10-13T08:43:09.265183135Z     return self.pool.connect()
+2026-10-13T08:43:09.265227376Z            ^^^^^^^^^^^^^^^^^^^
+2026-10-13T08:43:09.265235556Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+2026-10-13T08:43:09.265464543Z     return _ConnectionFairy._checkout(self)
+2026-10-13T08:43:09.265472516Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T08:43:09.265475180Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+2026-10-13T08:43:09.265876132Z     fairy = _ConnectionRecord.checkout(pool)
+2026-10-13T08:43:09.265900713Z             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--- webhook worker log lines inside the outage window
+2026-10-13T08:42:51.559803010Z INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+2026-10-13T08:43:08.941835241Z Traceback (most recent call last):
+2026-10-13T08:43:08.941871957Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 144, in __init__
+2026-10-13T08:43:08.942474915Z     self._dbapi_connection = engine.raw_connection()
+2026-10-13T08:43:08.942493318Z                              ^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T08:43:08.942496689Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3319, in raw_connection
+2026-10-13T08:43:08.943716624Z     return self.pool.connect()
+2026-10-13T08:43:08.943737745Z            ^^^^^^^^^^^^^^^^^^^
+2026-10-13T08:43:08.943741024Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+2026-10-13T08:43:08.944406821Z     return _ConnectionFairy._checkout(self)
+2026-10-13T08:43:08.944437491Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-13T08:43:08.944464077Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+2026-10-13T08:43:08.944780013Z     fairy = _ConnectionRecord.checkout(pool)
+2026-10-13T08:43:08.944799078Z             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--- retention worker log lines inside the outage window (may be silent: 3600 s interval)
+--- and after: are they still emitting passes (proof the loop continued)
+INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+=== STAGE I / same window, printed in chronological order: crash then continuation ===
+--- notification: pass/finished lines and tracebacks 08:42:40 -> 08:45:00
+2026-10-13T08:42:51.785682218Z INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0
+2026-10-13T08:43:09.263908054Z Traceback (most recent call last):
+2026-10-13T08:43:09.269020614Z   File "/usr/local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+2026-10-13T08:43:09.269182155Z psycopg2.OperationalError: could not translate host name "db" to address: Temporary failure in name resolution
+2026-10-13T08:43:09.269196820Z Traceback (most recent call last):
+2026-10-13T08:43:09.285984571Z   File "/usr/local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+2026-10-13T08:43:09.286216685Z sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "db" to address: Temporary failure in name resol
+2026-10-13T08:43:26.730765503Z INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0
+2026-10-13T08:43:44.070358375Z INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0
+2026-10-13T08:44:01.380132303Z INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0
+2026-10-13T08:44:18.750969622Z INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0
+2026-10-13T08:44:36.246545283Z INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0
+2026-10-13T08:44:53.810150541Z INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0
+    (count of tracebacks in that window: 2)
+--- webhook: pass/finished lines and tracebacks 08:42:40 -> 08:45:00
+2026-10-13T08:42:51.559803010Z INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+2026-10-13T08:43:08.941835241Z Traceback (most recent call last):
+2026-10-13T08:43:08.952342072Z   File "/usr/local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+2026-10-13T08:43:08.953553918Z psycopg2.OperationalError: could not translate host name "db" to address: Temporary failure in name resolution
+2026-10-13T08:43:08.953573180Z Traceback (most recent call last):
+2026-10-13T08:43:08.969246792Z   File "/usr/local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+2026-10-13T08:43:08.969678809Z sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "db" to address: Temporary failure in name resol
+2026-10-13T08:43:26.511163446Z INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+2026-10-13T08:43:43.980987300Z INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+2026-10-13T08:44:01.390181754Z INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+2026-10-13T08:44:18.856339614Z INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+2026-10-13T08:44:36.584651952Z INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+2026-10-13T08:44:54.384146520Z INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+    (count of tracebacks in that window: 2)
+
+--- interpretation (measured, not inferred):
+  * PID 1 in these two containers is 'sh -c while true; do python -m <worker> ...; sleep 15; done'.
+  * When PostgreSQL is unreachable the python pass raises, prints a full traceback and the pass
+    process exits; the shell loop starts the next pass 15 s later, and the passes resume as soon
+    as the database returns. The supervisor loop absorbs the outage.
+  * The analysis worker is the only LONG-LIVED consumer; it has no supervisor, so the same class
+    of dependency failure (Redis) ends the process permanently. See BE-037B-I1.

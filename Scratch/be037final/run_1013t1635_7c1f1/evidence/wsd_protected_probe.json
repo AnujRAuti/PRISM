@@ -1,0 +1,43 @@
+{
+  "run_id": "be037fin7c1f1",
+  "server": "127.0.0.1:15433 (disposable)",
+  "before": [
+    {
+      "connected_to": "postgres",
+      "listener": "172.19.0.5/32",
+      "listener_port": 5432,
+      "guest_port": "5432",
+      "existing_protected_named_databases": 1,
+      "this_runs_databases": 1
+    }
+  ],
+  "server_container_id": "89aeb7ec998aaf88ae49ac13fa95f7ed2a6a2e0a665822a25026e594c7e9d035",
+  "created": "pofa_dev",
+  "pytest_rc": 0,
+  "pytest_tail": [
+    ".                                                                        [100%]",
+    "============================== warnings summary ===============================",
+    "backend\\.venv312_repro\\Lib\\site-packages\\pydantic\\_internal\\_config.py:323",
+    "  D:\\CODING\\Projects\\Proof-Of-Action-Final\\backend\\.venv312_repro\\Lib\\site-packages\\pydantic\\_internal\\_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/",
+    "    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)",
+    "",
+    "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+    "1 passed, 1 warning in 4.09s"
+  ],
+  "drop": {
+    "dropped": true
+  },
+  "after_drop": [
+    [
+      {
+        "remaining_protected_named_databases": 0
+      }
+    ],
+    [
+      {
+        "databases_now": 1
+      }
+    ]
+  ],
+  "probe_url_redacted": "postgresql+psycopg2://postgres:***@127.0.0.1:15433/pofa_dev"
+}

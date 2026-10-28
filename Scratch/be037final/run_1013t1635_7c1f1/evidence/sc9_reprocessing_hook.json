@@ -1,0 +1,71 @@
+{
+  "audit_events_reprocess_completed": 1,
+  "completion_line": [
+    55.41,
+    "INFO:backend.workers.analysis_worker:analysis job completed job_id=93895d39-9974-4a33-aa75-e84a92954d60"
+  ],
+  "counts": {
+    "error_lines": 0,
+    "job_completed_lines": 2,
+    "linkage_lookup_failed_lines": 0,
+    "noop_debug_lines": 1,
+    "reprocessing_hook_failed_lines": 0,
+    "traceback_lines": 0
+  },
+  "job_states": {
+    "93895d39-9974-4a33-aa75-e84a92954d60": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    },
+    "f7d4c036-f936-4338-966b-73c2476e17da": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    }
+  },
+  "linked": {
+    "bytes": 68097,
+    "evidence_id": "3f87eee4-fa9a-4dc6-b183-89a169d94bb6",
+    "job_id": "f7d4c036-f936-4338-966b-73c2476e17da",
+    "reprocessing_id": "e8798ec0-7613-4251-be7f-baf93417682a",
+    "storage_key": "quarantine/3f87eee4-fa9a-4dc6-b183-89a169d94bb6/original"
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 0
+  },
+  "noop_debug_line": [
+    55.39100000000326,
+    "DEBUG:backend.workers.analysis_worker:no reprocessing request delegates job_id=93895d39-9974-4a33-aa75-e84a92954d60; governance hook skipped"
+  ],
+  "notifications_rows": 0,
+  "raw_error_and_debug_lines": [
+    "INFO:backend.services.audit_ledger:audit appended seq=1 type=INTELLIGENCE_REPROCESS_COMPLETED resource=reprocessing_requests:e8798ec0-7613-4251-be7f-baf93417682a",
+    "DEBUG:backend.workers.analysis_worker:no reprocessing request delegates job_id=93895d39-9974-4a33-aa75-e84a92954d60; governance hook skipped"
+  ],
+  "reprocessing_request_state": [
+    {
+      "completed_at": "2026-10-14 15:17:47.264676+00:00",
+      "status": "COMPLETED"
+    }
+  ],
+  "scenario": "S9 reprocessing hook on the real worker (DEBUG level)",
+  "unlinked": {
+    "bytes": 68190,
+    "evidence_id": "9ec1d0c5-e944-45f2-88e6-0a8cd88dbbe1",
+    "job_id": "93895d39-9974-4a33-aa75-e84a92954d60",
+    "storage_key": "quarantine/9ec1d0c5-e944-45f2-88e6-0a8cd88dbbe1/original"
+  },
+  "worker_final": {
+    "again_lines": [],
+    "alive_at_measurement": true,
+    "backoff_warnings": [],
+    "exit_code": null,
+    "log_lines": 299,
+    "pid": 11440,
+    "recovery_lines": []
+  }
+}

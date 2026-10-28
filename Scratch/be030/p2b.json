@@ -1,0 +1,44 @@
+{
+ "target": "pofa_be030_scratch",
+ "drift_with_check": {
+  "operations": 2,
+  "signatures": [
+   "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user",
+   "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_ro"
+  ],
+  "mentions_ledger": false,
+  "mentions_check": false
+ },
+ "drift_without_check": {
+  "operations": 2,
+  "signatures": [
+   "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user",
+   "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_ro"
+  ],
+  "mentions_ledger": false,
+  "mentions_check": false
+ },
+ "append_ms_without_trigger": 54.69,
+ "append_ms_with_trigger": 20.65,
+ "drift_after_reinstall": {
+  "operations": 2,
+  "signatures": [
+   "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user",
+   "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_ro"
+  ],
+  "mentions_ledger": false,
+  "mentions_check": false
+ },
+ "catalog_now": {
+  "triggers": [
+   "trg_audit_ledger_append_only"
+  ],
+  "constraints": [
+   "audit_ledger_events_pkey",
+   "ck_audit_ledger_event_type_domain",
+   "uq_audit_ledger_sequence"
+  ]
+ },
+ "rows": 38321,
+ "max_sequence": 38321
+}

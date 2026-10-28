@@ -1,0 +1,58 @@
+=== STAGE I / recovery of stranded queue work by restarting the worker ===
+start_utc=2026-10-13T08:53:10Z
+--- before: queue state
+1
+0
+--- stranded row before
+before [('4ef949ec-873b-407c-b13c-2f61fb135f16', 'queued', 0, None, datetime.datetime(2026, 10, 13, 8, 50, 50, 824680, tzinfo=datetime.timezone.utc))]
+--- worker container state before start
+state=exited exit=1 restarts=0
+--- starting worker
+worker_start_utc=2026-10-13T08:53:12Z
+be037b65cee2_analysis
+--- queue state after 20s
+0
+0
+--- row after 20s
+after20s [('4ef949ec-873b-407c-b13c-2f61fb135f16', 'failed', 3, 'Analysis processing failed', datetime.datetime(2026, 10, 13, 8, 53, 16, 398419, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 10, 13, 8, 53, 16, 436131, tzinfo=datetime.timezone.utc))]
+--- worker startup log (last 20 lines)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/botocore/context.py", line 123, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/botocore/client.py", line 1094, in _make_api_call
+    raise error_class(parsed_response, operation_name)
+botocore.errorfactory.NoSuchKey: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/backend/workers/analysis_worker.py", line 96, in process_message
+    fingerprint = process_evidence(job.evidence_id, db)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/services/fingerprinting.py", line 30, in process_evidence
+    data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/services/storage.py", line 149, in get_object_bytes
+    raise self._translate(error, bucket=bucket, key=key) from error
+backend.services.storage.ObjectNotFoundError: Object not found: be037b65cee2-quarantine/quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original
+--- row after 45s + queue
+after45s [('4ef949ec-873b-407c-b13c-2f61fb135f16', 'failed', 3, 'Analysis processing failed')]
+by_status [('completed', 4), ('failed', 4)]
+0
+0
+--- worker state + log tail
+state=running exit=0 restarts=0
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/backend/workers/analysis_worker.py", line 96, in process_message
+    fingerprint = process_evidence(job.evidence_id, db)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/services/fingerprinting.py", line 30, in process_evidence
+    data = storage.get_object_bytes(storage.quarantine_bucket, evidence.storage_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/services/storage.py", line 149, in get_object_bytes
+    raise self._translate(error, bucket=bucket, key=key) from error
+backend.services.storage.ObjectNotFoundError: Object not found: be037b65cee2-quarantine/quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original
+end_utc=2026-10-13T08:54:02Z

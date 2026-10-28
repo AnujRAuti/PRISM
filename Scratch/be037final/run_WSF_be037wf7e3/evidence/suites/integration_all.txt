@@ -1,0 +1,59 @@
+........................................................................ [ 18%]
+........................................................................ [ 36%]
+........................................................................ [ 55%]
+........................................................................ [ 73%]
+........................................................................ [ 92%]
+..............................                                           [100%]
+============================== warnings summary ===============================
+backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\pydantic\_internal\_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+backend\app\main.py:121
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:121: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\applications.py:4681: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+backend\app\main.py:135
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\app\main.py:135: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+tests/integration/test_be025_admin_control_plane.py::test_pagination_bounds_and_enumeration
+tests/integration/test_be037g1_analysis_auth.py::test_malformed_identifiers_rejected_before_any_lookup
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\security\authorization.py:84: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    reject_malformed_resource_id(resource_id)
+
+tests/integration/test_be026_field_operations.py::test_unsupported_sync_fields_are_refused_not_ignored
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\fastapi\routing.py:352: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    return await dependant.call(**values)
+
+tests/integration/test_governance.py::test_reprocessing_idempotent_delegation_and_completion
+  D:\CODING\Projects\Proof-Of-Action-Final\backend\.venv312_repro\Lib\site-packages\anyio\_backends\_asyncio.py:1100: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    result = context.run(func, *args)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+390 passed, 10 warnings in 835.87s (0:13:55)
+

@@ -1,0 +1,28 @@
+=== D4 alembic head + schema state (owner identity) ===
+ERROR:  column "table_owner" does not exist
+LINE 5:   select 'owner_of_public='||string_agg(distinct table_owner...
+                                                         ^
+HINT:  Perhaps you meant to reference the column "pg_tables.tableowner".
+alembic_rev=t0u1v2w3x030
+tables=73
+sequences=0
+ledger_rows=0
+exit=1
+
+=== D5 runtime identity: connect independently of the owner ===
+connected_as=be037b_rt
+db=be037b_app
+is_superuser=false
+can_create_in_public=false
+can_use_public=true
+ledger_select=true
+ledger_insert=true
+ledger_update=false
+ledger_delete=false
+ledger_truncate=false
+alembic_version_select=false
+exit=0
+
+=== D5b runtime role membership (must be none) ===
+member_of=(none)
+all_cluster_roles=be037b_owner,be037b_rt

@@ -1,0 +1,92 @@
+=== STAGE I / SIGTERM stop + start per worker container (exit-code matrix) ===
+host_utc=2026-10-13T09:01:05Z
+
+########## analysis ##########
+  pid1_mask: SigIgn:	0000000001001000
+  pid1_mask: SigCgt:	0000000100004002
+  before: state=running pid=8795 started=2026-10-13T08:53:12.817552712Z
+  after_stop: state=exited exit=0 oom=false finished=2026-10-13T09:01:11.884837791Z
+awk: cmd. line:1: BEGIN{printf \"%.1f\", b-a}
+awk: cmd. line:1:              ^ backslash not last character on line
+  stop_wall_seconds=
+  last 6 log lines:
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/app/backend/services/storage.py", line 149, in get_object_bytes
+        raise self._translate(error, bucket=bucket, key=key) from error
+    backend.services.storage.ObjectNotFoundError: Object not found: be037b65cee2-quarantine/quarantine/39b1fbb2-0d80-4305-87b4-abb6d001cbae/original
+    INFO:__main__:analysis worker stopping; releasing queue and database resources
+    INFO:__main__:analysis worker stopped
+  after_start: state=running pid=17049 started=2026-10-13T09:01:13.51027514Z restarts=0
+
+########## notification ##########
+  pid1_mask: SigIgn:	0000000000000000
+  pid1_mask: SigCgt:	0000000000010002
+  before: state=running pid=7911 started=2026-10-13T07:07:29.400211195Z
+  after_stop: state=exited exit=137 oom=false finished=2026-10-13T09:01:33.635168848Z
+awk: cmd. line:1: BEGIN{printf \"%.1f\", b-a}
+awk: cmd. line:1:              ^ backslash not last character on line
+  stop_wall_seconds=
+  last 6 log lines:
+    INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+    INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+    INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+    INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+    INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+    INFO:__main__:Notification worker finished: {'outbox': {'processed': 0, 'failed': 0}, 'retries': {'retried': 0, 'succeeded': 0, 'failed': 0}}
+  after_start: state=running pid=17474 started=2026-10-13T09:01:35.30107097Z restarts=0
+
+########## webhook ##########
+  pid1_mask: SigIgn:	0000000000000000
+  pid1_mask: SigCgt:	0000000000010002
+  before: state=running pid=7858 started=2026-10-13T07:07:28.829661383Z
+  after_stop: state=exited exit=137 oom=false finished=2026-10-13T09:01:55.398987552Z
+awk: cmd. line:1: BEGIN{printf \"%.1f\", b-a}
+awk: cmd. line:1:              ^ backslash not last character on line
+  stop_wall_seconds=
+  last 6 log lines:
+    INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+    INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+    INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+    INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+    INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+    INFO:__main__:Webhook worker pass: events=0 pending_deliveries=0 retries=0
+  after_start: state=running pid=17936 started=2026-10-13T09:01:57.050299871Z restarts=0
+
+########## retention ##########
+  pid1_mask: SigIgn:	0000000000000000
+  pid1_mask: SigCgt:	0000000000010002
+  before: state=running pid=7969 started=2026-10-13T07:07:29.953865909Z
+  after_stop: state=exited exit=137 oom=false finished=2026-10-13T09:02:17.068409035Z
+awk: cmd. line:1: BEGIN{printf \"%.1f\", b-a}
+awk: cmd. line:1:              ^ backslash not last character on line
+  stop_wall_seconds=
+  last 6 log lines:
+    INFO:backend.services.retention:retention sweep evaluated=0 archived=0 deleted=0 blocked=0 failed=0
+    INFO:__main__:retention sweep finished: {'evaluated': 0, 'archived': 0, 'deleted': 0, 'blocked': 0, 'failed': 0, 'resource_ids': []}
+    INFO:backend.services.retention:retention sweep evaluated=0 archived=0 deleted=0 blocked=0 failed=0
+    INFO:__main__:retention sweep finished: {'evaluated': 0, 'archived': 0, 'deleted': 0, 'blocked': 0, 'failed': 0, 'resource_ids': []}
+  after_start: state=running pid=18350 started=2026-10-13T09:02:18.849276463Z restarts=0
+
+########## client ##########
+  pid1_mask: SigIgn:	0000000000000000
+  pid1_mask: SigCgt:	0000000000000000
+  before: state=running pid=7802 started=2026-10-13T07:07:28.131574352Z
+  after_stop: state=exited exit=137 oom=false finished=2026-10-13T09:02:38.959206297Z
+awk: cmd. line:1: BEGIN{printf \"%.1f\", b-a}
+awk: cmd. line:1:              ^ backslash not last character on line
+  stop_wall_seconds=
+  last 6 log lines:
+  after_start: state=running pid=18816 started=2026-10-13T09:02:40.508896112Z restarts=0
+
+=== all disposable containers after the stop/start pass ===
+be037b65cee2_retention	running	Up 25 seconds
+be037b65cee2_webhook	running	Up 47 seconds
+be037b65cee2_api	running	Up 2 minutes (healthy)
+be037b65cee2_analysis	running	Up About a minute
+be037b65cee2_client	running	Up 4 seconds
+be037b65cee2_notification	running	Up About a minute
+be037b65cee2_minio_init	exited	Exited (0) 2 hours ago
+be037b65cee2_redis	running	Up 11 minutes (healthy)
+be037b65cee2_db	running	Up 19 minutes (healthy)
+be037b65cee2_minio	running	Up 3 minutes (healthy)
+end_utc=2026-10-13T09:02:44Z

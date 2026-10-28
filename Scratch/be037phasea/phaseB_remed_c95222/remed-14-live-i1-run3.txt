@@ -1,0 +1,141 @@
+=== BE-037 I1 live outage run 3 (plain stop/start, disposable stack c95222) === Tue Oct 13 13:37:06 UTC 2026
+
+>>> 13:37:06.812 | phase 0 - stop the worker (plain docker stop), confirm Redis up and queue empty
+be037remc95222_worker_iso
+
+>>> 13:37:09.548 | stop exit=0
+worker=exited redis=exited
+worker=running redis=running
+0
+
+>>> 13:37:10.551 | phase 1 - enqueue three payloads through the live enforcing API
+enqueued job c9084ec2-b76d-4379-9908-db23e11c7598 for evidence d6d25a13-3078-47aa-b7ae-1e0a6cac1843 status=queued
+enqueued job dee3f297-b68d-408c-bdc5-e3b9fc5ae155 for evidence 4f9cfc3c-f276-4d62-a283-205668cd1017 status=queued
+enqueued job 5599f14b-245d-45d8-8b0f-759c7e3f9feb for evidence 512ed78c-11fc-49d9-b2aa-8652e310e317 status=queued
+state written to D:\CODING\Scratch\be037phasea\phaseB_remed_c95222\i1-live-state.json
+
+>>> 13:37:15.214 | enqueue exit=0
+
+>>> 13:37:15.278 | phase 2 - queue holds the payloads, worker is stopped
+3
+0
+
+>>> 13:37:16.400 | phase 3 - OUTAGE: docker stop be037remc95222_redis
+be037remc95222_redis
+
+>>> 13:37:17.351 | redis stop exit=0
+
+>>> 13:37:17.423 | phase 4 - start the worker INTO the outage (plain docker start)
+be037remc95222_worker_iso
+
+>>> 13:37:18.273 | start exit=0
+
+>>> 13:37:29.255 | t+10s status=running exit=0 restarts=0 backoff_lines=2
+
+>>> 13:37:40.221 | t+20s status=running exit=0 restarts=0 backoff_lines=2
+
+>>> 13:37:51.208 | t+30s status=running exit=0 restarts=0 backoff_lines=3
+
+>>> 13:38:02.198 | t+40s status=running exit=0 restarts=0 backoff_lines=3
+
+>>> 13:38:13.191 | t+50s status=running exit=0 restarts=0 backoff_lines=4
+
+>>> 13:38:24.149 | t+60s status=running exit=0 restarts=0 backoff_lines=4
+
+>>> 13:38:24.204 | phase 5 - backoff log during the outage (timestamps + delays)
+2026-10-13T13:32:18.138546093Z INFO:__main__:analysis worker started
+2026-10-13T13:33:21.734341635Z INFO:__main__:analysis worker started
+2026-10-13T13:37:22.612138083Z INFO:__main__:analysis worker started
+2026-10-13T13:37:22.716595759Z WARNING:__main__:redis unavailable; backing off 4.1s (consecutive failures 1)
+2026-10-13T13:37:26.813801256Z WARNING:__main__:redis unavailable; backing off 14.4s (consecutive failures 2)
+2026-10-13T13:37:41.192261302Z WARNING:__main__:redis unavailable; backing off 27.4s (consecutive failures 3)
+2026-10-13T13:38:08.595247125Z WARNING:__main__:redis unavailable; backing off 58.3s (consecutive failures 4)
+
+>>> 13:38:24.631 | phase 6 - SIGTERM while the worker is inside a backoff wait
+
+>>> 13:38:24.747 | TERM sent at 13:38:24.689
+be037remc95222_worker_iso
+
+>>> 13:38:25.209 | kill exit=0
+
+>>> 13:38:26.737 | +1s status=exited exit=0 finishedAt=2026-10-13T13:38:25.907851456Z
+
+>>> 13:38:28.292 | +2s status=exited exit=0 finishedAt=2026-10-13T13:38:25.907851456Z
+
+>>> 13:38:29.897 | +3s status=exited exit=0 finishedAt=2026-10-13T13:38:25.907851456Z
+
+>>> 13:38:29.969 | last lines after SIGTERM
+2026-10-13T13:37:22.716595759Z WARNING:__main__:redis unavailable; backing off 4.1s (consecutive failures 1)
+2026-10-13T13:37:26.813801256Z WARNING:__main__:redis unavailable; backing off 14.4s (consecutive failures 2)
+2026-10-13T13:37:41.192261302Z WARNING:__main__:redis unavailable; backing off 27.4s (consecutive failures 3)
+2026-10-13T13:38:08.595247125Z WARNING:__main__:redis unavailable; backing off 58.3s (consecutive failures 4)
+2026-10-13T13:38:25.600669062Z INFO:__main__:analysis worker stopping; releasing queue and database resources
+2026-10-13T13:38:25.601124765Z INFO:__main__:analysis worker stopped
+
+>>> 13:38:30.559 | phase 7 - restart the worker into the still-live outage
+be037remc95222_worker_iso
+
+>>> 13:38:31.355 | start exit=0
+
+>>> 13:38:57.300 | after 25s status=running restarts=0 backoff_lines=7
+
+>>> 13:38:57.366 | phase 8 - RESTORE: docker start be037remc95222_redis, then read the queue at once
+be037remc95222_redis
+
+>>> 13:38:58.267 | redis start exit=0
+
+>>> 13:38:59.287 | queue right after restore=3 processing=0
+
+>>> 13:38:59.337 | phase 9 - observe recovery for 60s
+
+>>> 13:39:20.814 | t+1x20s queue=3 processing=1 status=running restarts=0
+
+>>> 13:39:42.447 | t+2x20s queue=0 processing=0 status=running restarts=0
+
+>>> 13:40:04.028 | t+3x20s queue=0 processing=0 status=running restarts=0
+
+>>> 13:40:04.090 | phase 10 - worker log: outage -> recovery
+2026-10-13T13:32:18.138546093Z INFO:__main__:analysis worker started
+2026-10-13T13:32:18.675750868Z WARNING:__main__:analysis job retried job_id=34f45f6a-8c0a-4711-ab24-d4574e28627b
+2026-10-13T13:32:18.754098265Z WARNING:__main__:analysis job retried job_id=34f45f6a-8c0a-4711-ab24-d4574e28627b
+2026-10-13T13:32:18.876284850Z ERROR:__main__:analysis job failed job_id=34f45f6a-8c0a-4711-ab24-d4574e28627b
+2026-10-13T13:32:18.922859522Z WARNING:__main__:analysis job retried job_id=96376417-56bc-4504-92f7-e04d4452f62f
+2026-10-13T13:32:18.960762612Z WARNING:__main__:analysis job retried job_id=96376417-56bc-4504-92f7-e04d4452f62f
+2026-10-13T13:32:19.134591332Z ERROR:__main__:analysis job failed job_id=96376417-56bc-4504-92f7-e04d4452f62f
+2026-10-13T13:32:19.186350052Z WARNING:__main__:analysis job retried job_id=167456a5-323c-4efa-bf85-f7f39718be02
+2026-10-13T13:32:19.236744718Z WARNING:__main__:analysis job retried job_id=167456a5-323c-4efa-bf85-f7f39718be02
+2026-10-13T13:32:19.326825738Z ERROR:__main__:analysis job failed job_id=167456a5-323c-4efa-bf85-f7f39718be02
+2026-10-13T13:33:09.875957288Z INFO:__main__:analysis worker stopping; releasing queue and database resources
+2026-10-13T13:33:09.876471696Z INFO:__main__:analysis worker stopped
+2026-10-13T13:33:21.734341635Z INFO:__main__:analysis worker started
+2026-10-13T13:37:09.086989187Z INFO:__main__:analysis worker stopping; releasing queue and database resources
+2026-10-13T13:37:09.087947795Z INFO:__main__:analysis worker stopped
+2026-10-13T13:37:22.612138083Z INFO:__main__:analysis worker started
+2026-10-13T13:37:22.716595759Z WARNING:__main__:redis unavailable; backing off 4.1s (consecutive failures 1)
+2026-10-13T13:37:26.813801256Z WARNING:__main__:redis unavailable; backing off 14.4s (consecutive failures 2)
+2026-10-13T13:37:41.192261302Z WARNING:__main__:redis unavailable; backing off 27.4s (consecutive failures 3)
+2026-10-13T13:38:08.595247125Z WARNING:__main__:redis unavailable; backing off 58.3s (consecutive failures 4)
+2026-10-13T13:38:25.600669062Z INFO:__main__:analysis worker stopping; releasing queue and database resources
+2026-10-13T13:38:25.601124765Z INFO:__main__:analysis worker stopped
+2026-10-13T13:38:35.299623461Z INFO:__main__:analysis worker started
+2026-10-13T13:38:35.402213647Z WARNING:__main__:redis unavailable; backing off 4.7s (consecutive failures 1)
+2026-10-13T13:38:40.058431989Z WARNING:__main__:redis unavailable; backing off 14.3s (consecutive failures 2)
+2026-10-13T13:38:54.370744152Z WARNING:__main__:redis unavailable; backing off 25.6s (consecutive failures 3)
+2026-10-13T13:39:20.403550760Z WARNING:__main__:analysis job retried job_id=5599f14b-245d-45d8-8b0f-759c7e3f9feb
+2026-10-13T13:39:20.404724984Z INFO:__main__:redis reachable again after 3 backoff(s)
+2026-10-13T13:39:20.453933260Z WARNING:__main__:analysis job retried job_id=5599f14b-245d-45d8-8b0f-759c7e3f9feb
+2026-10-13T13:39:20.576787147Z ERROR:__main__:analysis job failed job_id=5599f14b-245d-45d8-8b0f-759c7e3f9feb
+2026-10-13T13:39:20.620821599Z WARNING:__main__:analysis job retried job_id=dee3f297-b68d-408c-bdc5-e3b9fc5ae155
+2026-10-13T13:39:20.660489308Z WARNING:__main__:analysis job retried job_id=dee3f297-b68d-408c-bdc5-e3b9fc5ae155
+2026-10-13T13:39:20.737908791Z ERROR:__main__:analysis job failed job_id=dee3f297-b68d-408c-bdc5-e3b9fc5ae155
+2026-10-13T13:39:20.782921902Z WARNING:__main__:analysis job retried job_id=c9084ec2-b76d-4379-9908-db23e11c7598
+2026-10-13T13:39:20.837690879Z WARNING:__main__:analysis job retried job_id=c9084ec2-b76d-4379-9908-db23e11c7598
+2026-10-13T13:39:20.914773800Z ERROR:__main__:analysis job failed job_id=c9084ec2-b76d-4379-9908-db23e11c7598
+
+>>> 13:40:04.583 | phase 11 - egress check from the isolated network
+BLOCKED ('1.1.1.1', 443) OSError [Errno 101] Network is unreachable
+BLOCKED ('download.pytorch.org', 443) gaierror [Errno -3] Temporary failure in name resolution
+
+>>> 13:40:05.306 | egress check exit=0
+
+>>> 13:40:05.373 | driver 3 done

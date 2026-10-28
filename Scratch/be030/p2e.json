@@ -1,0 +1,72 @@
+{
+ "target": "pofa_be030_scratch",
+ "state_at_start": {
+  "rows": 38361,
+  "max_sequence": 38361
+ },
+ "damage_1": {
+  "tampered_sequence": 38361,
+  "committed": true,
+  "trigger_reinstalled_after": true
+ },
+ "verify_after_damage_full": {
+  "valid": false,
+  "checked": 38361,
+  "failures": [
+   "event_hash mismatch at sequence 38361"
+  ]
+ },
+ "verify_after_damage_tail_window": {
+  "note": "a window starting after the tampered row cannot see it",
+  "valid": true,
+  "checked": 0,
+  "first_sequence": 38362
+ },
+ "shipped_writer_after_damage": {
+  "appended_sequence": 38362,
+  "previous_hash_equals_stale_tail": true,
+  "state": {
+   "before": {
+    "rows": 38361,
+    "max_sequence": 38361
+   },
+   "after": {
+    "rows": 38362,
+    "max_sequence": 38362
+   }
+  }
+ },
+ "prototype_after_damage": {
+  "outcome": "executed"
+ },
+ "prototype_left_damaged_row_untouched": true,
+ "timing_note": "the shipped writer currently refuses nothing on this database shape, so its 20 appends are the control; the prototype refuses at the first damaged predecessor and cannot be timed on a healthy chain until it is installed as code -- measured instead as the cost of one verify_event recompute per append:",
+ "one_predecessor_recompute_ms": 0.568,
+ "shipped_append_ms_on_this_shape": 22.83,
+ "damage_2": {
+  "deleted_sequence": 38356,
+  "rowcount": 1
+ },
+ "verify_after_mid_delete": {
+  "valid": false,
+  "failures_by_class": {
+   "sequence gap": 1,
+   "event_hash mismatch": 1
+  },
+  "first_failures": [
+   "sequence gap before 38357 (expected 38356)",
+   "event_hash mismatch at sequence 38361"
+  ]
+ },
+ "prototype_with_mid_chain_gap": {
+  "outcome": "appended",
+  "sequence": 38384
+ },
+ "tamper_marker_removed_after_prototype": true,
+ "state_at_end": {
+  "rows": 38383,
+  "max_sequence": 38384
+ },
+ "enforcement_left_installed": true,
+ "check_still_installed": "ck_audit_ledger_event_type_domain"
+}

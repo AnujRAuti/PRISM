@@ -1,0 +1,1 @@
+[('non-raising client', 500, '{"detail":"internal server error"}'), ('default client', 'PROPAGATED IntegrityError', '')]

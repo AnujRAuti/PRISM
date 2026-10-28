@@ -1,0 +1,9 @@
+=== I2b cold-import cost of one loop iteration (seconds, measured in-container) ===
+webhook_worker         import_seconds= 2.03
+notification_worker    import_seconds= 1.81
+retention_worker       import_seconds= 2.06
+analysis_worker        import_seconds= 2.57
+
+=== I2d which heavy modules are pulled in by a worker import ===
+torch_import_seconds= 3.45
+webhook_worker_import_seconds= 1.84 heavy_modules_present= []

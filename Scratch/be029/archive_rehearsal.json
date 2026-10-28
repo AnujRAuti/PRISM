@@ -1,0 +1,37 @@
+{
+ "database": "pofa_be029_rehearsal",
+ "alembic_version": "s9t0u1v2w029",
+ "archive_counts": [
+  {
+   "source_table": "evidence",
+   "n": 40
+  },
+  {
+   "source_table": "projects",
+   "n": 40
+  },
+  {
+   "source_table": "users",
+   "n": 40
+  }
+ ],
+ "users_off_signature": [],
+ "user_columns_present": [
+  "created_at",
+  "email",
+  "external_subject",
+  "id",
+  "identity_provider",
+  "retired_at",
+  "status",
+  "username"
+ ],
+ "projects_off_signature": [],
+ "projects_owned_by_non_archived_user": [],
+ "evidence_off_signature": [],
+ "evidence_in_non_archived_project": [],
+ "triple_linkage_ok": true,
+ "live_users_with_username": 0,
+ "live_users_with_email": 0,
+ "ledger_rows_referencing_archived_ids": 0
+}

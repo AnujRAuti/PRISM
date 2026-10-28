@@ -1,0 +1,92 @@
+
+===== STAGE=forged: what does the integrated stack report? =====
+--- bounded range over the tail -> HTTP 200
+{
+  "checked_events": 10,
+  "failures": [
+    "event_hash mismatch at sequence 88",
+    "event_hash mismatch at sequence 89"
+  ],
+  "first_sequence": 80,
+  "last_sequence": 89,
+  "valid": false
+}
+--- whole chain -> HTTP 200
+{
+  "checked_events": 89,
+  "failures": [
+    "event_hash mismatch at sequence 88",
+    "event_hash mismatch at sequence 89"
+  ],
+  "first_sequence": 1,
+  "last_sequence": 89,
+  "valid": false
+}
+--- anchored, default (fail-closed) baseline -> HTTP 200
+{
+  "checked_events": 89,
+  "checkpoint": {
+    "max_sequence": 89,
+    "min_sequence": 1,
+    "rows": 89,
+    "tail_event_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "tail_previous_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "classification": {
+    "baseline_name": "none",
+    "baseline_version": 0,
+    "degraded": true,
+    "hard_anomalies": [
+      "event_hash mismatch at sequence 88",
+      "event_hash mismatch at sequence 89"
+    ],
+    "known_historical_gaps": [],
+    "new_gaps": [],
+    "status": "new_anomaly"
+  },
+  "failures": [
+    "event_hash mismatch at sequence 88",
+    "event_hash mismatch at sequence 89"
+  ],
+  "first_sequence": 1,
+  "last_sequence": 89,
+  "valid": false,
+  "writer_policy": "controlled_continuation"
+}
+--- anchored, blessed pofa-dev baseline -> HTTP 200
+{
+  "checked_events": 89,
+  "checkpoint": {
+    "max_sequence": 89,
+    "min_sequence": 1,
+    "rows": 89,
+    "tail_event_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "tail_previous_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "classification": {
+    "baseline_name": "pofa-dev-pre-be030-test-cleanup",
+    "baseline_version": 1,
+    "degraded": true,
+    "hard_anomalies": [
+      "event_hash mismatch at sequence 88",
+      "event_hash mismatch at sequence 89"
+    ],
+    "known_historical_gaps": [],
+    "new_gaps": [],
+    "status": "new_anomaly"
+  },
+  "failures": [
+    "event_hash mismatch at sequence 88",
+    "event_hash mismatch at sequence 89"
+  ],
+  "first_sequence": 1,
+  "last_sequence": 89,
+  "valid": false,
+  "writer_policy": "controlled_continuation"
+}
+STAGE_forged_VALID=False
+STAGE_forged_STATUS=new_anomaly degraded=True
+STAGE_forged_NEW_GAPS=[]
+STAGE_forged_KNOWN_GAPS=[]
+STAGE_forged_HARD=["event_hash mismatch at sequence 88", "event_hash mismatch at sequence 89"]
+STAGE_forged_FAILURES=["event_hash mismatch at sequence 88", "event_hash mismatch at sequence 89"]

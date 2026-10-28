@@ -1,0 +1,51 @@
+=== CREATED RESOURCE IDs — 2026-10-13T07:03:30Z ===
+container be037b65cee2_db id=996ee2c6da35bd8fcca7f41c8f8c090bc09421afcd8e91536ee56e714ade5908 image=sha256:6ebf83d85b522793e22c42ab31de15a199151dde07f05304f5f92f16da0898e4 status=running
+container be037b65cee2_redis id=102dacdc41aeea79105361e554f8272338a26675f38ccf5221d52cbcb6dfd561 image=sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf status=running
+container be037b65cee2_minio id=92628fb9f86348ac5aa3e0681d59e879b7c33ef19a8acaef1c2ee296ce3530a6 image=sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e status=running
+container be037b65cee2_minio_init id=9f030ac082f330863b120e1eebab19e1b853a2b4ce16b030a74b11e6c9a8a8e1 image=sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727 status=exited
+volume be037b65cee2_pgdata id=be037b65cee2_pgdata created=2026-10-13T07:01:10Z labels=be037b65cee2
+volume be037b65cee2_miniodata id=be037b65cee2_miniodata created=2026-10-13T07:01:10Z
+network be037b65cee2_net id=7d581f96427e8e905dc0633bba3fe8866a2ac729788dd13c45976b74c07d7046 internal=true driver=bridge
+
+=== D1 PostgreSQL: identity, version, extensions ===
+current_db=be037b_app
+server_role=be037b_owner
+is_superuser=true
+pg=PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1)
+ext=plpgsql 1.0
+ext=postgis 3.4.2
+ext=vector 0.7.4
+postgis=POSTGIS="3.4.2 c19ce56" [EXTENSION] PGSQL="150" GEOS="3.11.1-CAPI-1.17.1" PROJ="9.1.1 NETWORK_ENABLED=OFF URL_ENDPOINT=https://cdn.proj.org USER_WRITABLE_DIRECTORY=/var/lib/postgresql/.local/share/proj DATABASE_PATH=/usr/share/proj/proj.db" LIBXML="2.9.14" LIBJSON="0.16" LIBPROTOBUF="1.4.1" WAGYU="0.5.0 (Internal)"
+exit=0
+
+=== D1b init-log extension probe (from container logs) ===
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2026-10-13 07:01:13.401 UTC [48] LOG:  database system is ready to accept connections
+REDACTED-entrypoint.sh: running /docker-entrypoint-initdb.d/init.sql
+CREATE EXTENSION
+CREATE EXTENSION
+                                                                                                                                                           extension_probe                                                                                                                                                            
+ extension_probe 
+2026-10-13 07:01:14.983 UTC [1] LOG:  database system is ready to accept connections
+
+=== D2 Redis ===
+PONG
+redis_version:7.4.11
+executable:/data/redis-server
+config_file:
+appendonly
+no
+save
+
+
+=== D3 MinIO liveness/readiness (from inside, no host exposure) ===
+The cluster 'local' is ready
+ready_exit=0
+(minio-init already exited, as expected)
+minio-init output:
+Added `local` successfully.
+Bucket created successfully `REDACTED-quarantine`.
+Bucket created successfully `REDACTED-evidence`.
+Access permission for `REDACTED-quarantine` is set to `private`
+Access permission for `REDACTED-evidence` is set to `private`

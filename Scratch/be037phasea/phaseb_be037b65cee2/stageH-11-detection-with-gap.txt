@@ -1,0 +1,86 @@
+
+===== STAGE=gap: what does the integrated stack report? =====
+--- bounded range over the tail -> HTTP 200
+{
+  "checked_events": 9,
+  "failures": [
+    "sequence gap before 89 (expected 88)"
+  ],
+  "first_sequence": 80,
+  "last_sequence": 89,
+  "valid": false
+}
+--- whole chain -> HTTP 200
+{
+  "checked_events": 88,
+  "failures": [
+    "sequence gap before 89 (expected 88)"
+  ],
+  "first_sequence": 1,
+  "last_sequence": 89,
+  "valid": false
+}
+--- anchored, default (fail-closed) baseline -> HTTP 200
+{
+  "checked_events": 88,
+  "checkpoint": {
+    "max_sequence": 89,
+    "min_sequence": 1,
+    "rows": 88,
+    "tail_event_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "tail_previous_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "classification": {
+    "baseline_name": "none",
+    "baseline_version": 0,
+    "degraded": false,
+    "hard_anomalies": [],
+    "known_historical_gaps": [],
+    "new_gaps": [
+      "sequence gap before 89 (expected 88)"
+    ],
+    "status": "new_anomaly"
+  },
+  "failures": [
+    "sequence gap before 89 (expected 88)"
+  ],
+  "first_sequence": 1,
+  "last_sequence": 89,
+  "valid": false,
+  "writer_policy": "controlled_continuation"
+}
+--- anchored, blessed pofa-dev baseline -> HTTP 200
+{
+  "checked_events": 88,
+  "checkpoint": {
+    "max_sequence": 89,
+    "min_sequence": 1,
+    "rows": 88,
+    "tail_event_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "tail_previous_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "classification": {
+    "baseline_name": "pofa-dev-pre-be030-test-cleanup",
+    "baseline_version": 1,
+    "degraded": false,
+    "hard_anomalies": [],
+    "known_historical_gaps": [],
+    "new_gaps": [
+      "sequence gap before 89 (expected 88)"
+    ],
+    "status": "new_anomaly"
+  },
+  "failures": [
+    "sequence gap before 89 (expected 88)"
+  ],
+  "first_sequence": 1,
+  "last_sequence": 89,
+  "valid": false,
+  "writer_policy": "controlled_continuation"
+}
+STAGE_gap_VALID=False
+STAGE_gap_STATUS=new_anomaly degraded=False
+STAGE_gap_NEW_GAPS=["sequence gap before 89 (expected 88)"]
+STAGE_gap_KNOWN_GAPS=[]
+STAGE_gap_HARD=[]
+STAGE_gap_FAILURES=["sequence gap before 89 (expected 88)"]

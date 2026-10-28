@@ -1,0 +1,49 @@
+=== STAGE I / closing state after the failure-injection pass ===
+host_utc=2026-10-13T09:04:28Z
+--- container states (disposable run)
+be037b65cee2_retention	running	Up 2 minutes
+be037b65cee2_webhook	running	Up 2 minutes
+be037b65cee2_api	running	Up 4 minutes (healthy)
+be037b65cee2_analysis	running	Up 3 minutes
+be037b65cee2_client	running	Up About a minute
+be037b65cee2_notification	running	Up 2 minutes
+be037b65cee2_minio_init	exited	Exited (0) 2 hours ago
+be037b65cee2_redis	running	Up 13 minutes (healthy)
+be037b65cee2_db	running	Up 21 minutes (healthy)
+be037b65cee2_minio	running	Up 4 minutes (healthy)
+--- restart counts / exit codes / oom
+/be037b65cee2_api restarts=0 exit=0 oom=false health=healthy started=2026-10-13T09:00:27.330911933Z
+/be037b65cee2_analysis restarts=0 exit=0 oom=false health=n/a started=2026-10-13T09:01:13.51027514Z
+/be037b65cee2_notification restarts=0 exit=0 oom=false health=n/a started=2026-10-13T09:01:35.30107097Z
+/be037b65cee2_webhook restarts=0 exit=0 oom=false health=n/a started=2026-10-13T09:01:57.050299871Z
+/be037b65cee2_retention restarts=0 exit=0 oom=false health=n/a started=2026-10-13T09:02:18.849276463Z
+/be037b65cee2_client restarts=0 exit=0 oom=false health=n/a started=2026-10-13T09:02:40.508896112Z
+/be037b65cee2_db restarts=0 exit=0 oom=false health=healthy started=2026-10-13T08:43:25.88051494Z
+/be037b65cee2_redis restarts=0 exit=0 oom=false health=healthy started=2026-10-13T08:50:49.471012037Z
+/be037b65cee2_minio restarts=0 exit=0 oom=false health=healthy started=2026-10-13T08:59:37.863290687Z
+--- final resource snapshot (one sample)
+be037b65cee2_retention	cpu=0.00%	mem=3.672MiB / 7.606GiB	0.05%
+be037b65cee2_webhook	cpu=0.00%	mem=2.312MiB / 7.606GiB	0.03%
+be037b65cee2_api	cpu=0.28%	mem=127.7MiB / 7.606GiB	1.64%
+be037b65cee2_analysis	cpu=0.00%	mem=76.16MiB / 7.606GiB	0.98%
+be037b65cee2_client	cpu=0.00%	mem=432KiB / 7.606GiB	0.01%
+be037b65cee2_notification	cpu=4.34%	mem=2.574MiB / 7.606GiB	0.03%
+be037b65cee2_redis	cpu=0.78%	mem=4.777MiB / 7.606GiB	0.06%
+be037b65cee2_db	cpu=0.01%	mem=28.04MiB / 7.606GiB	0.36%
+be037b65cee2_minio	cpu=11.45%	mem=84.56MiB / 7.606GiB	1.09%
+--- /ready final
+{"status":"healthy","timestamp":1791882276.0696836,"checks":{"application":{"status":"healthy","message":"Application is running","required":false},"postgresql":{"status":"healthy","message":"PostgreSQL connection successful","required":true},"redis":{"status":"healthy","message":"Redis connection successful","required":true},"storage":{"status":"healthy","message":"Storage service connection succ
+--- DB consistency after SIGKILL shutdowns + outage tests
+  SELECT status, count(*) -> [('completed', 4), ('failed', 4)]
+  SELECT count(*) -> [(0,)]
+  SELECT status, count(*) -> [('uploaded_quarantine', 11)]
+  SELECT status, count(*) -> [('RETRYING', 2)]
+  SELECT count(*) -> [(3,)]
+  SELECT count(*), min(sequence_number), max(sequence_number) -> [(92, 1, 92)]
+  SELECT count(DISTINCT sequence_number)=max(sequence_number)- -> [(True,)]
+--- queue state
+0
+0
+--- chain through the API
+{"valid":true,"checked_events":92,"first_sequence":1,"last_sequence":92,"failures":[]}
+end_utc=2026-10-13T09:04:38Z

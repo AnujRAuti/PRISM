@@ -1,0 +1,332 @@
+{
+  "started_at": "2026-10-15T08:29:03+0530",
+  "suite_target_setup": {
+    "probe_database": {
+      "name": "pofa_test",
+      "server_reports": "pofa_test",
+      "tables": 0,
+      "cluster_container": "be037wf7e3_db",
+      "writes_performed_by_this_run": [
+        "CREATE DATABASE only"
+      ]
+    },
+    "extensions": {
+      "plpgsql": "1.0",
+      "postgis": "3.4.2",
+      "vector": "0.7.4"
+    },
+    "tables_after_create": 3,
+    "alembic": {
+      "command": "python -m alembic upgrade head  (cwd=repo, DATABASE_URL=<suite db>)",
+      "rc": 0,
+      "wall_s": 19.5,
+      "tail": [
+        "INFO  [alembic.runtime.migration] Running upgrade h8c9d0e1f015 -> i9d0e1f2g016, add BE-016 authentication and authorization foundation",
+        "INFO  [alembic.runtime.migration] Running upgrade i9d0e1f2g016 -> j0e1f2g3h017, add BE-017 retention and data governance",
+        "INFO  [alembic.runtime.migration] Running upgrade j0e1f2g3h017 -> k1f2g3h4i018, add BE-018 notifications and event delivery",
+        "INFO  [alembic.runtime.migration] Running upgrade k1f2g3h4i018 -> l2g3h4i5j019, BE-019: external integrations and API client platform.",
+        "INFO  [alembic.runtime.migration] Running upgrade l2g3h4i5j019 -> m3n4o5p6q021, BE-021: dispute, correction & intelligence invalidation governance.",
+        "INFO  [alembic.runtime.migration] Running upgrade m3n4o5p6q021 -> n4o5p6q7r022, BE-022: publication, transparency & public evidence governance.",
+        "INFO  [alembic.runtime.migration] Running upgrade n4o5p6q7r022 -> o5p6q7r8s025, BE-025: database-enforced assignment scope/ID matrix (M1).",
+        "INFO  [alembic.runtime.migration] Running upgrade o5p6q7r8s025 -> p6q7r8s9t026, BE-026: field operations and offline evidence capture tables.",
+        "INFO  [alembic.runtime.migration] Running upgrade p6q7r8s9t026 -> q7r8s9t0u027, BE-028: the three indexes the models declared but no migration created.",
+        "INFO  [alembic.runtime.migration] Running upgrade q7r8s9t0u027 -> r8s9t0u1v028, BE-029 (1/2): archive, then retire, the synthetic user-identity residue.",
+        "INFO  [alembic.runtime.migration] Running upgrade r8s9t0u1v028 -> s9t0u1v2w029, BE-029 (2/2): make users.username / users.email unique in the database.",
+        "INFO  [alembic.runtime.migration] Running upgrade s9t0u1v2w029 -> t0u1v2w3x030, BE-030: append-only enforcement + event-type domain CHECK for the audit ledger."
+      ]
+    },
+    "alembic_version": [
+      [
+        "t0u1v2w3x030"
+      ]
+    ],
+    "tables_at_head": 75,
+    "catalogue_seed": {
+      "rc": 1,
+      "wall_s": 0.1,
+      "result_line": null,
+      "tail": [
+        "File \"<string>\", line 6",
+        "    print('CATALOGUE', db.execute(__import__('sqlalchemy').text(\"select (select count(*) from roles), (select count(*) from permissions), (select count(*) from role_permissions)\"))).one())",
+        "                                                                                                                                                                                           ^",
+        "SyntaxError: unmatched ')'"
+      ]
+    }
+  },
+  "_setup": {
+    "probe_database": {
+      "name": "pofa_test",
+      "server_reports": "pofa_test",
+      "tables": 0,
+      "cluster_container": "be037wf7e3_db",
+      "writes_performed_by_this_run": [
+        "CREATE DATABASE only"
+      ]
+    },
+    "extensions": {
+      "plpgsql": "1.0",
+      "postgis": "3.4.2",
+      "vector": "0.7.4"
+    },
+    "tables_after_create": 3,
+    "alembic": {
+      "command": "python -m alembic upgrade head  (cwd=repo, DATABASE_URL=<suite db>)",
+      "rc": 0,
+      "wall_s": 19.5,
+      "tail": [
+        "INFO  [alembic.runtime.migration] Running upgrade h8c9d0e1f015 -> i9d0e1f2g016, add BE-016 authentication and authorization foundation",
+        "INFO  [alembic.runtime.migration] Running upgrade i9d0e1f2g016 -> j0e1f2g3h017, add BE-017 retention and data governance",
+        "INFO  [alembic.runtime.migration] Running upgrade j0e1f2g3h017 -> k1f2g3h4i018, add BE-018 notifications and event delivery",
+        "INFO  [alembic.runtime.migration] Running upgrade k1f2g3h4i018 -> l2g3h4i5j019, BE-019: external integrations and API client platform.",
+        "INFO  [alembic.runtime.migration] Running upgrade l2g3h4i5j019 -> m3n4o5p6q021, BE-021: dispute, correction & intelligence invalidation governance.",
+        "INFO  [alembic.runtime.migration] Running upgrade m3n4o5p6q021 -> n4o5p6q7r022, BE-022: publication, transparency & public evidence governance.",
+        "INFO  [alembic.runtime.migration] Running upgrade n4o5p6q7r022 -> o5p6q7r8s025, BE-025: database-enforced assignment scope/ID matrix (M1).",
+        "INFO  [alembic.runtime.migration] Running upgrade o5p6q7r8s025 -> p6q7r8s9t026, BE-026: field operations and offline evidence capture tables.",
+        "INFO  [alembic.runtime.migration] Running upgrade p6q7r8s9t026 -> q7r8s9t0u027, BE-028: the three indexes the models declared but no migration created.",
+        "INFO  [alembic.runtime.migration] Running upgrade q7r8s9t0u027 -> r8s9t0u1v028, BE-029 (1/2): archive, then retire, the synthetic user-identity residue.",
+        "INFO  [alembic.runtime.migration] Running upgrade r8s9t0u1v028 -> s9t0u1v2w029, BE-029 (2/2): make users.username / users.email unique in the database.",
+        "INFO  [alembic.runtime.migration] Running upgrade s9t0u1v2w029 -> t0u1v2w3x030, BE-030: append-only enforcement + event-type domain CHECK for the audit ledger."
+      ]
+    },
+    "alembic_version": [
+      [
+        "t0u1v2w3x030"
+      ]
+    ],
+    "tables_at_head": 75,
+    "catalogue_seed": {
+      "rc": 1,
+      "wall_s": 0.1,
+      "result_line": null,
+      "tail": [
+        "File \"<string>\", line 6",
+        "    print('CATALOGUE', db.execute(__import__('sqlalchemy').text(\"select (select count(*) from roles), (select count(*) from permissions), (select count(*) from role_permissions)\"))).one())",
+        "                                                                                                                                                                                           ^",
+        "SyntaxError: unmatched ')'"
+      ]
+    }
+  },
+  "unit_all": {
+    "category": "unit_all",
+    "command": "python -m pytest tests/unit -q -p no:cacheprovider",
+    "rc": 0,
+    "wall_s": 59.0,
+    "target_database_header": [],
+    "summary_line": "540 passed, 1 skipped, 6 warnings in 53.82s",
+    "counts": {
+      "passed": 540,
+      "skipped": 1,
+      "warning": 6
+    },
+    "failed_tests": [],
+    "skip_reasons": [
+      "SKIPPED [1] tests\\unit\\test_preflight.py:117: ML stack genuinely installed in this environment"
+    ],
+    "log_file": "evidence/suites/unit_all.txt",
+    "env_keys_set": []
+  },
+  "integration_all": {
+    "category": "integration_all",
+    "command": "python -m pytest tests/integration -q -rs -p no:cacheprovider",
+    "rc": 0,
+    "wall_s": 844.2,
+    "target_database_header": [],
+    "summary_line": "390 passed, 10 warnings in 835.87s (0:13:55)",
+    "counts": {
+      "passed": 390,
+      "warning": 10
+    },
+    "failed_tests": [],
+    "skip_reasons": [],
+    "log_file": "evidence/suites/integration_all.txt",
+    "env_keys_set": []
+  },
+  "authorization": {
+    "category": "authorization",
+    "command": "python -m pytest tests/unit/test_authorization.py tests/integration/test_authorization.py -q",
+    "rc": 0,
+    "wall_s": 48.5,
+    "target_database_header": [],
+    "summary_line": "34 passed, 6 warnings in 44.52s",
+    "counts": {
+      "passed": 34,
+      "warning": 6
+    },
+    "failed_tests": [],
+    "skip_reasons": [],
+    "log_file": "evidence/suites/authorization.txt",
+    "env_keys_set": []
+  },
+  "worker": {
+    "category": "worker",
+    "command": "python -m pytest tests/unit/test_be037a_analysis_worker_shutdown.py tests/unit/test_be037c_analysis_queue_timeouts.py tests/unit/test_be037i1_analysis_worker_redis_outage.py tests/unit/test_be037g5_reprocessing_hook.py tests/integration/test_be036_webhook_worker.py tests/integration/test_be037c_redis_timeout_integration.py tests/integration/test_analysis_jobs.py -q",
+    "rc": 0,
+    "wall_s": 81.7,
+    "target_database_header": [],
+    "summary_line": "68 passed, 6 warnings in 75.59s (0:01:15)",
+    "counts": {
+      "passed": 68,
+      "warning": 6
+    },
+    "failed_tests": [],
+    "skip_reasons": [],
+    "log_file": "evidence/suites/worker.txt",
+    "env_keys_set": []
+  },
+  "storage": {
+    "category": "storage",
+    "command": "python -m pytest tests/integration/test_storage.py -q -rs",
+    "rc": 0,
+    "wall_s": 8.2,
+    "target_database_header": [],
+    "summary_line": "7 passed, 1 warning in 5.50s",
+    "counts": {
+      "passed": 7,
+      "warning": 1
+    },
+    "failed_tests": [],
+    "skip_reasons": [],
+    "log_file": "evidence/suites/storage.txt",
+    "env_keys_set": []
+  },
+  "migration": {
+    "category": "migration",
+    "command": "python -m pytest tests/unit/test_migrations.py tests/integration/test_migration_and_crud.py -q",
+    "rc": 0,
+    "wall_s": 9.0,
+    "target_database_header": [],
+    "summary_line": "10 passed, 1 warning in 6.23s",
+    "counts": {
+      "passed": 10,
+      "warning": 1
+    },
+    "failed_tests": [],
+    "skip_reasons": [],
+    "log_file": "evidence/suites/migration.txt",
+    "env_keys_set": []
+  },
+  "schema_drift": {
+    "category": "schema_drift",
+    "command": "python -m pytest tests/integration/test_schema_drift_gate.py -q",
+    "rc": 0,
+    "wall_s": 16.5,
+    "target_database_header": [],
+    "summary_line": "6 passed, 1 warning in 13.61s",
+    "counts": {
+      "passed": 6,
+      "warning": 1
+    },
+    "failed_tests": [],
+    "skip_reasons": [],
+    "log_file": "evidence/suites/schema_drift.txt",
+    "env_keys_set": []
+  },
+  "be037_final": {
+    "category": "be037_final",
+    "command": "python -m pytest tests/unit/test_be037_webhook_redirect_ssrf.py tests/integration/test_be037g1_analysis_auth.py tests/integration/test_be037e2_ledger_identity_matrix.py tests/integration/test_be029_database_safety_guard.py -q",
+    "rc": 0,
+    "wall_s": 62.2,
+    "target_database_header": [],
+    "summary_line": "63 passed, 7 warnings in 58.52s",
+    "counts": {
+      "passed": 63,
+      "warning": 7
+    },
+    "failed_tests": [],
+    "skip_reasons": [],
+    "log_file": "evidence/suites/be037_final.txt",
+    "env_keys_set": []
+  },
+  "full_suite": {
+    "category": "full_suite",
+    "command": "python -m pytest tests -q -rs -p no:cacheprovider",
+    "rc": 0,
+    "wall_s": 600.2,
+    "target_database_header": [],
+    "summary_line": "930 passed, 1 skipped, 10 warnings in 590.47s (0:09:50)",
+    "counts": {
+      "passed": 930,
+      "skipped": 1,
+      "warning": 10
+    },
+    "failed_tests": [],
+    "skip_reasons": [
+      "SKIPPED [1] tests\\unit\\test_preflight.py:117: ML stack genuinely installed in this environment"
+    ],
+    "log_file": "evidence/suites/full_suite.txt",
+    "env_keys_set": []
+  },
+  "finished_at": "2026-10-15T08:58:15+0530",
+  "_summary": {
+    "categories": {
+      "unit_all": {
+        "rc": 0,
+        "counts": {
+          "passed": 540,
+          "skipped": 1,
+          "warning": 6
+        }
+      },
+      "integration_all": {
+        "rc": 0,
+        "counts": {
+          "passed": 390,
+          "warning": 10
+        }
+      },
+      "authorization": {
+        "rc": 0,
+        "counts": {
+          "passed": 34,
+          "warning": 6
+        }
+      },
+      "worker": {
+        "rc": 0,
+        "counts": {
+          "passed": 68,
+          "warning": 6
+        }
+      },
+      "storage": {
+        "rc": 0,
+        "counts": {
+          "passed": 7,
+          "warning": 1
+        }
+      },
+      "migration": {
+        "rc": 0,
+        "counts": {
+          "passed": 10,
+          "warning": 1
+        }
+      },
+      "schema_drift": {
+        "rc": 0,
+        "counts": {
+          "passed": 6,
+          "warning": 1
+        }
+      },
+      "be037_final": {
+        "rc": 0,
+        "counts": {
+          "passed": 63,
+          "warning": 7
+        }
+      },
+      "full_suite": {
+        "rc": 0,
+        "counts": {
+          "passed": 930,
+          "skipped": 1,
+          "warning": 10
+        }
+      }
+    },
+    "suite_database": "be037wf7e3_suite",
+    "acceptance_database_untouched_by_suites": true,
+    "protected_targets_used": []
+  }
+}

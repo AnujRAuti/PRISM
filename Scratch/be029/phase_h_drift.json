@@ -1,0 +1,92 @@
+[
+  {
+    "url_table": "pofa_test",
+    "current_database": "pofa_test",
+    "server_version": "15.13 (Debian 15.13-1.pgdg120+1)",
+    "alembic_version": [
+      "s9t0u1v2w029"
+    ],
+    "catalog": {
+      "def": "UNIQUE NULLS NOT DISTINCT (user_id, role_id, scope_type, organization_id, organizational_unit_id, project_id)",
+      "contype": "u",
+      "index_flag": true
+    },
+    "sqlalchemy_reflection": [
+      {
+        "column_names": [
+          "user_id",
+          "role_id",
+          "scope_type",
+          "organization_id",
+          "organizational_unit_id",
+          "project_id"
+        ],
+        "name": "uq_user_role_scoped",
+        "comment": null,
+        "dialect_options": {
+          "postgresql_include": [],
+          "postgresql_nulls_not_distinct": true
+        }
+      }
+    ],
+    "flag_from_reflection": true,
+    "model_declares_flag": true,
+    "alembic_operations": [
+      "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assignments>), Column('scope_type', NullType(), table=<user_role_assignments>), Column('organization_id', NullType(), table=<user_role_assignments>), Column('organizational_unit_id', NullType(), table=<user_role_assignments>), Column('project_id', NullType(), table=<user_role_assignments>)))",
+      "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assignments>), Column('scope_type', NullType(), table=<user_role_assignments>), Column('organization_id', NullType(), table=<user_role_assignments>), Column('organizational_unit_id', NullType(), table=<user_role_assignments>), Column('project_id', NullType(), table=<user_role_assignments>)))"
+    ],
+    "gate_signatures": [
+      "add_constraint|user_role_assignments|uq_user_role_scoped",
+      "remove_constraint|user_role_assignments|uq_user_role_scoped"
+    ],
+    "gate_verdict": "CLEAN",
+    "rows": 923,
+    "null_dependent_duplicate_groups": 0,
+    "null_free_duplicate_groups": 0
+  },
+  {
+    "url_table": "pofa_be029_devpost",
+    "current_database": "pofa_be029_devpost",
+    "server_version": "15.13 (Debian 15.13-1.pgdg120+1)",
+    "alembic_version": [
+      "s9t0u1v2w029"
+    ],
+    "catalog": {
+      "def": "UNIQUE NULLS NOT DISTINCT (user_id, role_id, scope_type, organization_id, organizational_unit_id, project_id)",
+      "contype": "u",
+      "index_flag": true
+    },
+    "sqlalchemy_reflection": [
+      {
+        "column_names": [
+          "user_id",
+          "role_id",
+          "scope_type",
+          "organization_id",
+          "organizational_unit_id",
+          "project_id"
+        ],
+        "name": "uq_user_role_scoped",
+        "comment": null,
+        "dialect_options": {
+          "postgresql_include": [],
+          "postgresql_nulls_not_distinct": true
+        }
+      }
+    ],
+    "flag_from_reflection": true,
+    "model_declares_flag": true,
+    "alembic_operations": [
+      "('remove_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assignments>), Column('scope_type', NullType(), table=<user_role_assignments>), Column('organization_id', NullType(), table=<user_role_assignments>), Column('organizational_unit_id', NullType(), table=<user_role_assignments>), Column('project_id', NullType(), table=<user_role_assignments>)))",
+      "('add_constraint', UniqueConstraint(Column('user_id', NullType(), table=<user_role_assignments>), Column('role_id', NullType(), table=<user_role_assignments>), Column('scope_type', NullType(), table=<user_role_assignments>), Column('organization_id', NullType(), table=<user_role_assignments>), Column('organizational_unit_id', NullType(), table=<user_role_assignments>), Column('project_id', NullType(), table=<user_role_assignments>)))"
+    ],
+    "gate_signatures": [
+      "add_constraint|user_role_assignments|uq_user_role_scoped",
+      "remove_constraint|user_role_assignments|uq_user_role_scoped"
+    ],
+    "gate_verdict": "CLEAN",
+    "rows": 872,
+    "null_dependent_duplicate_groups": 0,
+    "null_free_duplicate_groups": 0
+  }
+]

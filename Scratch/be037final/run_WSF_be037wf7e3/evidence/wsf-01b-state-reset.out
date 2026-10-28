@@ -1,0 +1,3 @@
+[22:59:25] cleared 68 tables, rows_before={'analysis_jobs': 3, 'analysis_results': 3, 'api_clients': 7, 'api_credentials': 6, 'audit_ledger_events': 21, 'evidence': 3, 'evidence_metadata': 2, 'organizations': 2, 'projects': 2, 'user_role_assignments': 4, 'users': 4}
+[22:59:25] redis={'be037wf7e3:analysis:jobs': {'rc': 0, 'value': '0'}, 'be037wf7e3:analysis:jobs:processing': {'rc': 0, 'value': '0'}} minio={'be037wf7e3-quarantine': 3, 'be037wf7e3-evidence': 0}
+[22:59:25] empty=True alembic=t0u1v2w3x030 identity=['be037wf7e3_app', 'postgres', 5432]

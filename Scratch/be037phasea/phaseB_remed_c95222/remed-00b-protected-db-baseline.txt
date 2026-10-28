@@ -1,0 +1,34 @@
+=== protected database baseline (READ-ONLY counts, both protected DBs) ===
+utc=2026-10-13T13:04:46Z
+columns: ledger_count lo hi users projects evidence analysis_jobs webhook_events tables
+--- pofa_dev ---
+6023|1|6059|1054|544|284|32|561|75
+PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+pofa_dev|postgres
+t0u1v2w3x030
+--- pofa_test ---
+53316|1|53316|3263|1636|1216|38|4455|75
+PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+pofa_test|postgres
+t0u1v2w3x030
+--- databases present in the live cluster (names only) ---
+pofa_audit_verify
+pofa_be028_fresh
+pofa_be028_rollback
+pofa_be028_scratch
+pofa_be029_assumptions
+pofa_be029_bkpverify
+pofa_be029_control
+pofa_be029_devpost
+pofa_be029_fresh
+pofa_be029_premig_verify
+pofa_be029_rehearsal
+pofa_be029_rollback
+pofa_be029_scratch
+pofa_be030_proof
+pofa_be030_scratch
+pofa_dev
+pofa_test
+postgres
+template0
+template1

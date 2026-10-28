@@ -1,0 +1,42 @@
+=== G6a registration of an external system (integration.manage) ===
+FAIL  G6a external system registered  | HTTP 422 {"detail": [{"type": "value_error", "loc": ["body", "system_type"], "msg": "Value error, system_type must be one of {'GO
+
+=== G6b SSRF boundary at the subscription API (no sink may be reachable) ===
+PASS  G6b SSRF rejects loopback sink (http://127.0.0.1:9099/hook)  | HTTP 422 {"detail": [{"type": "uuid_type", "loc": ["body", "external_system_id"], "msg": "UUID input should be a string, bytes or UUID object", "input": null}]
+PASS  G6b SSRF rejects docker-bridge-gw sink (http://172.18.0.1:9099/hook)  | HTTP 422 {"detail": [{"type": "uuid_type", "loc": ["body", "external_system_id"], "msg": "UUID input should be a string, bytes or UUID object", "input": null}]
+PASS  G6b SSRF rejects container-alias sink (http://api:8000/hook)  | HTTP 422 {"detail": [{"type": "uuid_type", "loc": ["body", "external_system_id"], "msg": "UUID input should be a string, bytes or UUID object", "input": null}]
+PASS  G6b SSRF rejects cloud-metadata sink (http://169.254.169.254/latest/meta-data/)  | HTTP 422 {"detail": [{"type": "uuid_type", "loc": ["body", "external_system_id"], "msg": "UUID input should be a string, bytes or UUID object", "input": null}]
+PASS  G6b SSRF rejects rfc1918-10 sink (http://10.0.5.9:9099/hook)  | HTTP 422 {"detail": [{"type": "uuid_type", "loc": ["body", "external_system_id"], "msg": "UUID input should be a string, bytes or UUID object", "input": null}]
+
+=== G6c subscription lifecycle on non-routable TEST-NET sinks ===
+FAIL  G6c active subscription accepted for TEST-NET-1 sink  | HTTP 422 {}
+FAIL  G6c second subscription can be disabled before fanout  | HTTP 422 status=None
+PASS  G6c unknown webhook event type is rejected  | HTTP 422 {"detail": [{"type": "uuid_type", "loc": ["body", "external_system_id"], "msg": "UUID input should be a string, bytes or UUID object", "input": null},
+FAIL  G6c anonymous subscription creation is denied  | HTTP 422
+PASS  G6c FIELD_OFFICER cannot read webhook subscriptions (least privilege)  | HTTP 403
+
+=== G7 fusion run must enqueue a fusion.completed webhook event ===
+PASS  G7 fusion execution accepted for an evidence target  | HTTP 200 {"run": {"id": "d084ecee-c598-4c2e-bbe5-c73379179b73", "target_type": "EVIDENCE", "target_id": "7f703702-7976-4070-9215-5536e967245b", "status": "COMPLETED", "method": "determinist
+
+=== G8 dispute workflow must emit notification outbox events ===
+PASS  G8 dispute created against evidence  | HTTP 201 {"id": "6e1d58c6-9dfa-4aa1-849a-8baa6bc215ba", "target_type": "EVIDENCE", "target_id": "7f703702-7976-4070-9215-5536e967245b", "project_id": null, "initiator_id": "881cbe60-6f89-4b
+PASS  G8 dispute assigned to a user  | HTTP 200 status=OPEN
+PASS  G8 dispute escalated to a supervisor  | HTTP 200 status=ESCALATED
+PASS  G8 dispute history is readable  | HTTP 200
+PASS  G8 notification list endpoint reachable for the recipient  | HTTP 200 rows={'items': [], 'total': 0, 'limit': 50, 'offset': 0, 'unread_count': 0}
+
+=== ARTIFACTS (ids only, no secrets) ===
+{
+  "external_system_id": null,
+  "active_subscription_id": null,
+  "disabled_subscription_id": null,
+  "fusion_run_id": "d084ecee-c598-4c2e-bbe5-c73379179b73",
+  "fusion_http": 200,
+  "dispute_id": "6e1d58c6-9dfa-4aa1-849a-8baa6bc215ba"
+}
+
+G_RESULT_C: total=17 pass=13 fail=4
+FAILING CHECK: G6a external system registered | HTTP 422 {"detail": [{"type": "value_error", "loc": ["body", "system_type"], "msg": "Value error, system_type must be one of {'GO
+FAILING CHECK: G6c active subscription accepted for TEST-NET-1 sink | HTTP 422 {}
+FAILING CHECK: G6c second subscription can be disabled before fanout | HTTP 422 status=None
+FAILING CHECK: G6c anonymous subscription creation is denied | HTTP 422

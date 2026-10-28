@@ -1,0 +1,66 @@
+=== STAGE I / API graceful stop + start (SIGTERM) and recovery timing ===
+host_utc=2026-10-13T09:00:22Z
+--- before: chain head + container state
+chain_before {"valid":true,"checked_events":91,"first_sequence":1,"last_sequence":91,"failures":[]}
+before state=running started=2026-10-13T07:07:30.937194244Z restarts=0 pid1=8036
+--- docker stop -t 10 (SIGTERM then SIGKILL)
+stop_cmd_utc=2026-10-13T09:00:24.156840700Z
+stop_done_utc=2026-10-13T09:00:26.054484000Z
+after_stop state=exited exit=0 oom=false
+--- api log: last 18 lines (shutdown sequence)
+2026-10-13 08:59:37,295 WARNING backend.observability.health [rid=d3994aaf-6943-4124-b438-a7778dfc9b5e] Storage health check failed: Could not connect to the endpoint URL: "http://minio:9000
+Storage health check failed: Could not connect to the endpoint URL: "http://minio:9000/"
+INFO:     127.0.0.1:45940 - "GET /ready HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45948 - "GET /health HTTP/1.1" 200 OK
+2026-10-13 08:59:44,322 INFO backend.security.authentication [rid=e95f2e18-ca54-49df-b853-988698175879] authz action=evidence.read resource=evidence:12b381ec-f821-41ea-bfca-b8b206b4d8f7 prin
+authz action=evidence.read resource=evidence:12b381ec-f821-41ea-bfca-b8b206b4d8f7 principal=USER:8dc93dec-423e-4e5c-9855-ba78d99eebad allowed=True reason=ALLOWED request_id=e95f2e18-ca54-49d
+INFO:     127.0.0.1:39846 - "GET /api/v1/evidence/12b381ec-f821-41ea-bfca-b8b206b4d8f7/download HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39856 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44646 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54970 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50036 - "GET /api/v1/audit/verify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50042 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+2026-10-13 09:00:24,704 INFO backend.app.main [rid=-] application.shutting_down
+application.shutting_down
+INFO:     Finished server process [1]
+--- docker start + time to first /health 200 and first /ready 200
+start_cmd_utc=2026-10-13T09:00:26.841109700Z
+/usr/bin/bash: line 34: bc: command not found
+time_to_first_health_200s=
+time_to_first_ready_200s=
+--- startup log (last 15 lines)
+INFO:     127.0.0.1:50042 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+2026-10-13 09:00:24,704 INFO backend.app.main [rid=-] application.shutting_down
+application.shutting_down
+INFO:     Finished server process [1]
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2026-10-13 09:00:31,879 INFO backend.app.main [rid=-] application.starting
+application.starting
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:41216 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41230 - "GET /health HTTP/1.1" 200 OK
+--- after: chain head, then a real append through the app path
+after_start state=running started=2026-10-13T09:00:27.330911933Z restarts=0 health=healthy
+append_after_restart 201 {"evidence_id":"61b8809a-3bdf-48c3-9a0a-ef9e983aa317","status":"uploaded","storage_key":"quarantine/61b8809a-3bdf-48c3-9
+chain_after {"valid":true,"checked_events":92,"first_sequence":1,"last_sequence":92,"failures":[]}
+end_utc=2026-10-13T09:00:37Z
+
+=== ADDENDUM: timings derived from the container log timestamps (bc was unavailable, so
+    the shell arithmetic above produced empty values; these are read off the logs instead) ===
+SIGTERM -> all shutdown lines done: stop command 09:00:24.157, container exited 09:00:26.054 = 1.90 s, exit=0
+  log order: 'Shutting down' -> 'Waiting for application shutdown.' -> 'Application shutdown complete.'
+             -> application.shutting_down -> 'Finished server process [1]'
+docker start 09:00:26.841 -> container started 09:00:27.331 -> 'Started server process [1]' 09:00:31.879
+  -> 'Application startup complete' 09:00:31.881 -> first GET /ready 200 at 09:00:33.675
+  => wall time from the start command to first successful readiness = 6.83 s
+  => of which ~4.5 s is cold application import before uvicorn binds, 1.8 s between startup complete and first probe
+Ledger continuity: 91 events before the stop, 92 after one real app-path append (evidence upload) post-start;
+  chain valid:true both times, no gap and no sequence reset; restarts=0 throughout.

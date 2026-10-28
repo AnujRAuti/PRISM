@@ -1,0 +1,36 @@
+=== I2a three CPU samples 10s apart (idle stack, no client traffic) ===
+be037b65cee2_retention cpu=0.00% mem=16.5MiB / 7.606GiB
+be037b65cee2_webhook cpu=0.00% mem=3.258MiB / 7.606GiB
+be037b65cee2_api cpu=0.22% mem=160MiB / 7.606GiB
+be037b65cee2_analysis cpu=0.06% mem=446.4MiB / 7.606GiB
+be037b65cee2_notification cpu=0.00% mem=2.738MiB / 7.606GiB
+be037b65cee2_db cpu=0.01% mem=77.2MiB / 7.606GiB
+pofa_db cpu=0.00% mem=107.7MiB / 7.606GiB
+-- sample 1 above --
+be037b65cee2_retention cpu=0.00% mem=16.5MiB / 7.606GiB
+be037b65cee2_webhook cpu=0.00% mem=3.359MiB / 7.606GiB
+be037b65cee2_api cpu=0.18% mem=160.4MiB / 7.606GiB
+be037b65cee2_analysis cpu=0.00% mem=446.4MiB / 7.606GiB
+be037b65cee2_notification cpu=0.00% mem=2.801MiB / 7.606GiB
+be037b65cee2_db cpu=0.00% mem=77.38MiB / 7.606GiB
+pofa_db cpu=0.00% mem=107.7MiB / 7.606GiB
+-- sample 2 above --
+be037b65cee2_retention cpu=0.00% mem=16.33MiB / 7.606GiB
+be037b65cee2_webhook cpu=39.34% mem=3.156MiB / 7.606GiB
+be037b65cee2_api cpu=0.17% mem=160.7MiB / 7.606GiB
+be037b65cee2_analysis cpu=0.00% mem=446.6MiB / 7.606GiB
+be037b65cee2_notification cpu=98.90% mem=54.76MiB / 7.606GiB
+be037b65cee2_db cpu=3.70% mem=79.16MiB / 7.606GiB
+pofa_db cpu=0.00% mem=107.3MiB / 7.606GiB
+-- sample 3 above --
+
+=== I2b what one loop iteration actually costs (cold import, in-container) ===
+webhook_worker: sh: 1: time: not found 
+notification_worker: sh: 1: time: not found 
+retention_worker: sh: 1: time: not found 
+analysis_worker: sh: 1: time: not found 
+
+=== I2c iteration count implied by logs since startup ===
+be037b65cee2_webhook log_lines=322 lines_last_5min=19
+be037b65cee2_notification log_lines=322 lines_last_5min=18
+be037b65cee2_retention log_lines=4 lines_last_5min=0

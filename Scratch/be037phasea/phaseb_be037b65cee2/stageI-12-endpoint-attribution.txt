@@ -1,0 +1,42 @@
+=== STAGE I / health-endpoint attribution (which code answers which path) ===
+host_utc=2026-10-13T09:05:17Z
+--- live responses per path (body, truncated to 220 chars)
+/health -> 200 {"status":"healthy","timestamp":1791882318.3061876,"checks":{"application":{"status":"healthy","message":"Application is running"}}}
+/ready -> 200 {"status":"healthy","timestamp":1791882319.4223871,"checks":{"application":{"status":"healthy","message":"Application is running","required":false},"postgresql":{"status":"healthy","message":"PostgreSQL connection succes
+/healthz -> 200 {"status":"healthy","timestamp":1791882320.4954455,"liveness":{"status":"healthy","timestamp":1791882320.456633,"checks":{"application":{"status":"healthy","message":"Application is running"}}},"readiness":{"status":"hea
+/api/v1/health -> 200 {"status":"ok"}
+/api/v1/ready -> 200 {"status":"ok"}
+/metrics -> 200 # HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 2602.0
+python_gc_objects_collected_total{generation=
+
+--- code ownership (repo, read-only)
+  backend/app/main.py:87   @app.get("/health")  -> liveness_endpoint()  [dependency-agnostic by BE-020 design]
+  backend/app/main.py:93   @app.get("/ready")   -> readiness_endpoint() [application+postgres+redis+storage]
+  backend/app/main.py:99   @app.get("/healthz") -> health_endpoint()    [liveness+readiness snapshot]
+  backend/app/main.py:78   include_router(health_router, prefix="/api/v1")
+  backend/api/v1/endpoints/health.py:8,15 -> the legacy trivial /api/v1/health and /api/v1/ready ({"status":"ok"}, SELECT 1 only)
+  backend/observability/health.py:75,115,144 -> postgresql/redis/storage each required=True; :188 application required=False; :201 the check list readiness runs
+
+--- compose healthcheck target (what Docker actually probes)
+45:    healthcheck:
+46-      test: ["CMD-SHELL", "pg_isready -U be037b_owner -d be037b_app"]
+47-      interval: 5s
+48-      timeout: 5s
+--
+58:    healthcheck:
+59-      test: ["CMD", "redis-cli", "ping"]
+60-      interval: 5s
+61-      timeout: 3s
+--
+75:    healthcheck:
+76-      test: ["CMD-SHELL", "mc ready local || exit 1"]
+end_utc=2026-10-13T09:05:23Z
+
+--- api container healthcheck (compose.disposable.yml:112-117)
+    test: python -c "...urlopen(http://127.0.0.1:8000/health)..."
+    interval: 15s   timeout: 5s   -> Docker probes the LIVENESS path, which never consults dependencies
+
+--- consequence measured in stageI-03: during a 34 s total PostgreSQL outage the api
+    container stayed health=healthy while /ready returned 503 for every poll.

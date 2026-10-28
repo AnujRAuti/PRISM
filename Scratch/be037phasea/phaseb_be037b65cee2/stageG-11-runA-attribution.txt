@@ -1,0 +1,40 @@
+=== analysis worker log (job attribution) ===
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 22bec16d-9973-4494-a3ff-c0b5a02c3b80)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 1s [Retry 1/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 50697c89-4af6-49f2-be08-3abe089d5c9d)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 2s [Retry 2/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 977d9c1f-4475-4799-b3cc-f82edfff0551)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 4s [Retry 3/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 20788b9c-f08b-4873-97db-190c4bd22d62)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 8s [Retry 4/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 67c35df8-94f9-4707-82d2-5664b5353522)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 8s [Retry 5/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 848e0883-7dde-463c-8965-deffa3b318b2)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/preprocessor_config.json
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/processor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: e0064da2-35e6-4e22-85c6-97b20ac6ab92)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/processor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 1s [Retry 1/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/processor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 217429f1-99d1-4318-a588-f65d32f00ea8)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/processor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 2s [Retry 2/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/processor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 14c9638f-3672-479d-85f7-872235872779)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/processor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 4s [Retry 3/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/processor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 4daefab3-1914-47c9-b8a9-9d781e7382ba)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/processor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 8s [Retry 4/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/processor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 19262269-db48-4d5b-b565-bd6f914e0d9e)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/processor_config.json
+WARNING:huggingface_hub.utils._http:Retrying in 8s [Retry 5/5].
+WARNING:huggingface_hub.utils._http:'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /openai/clip-vit-base-patch32/resolve/main/processor_config.json (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 9fae49a9-3d38-4351-aa30-749b27ff65d4)')' thrown while requesting HEAD https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/processor_config.json
+ERROR:__main__:reprocessing completion hook failed job_id=5be75539-f310-42f9-aba7-5c192b602097
+Traceback (most recent call last):
+INFO:__main__:analysis job completed job_id=5be75539-f310-42f9-aba7-5c192b602097
+
+=== redis queue state after run A ===
+0
+0
+
+=== DB counts after run A ===
+jobs=3 by status: completed=3, completed=3, completed=3
+completed fingerprint attempts=1 err=-
+completed vision attempts=1 err=-
+completed fingerprint attempts=1 err=-
+results=3
+vision_detections=1
+evidence=8
+audit=36

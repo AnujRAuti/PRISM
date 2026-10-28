@@ -1,0 +1,9 @@
+=== audit events (evidence-scoped, latest 5) ===
+ERROR:  column "source" does not exist
+LINE 1: ...quence_number, event_type, action, resource_type, source fro...
+                                                             ^
+=== ledger total ===
+82
+=== re-run retention sweep (state row now exists) ===
+INFO:backend.services.retention:retention sweep evaluated=0 archived=0 deleted=0 blocked=0 failed=0
+INFO:__main__:retention sweep finished: {'evaluated': 0, 'archived': 0, 'deleted': 0, 'blocked': 0, 'failed': 0, 'resource_ids': []}

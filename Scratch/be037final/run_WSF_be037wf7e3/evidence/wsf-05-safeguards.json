@@ -1,0 +1,509 @@
+{
+  "webhook_redirect_ssrf": {
+    "sink_start_rc": 0,
+    "sink_container": "be037wf7e3_f5_sink",
+    "probe_rc": 0,
+    "probe_container": "be037wf7e3_f5_probe",
+    "requests_the_sink_actually_received": [
+      "HIT /ok",
+      "HIT /redirect",
+      "HIT /redirect"
+    ],
+    "hop2_received": false,
+    "measurement": {
+      "plain_delivery_status": 200,
+      "redirect_followed": false,
+      "redirect_exception": "WebhookRedirectError: Webhook endpoint returned HTTP 302 redirect to 'http://sink:8000/hop2'; redirects are rejected so a validated destination cannot redirect toward a prohibited address (BE-036-D1).",
+      "deliver_webhook_result": "WebhookRedirectError",
+      "deliver_webhook_message": "Webhook endpoint returned HTTP 302 redirect to 'http://sink:8000/hop2'; redirects are rejected so a validated destination cannot redirect toward a prohibited address (BE-036-D1).",
+      "getaddrinfo_calls": 2,
+      "ssrf_validation": {
+        "http://sink:8000/ok": "rejected: Webhook URL resolves to private/reserved address 172.20.0.5 \u2014 blocked for security",
+        "http://localhost:8000/x": "rejected: Webhook URL hostname 'localhost' is not allowed",
+        "http://127.0.0.1:8000/x": "rejected: Webhook URL resolves to private/reserved address 127.0.0.1 \u2014 blocked for security",
+        "http://169.254.169.254/latest/meta-data/": "rejected: Webhook URL resolves to blocked metadata endpoint 169.254.169.254",
+        "http://10.0.0.1/x": "rejected: Webhook URL resolves to private/reserved address 10.0.0.1 \u2014 blocked for security",
+        "http://172.17.0.2/x": "rejected: Webhook URL resolves to private/reserved address 172.17.0.2 \u2014 blocked for security",
+        "http://[::1]/x": "rejected: Webhook URL resolves to private/reserved address ::1 \u2014 blocked for security",
+        "ftp://example.invalid/x": "rejected: Webhook URL scheme must be http or https, got 'ftp'",
+        "http://no-such-host.invalid/x": "rejected: Webhook URL hostname 'no-such-host.invalid' could not be resolved"
+      }
+    },
+    "harness_tail": []
+  },
+  "image_provenance": {
+    "files": [
+      {
+        "file": "backend/services/analysis_queue.py",
+        "in_image": "65e097872211ffad7057ae708e544a8e42357b8e1a2dc76f41e6186f273b5b84",
+        "git_head_blob_raw": "7ef5730f64b4a1e1ea14b79c6b56499316b646cec7d520b2c8c720787244d8c2",
+        "git_head_blob_crlf_lines": 0,
+        "working_tree_raw": "65e097872211ffad7057ae708e544a8e42357b8e1a2dc76f41e6186f273b5b84",
+        "working_tree_crlf_lines": 154,
+        "image_matches_head_blob_bytes": false,
+        "image_matches_working_tree_bytes": true,
+        "content_identical_after_line_ending_normalisation": true
+      },
+      {
+        "file": "backend/workers/analysis_worker.py",
+        "in_image": "af11e8b218df10333aa969df000b875ddbbd4d6cf4d466884fa01bf1e297b962",
+        "git_head_blob_raw": "af11e8b218df10333aa969df000b875ddbbd4d6cf4d466884fa01bf1e297b962",
+        "git_head_blob_crlf_lines": 0,
+        "working_tree_raw": "af11e8b218df10333aa969df000b875ddbbd4d6cf4d466884fa01bf1e297b962",
+        "working_tree_crlf_lines": 0,
+        "image_matches_head_blob_bytes": true,
+        "image_matches_working_tree_bytes": true,
+        "content_identical_after_line_ending_normalisation": true
+      },
+      {
+        "file": "backend/services/webhook.py",
+        "in_image": "e037d1a35f1576f0081f714da9813c142c5c4026a07c86377d540e2416186204",
+        "git_head_blob_raw": "e037d1a35f1576f0081f714da9813c142c5c4026a07c86377d540e2416186204",
+        "git_head_blob_crlf_lines": 0,
+        "working_tree_raw": "e037d1a35f1576f0081f714da9813c142c5c4026a07c86377d540e2416186204",
+        "working_tree_crlf_lines": 0,
+        "image_matches_head_blob_bytes": true,
+        "image_matches_working_tree_bytes": true,
+        "content_identical_after_line_ending_normalisation": true
+      },
+      {
+        "file": "backend/core/config.py",
+        "in_image": "6811fc04077c1b1d752a2227642d34e2ebf1979829eb30a84696c2da228eef75",
+        "git_head_blob_raw": "6811fc04077c1b1d752a2227642d34e2ebf1979829eb30a84696c2da228eef75",
+        "git_head_blob_crlf_lines": 0,
+        "working_tree_raw": "6811fc04077c1b1d752a2227642d34e2ebf1979829eb30a84696c2da228eef75",
+        "working_tree_crlf_lines": 0,
+        "image_matches_head_blob_bytes": true,
+        "image_matches_working_tree_bytes": true,
+        "content_identical_after_line_ending_normalisation": true
+      },
+      {
+        "file": "backend/security/authorization.py",
+        "in_image": "74b3dfc635fbdcbb6cdf58308d4a57e2d4aa034364b5473492a79476d2512d69",
+        "git_head_blob_raw": "74b3dfc635fbdcbb6cdf58308d4a57e2d4aa034364b5473492a79476d2512d69",
+        "git_head_blob_crlf_lines": 0,
+        "working_tree_raw": "74b3dfc635fbdcbb6cdf58308d4a57e2d4aa034364b5473492a79476d2512d69",
+        "working_tree_crlf_lines": 0,
+        "image_matches_head_blob_bytes": true,
+        "image_matches_working_tree_bytes": true,
+        "content_identical_after_line_ending_normalisation": true
+      }
+    ],
+    "autocrlf": "true",
+    "note": "The build context is the working tree, so the image carries the checkout's bytes; with core.autocrlf=true those can be CRLF while the blob is LF. Byte equality against the blob and content equality against HEAD are therefore reported separately \u2014 a byte mismatch that vanishes under line-ending normalisation is a checkout artifact, not a code difference."
+  },
+  "_reopened_sections": [
+    "secrets"
+  ],
+  "production_fail_fast": {
+    "cases": [
+      {
+        "case": "production + development defaults only",
+        "expectation": "jwt_secret is the documented development default",
+        "expected_refusal": true,
+        "observed_rc": 1,
+        "observed_stayed_up": false,
+        "observed_refused": true,
+        "met": true,
+        "wall_s": 2.9,
+        "refusal_message": "Value error, jwt_secret is unsafe for production: set a distinct secret of at least 32 characters (the development default and blank values are rejected). The secret value is not shown here. [type=value_error, input_value={'environment': 'producti...: 'be037wf7e3-evidence'}, input_type=dict]",
+        "secret_echoed_in_message": false,
+        "boot_container_removed": "",
+        "tail": [
+          "  File \"/usr/local/lib/python3.12/site-packages/pydantic/main.py\", line 253, in __init__",
+          "    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)",
+          "                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings",
+          "  Value error, jwt_secret is unsafe for production: set a distinct secret of at least 32 characters (the development default and blank values are rejected). The secret value is not shown here. [type=value_error, input_value={'environment': 'producti...: 'be037wf7e3-evidence'}, input_type=dict]",
+          "    For further information visit https://errors.pydantic.dev/2.11/v/value_error"
+        ]
+      },
+      {
+        "case": "production + compliant jwt_secret, auth_mode left development",
+        "expectation": "auth_mode must be 'enforcing' in production",
+        "expected_refusal": true,
+        "observed_rc": 1,
+        "observed_stayed_up": false,
+        "observed_refused": true,
+        "met": true,
+        "wall_s": 2.7,
+        "refusal_message": "Value error, auth_mode must be 'enforcing' in production (got 'development'); the development mode accepts anonymous requests and bypasses authorization. [type=value_error, input_value={'environment': 'producti...ecret-0123456789abcdef'}, input_type=dict]",
+        "secret_echoed_in_message": false,
+        "boot_container_removed": "",
+        "tail": [
+          "  File \"/usr/local/lib/python3.12/site-packages/pydantic/main.py\", line 253, in __init__",
+          "    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)",
+          "                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings",
+          "  Value error, auth_mode must be 'enforcing' in production (got 'development'); the development mode accepts anonymous requests and bypasses authorization. [type=value_error, input_value={'environment': 'producti...ecret-0123456789abcdef'}, input_type=dict]",
+          "    For further information visit https://errors.pydantic.dev/2.11/v/value_error"
+        ]
+      },
+      {
+        "case": "production + enforcing auth, dev tokens still enabled",
+        "expectation": "development bearer tokens are non-secret identifiers",
+        "expected_refusal": true,
+        "observed_rc": 1,
+        "observed_stayed_up": false,
+        "observed_refused": true,
+        "met": true,
+        "wall_s": 2.7,
+        "refusal_message": "Value error, auth_dev_tokens_enabled must be false in production: the development tokens are non-secret identifiers. [type=value_error, input_value={'environment': 'producti...auth_mode': 'enforcing'}, input_type=dict]",
+        "secret_echoed_in_message": false,
+        "boot_container_removed": "",
+        "tail": [
+          "  File \"/usr/local/lib/python3.12/site-packages/pydantic/main.py\", line 253, in __init__",
+          "    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)",
+          "                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings",
+          "  Value error, auth_dev_tokens_enabled must be false in production: the development tokens are non-secret identifiers. [type=value_error, input_value={'environment': 'producti...auth_mode': 'enforcing'}, input_type=dict]",
+          "    For further information visit https://errors.pydantic.dev/2.11/v/value_error"
+        ]
+      },
+      {
+        "case": "production + enforcing, dev tokens off, wildcard CORS",
+        "expectation": "cors_allow_origins defaults to '*' and credentials are on",
+        "expected_refusal": true,
+        "observed_rc": 1,
+        "observed_stayed_up": false,
+        "observed_refused": true,
+        "met": true,
+        "wall_s": 2.7,
+        "refusal_message": "Value error, cors_allow_origins must be an explicit origin allowlist in production; the wildcard '*' is unsafe because credentials are enabled, so list the real frontend origins instead. [type=value_error, input_value={'environment': 'producti...okens_enabled': 'false'}, input_type=dict]",
+        "secret_echoed_in_message": false,
+        "boot_container_removed": "",
+        "tail": [
+          "  File \"/usr/local/lib/python3.12/site-packages/pydantic/main.py\", line 253, in __init__",
+          "    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)",
+          "                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings",
+          "  Value error, cors_allow_origins must be an explicit origin allowlist in production; the wildcard '*' is unsafe because credentials are enabled, so list the real frontend origins instead. [type=value_error, input_value={'environment': 'producti...okens_enabled': 'false'}, input_type=dict]",
+          "    For further information visit https://errors.pydantic.dev/2.11/v/value_error"
+        ]
+      },
+      {
+        "case": "production + too-short hand-set jwt_secret",
+        "expectation": "MIN_JWT_SECRET_LENGTH is 32 (config.py:12)",
+        "expected_refusal": true,
+        "observed_rc": 1,
+        "observed_stayed_up": false,
+        "observed_refused": true,
+        "met": true,
+        "wall_s": 2.7,
+        "refusal_message": "Value error, jwt_secret is unsafe for production: set a distinct secret of at least 32 characters (the development default and blank values are rejected). The secret value is not shown here. [type=value_error, input_value={'environment': 'producti...okens_enabled': 'false'}, input_type=dict]",
+        "secret_echoed_in_message": false,
+        "boot_container_removed": "",
+        "tail": [
+          "  File \"/usr/local/lib/python3.12/site-packages/pydantic/main.py\", line 253, in __init__",
+          "    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)",
+          "                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings",
+          "  Value error, jwt_secret is unsafe for production: set a distinct secret of at least 32 characters (the development default and blank values are rejected). The secret value is not shown here. [type=value_error, input_value={'environment': 'producti...okens_enabled': 'false'}, input_type=dict]",
+          "    For further information visit https://errors.pydantic.dev/2.11/v/value_error"
+        ]
+      },
+      {
+        "case": "production + every safeguard satisfied (positive control)",
+        "expectation": "a compliant production-shaped configuration must still boot",
+        "expected_refusal": false,
+        "observed_rc": -1,
+        "observed_stayed_up": true,
+        "observed_refused": false,
+        "met": true,
+        "wall_s": 45.4,
+        "refusal_message": null,
+        "secret_echoed_in_message": false,
+        "boot_container_removed": "be037wf7e3_f5_boot",
+        "tail": [],
+        "serving_check": {
+          "container": "be037wf7e3_f5_api",
+          "run_rc": 0,
+          "state_and_restarts": "running|0",
+          "answers": {
+            "/health": 200,
+            "/ready": 200,
+            "anonymous_analysis_job_create": {
+              "status": 401,
+              "detail": "{\"detail\":\"Authentication required\"}"
+            },
+            "anonymous_analysis_job_read": {
+              "status": 401,
+              "detail": "{\"detail\":\"Authentication required\"}"
+            }
+          }
+        }
+      }
+    ],
+    "all_met": true,
+    "any_secret_echoed": false
+  },
+  "ledger_posture": {
+    "identity": {
+      "runtime": {
+        "status": "ok",
+        "rows": [
+          [
+            "be037wf7e3_runtime",
+            "be037wf7e3_app"
+          ]
+        ]
+      },
+      "owner": {
+        "status": "ok",
+        "rows": [
+          [
+            "postgres",
+            "be037wf7e3_app"
+          ]
+        ]
+      }
+    },
+    "append_only": {
+      "runtime_update": {
+        "status": "error",
+        "detail": "InsufficientPrivilege: permission denied for table audit_ledger_events\n",
+        "database": "be037wf7e3_app",
+        "aimed_at": "acceptance db (expected refusal; the role holds no UPDATE/DELETE grant, so the attempt is safe either way)"
+      },
+      "runtime_delete": {
+        "status": "error",
+        "detail": "InsufficientPrivilege: permission denied for table audit_ledger_events\n",
+        "database": "be037wf7e3_app",
+        "aimed_at": "acceptance db (expected refusal; the role holds no UPDATE/DELETE grant, so the attempt is safe either way)"
+      },
+      "owner_update": {
+        "status": "error",
+        "detail": "InsufficientPrivilege: append-only enforcement refuses UPDATE on the audit ledger\nHINT:  SET LOCAL poa.ledger_mutation_exception to use the sanctioned path\nCONTEXT:  PL/pgSQL function audit_ledger_refuse_mutation() line 16 ",
+        "database": "be037wf7e3_suite",
+        "rows_still_in_suite_ledger_after_attempt": [
+          "ok",
+          [
+            [
+              3
+            ]
+          ]
+        ],
+        "seeded_rows_present_when_attempted": true,
+        "meaning": "the row trigger fires for the table owner too \u2014 grants refuse the owner nothing, so this is the enforcement point for row-level tampering"
+      },
+      "owner_delete": {
+        "status": "error",
+        "detail": "InsufficientPrivilege: append-only enforcement refuses DELETE on the audit ledger\nHINT:  SET LOCAL poa.ledger_mutation_exception to use the sanctioned path\nCONTEXT:  PL/pgSQL function audit_ledger_refuse_mutation() line 20 ",
+        "database": "be037wf7e3_suite",
+        "rows_still_in_suite_ledger_after_attempt": [
+          "ok",
+          [
+            [
+              3
+            ]
+          ]
+        ],
+        "seeded_rows_present_when_attempted": true,
+        "meaning": "the row trigger fires for the table owner too \u2014 grants refuse the owner nothing, so this is the enforcement point for row-level tampering"
+      }
+    },
+    "truncates": {
+      "runtime_on_acceptance_db": {
+        "status": "error",
+        "detail": "InsufficientPrivilege: permission denied for table audit_ledger_events\n",
+        "database": "be037wf7e3_app"
+      },
+      "owner_on_suite_db": {
+        "status": "ok",
+        "detail": [],
+        "database": "be037wf7e3_suite",
+        "rows_in_suite_ledger_after_attempt": [
+          "ok",
+          [
+            [
+              0
+            ]
+          ]
+        ],
+        "meaning": "successful truncation of a disposable ledger, which is the documented residual: row triggers do not fire on TRUNCATE"
+      }
+    },
+    "suite_ledger_seed": {
+      "rows_and_max_seq_before": [
+        "ok",
+        [
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      "rows_and_max_seq_after": [
+        "ok",
+        [
+          [
+            3,
+            3
+          ]
+        ]
+      ],
+      "seed_rc": 0,
+      "seed_container": "be037wf7e3_f5_seed",
+      "seed_output": [
+        "SEED {\"appended\": [\"7358feec-ba35-43f5-b3fe-251ffd377cdd\", \"be4f4beb-7d01-48e5-943a-f7f11283c7a1\", \"79879ff1-d3ec-4f58-921a-8de05df4ae45\"]}"
+      ],
+      "tail": [],
+      "non_empty_for_owner_attempts": true
+    },
+    "append_only_trigger": {
+      "be037wf7e3_app": [
+        "ok",
+        [
+          [
+            "trg_audit_ledger_append_only",
+            27,
+            "O"
+          ]
+        ]
+      ],
+      "be037wf7e3_suite": [
+        "ok",
+        [
+          [
+            "trg_audit_ledger_append_only",
+            27,
+            "O"
+          ]
+        ]
+      ]
+    },
+    "suite_ledger_rows_after": [
+      "ok",
+      [
+        [
+          0
+        ]
+      ]
+    ],
+    "acceptance_ledger_rows_before_and_after": [
+      [
+        "ok",
+        [
+          [
+            23
+          ]
+        ]
+      ],
+      [
+        "ok",
+        [
+          [
+            23
+          ]
+        ]
+      ]
+    ],
+    "acceptance_ledger_preserved": true,
+    "no_owner_shaped_statement_aimed_at_acceptance_db": true,
+    "vacuity_note": "An earlier measurement of this step reported the owner UPDATE as 'ok'. It was vacuous: this run's own integration suite had truncated the disposable ledger, so the statement matched zero rows. This run re-arms the suite ledger through append_event before each attempt and records the row count on both sides of it. The incidental emptying is itself a demonstration of the documented TRUNCATE bypass, not a defect in the trigger.",
+    "classification": "Two different mechanisms answer, one per identity, and the measurement separates them. The F-05 runtime role is refused by the GRANT layer ('permission denied for table audit_ledger_events') for UPDATE, DELETE and TRUNCATE alike \u2014 its statements never reach the trigger. The table owner holds every grant, so only the in-database append-only trigger stands between it and row-level tampering, and that trigger is what refused the owner's UPDATE and DELETE here ('append-only enforcement refuses UPDATE/DELETE on the audit ledger', from audit_ledger_refuse_mutation(), with the sanctioned path named as the poa.ledger_mutation_exception GUC). TRUNCATE bypasses row triggers, so the owner's TRUNCATE of the seeded disposable ledger succeeded (3 rows to 0) while the runtime role was denied it by grants. That is the documented threat-model boundary: an application-level trigger does not defeat a database owner, it defeats the application identity."
+  },
+  "secret_scan": {
+    "root": "D:\\CODING\\Scratch\\be037final",
+    "files_scanned": 114,
+    "credential_patterns_checked": 12,
+    "files_containing_a_credential": {},
+    "clean": true,
+    "note": "A match means the throwaway value is still sitting in a file on this machine; the credential-bearing compose/env files were deleted by WS-G's scrub, so any hit here is a harness literal that derives it from the run id."
+  },
+  "ledger_chain_control": {
+    "probe_rc": 0,
+    "probe_container": "be037wf7e3_f5_chain",
+    "ran_as_runtime_role": true,
+    "measurement": {
+      "identity": [
+        [
+          "be037wf7e3_runtime",
+          "be037wf7e3_app"
+        ]
+      ],
+      "anchored": {
+        "valid": true,
+        "checked_events": 23,
+        "first_sequence": 1,
+        "last_sequence": 23,
+        "failures": [],
+        "checkpoint": {
+          "rows": 23,
+          "min_sequence": 1,
+          "max_sequence": 23,
+          "tail_event_hash": "2fd1e31e3898ba69344ff1f19a08445710e62f7375d2d7ea73a53c29908bd381",
+          "tail_previous_hash": "3d8723d7e84f5016ca6ec0ea330266a89e05aff606e1a8fd67ea913dbdae5fbf"
+        }
+      },
+      "checkpoint": {
+        "rows": 23,
+        "min_sequence": 1,
+        "max_sequence": 23,
+        "tail_event_hash": "2fd1e31e3898ba69344ff1f19a08445710e62f7375d2d7ea73a53c29908bd381",
+        "tail_previous_hash": "3d8723d7e84f5016ca6ec0ea330266a89e05aff606e1a8fd67ea913dbdae5fbf"
+      },
+      "writer_policy": {
+        "policy": "controlled_continuation",
+        "writer_guards": "immediate-predecessor hash recomputation (D-2-A)",
+        "durable_detection": "anchored whole-chain verify_chain_classified",
+        "continuation_allowed_when": [
+          "clean",
+          "known_historical_only"
+        ],
+        "fail_closed_when": [
+          "new_anomaly",
+          "degraded"
+        ],
+        "history_repair_permitted": false
+      },
+      "rows_by_project": [
+        [
+          "(none)",
+          17,
+          1,
+          23
+        ],
+        [
+          "c2e97af6-f94f-461a-8113-3de47dbbca25",
+          4,
+          8,
+          20
+        ],
+        [
+          "2e62de1c-4890-4fd8-9bc0-8e58159a31fa",
+          2,
+          9,
+          17
+        ]
+      ],
+      "event_types": [
+        [
+          "API_CLIENT_CREATED",
+          6
+        ],
+        [
+          "USER_CREATED",
+          5
+        ],
+        [
+          "ROLE_ASSIGNED",
+          5
+        ],
+        [
+          "EVIDENCE_UPLOADED",
+          3
+        ],
+        [
+          "PROJECT_SCOPE_CHANGED",
+          2
+        ],
+        [
+          "ORGANIZATION_CREATED",
+          2
+        ]
+      ]
+    },
+    "harness_tail": []
+  }
+}

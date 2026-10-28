@@ -1,0 +1,8 @@
+current_database(): pofa_dev
+alembic_version  : ['s9t0u1v2w029']
+
+operations reported: 2
+  add_constraint|user_role_assignments|uq_user_role_scoped
+  remove_constraint|user_role_assignments|uq_user_role_scoped
+
+gate verdict: CLEAN (all ops accepted)

@@ -1,0 +1,5 @@
+ backend/api/v1/endpoints/integration.py | 118 ++++++++++++++++++++++++++++++--
+ backend/repositories/integration.py     |  40 +++++++++++
+ backend/security/authorization.py       |  35 ++++++++++
+ backend/services/integration.py         |   9 ++-
+ 4 files changed, 197 insertions(+), 5 deletions(-)

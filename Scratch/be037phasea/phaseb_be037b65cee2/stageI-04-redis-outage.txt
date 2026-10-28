@@ -1,0 +1,82 @@
+=== STAGE I / Redis outage — run be037b_20261013T062257Z_65cee2 ===
+host_utc=2026-10-13T08:50:43Z
+--- queue length before
+0
+--- phase UP
+# STAGE=up evidence=39b1fbb2-0d80-4305-87b4-abb6d001cbae 08:50:45
+R1 POST_jobs(redis UP) -> 202 (111ms) '{"job_id":"702a4937-9f07-4724-a82a-b38b0d2b65cb","evidence_id":"39b1fbb2-0d80-4305-87b4-abb6d001cbae","status":"queued","attempt_count":0,"error":null,"started_at":null,"completed_at":null,"result":nu'
+R1 row(redis UP) id=702a4937-9f07-4724-a82a-b38b0d2b65cb [('queued', None)]
+R2 ready(redis UP) -> 200 (42ms) {'raw': '{"status":"healthy","timestamp":1791881445.4331203,"checks":{"application":{"status":"healthy","mess'}
+# stage done 08:50:45
+--- queue length after UP post (job should be pending or consumed)
+0
+0
+--- stopping redis -t 2
+stop_utc=2026-10-13T08:50:46Z
+be037b65cee2_redis
+--- phase DOWN
+# STAGE=down evidence=39b1fbb2-0d80-4305-87b4-abb6d001cbae 08:50:48
+R3 ready(redis DOWN) -> 503 (113ms) {'raw': '{"status":"unhealthy","timestamp":1791881448.2986672,"checks":{"application":{"status":"healthy","me'}
+R4 dbread during redis outage -> 200 (31ms) '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":89,"failures":[]}'
+R5 liveness during redis outage -> 200 (4ms) '{"status":"healthy","timestamp":1791881448.3357186,"checks":{"application":{"status":"healthy","mess'
+R6 POST_jobs(redis DOWN) -> 503 (29ms) '{"detail":"Unable to enqueue analysis job"}'
+R6 newest rows for this evidence = [('bd7b1583-c69f-494c-b5ad-3360517891f8', 'failed', 'Unable to enqueue analysis job', datetime.datetime(2026, 10, 13, 8, 50, 48, 341923, tzinfo=datetime.timezone.utc)), ('702a4937-9f07-4724-a82a-b38b0d2b65cb', 'failed', 'Analysis processing failed', datetime.datetime(2026, 10, 13, 8, 50, 45, 348235, tzinfo=datetime.timezone.utc)), ('da486ea1-1abc-4f21-bfa3-e3db6ae89119', 'failed', 'Analysis processing failed', datetime.datetime(2026, 10, 13, 7, 56, 28, 653091, tzinfo=datetime.timezone.utc))]
+R7 stranded-queued-check total queued rows in DB = [(0,)]
+R8 rows whose error says enqueue failed = [(1,)]
+R9 ready again during outage -> 503 (50ms) {'raw': '{"status":"unhealthy","timestamp":1791881448.462808,"checks":{"application":{"status":"healthy","mes'}
+# stage done 08:50:48
+--- analysis worker log during outage (last 25 lines)
+    return do()
+           ^^^^
+  File "/usr/local/lib/python3.12/site-packages/redis/client.py", line 1270, in <lambda>
+    lambda: self._send_command_parse_response(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/redis/client.py", line 1246, in _send_command_parse_response
+    return self.parse_response(conn, command_name, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/redis/client.py", line 1286, in parse_response
+    response = connection.read_response()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/redis/connection.py", line 882, in read_response
+    response = self._parser.read_response(disable_decoding=disable_decoding)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/redis/connection.py", line 349, in read_response
+    result = self._read_response(disable_decoding=disable_decoding)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/redis/connection.py", line 359, in _read_response
+    raw = self._buffer.readline()
+          ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/redis/connection.py", line 262, in readline
+    self._read_from_socket()
+  File "/usr/local/lib/python3.12/site-packages/redis/connection.py", line 215, in _read_from_socket
+    raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+redis.exceptions.ConnectionError: Connection closed by server.
+--- starting redis
+start_utc=2026-10-13T08:50:49Z
+be037b65cee2_redis
+--- phase RESTORE
+# STAGE=restore evidence=39b1fbb2-0d80-4305-87b4-abb6d001cbae 08:50:50
+R10 recovered after ~0s -> 200 (126ms) {'raw': '{"status":"healthy","timestamp":1791881450.816945,"checks":{"application":{"status":"healthy","messa'}
+R11 POST_jobs(after restore) -> 202 (23ms) '{"job_id":"4ef949ec-873b-407c-b13c-2f61fb135f16","evidence_id":"39b1fbb2-0d80-4305-87b4-abb6d001cbae","status":"queued","attempt_count":0,"error":null,"started_at":null,"completed_at":null,"result":nu'
+R11 t+3s row=[('queued', 0, None)]
+R11 t+6s row=[('queued', 0, None)]
+R11 t+9s row=[('queued', 0, None)]
+R11 t+12s row=[('queued', 0, None)]
+R11 t+15s row=[('queued', 0, None)]
+R11 t+18s row=[('queued', 0, None)]
+R11 t+21s row=[('queued', 0, None)]
+R11 t+24s row=[('queued', 0, None)]
+R11 t+27s row=[('queued', 0, None)]
+R11 t+30s row=[('queued', 0, None)]
+R11 t+33s row=[('queued', 0, None)]
+R11 t+36s row=[('queued', 0, None)]
+CLOSE ready -> 200 {'raw': '{"status":"healthy","timestamp":1791881487.0502856,"checks":{"application":{"status":"healthy","mess'}
+CLOSE analysis_jobs by status = [('completed', 4), ('failed', 3), ('queued', 1)]
+CLOSE chain = '{"valid":true,"checked_events":89,"first_sequence":1,"last_sequence":89,"failures":[]}'
+# stage done 08:51:27
+--- final redis container state
+name=/be037b65cee2_redis id=102dacdc41aeea79105361e554f8272338a26675f38ccf5221d52cbcb6dfd561 state=running health=healthy restarts=0 exit=0
+--- analysis jobs by status now
+[('completed', 4), ('failed', 3), ('queued', 1)]
+[('4ef949ec-873b-407c-b13c-2f61fb135f16', 'queued', None), ('bd7b1583-c69f-494c-b5ad-3360517891f8', 'failed', 'Unable to enqueue analysis job'), ('702a4937-9f07-4724-a82a-b38b0d2b65cb', 'failed', 'Analysis processing failed')]
+end_utc=2026-10-13T08:51:28Z

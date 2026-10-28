@@ -1,0 +1,33 @@
+=== D6 egress / isolation proof ===
+--- published host ports on every Phase B container (must all be empty) ---
+be037b65cee2_db ports=[none]
+be037b65cee2_redis ports=[none]
+be037b65cee2_minio ports=[none]
+be037b65cee2_api ports=[none]
+be037b65cee2_analysis ports=[none]
+be037b65cee2_notification ports=[none]
+be037b65cee2_retention ports=[none]
+be037b65cee2_webhook ports=[none]
+be037b65cee2_client ports=[none]
+--- containers attached to be037b65cee2_net (only this run) ---
+be037b65cee2_notification be037b65cee2_redis be037b65cee2_api be037b65cee2_retention be037b65cee2_minio be037b65cee2_db be037b65cee2_webhook be037b65cee2_analysis be037b65cee2_client 
+--- network internal flag + no gateway route to host ---
+internal=true enable_ipv6=false
+--- DNS from inside the disposable network ---
+resolve api                    -> 172.19.0.9
+resolve db                     -> 172.19.0.3
+resolve redis                  -> 172.19.0.2
+resolve minio                  -> 172.19.0.4
+resolve pofa_db                -> FAIL gaierror: Temporary failure in name resolution
+resolve pofa_minio             -> FAIL gaierror: Temporary failure in name resolution
+resolve pofa_redis             -> FAIL gaierror: Temporary failure in name resolution
+resolve example.com            -> FAIL gaierror: Temporary failure in name resolution
+resolve registry-1.docker.io   -> FAIL gaierror: Temporary failure in name resolution
+resolve huggingface.co         -> FAIL gaierror: Temporary failure in name resolution
+resolve github.com             -> FAIL gaierror: Temporary failure in name resolution
+--- direct outbound TCP attempts (must all fail) ---
+connect 1.1.1.1:80 -> refused/failed OSError: [Errno 101] Network is unreachable
+connect 151.101.1.5:443 -> refused/failed OSError: [Errno 101] Network is unreachable
+connect 140.82.121.3:443 -> refused/failed OSError: [Errno 101] Network is unreachable
+--- outbound HTTP attempt (must fail) ---
+outbound http -> FAIL URLError <urlopen error [Errno -3] Temporary failure in name resolution>

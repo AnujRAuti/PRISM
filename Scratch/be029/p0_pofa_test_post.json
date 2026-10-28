@@ -1,0 +1,85 @@
+{
+ "current_database": {
+  "n": "pofa_test"
+ },
+ "alembic_version": [
+  {
+   "version_num": "s9t0u1v2w029"
+  }
+ ],
+ "users": {
+  "n": 2079
+ },
+ "projects": {
+  "n": 1034
+ },
+ "evidence": {
+  "n": 765
+ },
+ "audit_ledger_events": {
+  "n": 30862
+ },
+ "residue_users": {
+  "n": 0
+ },
+ "residue_projects": {
+  "n": 0
+ },
+ "residue_evidence": {
+  "n": 0
+ },
+ "dup_username_groups": {
+  "n": 0
+ },
+ "dup_email_groups": {
+  "n": 0
+ },
+ "dup_username_values": [],
+ "dup_email_values": [],
+ "users_indexes": [
+  {
+   "indexname": "ix_users_email",
+   "indexdef": "CREATE UNIQUE INDEX ix_users_email ON public.users USING btree (email)"
+  },
+  {
+   "indexname": "ix_users_username",
+   "indexdef": "CREATE UNIQUE INDEX ix_users_username ON public.users USING btree (username)"
+  }
+ ],
+ "users_constraints": [
+  {
+   "conname": "ck_user_status",
+   "def": "CHECK (((status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'SUSPENDED'::character varying, 'DISABLED'::character varying])::text[])))"
+  },
+  {
+   "conname": "uq_user_identity_subject",
+   "def": "UNIQUE (identity_provider, external_subject)"
+  },
+  {
+   "conname": "users_pkey",
+   "def": "PRIMARY KEY (id)"
+  }
+ ],
+ "null_external_subject": [
+  {
+   "n_null": 2079,
+   "n_total": 2079
+  }
+ ],
+ "archive_table": {
+  "n": 1
+ },
+ "archive_rows": {
+  "n": 57
+ },
+ "fk_into_residue": [
+  {
+   "ref": "projects.owner_id",
+   "n": 0
+  },
+  {
+   "ref": "evidence.project_id",
+   "n": 0
+  }
+ ]
+}

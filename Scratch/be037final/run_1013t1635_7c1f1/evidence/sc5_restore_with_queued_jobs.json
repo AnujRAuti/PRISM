@@ -1,0 +1,101 @@
+{
+  "completion_lines": [
+    {
+      "arrival_s": 70.52,
+      "message": "INFO:__main__:analysis job completed job_id=7da165eb-db64-4b7c-848f-47fad553b441"
+    },
+    {
+      "arrival_s": 71.25,
+      "message": "INFO:__main__:analysis job completed job_id=bc1391b9-0ea3-4f0a-9eb5-b4cd64be59ba"
+    },
+    {
+      "arrival_s": 72.03,
+      "message": "INFO:__main__:analysis job completed job_id=8c879bcc-02a7-4762-9cb8-e2c40241f595"
+    }
+  ],
+  "fixtures": [
+    {
+      "bytes": 68181,
+      "evidence_id": "28a3a6a3-e28c-4e91-9697-842038d4d977",
+      "job_id": "8c879bcc-02a7-4762-9cb8-e2c40241f595",
+      "storage_key": "quarantine/28a3a6a3-e28c-4e91-9697-842038d4d977/original"
+    },
+    {
+      "bytes": 68164,
+      "evidence_id": "dd484256-c496-4e8b-b12b-30657129bfa3",
+      "job_id": "bc1391b9-0ea3-4f0a-9eb5-b4cd64be59ba",
+      "storage_key": "quarantine/dd484256-c496-4e8b-b12b-30657129bfa3/original"
+    },
+    {
+      "bytes": 68169,
+      "evidence_id": "29528ed7-6428-438d-8724-e57a64ca1c17",
+      "job_id": "7da165eb-db64-4b7c-848f-47fad553b441",
+      "storage_key": "quarantine/29528ed7-6428-438d-8724-e57a64ca1c17/original"
+    }
+  ],
+  "job_states": {
+    "7da165eb-db64-4b7c-848f-47fad553b441": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    },
+    "8c879bcc-02a7-4762-9cb8-e2c40241f595": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    },
+    "bc1391b9-0ea3-4f0a-9eb5-b4cd64be59ba": {
+      "attempt_count": 1,
+      "error": null,
+      "result_rows": 1,
+      "status": "completed"
+    }
+  },
+  "lists_after": {
+    "main": 0,
+    "processing": 0
+  },
+  "lists_before_outage": {
+    "main": 3,
+    "processing": 0
+  },
+  "redis_restored_at_worker_clock_s": 9.36,
+  "scenario": "S5 restoration with queued jobs (survives via Redis AOF)",
+  "worker_during_outage": {
+    "again_lines": [],
+    "alive_at_measurement": true,
+    "backoff_warnings": [
+      {
+        "arrival_s": 7.3,
+        "stated_consecutive_failures": 1,
+        "stated_delay_s": 3.0
+      }
+    ],
+    "exit_code": null,
+    "log_lines": 2,
+    "pid": 6844,
+    "recovery_lines": []
+  },
+  "worker_final": {
+    "again_lines": [
+      {
+        "arrival_s": 70.52,
+        "message": "INFO:__main__:redis reachable again after 1 backoff(s)"
+      }
+    ],
+    "alive_at_measurement": true,
+    "backoff_warnings": [
+      {
+        "arrival_s": 7.3,
+        "stated_consecutive_failures": 1,
+        "stated_delay_s": 3.0
+      }
+    ],
+    "exit_code": null,
+    "log_lines": 7,
+    "pid": 6844,
+    "recovery_lines": []
+  }
+}

@@ -1,0 +1,21 @@
+/health -> 200 len=132
+   body: {"status":"healthy","timestamp":1791875313.6557848,"checks":{"application":{"status":"healthy","message":"Application is running"}}}
+/healthz -> 200 len=634
+   body: {"status":"healthy","timestamp":1791875314.0021286,"liveness":{"status":"healthy","timestamp":1791875313.6621869,"checks":{"application":{"status":"healthy","message":"Application is running"}}},"readiness":{"status":"healthy","timestamp":1791875314.0021162,"checks":{"application":{"status":"healthy","message":"Application is running","required":false},"postgresql":{"status":"healthy","message":"P
+/ready -> 200 len=426
+   body: {"status":"healthy","timestamp":1791875314.0907109,"checks":{"application":{"status":"healthy","message":"Application is running","required":false},"postgresql":{"status":"healthy","message":"PostgreSQL connection successful","required":true},"redis":{"status":"healthy","message":"Redis connection successful","required":true},"storage":{"status":"healthy","message":"Storage service connection succ
+/api/v1/health -> 200 len=15
+   body: {"status":"ok"}
+/docs -> 200 len=1022
+   body: 
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+    <link rel="shortcut icon" href="https://fastapi.tiangolo.com/img/favicon.png">
+    <title>proof-of-action-backend - Swagger UI</title>
+    </head>
+    <body>
+    <di
+/openapi.json -> 200 len=281652

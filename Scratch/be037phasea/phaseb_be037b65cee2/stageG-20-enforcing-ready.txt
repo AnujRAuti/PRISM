@@ -1,0 +1,2 @@
+/ready -> 200 {"status": "healthy", "timestamp": 1791878922.2722962, "checks": {"application": {"status": "healthy", "message": "Application is running", "required": false}, 
+/healthz -> 200 {"status": "healthy", "timestamp": 1791878922.3308508, "liveness": {"status": "healthy", "timestamp": 1791878922.279154, "checks": {"application": {"status": "h

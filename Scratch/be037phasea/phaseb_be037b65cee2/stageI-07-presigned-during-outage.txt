@@ -1,0 +1,29 @@
+=== STAGE I / presigned URL reachability during a storage outage (focused re-test, run 2) ===
+host_utc=2026-10-13T08:59:18Z
+--- minio state before: running healthy
+--- PHASE A: storage reachable
+PHASE=A-up 08:59:20
+  issue_download -> 200 (112ms) host=minio:9000
+  client_fetch -> 200 99 bytes (5ms)
+  /ready -> 200 (53ms) '{"status":"healthy","timestamp":1791881960.3231592,"checks":{"application":{"status":"healthy","message":"Application is'
+--- stopping minio -t 2
+stop_utc=2026-10-13T08:59:20Z
+--- PHASE B: storage down (immediately)
+PHASE=B-down 08:59:22
+  issue_download -> 200 (101ms) host=minio:9000
+  client_fetch -> FAIL URLError: <urlopen error [Errno -3] Temporary failure in name resolution> (2ms)
+  /ready -> 503 (10077ms) '{"status":"unhealthy","timestamp":1791881972.2547772,"checks":{"application":{"status":"healthy","message":"Application '
+--- PHASE C: storage down (second sample, repeatability of the /ready latency)
+PHASE=C-down2 08:59:33
+  issue_download -> 200 (117ms) host=minio:9000
+  client_fetch -> FAIL URLError: <urlopen error [Errno -3] Temporary failure in name resolution> (2ms)
+  /ready -> 503 (3889ms) '{"status":"unhealthy","timestamp":1791881977.296229,"checks":{"application":{"status":"healthy","message":"Application i'
+--- starting minio
+start_utc=2026-10-13T08:59:37Z
+--- PHASE D: storage restored
+PHASE=D-restored 08:59:44
+  issue_download -> 200 (109ms) host=minio:9000
+  client_fetch -> 200 99 bytes (4ms)
+  /ready -> 200 (50ms) '{"status":"healthy","timestamp":1791881984.3903112,"checks":{"application":{"status":"healthy","message":"Application is'
+--- minio final: running health=healthy restarts=0
+end_utc=2026-10-13T08:59:44Z

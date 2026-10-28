@@ -95,19 +95,19 @@ class Settings(BaseSettings):
     # development: anonymous requests are permitted (existing behavior) while
     # presented credentials are fully enforced. enforcing: anonymous requests
     # are rejected (401); use in any shared/production deployment.
-    auth_mode: str = "development"
+    auth_mode: str = "enforcing"
     # Development bearer tokens (dev-user-<uuid>, dev-client-<id>) are
     # non-secret identifiers accepted only when this is explicitly enabled.
     # Production OIDC/OAuth2 integration must disable this.
-    auth_dev_tokens_enabled: bool = True
+    auth_dev_tokens_enabled: bool = False
 
     # Stage 02 — trusted human identity (Supabase Auth, verified locally over
     # JWKS). Off by default so an unconfigured deployment keeps the existing
     # service-credential-only posture; enabling it is what lets a browser send
     # the reviewer's own sign-in token instead of a service secret.
-    auth_oidc_enabled: bool = False
-    auth_oidc_issuer: str = ""
-    auth_oidc_jwks_uri: str = ""
+    auth_oidc_enabled: bool = True
+    auth_oidc_issuer: str = "https://supabase.auth.local"
+    auth_oidc_jwks_uri: str = "https://supabase.auth.local/.well-known/jwks"
     auth_oidc_audience: str = "authenticated"
     # The users.identity_provider value a verified token's `sub` is looked up under.
     auth_oidc_identity_provider: str = "supabase"

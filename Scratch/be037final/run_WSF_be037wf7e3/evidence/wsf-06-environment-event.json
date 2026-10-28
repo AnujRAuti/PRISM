@@ -1,0 +1,97 @@
+{
+  "observed_at_host_local": "2026-10-15T08:18:56+0530",
+  "observed_at_host_utc": "2026-10-15T02:48:56Z",
+  "event": "Docker Desktop engine became unreachable at ~23:25 IST on the run's clock and was relaunched; the machine's containers all show a single simultaneous exit",
+  "commands_issued_by_this_run_against_protected_containers": [],
+  "protected_containers_read_only_inspection": {
+    "pofa_db": {
+      "status": "running",
+      "exit_code": "0",
+      "started_at": "2026-10-15T02:44:48.359513413Z",
+      "finished_at": "2026-10-15T02:44:45.433597156Z",
+      "restart_count": "0",
+      "restart_policy": "unless-stopped",
+      "created": "2026-09-18T18:09:18.006806062Z",
+      "image": "garapadev/postgres-postgis-pgvector:15-stable"
+    },
+    "pofa_redis": {
+      "status": "running",
+      "exit_code": "0",
+      "started_at": "2026-10-15T02:44:48.290627392Z",
+      "finished_at": "2026-10-15T02:44:45.438503956Z",
+      "restart_count": "0",
+      "restart_policy": "unless-stopped",
+      "created": "2026-09-13T16:58:41.514014662Z",
+      "image": "redis:7-alpine"
+    },
+    "pofa_minio": {
+      "status": "running",
+      "exit_code": "0",
+      "started_at": "2026-10-15T02:44:48.292795018Z",
+      "finished_at": "2026-10-15T02:44:45.440235862Z",
+      "restart_count": "0",
+      "restart_policy": "unless-stopped",
+      "created": "2026-09-13T13:33:00.828947067Z",
+      "image": "quay.io/minio/minio:latest"
+    }
+  },
+  "run_containers": {
+    "be037wf7e3_db": {
+      "status": "running",
+      "exit_code": "0",
+      "started_at": "2026-10-15T02:45:46.127773531Z",
+      "finished_at": "2026-10-15T02:44:45.44536531Z",
+      "restart_count": "0",
+      "restart_policy": "no",
+      "created": "2026-10-14T16:48:04.260114645Z",
+      "image": "garapadev/postgres-postgis-pgvector:15-stable"
+    },
+    "be037wf7e3_redis": {
+      "status": "running",
+      "exit_code": "0",
+      "started_at": "2026-10-15T02:45:46.805741841Z",
+      "finished_at": "2026-10-14T17:55:42.113134769Z",
+      "restart_count": "0",
+      "restart_policy": "no",
+      "created": "2026-10-14T16:48:04.216089894Z",
+      "image": "redis:7-alpine"
+    },
+    "be037wf7e3_minio": {
+      "status": "running",
+      "exit_code": "0",
+      "started_at": "2026-10-15T02:45:47.398006359Z",
+      "finished_at": "2026-10-15T02:44:45.440388644Z",
+      "restart_count": "0",
+      "restart_policy": "no",
+      "created": "2026-10-14T16:48:04.200264548Z",
+      "image": "quay.io/minio/minio:latest"
+    }
+  },
+  "volumes": [
+    "53d73830397a014f1a50263c48a77cd123df6cc2cc798521b7c8596cdaa64401|local",
+    "35393f31e3261a8303fa830841fc6497e1b31f140881f92cc71ac1a12703c758|local",
+    "86901abfdac566d47f9695a60221be82f3c02f3c8a68ca28e55f3dc9d51d5105|local",
+    "bdfa6f08253d9049c56b3fc6b35c7cec69387ccd2b250c3fd4d6225a1fc44014|local",
+    "be037fin7c1f1_db2_data|local",
+    "be037fin7c1f1_db_data|local",
+    "be037fin7c1f1_minio_data|local",
+    "be037fin7c1f1_redis_data|local",
+    "be037wf7e3_db_data|local",
+    "be037wf7e3_minio_data|local",
+    "be037wf7e3_redis_data|local",
+    "c7ed4da61acf4c03d2936a2c8bae6329598a0b7477d24e8dbc5c0976bd1e8625|local",
+    "proof-of-action-final_db_data|local",
+    "proof-of-action-final_minio_data|local"
+  ],
+  "run_data_survived_restart": {
+    "acceptance_db": {
+      "analysis_jobs": 10,
+      "ledger_events": 23,
+      "ledger_sequence_range": "1-23",
+      "alembic_version": "t0u1v2w3x030"
+    },
+    "queue_lengths": "0",
+    "processing_lengths": "0",
+    "minio_bucket_directories": "be037wf7e3-evidence\nbe037wf7e3-quarantine"
+  }
+}

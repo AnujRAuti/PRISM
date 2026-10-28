@@ -1,0 +1,106 @@
+{
+  "redacted_url": "postgresql+psycopg2://postgres:***@localhost:15433/be037fin7c1f1_app2",
+  "container": "be037fin7c1f1_db2",
+  "docker_run_rc": 0,
+  "healthcheck_on_bare_docker_run": "none\n",
+  "healthcheck_on_compose_created_db": "defined\n",
+  "init_scripts_run": [
+    "/docker-entrypoint-initdb.d/init.sql"
+  ],
+  "initdb_trust_warning": false,
+  "extensions_after_first_boot": [
+    "plpgsql 1.0",
+    "postgis 3.4.2",
+    "vector 0.7.4"
+  ],
+  "public_table_count_after_first_boot": 1,
+  "vendor_demo_present_after_first_boot": false,
+  "public_relations_after_first_boot": [
+    "spatial_ref_sys"
+  ],
+  "alembic_upgrade_rc": 0,
+  "alembic_upgrade_tail": [
+    "INFO  [alembic.runtime.migration] Running upgrade n4o5p6q7r022 -> o5p6q7r8s025, BE-025: database-enforced assignment scope/ID matrix (M1).",
+    "INFO  [alembic.runtime.migration] Running upgrade o5p6q7r8s025 -> p6q7r8s9t026, BE-026: field operations and offline evidence capture tables.",
+    "INFO  [alembic.runtime.migration] Running upgrade p6q7r8s9t026 -> q7r8s9t0u027, BE-028: the three indexes the models declared but no migration created.",
+    "INFO  [alembic.runtime.migration] Running upgrade q7r8s9t0u027 -> r8s9t0u1v028, BE-029 (1/2): archive, then retire, the synthetic user-identity residue.",
+    "INFO  [alembic.runtime.migration] Running upgrade r8s9t0u1v028 -> s9t0u1v2w029, BE-029 (2/2): make users.username / users.email unique in the database.",
+    "INFO  [alembic.runtime.migration] Running upgrade s9t0u1v2w029 -> t0u1v2w3x030, BE-030: append-only enforcement + event-type domain CHECK for the audit ledger."
+  ],
+  "alembic_version_after_upgrade": "t0u1v2w3x030",
+  "table_count_after_upgrade": 73,
+  "extension_owned_objects": [
+    {
+      "owner": "postgres",
+      "relname": "spatial_ref_sys",
+      "relkind": "r"
+    }
+  ],
+  "search_path": "\"$user\", public",
+  "baseline_registry_rows": 15,
+  "gate_rc": 0,
+  "gate_summary": [
+    "24 passed, 1 skipped, 1 warning in 65.83s (0:01:05)"
+  ],
+  "drift_test_clean": {
+    "rc": 0,
+    "tail": [
+      "",
+      "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+      "1 passed, 1 warning in 15.95s"
+    ]
+  },
+  "drift_test_with_manual_table": {
+    "rc": 1,
+    "names_the_manual_table": true,
+    "tail": [
+      "    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)",
+      "",
+      "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+      "=========================== short test summary info ===========================",
+      "FAILED tests/integration/test_schema_drift_gate.py::test_drift_is_exactly_the_documented_baseline",
+      "1 failed, 1 warning in 11.19s"
+    ]
+  },
+  "alembic_check_with_manual_table": {
+    "rc": 4294967295,
+    "mentions_manual_table": true,
+    "tail": [
+      "INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact add_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)",
+      "INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact remove_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)",
+      "INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact add_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)",
+      "ERROR [alembic.util.messaging] New upgrade operations detected: [('remove_table', Table('poa_wsd_manual_drift', MetaData(), Column('id', INTEGER(), table=<poa_wsd_manual_drift>, primary_key=True, nullable=False), schema=None))]"
+    ]
+  },
+  "drift_test_after_drop": {
+    "rc": 0,
+    "tail": [
+      "",
+      "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+      "1 passed, 1 warning in 10.89s"
+    ]
+  },
+  "alembic_upgrade_again": {
+    "rc": 0,
+    "tail": [
+      "INFO  [alembic.env] Alembic target database: be037fin7c1f1_app2",
+      "INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.",
+      "INFO  [alembic.runtime.migration] Will assume transactional DDL."
+    ]
+  },
+  "alembic_check_clean": {
+    "rc": 0,
+    "head_is_up_to_date": true,
+    "tail": [
+      "INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact remove_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)",
+      "INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact add_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)",
+      "INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact remove_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)",
+      "INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact add_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)"
+    ]
+  },
+  "extensions_after_upgrade": [
+    "plpgsql 1.0",
+    "postgis 3.4.2",
+    "vector 0.7.4"
+  ]
+}

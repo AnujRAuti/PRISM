@@ -1,0 +1,12 @@
+ sequence_number |    event_type     | action  | resource_type |            src             
+-----------------+-------------------+---------+---------------+----------------------------
+              82 | RESOURCE_ARCHIVED | archive | evidence      | retention_service
+              36 | EVIDENCE_UPLOADED | upload  | evidence      | evidence_ingestion_service
+              35 | EVIDENCE_UPLOADED | upload  | evidence      | evidence_ingestion_service
+              34 | EVIDENCE_UPLOADED | upload  | evidence      | evidence_ingestion_service
+              33 | EVIDENCE_UPLOADED | upload  | evidence      | evidence_ingestion_service
+              28 | EVIDENCE_UPLOADED | upload  | evidence      | evidence_ingestion_service
+              25 | EVIDENCE_UPLOADED | upload  | evidence      | evidence_ingestion_service
+              22 | EVIDENCE_UPLOADED | upload  | evidence      | evidence_ingestion_service
+(8 rows)
+
