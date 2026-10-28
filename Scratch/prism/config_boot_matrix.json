@@ -1,0 +1,138 @@
+{
+  "summary": {
+    "passed": 13,
+    "total": 13
+  },
+  "results": [
+    {
+      "case": "production fully configured",
+      "expect_boot": true,
+      "returncode": 0,
+      "booted": true,
+      "expected_reason": "",
+      "reason": "",
+      "passed": true,
+      "detail": "BOOT production enforcing False True"
+    },
+    {
+      "case": "production with the verifier off",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "auth_oidc_enabled must be true in production",
+      "reason": "Value error, auth_oidc_enabled must be true in production: reviewers sign in through the identity provider, and with it off the only accepted credential is a service client secret. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, auth_oidc_enabled must be true in production: reviewers sign in through the identity provider, and with it off the only accepted credential is a service client secret. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    },
+    {
+      "case": "production with the shipped placeholder issuer",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "auth_oidc_issuer uses the non-public host",
+      "reason": "Value error, auth_oidc_issuer uses the non-public host 'supabase.auth.local', which cannot be a real identity provider; set the provider's published issuer address [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, auth_oidc_issuer uses the non-public host 'supabase.auth.local', which cannot be a real identity provider; set the provider's published issuer address [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    },
+    {
+      "case": "production with loopback as the provider",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "auth_oidc_issuer uses the non-public host",
+      "reason": "Value error, auth_oidc_issuer uses the non-public host 'localhost', which cannot be a real identity provider; set the provider's published issuer address [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, auth_oidc_issuer uses the non-public host 'localhost', which cannot be a real identity provider; set the provider's published issuer address [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    },
+    {
+      "case": "production with keys from a different host",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "must be served by the same host",
+      "reason": "Value error, auth_oidc_issuer and auth_oidc_jwks_uri must be served by the same host (got 'tuaeujvuuanadqvykugw.supabase.co' and 'other-project.supabase.co'); keys from another authority cannot vouch for this issuer's tokens [type=value_error, input_value={'database_url': 'postgre...dc_algorithms':",
+      "passed": true,
+      "detail": "Value error, auth_oidc_issuer and auth_oidc_jwks_uri must be served by the same host (got 'tuaeujvuuanadqvykugw.supabase.co' and 'other-project.supabase.co'); keys from another authority cannot vouch for this issuer's tokens [type=value_error, input_value={'database_url': 'postgre...dc_algorithms':"
+    },
+    {
+      "case": "production with no provider name",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "auth_oidc_identity_provider must name the provider",
+      "reason": "Value error, auth_oidc_identity_provider must name the provider whose tokens production accepts; a verified subject is looked up under it. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, auth_oidc_identity_provider must name the provider whose tokens production accepts; a verified subject is looked up under it. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    },
+    {
+      "case": "production with the HMAC algorithm",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "only contain asymmetric algorithms",
+      "reason": "Value error, auth_oidc_algorithms may only contain asymmetric algorithms (RS*/ES*/PS*); 1 refused entry(ies) are not accepted. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'HS256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, auth_oidc_algorithms may only contain asymmetric algorithms (RS*/ES*/PS*); 1 refused entry(ies) are not accepted. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'HS256'}, input_type=dict]"
+    },
+    {
+      "case": "production on the development jwt default",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "jwt_secret is unsafe for production",
+      "reason": "Value error, jwt_secret is unsafe for production: set a distinct secret of at least 32 characters (the development default and blank values are rejected). The secret value is not shown here. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, jwt_secret is unsafe for production: set a distinct secret of at least 32 characters (the development default and blank values are rejected). The secret value is not shown here. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    },
+    {
+      "case": "production in development auth mode",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "auth_mode must be 'enforcing' in production",
+      "reason": "Value error, auth_mode must be 'enforcing' in production (got 'development'); the development mode accepts anonymous requests and bypasses authorization. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, auth_mode must be 'enforcing' in production (got 'development'); the development mode accepts anonymous requests and bypasses authorization. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    },
+    {
+      "case": "production with development bearer tokens on",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "auth_dev_tokens_enabled must be false in production",
+      "reason": "Value error, auth_dev_tokens_enabled must be false in production: the development tokens are non-secret identifiers. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, auth_dev_tokens_enabled must be false in production: the development tokens are non-secret identifiers. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    },
+    {
+      "case": "production with wildcard CORS",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "cors_allow_origins must be an explicit origin allowlist",
+      "reason": "Value error, cors_allow_origins must be an explicit origin allowlist in production; the wildcard '*' is unsafe because credentials are enabled, so list the real frontend origins instead. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, cors_allow_origins must be an explicit origin allowlist in production; the wildcard '*' is unsafe because credentials are enabled, so list the real frontend origins instead. [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    },
+    {
+      "case": "development with nothing set",
+      "expect_boot": true,
+      "returncode": 0,
+      "booted": true,
+      "expected_reason": "",
+      "reason": "",
+      "passed": true,
+      "detail": "BOOT development development True False"
+    },
+    {
+      "case": "development with the verifier on a placeholder host",
+      "expect_boot": false,
+      "returncode": 3,
+      "booted": false,
+      "expected_reason": "auth_oidc_issuer uses the non-public host",
+      "reason": "Value error, auth_oidc_issuer uses the non-public host 'supabase.auth.local', which cannot be a real identity provider; set the provider's published issuer address [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]",
+      "passed": true,
+      "detail": "Value error, auth_oidc_issuer uses the non-public host 'supabase.auth.local', which cannot be a real identity provider; set the provider's published issuer address [type=value_error, input_value={'database_url': 'postgre...dc_algorithms': 'ES256'}, input_type=dict]"
+    }
+  ]
+}

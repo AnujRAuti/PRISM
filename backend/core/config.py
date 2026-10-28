@@ -1,5 +1,8 @@
 """Configuration using Pydantic BaseSettings."""
 
+import ipaddress
+from urllib.parse import urlsplit
+
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
@@ -10,6 +13,62 @@ from pydantic_settings import BaseSettings
 #: credential. The minimum length keeps a trivially short hand-set secret out too.
 UNSAFE_JWT_SECRETS = frozenset({"", "changeme"})
 MIN_JWT_SECRET_LENGTH = 32
+
+#: Identity-provider hosts that can never resolve to a real provider.
+#: ``supabase.auth.local`` was committed as the default issuer (PRISM-1): it
+#: satisfied the non-blank + ``https://`` checks while pointing at a host that
+#: does not exist, so a deployment booted looking verified and refused every
+#: reviewer. Loopback and ``0.0.0.0`` are where a developer's own process lives,
+#: the suffixes are reserved-non-public TLDs, and a single-label name is a local
+#: mDNS/hosts-entry alias rather than a hosted issuer.
+PLACEHOLDER_OIDC_HOSTS = frozenset({
+    "supabase.auth.local", "localhost", "localhost.localdomain", "0.0.0.0", "::1",
+})
+NON_PUBLIC_OIDC_SUFFIXES = (
+    ".local", ".localhost", ".internal", ".test", ".example", ".invalid",
+    ".localdomain", ".onion",
+)
+
+
+def oidc_endpoint_host(label: str, value: str) -> str:
+    """Validate one identity endpoint and return its lowercase hostname.
+
+    Raises ``ValueError`` with the offending field named, because a
+    half-configured verifier fails every request in a way that looks like the
+    provider is broken. Only the host appears in the message — an issuer URL is
+    not secret, but a full value in a boot error tends to end up in shared logs.
+    """
+    stripped = (value or "").strip()
+    if not stripped:
+        raise ValueError(f"{label} must be set when auth_oidc_enabled is true")
+    if not stripped.lower().startswith("https://"):
+        raise ValueError(
+            f"{label} must be an https:// address when auth_oidc_enabled is true"
+        )
+    try:
+        host = (urlsplit(stripped).hostname or "").lower().rstrip(".")
+    except ValueError as error:  # an unparseable authority, e.g. a bad IPv6 literal
+        raise ValueError(f"{label} is not a parseable https:// URL") from error
+    if not host:
+        raise ValueError(f"{label} must name a hostname")
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        address = None
+    if address is not None and (
+        address.is_loopback or address.is_unspecified or address.is_link_local
+    ):
+        raise ValueError(
+            f"{label} points at a non-routable address ({host}); an identity "
+            "provider must be reachable from the deployment"
+        )
+    if (host in PLACEHOLDER_OIDC_HOSTS or "." not in host
+            or host.endswith(NON_PUBLIC_OIDC_SUFFIXES)):
+        raise ValueError(
+            f"{label} uses the non-public host {host!r}, which cannot be a real "
+            "identity provider; set the provider's published issuer address"
+        )
+    return host
 
 
 class Settings(BaseSettings):
@@ -95,24 +154,32 @@ class Settings(BaseSettings):
     # development: anonymous requests are permitted (existing behavior) while
     # presented credentials are fully enforced. enforcing: anonymous requests
     # are rejected (401); use in any shared/production deployment.
-    auth_mode: str = "enforcing"
+    # The default is the permissive one on purpose. Hardening lives in
+    # ``_validate_production_settings``, so a deployment cannot inherit these
+    # values silently; putting the safe values here instead would break local
+    # work (a checkout with no sign-in path could not call its own API).
+    auth_mode: str = "development"
     # Development bearer tokens (dev-user-<uuid>, dev-client-<id>) are
     # non-secret identifiers accepted only when this is explicitly enabled.
     # Production OIDC/OAuth2 integration must disable this.
-    auth_dev_tokens_enabled: bool = False
+    auth_dev_tokens_enabled: bool = True
 
     # Stage 02 — trusted human identity (Supabase Auth, verified locally over
     # JWKS). Off by default so an unconfigured deployment keeps the existing
     # service-credential-only posture; enabling it is what lets a browser send
     # the reviewer's own sign-in token instead of a service secret.
-    auth_oidc_enabled: bool = True
-    auth_oidc_issuer: str = "https://supabase.auth.local"
-    auth_oidc_jwks_uri: str = "https://supabase.auth.local/.well-known/jwks"
+    # No endpoint is shipped as a default: an unset issuer is visibly unset,
+    # whereas a placeholder reads as configured while refusing every reviewer.
+    auth_oidc_enabled: bool = False
+    auth_oidc_issuer: str = ""
+    auth_oidc_jwks_uri: str = ""
     auth_oidc_audience: str = "authenticated"
     # The users.identity_provider value a verified token's `sub` is looked up under.
     auth_oidc_identity_provider: str = "supabase"
     # Only asymmetric algorithms are accepted; a JWKS entry using any other
     # `alg` is refused, which is what blocks key-type confusion attacks.
+    # Set this to the algorithm the provider actually signs with (Supabase's
+    # current key is ES256) — a mismatch fails closed, it never falls open.
     auth_oidc_algorithms: str = "RS256"
     auth_oidc_jwks_ttl_seconds: int = 300
 
@@ -185,28 +252,46 @@ class Settings(BaseSettings):
                     "production; the wildcard '*' is unsafe because credentials are "
                     "enabled, so list the real frontend origins instead."
                 )
+            # PRISM-1: a production reviewer deployment whose only credential is a
+            # service secret has no human identity path, so every review action
+            # would be attributed to an integration client (or refused). Stage 02
+            # made the verifier the supported way in, therefore production must
+            # have it on and pointed at a real provider — the endpoint rules
+            # themselves run in _validate_oidc_settings, in every environment.
+            if not self.auth_oidc_enabled:
+                raise ValueError(
+                    "auth_oidc_enabled must be true in production: reviewers sign in "
+                    "through the identity provider, and with it off the only accepted "
+                    "credential is a service client secret."
+                )
+            if not (self.auth_oidc_identity_provider or "").strip():
+                raise ValueError(
+                    "auth_oidc_identity_provider must name the provider whose tokens "
+                    "production accepts; a verified subject is looked up under it."
+                )
         return self
 
     @model_validator(mode="after")
     def _validate_oidc_settings(self):
-        """A switched-on but half-configured identity verifier must not start.
+        """A switched-on but unusable identity verifier must not start.
 
-        ``AUTH_OIDC_ENABLED=true`` with a blank issuer or JWKS address would
-        accept nothing while looking like it accepts something, which is worse
-        than leaving it off. Checked in every environment, not only production:
-        the failure mode is identical. No configured value is echoed in full.
+        ``AUTH_OIDC_ENABLED=true`` with a blank, plain-HTTP, loopback or
+        placeholder issuer/JWKS address would accept nothing while looking like it
+        accepts something, which is worse than leaving it off — and a key set
+        fetched from a different host than the issuer is not that issuer's key set.
+        Checked in every environment, not only production: the failure mode is
+        identical. Only the offending host is echoed, never a full configured value.
         """
         if not self.auth_oidc_enabled:
             return self
-        for field, label in ((self.auth_oidc_issuer, "auth_oidc_issuer"),
-                             (self.auth_oidc_jwks_uri, "auth_oidc_jwks_uri")):
-            value = (field or "").strip()
-            if not value:
-                raise ValueError(f"{label} must be set when auth_oidc_enabled is true")
-            if not value.lower().startswith("https://"):
-                raise ValueError(
-                    f"{label} must be an https:// address when auth_oidc_enabled is true"
-                )
+        issuer_host = oidc_endpoint_host("auth_oidc_issuer", self.auth_oidc_issuer)
+        jwks_host = oidc_endpoint_host("auth_oidc_jwks_uri", self.auth_oidc_jwks_uri)
+        if issuer_host != jwks_host:
+            raise ValueError(
+                "auth_oidc_issuer and auth_oidc_jwks_uri must be served by the same "
+                f"host (got {issuer_host!r} and {jwks_host!r}); keys from another "
+                "authority cannot vouch for this issuer's tokens"
+            )
         if not (self.auth_oidc_audience or "").strip():
             raise ValueError("auth_oidc_audience must not be blank when OIDC is enabled")
         algorithms = [a.strip() for a in (self.auth_oidc_algorithms or "").split(",") if a.strip()]

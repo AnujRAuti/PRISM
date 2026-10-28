@@ -33,9 +33,12 @@ x-app-environment: &app-environment
   S3_USE_SSL: ${S3_USE_SSL:-false}
   S3_QUARANTINE_BUCKET: ${S3_QUARANTINE_BUCKET:-pofa-quarantine}
   S3_EVIDENCE_BUCKET: ${S3_EVIDENCE_BUCKET:-pofa-evidence}
-  # Development defaults only. A production deploy sets a real secret, an
-  # explicit CORS allowlist and AUTH_MODE=enforcing; the config validator then
-  # refuses any of these permissive defaults (fail-closed).
+  # Development defaults only, matching backend/core/config.py so a stack that
+  # sets nothing behaves exactly as before. A production deploy sets a real
+  # secret, an explicit CORS allowlist, AUTH_MODE=enforcing with
+  # AUTH_DEV_TOKENS_ENABLED=false, and AUTH_OIDC_ENABLED=true with the
+  # provider's real issuer/JWKS: the config validator refuses every one of
+  # these permissive defaults under ENVIRONMENT=production (fail-closed).
   JWT_SECRET: ${JWT_SECRET:-changeme}
   CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
   AUTH_MODE: ${AUTH_MODE:-development}
