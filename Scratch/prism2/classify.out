@@ -1,0 +1,117 @@
+unpublished commits analysed          : 13  (1c2eb039 .. 190c64ca)
+paths flagged by artifact name        : 24
+
+PATH                                                         CLASS             ATTRIBUTION
+Scratch/be029/backups/pofa_dev_20261009T150626Z_pre-be029.d  DATABASE_DUMP     first=1c2eb039 last=a453ebb4 in=6/13
+Scratch/be029/backups/pofa_dev_20261009T152259Z_pre-migrati  DATABASE_DUMP     first=1c2eb039 last=a453ebb4 in=6/13
+Scratch/be029/event_type_domain.sql                          SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/be029/phase2_ts.env                                  ENV_FILE          first=1c2eb039 last=190c64ca in=13/13
+Scratch/be030/_testurl.txt                                   URL_DUMP          first=1c2eb039 last=190c64ca in=13/13
+Scratch/be033/append_probe.sql                               SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/be033/append_probe2.sql                              SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/be033/append_probe3.sql                              SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/be033/be033_pofa_dev.dump                            DATABASE_DUMP     first=1c2eb039 last=a453ebb4 in=6/13
+Scratch/be033/poa_runtime_password.txt                       PASSWORD_FILE     first=1c2eb039 last=190c64ca in=13/13
+Scratch/be034/be034_pofa_dev_current.dump                    DATABASE_DUMP     first=1c2eb039 last=a453ebb4 in=6/13
+Scratch/be035/be035_pofa_dev_current.dump                    DATABASE_DUMP     first=1c2eb039 last=a453ebb4 in=6/13
+Scratch/be037/staged.diff                                    DIFF_SNAPSHOT     first=1c2eb039 last=190c64ca in=13/13
+Scratch/be037final/run_1013t1635_7c1f1/img-initdb/init.sql   SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/be037phasea/grants_disp.sql                          SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/be037phasea/phaseB_remed_c95222/secrets.env          SECRET_ENV        first=1c2eb039 last=a453ebb4 in=6/13
+Scratch/be037phasea/phaseb_be037b65cee2/pg-init/init.sql     SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/be037phasea/phaseb_be037b65cee2/provision-runtime.s  SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/be037phasea/phaseb_be037b65cee2/secrets.env          SECRET_ENV        first=1c2eb039 last=a453ebb4 in=6/13
+Scratch/be037phasea/phaseb_be037b65cee2/stageH-owner-trigge  SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+Scratch/deploy1/poa-backend-mbe01-wt1.tar                    BINARY_ARCHIVE    first=1c2eb039 last=190c64ca in=13/13
+diagnostics/audit_gap_diagnostic.sql                         SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+docker/pg-init/init.sql                                      SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+scripts/provision_runtime_roles.sql                          SQL_DATA_EXPORT   first=1c2eb039 last=190c64ca in=13/13
+
+per-class path counts: DATABASE_DUMP=1
+still present at HEAD: SQL_DATA_EXPORT=12, ENV_FILE=1, URL_DUMP=1, PASSWORD_FILE=1, DIFF_SNAPSHOT=1, BINARY_ARCHIVE=1 (total 17)
+
+== credential-shaped content at HEAD (values never printed) ==
+inert matches : 268 (assign-CODE-REF=19) (assign-FILE-PATH=1) (assign-PLAINTEXT=1) (assign-SHORT=67) (assign-TEMPLATE=62) (dsn-CODE-REF=2) (dsn-SHORT=16) (dsn-TEMPLATE=37) (dsn-local-dev-or-container-default=63)
+literal credential-shaped matches : 479
+distinct literal values : 29
+   sha256:734d11a154 [ASSIGN/PLAINTEXT] len=10 places=420 :: var=KeyError val_len=10
+        Scratch/poa_stageE_be026/server8121.log.pre-fse06:11
+        Scratch/poa_stageE_be026/server8121.log.pre-fse06:117
+        Scratch/poa_stageE_be026/server8121.log.pre-fse06:165
+        Scratch/poa_stageE_be026/server8121.log.pre-fse06:213
+        … 416 more
+   sha256:b8da1c2954 [ASSIGN/PLAINTEXT] len=19 places=11 :: var=private_key val_len=19
+        tests/integration/test_stage02_reviewer_identity.py:236
+        tests/integration/test_stage02_reviewer_identity.py:258
+        tests/integration/test_stage02_reviewer_identity.py:301
+        tests/integration/test_stage02_reviewer_identity.py:327
+        … 7 more
+   sha256:7ee58f1354 [DSN/PLAINTEXT] len=14 places=9 :: user=be037wf7e3_runtime host=db:5432/be037wf7e3_app pw_len=14
+        Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:8
+        Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:158
+        Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:280
+        Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:410
+        … 5 more
+   sha256:ad9858116e [ASSIGN/PLAINTEXT] len=10 places=7 :: var=S3_ACCESS_KEY val_len=10
+        .env.example:89
+        .env.example:90
+        .env.example:99
+        Scratch/be035/env.owner.backup:7
+        … 3 more
+   sha256:c834bff259 [ASSIGN/PLAINTEXT] len=23 places=2 :: var=keys val_len=23
+        Scratch/be030/alembic_pre030.ini:118
+        alembic.ini:118
+   sha256:8eff75b7a0 [ASSIGN/PLAINTEXT] len=12 places=2 :: var=token val_len=12
+        Scratch/be037phasea/phaseb_be037b65cee2/probe_e.py:191
+        Scratch/be037phasea/phaseb_be037b65cee2/probe_e.py:195
+   sha256:5b8bdd0602 [ASSIGN/PLAINTEXT] len=10 places=2 :: var=secret val_len=10
+        Scratch/deploy1/be019/headsrc/work__endpoints_integration.py.bak:327
+        backend/api/v1/endpoints/integration.py:328
+   sha256:5f1921fb8e [ASSIGN/PLAINTEXT] len=12 places=2 :: var=secret_hash val_len=12
+        Scratch/deploy1/be019/headsrc/work__endpoints_integration.py.bak:721
+        backend/api/v1/endpoints/integration.py:771
+   sha256:a6aba08caa [ASSIGN/PLAINTEXT] len=17 places=2 :: var=secret val_len=17
+        Scratch/deploy1/be019/headsrc/work__endpoints_integration.py.bak:745
+        backend/api/v1/endpoints/integration.py:795
+   sha256:3caacbfc69 [ASSIGN/PLAINTEXT] len=12 places=2 :: var=_LAST_ADMIN_LOCK_KEY val_len=12
+        Scratch/deploy1/be039/proof/backend_services_authorization.py.post_fix.bak:938
+        backend/services/authorization.py:938
+   sha256:684e56e918 [ASSIGN/PLAINTEXT] len=11 places=2 :: var=dedupe_key val_len=11
+        backend/repositories/evidence_graph.py:63
+        backend/services/evidence_graph.py:189
+   sha256:07ef3f4e6d [ASSIGN/PLAINTEXT] len=13 places=1 :: var=KEY val_len=13
+        Scratch/be029/ledger_append_only_probe.py:41
+   sha256:28316a393a [ASSIGN/PLAINTEXT] len=16 places=1 :: var=KeyError val_len=16
+        Scratch/be037final/run_1013t1635_7c1f1/final-08-redis-exception-hierarchy.txt:27
+   sha256:0be64ae89d [DSN/PLAINTEXT] len=8 places=1 :: user=postgres host=localhost:{HOST_PORT}/{DB_NAME} pw_len=8
+        Scratch/be037final/run_1013t1635_7c1f1/wsd_second_boot.py:48
+   sha256:f2048e4337 [DSN/PLAINTEXT] len=10 places=1 :: user=${POFA_SHARED_USER:-post host=127.0.0.1:5432/pofa_test pw_len=10
+        Scratch/be037phasea/phaseB_remed_c95222/run-drift-classification.sh:6
+   sha256:3d5749bb3f [ASSIGN/BASE64-ISH] len=56 places=1 :: var=STORAGE_KEY val_len=56
+        Scratch/be037phasea/phaseb_be037b65cee2/stageF-result-rerun.txt:44
+   sha256:1a7a5f3555 [ASSIGN/BASE64-ISH] len=56 places=1 :: var=STORAGE_KEY val_len=56
+        Scratch/be037phasea/phaseb_be037b65cee2/stageF-result-rerun2.txt:47
+   sha256:79f70346af [ASSIGN/BASE64-ISH] len=56 places=1 :: var=STORAGE_KEY val_len=56
+        Scratch/be037phasea/phaseb_be037b65cee2/stageF-result.txt:42
+   sha256:248dc6a1a6 [ASSIGN/BASE64-ISH] len=56 places=1 :: var=G4_STORAGE_KEY val_len=56
+        Scratch/be037phasea/phaseb_be037b65cee2/stageG-10-runA.txt:38
+   sha256:a942b37ccf [DSN/PLAINTEXT] len=8 places=1 :: user=postgres host=(none) pw_len=8
+        Scratch/deploy1/mbe01_deploy_rehearsal.py:318
+   sha256:bc4e32bd5b [ASSIGN/BASE64-ISH] len=23 places=1 :: var=APPEND_LOCK_KEY val_len=23
+        backend/services/audit_ledger.py:52
+   sha256:8ddacedbe0 [ASSIGN/PLAINTEXT] len=12 places=1 :: var=storage_key val_len=12
+        backend/services/evidence_ingestion.py:115
+   sha256:6093a78837 [ASSIGN/PLAINTEXT] len=11 places=1 :: var=key val_len=11
+        backend/services/storage.py:182
+   sha256:f72271fe2f [ASSIGN/PLAINTEXT] len=22 places=1 :: var=Key val_len=22
+        backend/services/storage.py:208
+   sha256:d5adca02c9 [DSN/PLAINTEXT] len=15 places=1 :: user=postgres host=127.0.0.1:1/no_such_database pw_len=15
+        tests/integration/test_be027_foundation_contract.py:291
+   sha256:bf54036858 [ASSIGN/PLAINTEXT] len=11 places=1 :: var=aws_access_key_id val_len=11
+        tests/preflight.py:226
+   sha256:f3b1a8c5d8 [ASSIGN/PLAINTEXT] len=11 places=1 :: var=aws_secret_access_key val_len=11
+        tests/preflight.py:227
+   sha256:36ba773032 [ASSIGN/PLAINTEXT] len=11 places=1 :: var=jwt_secret val_len=11
+        tests/unit/test_configuration_and_logging.py:117
+   sha256:e0bfc5f148 [DSN/PLAINTEXT] len=8 places=1 :: user=poa_owner host=10.0.0.4:5432/pofa_prod pw_len=8
+        tests/unit/test_stage02_log_redaction.py:26

@@ -41,6 +41,30 @@ node_modules/
 **/secrets.env
 Scratch/deploy1/armfull_state.json
 
+# Every artifact class that Phase 1 found reachable in unpublished history:
+# a 704 MB image export, a captured role password, a dumped test URL and a
+# backup copy of the developer .env.
+*.tar
+*.tgz
+*.zip
+*_password.txt
+*_password.lst
+*credential*.txt
+_testurl.txt
+env.owner.backup
+*.env.bak
+*.env.backup
+# Any real .env, while still allowing the documented templates.
+**/.env
+!**/.env.example
+!**/.env.*.example
+
+# Generated probe output; evidence belongs in the committed .out summaries.
+Scratch/**/*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
 # A git worktree of another branch checked out inside this repo; the nested
 # branch owns that history, so it must not be recorded as a gitlink here.
 Scratch/mbe01-frontend/

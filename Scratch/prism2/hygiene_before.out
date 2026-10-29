@@ -1,0 +1,17 @@
+mode=worktree target=-
+paths checked: 872  text blobs content-scanned: 829
+findings: 14
+   ENV_FILE_NOT_EXAMPLE  Scratch/be029/phase2_ts.env  matched_length=0
+   RAW_URL_DUMP  Scratch/be030/_testurl.txt  matched_length=0
+   PASSWORD_FILE  Scratch/be033/poa_runtime_password.txt  matched_length=0
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:8  matched_length=56
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:158  matched_length=56
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:280  matched_length=56
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:410  matched_length=56
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:567  matched_length=56
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:662  matched_length=56
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:748  matched_length=56
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:834  matched_length=56
+   DSN_WITH_PASSWORD  Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:946  matched_length=56
+   ARCHIVE_OR_IMAGE_TAR  Scratch/deploy1/poa-backend-mbe01-wt1.tar  matched_length=0
+   LARGE_BINARY  Scratch/deploy1/poa-backend-mbe01-wt1.tar  matched_length=704616448
