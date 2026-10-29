@@ -72,7 +72,7 @@ def oidc_endpoint_host(label: str, value: str) -> str:
 
 
 class Settings(BaseSettings):
-    app_name: str = "proof-of-action-backend"
+    app_name: str = "prism-backend"
     environment: str = "development"
 
     # Data stores
@@ -185,7 +185,7 @@ class Settings(BaseSettings):
 
     # BE-020 Observability Configuration
     otel_enabled: bool = False
-    otel_service_name: str = "poa-backend"
+    otel_service_name: str = "prism-backend"
     otel_exporter_otlp_endpoint: str = ""
     otel_trace_sample_rate: float = 0.1
     prometheus_enabled: bool = True

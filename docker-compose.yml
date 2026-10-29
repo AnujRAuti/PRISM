@@ -1,4 +1,4 @@
-# PoA backend — full stack (BE-037 Phase A).
+# PRISM backend — full stack (BE-037 Phase A).
 #
 # Datastores (db/redis/minio/minio-init) keep their original behavior; database
 # passwords are now passed through variables with the same development defaults,
@@ -54,6 +54,8 @@ x-app-environment: &app-environment
   AUTH_OIDC_IDENTITY_PROVIDER: ${AUTH_OIDC_IDENTITY_PROVIDER:-supabase}
   AUTH_OIDC_ALGORITHMS: ${AUTH_OIDC_ALGORITHMS:-RS256}
   AUTH_OIDC_JWKS_TTL_SECONDS: ${AUTH_OIDC_JWKS_TTL_SECONDS:-300}
+
+x-prism-image: &prism-image ${PRISM_IMAGE:-prism-backend:prism-3e79f833}
 
 services:
   db:
@@ -130,7 +132,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: poa-backend:be037a
+    image: *prism-image
     container_name: pofa_api
     restart: unless-stopped
     command: ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -161,7 +163,7 @@ services:
     networks: [pofa]
 
   analysis_worker:
-    image: poa-backend:be037a
+    image: *prism-image
     container_name: pofa_analysis_worker
     restart: unless-stopped
     command: ["python", "-m", "backend.workers.analysis_worker"]
@@ -176,7 +178,7 @@ services:
     networks: [pofa]
 
   notification_worker:
-    image: poa-backend:be037a
+    image: *prism-image
     container_name: pofa_notification_worker
     restart: unless-stopped
     # One-shot CLI pass wrapped in a bounded loop so the container persists. The
@@ -193,7 +195,7 @@ services:
     networks: [pofa]
 
   retention_worker:
-    image: poa-backend:be037a
+    image: *prism-image
     container_name: pofa_retention_worker
     restart: unless-stopped
     # Deliberately omits --auto-delete: a scheduled sweep must archive/evaluate
@@ -208,7 +210,7 @@ services:
     networks: [pofa]
 
   webhook_worker:
-    image: poa-backend:be037a
+    image: *prism-image
     container_name: pofa_webhook_worker
     restart: unless-stopped
     command: ["sh", "-c", "trap 'exit 0' TERM INT; while true; do python -m backend.workers.webhook_worker --once --limit 50; sleep 15 & wait $!; done"]
@@ -223,7 +225,7 @@ services:
     # behind the `tools` profile. Uses the separate migration identity so the
     # runtime role never performs DDL.
     #   docker compose run --rm migrate
-    image: poa-backend:be037a
+    image: *prism-image
     container_name: pofa_migrate
     profiles: ["tools"]
     command: ["alembic", "upgrade", "head"]

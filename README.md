@@ -1,7 +1,8 @@
-# Proof of Action - Backend
+# PRISM Backend
 
-Backend for Evidence Integrity & Intelligence Layer (EIIL).
+Backend for the PRISM Evidence Integrity & Intelligence Layer (EIIL).
 
-See `docs/Proof-of-Action Backend — TODO.md` for roadmap and tasks.
+See `docs/PRISM Report — Autonomous Backend Completion — 2026-10-29.md` for the
+latest release status and remaining gates.
 
 Object storage setup and the S3/MinIO storage abstraction are documented in `docs/storage.md`.

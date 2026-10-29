@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# BE-037 Phase A — production container image for the PoA backend.
+# BE-037 Phase A — production container image for the PRISM backend.
 #
 # One image is built and shared by the API and the four background workers
 # (analysis, notification, retention, webhook). Only the command differs.
@@ -10,7 +10,7 @@
 # have cp312 wheels for these packages, but that path was NOT exercised in this
 # phase — do not assume the image runs on ARM until it is built and smoke-tested
 # there. Build explicitly for the intended platform, e.g.
-#   docker build --platform linux/amd64 -t poa-backend:be037a .
+#   docker build --platform linux/amd64 -t prism-backend:prism-3e79f833 .
 #
 # WHY CPU-ONLY TORCH: the deployment target is a CPU VM (no GPU), and the app
 # already runs inference on CPU via VISION_DEVICE=auto (backend/core/config.py),

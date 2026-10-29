@@ -66,7 +66,7 @@ def test_add_service_info():
     """Test adding service information."""
     event_dict = {}
     result = add_service_info(None, None, event_dict)
-    assert result["service"] == "poa-backend"
+    assert result["service"] == "prism-backend"
     assert "component" in result
 
 
