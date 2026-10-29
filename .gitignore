@@ -58,6 +58,9 @@ env.owner.backup
 **/.env
 !**/.env.example
 !**/.env.*.example
+# Captured environment files in scratch runs are the same artifact class.
+Scratch/**/*.env
+!Scratch/**/*.env.example
 
 # Generated probe output; evidence belongs in the committed .out summaries.
 Scratch/**/*.pyc
