@@ -179,8 +179,11 @@ services:
     image: poa-backend:be037a
     container_name: pofa_notification_worker
     restart: unless-stopped
-    # One-shot CLI pass wrapped in a bounded loop so the container persists.
-    command: ["sh", "-c", "while true; do python -m backend.workers.notification_worker --limit 50; sleep 15; done"]
+    # One-shot CLI pass wrapped in a bounded loop so the container persists. The
+    # sleep runs in the background and the shell waits on it: a foreground sleep
+    # makes dash defer SIGTERM until it returns, which turns every `docker stop`
+    # into a timeout followed by SIGKILL mid-batch.
+    command: ["sh", "-c", "trap 'exit 0' TERM INT; while true; do python -m backend.workers.notification_worker --limit 50; sleep 15 & wait $!; done"]
     environment: *app-environment
     depends_on:
       db:
@@ -195,7 +198,7 @@ services:
     restart: unless-stopped
     # Deliberately omits --auto-delete: a scheduled sweep must archive/evaluate
     # only; deletion stays an explicit operator action per the worker contract.
-    command: ["sh", "-c", "while true; do python -m backend.workers.retention_worker --limit 200; sleep 3600; done"]
+    command: ["sh", "-c", "trap 'exit 0' TERM INT; while true; do python -m backend.workers.retention_worker --limit 200; sleep 3600 & wait $!; done"]
     environment: *app-environment
     depends_on:
       db:
@@ -208,7 +211,7 @@ services:
     image: poa-backend:be037a
     container_name: pofa_webhook_worker
     restart: unless-stopped
-    command: ["sh", "-c", "while true; do python -m backend.workers.webhook_worker --once --limit 50; sleep 15; done"]
+    command: ["sh", "-c", "trap 'exit 0' TERM INT; while true; do python -m backend.workers.webhook_worker --once --limit 50; sleep 15 & wait $!; done"]
     environment: *app-environment
     depends_on:
       db:

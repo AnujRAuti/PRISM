@@ -1,0 +1,50 @@
+{
+  "step": "app",
+  "checks": [
+    {
+      "check": "the candidate app answers HTTP against the migrated schema",
+      "passed": true,
+      "detail": "GET /ready http=200"
+    },
+    {
+      "check": "the root readiness report names every dependency leg healthy on the migrated copy",
+      "passed": true,
+      "detail": "http=200 legs={\"application\": \"healthy\", \"postgresql\": \"healthy\", \"redis\": \"healthy\", \"storage\": \"healthy\"}"
+    },
+    {
+      "check": "the shipped idempotent bootstrap closes the catalogue shortfall on the copy",
+      "passed": true,
+      "detail": "permissions rows 69 -> 70 after ensure_default_catalogue() (the function no production caller invokes)"
+    },
+    {
+      "check": "the copy's catalogue now matches exactly what the shipped code declares",
+      "passed": true,
+      "detail": "declared=70 rows=70 still_missing=[] - reached by calling ensure_default_catalogue() from this probe, not by the container's own startup sequence"
+    },
+    {
+      "check": "the migrated copy resolves the application's own identity endpoint",
+      "passed": true,
+      "detail": "http=200 roles=['SUPERVISOR'] permissions=40 project.create=True body_chars=1021"
+    },
+    {
+      "check": "no unauthenticated write creates a project (the 201 below is not an open door)",
+      "passed": true,
+      "detail": "http=422 projects=0 -> 0 layer=service owner-derivation check detail={\"detail\":\"owner_id is required: the caller has no user identity to own the project\"}"
+    },
+    {
+      "check": "the workflow only the new schema supports (PROJECT_CREATED) runs over HTTP",
+      "passed": true,
+      "detail": "http=201 body={\"id\":\"d945dd5c-7a26-4dd6-9d06-12751f1e2075\",\"name\":\"PRISM rehearsal\",\"owner_id\":\"2c073e82-f6f5-4d27-ab21-9d53180d2849\",\"created_at\":\"2026-10-29T13:36:15.961579Z\"}"
+    },
+    {
+      "check": "the audit ledger accepted the new event",
+      "passed": true,
+      "detail": "rows 3 -> 4 for this request"
+    },
+    {
+      "check": "the audit chain on the restored copy runs through the shipped verifier",
+      "passed": true,
+      "detail": "{\"valid\": true, \"checked_events\": 4, \"first_sequence\": 1, \"last_sequence\": 4, \"failures\": []}"
+    }
+  ]
+}

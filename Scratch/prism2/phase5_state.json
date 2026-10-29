@@ -1,0 +1,34 @@
+{
+  "dump": "D:\\CODING\\Backups\\poa\\poa_prod-20261029T124038Z.dump",
+  "sha256": "cb6710330f6855cb36373146001b9826136f041fa4d16fd14af98d717929ecb5",
+  "bytes": "270156",
+  "revision_before": "v2w3x4y5z032",
+  "counts": {
+    "users": "0",
+    "projects": "0",
+    "audit_ledger_events": "1",
+    "roles": "6",
+    "user_role_assignments": "0",
+    "permissions": "69"
+  },
+  "base_tables": "73",
+  "db_size_bytes": "20837167",
+  "stored_at": "2026-10-29T12:40:54.935095+00:00",
+  "dumpable_tables": "72",
+  "restored_at": "2026-10-29T13:35:27.706630+00:00",
+  "ledger_digest_live": "d4e676c0adca8ed3c3be0ffdac14adc5",
+  "ledger_digest_copy": "d4e676c0adca8ed3c3be0ffdac14adc5",
+  "revision_after": "w3x4y5z6a033",
+  "counts_after": {
+    "users": "0",
+    "projects": "0",
+    "audit_ledger_events": "1",
+    "roles": "6",
+    "user_role_assignments": "0",
+    "permissions": "69"
+  },
+  "ledger_digest_pre_migration": "d4e676c0adca8ed3c3be0ffdac14adc5",
+  "ledger_digest_post_migration": "d4e676c0adca8ed3c3be0ffdac14adc5",
+  "permission_rows": "69",
+  "drift": "er_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)"
+}

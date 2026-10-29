@@ -67,6 +67,9 @@ node_modules/
 .vscode/
 .idea/
 .claude/
+# A worktree build of the earlier candidate baked .freebuff/project-id (local tool
+# state that exists in no commit) into the image; docker does not read .gitignore.
+.freebuff/
 .DS_Store
 
 # --- Local CI/tooling that must not leak into the image ---

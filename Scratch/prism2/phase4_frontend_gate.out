@@ -1,0 +1,47 @@
+=== HEAD f9e26d13 fullstack
+=== npm test ===
+  ✔ calculateFusionIntegrity correctly weights multi-signal inputs (2.0979ms)
+  ✔ detectImpossibleTravel flags implausible velocity between submissions (1.363ms)
+  ✔ detectImpossibleTravel passes feasible velocity (0.4217ms)
+✔ EIIL Fusion Engine & Anomaly Rules (7.0048ms)
+▶ Utility Functions & Formatters
+  ✔ formatDate correctly formats ISO date strings (104.135ms)
+  ✔ formatFileSize correctly calculates units (1.0422ms)
+  ✔ getRiskLevel returns correct risk classification and colors (0.6114ms)
+  ✔ getIntegrityLevel returns correct integrity scores (0.4038ms)
+  ✔ truncateText truncates with ellipsis when length exceeded (0.4289ms)
+  ✔ getUserRoleLabel translates system roles into human-readable titles (0.4318ms)
+  ✔ getStatusColor maps statuses to bootstrap classes (0.4308ms)
+  ✔ validateEmail validates RFC-compliant email formats (0.7323ms)
+  ✔ generateId returns unique string identifiers (0.5777ms)
+  ✔ getIndianStates returns official list of Indian states (1.045ms)
+  ✔ capitalize capitalizes first character (0.7393ms)
+✔ Utility Functions & Formatters (115.1703ms)
+ℹ tests 36
+ℹ suites 9
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 646.01
+=== npm run build ===
+dist/assets/ProjectDetail-Dz-NPOO9.js      13.76 kB │ gzip:  2.65 kB
+dist/assets/ReviewInterface-BtRwlB5Z.js    15.70 kB │ gzip:  3.51 kB
+dist/assets/EvidenceGraph-yhoZtlOm.js      20.62 kB │ gzip:  5.14 kB
+dist/assets/EvidenceDetail-BR5zyKfF.js     21.20 kB │ gzip:  5.51 kB
+dist/assets/Search-BBX_0gm7.js             26.53 kB │ gzip:  5.48 kB
+dist/assets/AdminDashboard-YRcvuWPl.js     31.62 kB │ gzip:  6.54 kB
+dist/assets/index-1Z-jfrMS.js              38.23 kB │ gzip: 11.56 kB
+dist/assets/network-C654CTRf.js            49.86 kB │ gzip: 18.73 kB
+dist/assets/vendor-DtuMx0jC.js            214.39 kB │ gzip: 55.16 kB
+dist/assets/react-core-B-PBLSWS.js        258.63 kB │ gzip: 82.06 kB
+
+[32m✓ built in 3.38s[39m
+=== npm run lint ===
+src/pages/Evidence/UploadEvidence.jsx:19:18: warning react(purity): Cannot call impure function during render help: `Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+src/pages/Evidence/UploadEvidence.jsx:62:7: warning react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+src/pages/Search.jsx:3:10: warning eslint(no-unused-vars): Identifier 'formatDate' is imported but never used. help: Consider removing this import.
+src/pages/Search.jsx:159:17: warning react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'evidenceData' help: Either include it or remove the dependency array.
+src/pages/Reviews/ReviewInterface.jsx:13:20: warning eslint(no-unused-vars): Variable 'setEvidence' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+=== lint warning count: 38 ===

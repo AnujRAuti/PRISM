@@ -1,0 +1,60 @@
+{
+  "step": "restore",
+  "checks": [
+    {
+      "check": "the stored dump still hashes to the value recorded when it was taken",
+      "passed": true,
+      "detail": "sha256=cb6710330f6855cb... bytes=270156"
+    },
+    {
+      "check": "the dump restored into the isolated rehearsal database without errors",
+      "passed": true,
+      "detail": "rc=0 alembic=v2w3x4y5z032 "
+    },
+    {
+      "check": "the restored copy starts at exactly production's revision",
+      "passed": true,
+      "detail": "rehearsal=v2w3x4y5z032 poa_prod=v2w3x4y5z032"
+    },
+    {
+      "check": "restored users carries the same rows as production",
+      "passed": true,
+      "detail": "rehearsal=0 poa_prod=0"
+    },
+    {
+      "check": "restored projects carries the same rows as production",
+      "passed": true,
+      "detail": "rehearsal=0 poa_prod=0"
+    },
+    {
+      "check": "restored audit_ledger_events carries the same rows as production",
+      "passed": true,
+      "detail": "rehearsal=1 poa_prod=1"
+    },
+    {
+      "check": "restored roles carries the same rows as production",
+      "passed": true,
+      "detail": "rehearsal=6 poa_prod=6"
+    },
+    {
+      "check": "restored user_role_assignments carries the same rows as production",
+      "passed": true,
+      "detail": "rehearsal=0 poa_prod=0"
+    },
+    {
+      "check": "restored permissions carries the same rows as production",
+      "passed": true,
+      "detail": "rehearsal=69 poa_prod=69"
+    },
+    {
+      "check": "the restored schema has the same base-table count",
+      "passed": true,
+      "detail": "rehearsal=73 poa_prod=73"
+    },
+    {
+      "check": "the restored ledger rows carry the same content as production's, not just the same count",
+      "passed": true,
+      "detail": "rehearsal md5=d4e676c0adca... poa_prod md5=d4e676c0adca..."
+    }
+  ]
+}

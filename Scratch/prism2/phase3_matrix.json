@@ -1,0 +1,181 @@
+{
+  "summary": {
+    "counts": {
+      "PASS": 26,
+      "FAIL": 0,
+      "BLOCKED": 2
+    },
+    "acceptance_proven": false,
+    "sent_credentials": 9
+  },
+  "checks": [
+    {
+      "section": "0-preflight",
+      "check": "the candidate container answers on the chosen port",
+      "status": "PASS",
+      "detail": "http://127.0.0.1:8011"
+    },
+    {
+      "section": "0-preflight",
+      "check": "the published key set is still the single ES256 kid measured in Phase 2",
+      "status": "PASS",
+      "detail": "kid=ab0ac6ae-93be-441c-9196-7b2fade15af0"
+    },
+    {
+      "section": "1-refusal",
+      "check": "anonymous request is refused",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Authentication required\"}"
+    },
+    {
+      "section": "1-refusal",
+      "check": "development bearer token is refused (dev tokens are off)",
+      "status": "PASS",
+      "detail": "http=401"
+    },
+    {
+      "section": "1-refusal",
+      "check": "HS256 token is refused",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Invalid credentials\"}"
+    },
+    {
+      "section": "1-refusal",
+      "check": "forged ES256 carrying the live kid is refused",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Invalid credentials\"}"
+    },
+    {
+      "section": "1-refusal",
+      "check": "unknown kid is refused",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Invalid credentials\"}"
+    },
+    {
+      "section": "1-refusal",
+      "check": "wrong issuer is refused",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Invalid credentials\"}"
+    },
+    {
+      "section": "1-refusal",
+      "check": "wrong audience is refused",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Invalid credentials\"}"
+    },
+    {
+      "section": "1-refusal",
+      "check": "expired token is refused",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Invalid credentials\"}"
+    },
+    {
+      "section": "1-refusal",
+      "check": "refresh token used as a session is refused",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Invalid credentials\"}"
+    },
+    {
+      "section": "1-refusal",
+      "check": "no refusal created or changed a user row (nothing auto-provisioned)",
+      "status": "PASS",
+      "detail": "users before=1 after=1"
+    },
+    {
+      "section": "1-refusal",
+      "check": "the refusals name distinct reasons, not one blanket error",
+      "status": "PASS",
+      "detail": "{\"ALGORITHM_REFUSED\": 6, \"UNKNOWN_KEY_ID\": 6, \"TOKEN_REJECTED\": 26}"
+    },
+    {
+      "section": "2-mapping",
+      "check": "the mapped subject resolves through the shipped code path",
+      "status": "PASS",
+      "detail": "{\"mapped\": true, \"user_id\": \"7833183a-09d3-4c51-b20c-062710e88038\", \"status\": \"ACTIVE\", \"provider\": \"supabase\", \"principal_type\": \"USER\", \"authenticated\": true, \"principal_status\": \"ACTIVE\", \"grants\": [{\"role\": \"REVIEWER\", \"scope_type\": \"PROJECT\", \"project_id\": \"c450af86-2fed-4a51-bede-adc9613e2a1f\"}], \"permissions\": [\"audit.read\", \"claim.read\", \"correction.create\", \"correction.read\", \"dispute.create\", \"dispute.read\", \"dispute.review\", \"evidence.read\", \"evidence.read_sensitive\", \"evidence_reques"
+    },
+    {
+      "section": "2-mapping",
+      "check": "exactly one grant, and it is REVIEWER at PROJECT scope",
+      "status": "PASS",
+      "detail": "[{\"role\": \"REVIEWER\", \"scope_type\": \"PROJECT\", \"project_id\": \"c450af86-2fed-4a51-bede-adc9613e2a1f\"}]"
+    },
+    {
+      "section": "2-mapping",
+      "check": "no administrative permission is granted to the reviewer",
+      "status": "PASS",
+      "detail": "admin-like=[] total_permissions=25"
+    },
+    {
+      "section": "2-mapping",
+      "check": "an unmapped subject finds no row (the lookup can actually miss)",
+      "status": "PASS",
+      "detail": "rows=['0']"
+    },
+    {
+      "section": "3-acceptance",
+      "check": "a token this project really signed is accepted",
+      "status": "BLOCKED",
+      "detail": "no Scratch/prism2/reviewer.local.token; run phase3_operator_token.py locally (it never prints the secret)"
+    },
+    {
+      "section": "3-acceptance",
+      "check": "the accepted principal is the mapped reviewer with REVIEWER only",
+      "status": "BLOCKED",
+      "detail": "needs the same token"
+    },
+    {
+      "section": "4-keyset-outage",
+      "check": "the app boots while its key set is unreachable (issuer shape valid, provider silent)",
+      "status": "PASS",
+      "detail": "/health ready=True"
+    },
+    {
+      "section": "4-keyset-outage",
+      "check": "an unverifiable token during a key-set outage is refused with a safe status (no 500, no admission)",
+      "status": "PASS",
+      "detail": "http=401 body={\"detail\":\"Invalid credentials\"}"
+    },
+    {
+      "section": "4-keyset-outage",
+      "check": "the refusal is attributed to the unavailable key set, not to a blanket rejection",
+      "status": "PASS",
+      "detail": "oidc_jwks_unavailable=True"
+    },
+    {
+      "section": "4-keyset-outage",
+      "check": "the outage is confined to authentication: /health still answers",
+      "status": "PASS",
+      "detail": "http=200"
+    },
+    {
+      "section": "4-keyset-outage",
+      "check": "a non-public issuer host never starts the app at all",
+      "status": "PASS",
+      "detail": "rc=1 refused at settings validation"
+    },
+    {
+      "section": "5-secret-hygiene",
+      "check": "none of the 9 credentials sent appears in the container log stream",
+      "status": "PASS",
+      "detail": "leaked=[]"
+    },
+    {
+      "section": "5-secret-hygiene",
+      "check": "no refusal body echoes the bearer token",
+      "status": "PASS",
+      "detail": "checked against every recorded detail line"
+    },
+    {
+      "section": "5-secret-hygiene",
+      "check": "the captured provider token stays in a gitignored local file",
+      "status": "PASS",
+      "detail": "git check-ignore Scratch/prism2/reviewer.local.token"
+    },
+    {
+      "section": "5-secret-hygiene",
+      "check": "the reviewer's personal identity file is gitignored",
+      "status": "PASS",
+      "detail": "git check-ignore Scratch/prism2/reviewer.local.json"
+    }
+  ]
+}

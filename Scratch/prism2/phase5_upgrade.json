@@ -1,0 +1,40 @@
+{
+  "step": "upgrade",
+  "checks": [
+    {
+      "check": "the audit chain on the restored copy runs through the shipped verifier",
+      "passed": true,
+      "detail": "{\"valid\": true, \"checked_events\": 1, \"first_sequence\": 1, \"last_sequence\": 1, \"failures\": []}"
+    },
+    {
+      "check": "the candidate image moves the copy from v2w3x4y5z032 to w3x4y5z6a033",
+      "passed": true,
+      "detail": "alembic=w3x4y5z6a033 rc=0  assume transactional DDL.\nINFO  [alembic.runtime.migration] Running upgrade v2w3x4y5z032 -> w3x4y5z6a033, Add PROJECT_CREATED to the enforced audit vocabulary."
+    },
+    {
+      "check": "the migration removed no rows from any measured table",
+      "passed": true,
+      "detail": "{\"before\": {\"users\": \"0\", \"projects\": \"0\", \"audit_ledger_events\": \"1\", \"roles\": \"6\", \"user_role_assignments\": \"0\", \"permissions\": \"69\"}, \"after\": {\"users\": \"0\", \"projects\": \"0\", \"audit_ledger_events\": \"1\", \"roles\": \"6\", \"user_role_assignments\": \"0\", \"permissions\": \"69\"}}"
+    },
+    {
+      "check": "the migration left every existing ledger row content-identical",
+      "passed": true,
+      "detail": "before md5=d4e676c0adca... after md5=d4e676c0adca..."
+    },
+    {
+      "check": "the migration's own effect on the catalogue",
+      "recorded": true,
+      "detail": "rows=69 declared_by_code=70 not_in_db=['metrics.read'] - the 032->033 revision widens the audit vocabulary only; the rows the code declares are inserted by the startup catalogue bootstrap, which the app step measures next"
+    },
+    {
+      "check": "no permission row exists that the shipped code does not declare",
+      "passed": true,
+      "detail": "extra=[] declared=70"
+    },
+    {
+      "check": "alembic reports no schema drift after the upgrade",
+      "passed": true,
+      "detail": "rc=0 er_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)"
+    }
+  ]
+}

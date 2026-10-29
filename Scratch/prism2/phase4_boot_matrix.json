@@ -1,0 +1,127 @@
+{
+  "image": "poa-backend:prism-481fdc39",
+  "digest": "poa-backend@sha256:cfce7e8fa635b0c52d8461efd522d400c6adc3475db1b8aa705b605b730a5185|sha256:cfce7e8fa635b0c52d8461efd522d400c6adc3475db1b8aa705b605b730a5185",
+  "checks": [
+    {
+      "check": "the named image exists and resolves to a digest",
+      "pass": true,
+      "detail": "poa-backend@sha256:cfce7e8fa635b0c52d8461efd522d400c6adc3475db1b8aa705b605b730a5"
+    },
+    {
+      "check": "an empty database was created for this smoke",
+      "pass": true,
+      "detail": "poa_boot4"
+    },
+    {
+      "check": "the new database has no application tables before migration",
+      "pass": true,
+      "detail": "base tables=0"
+    },
+    {
+      "check": "the image's own Alembic revision builds the schema from nothing",
+      "pass": true,
+      "detail": "rc=0 INFO  [alembic.env] Alembic target database: poa_boot4\nINFO  [alembic.runtime.mi"
+    },
+    {
+      "check": "the built schema sits at the release revision",
+      "pass": true,
+      "detail": "alembic_version=w3x4y5z6a033"
+    },
+    {
+      "check": "the built schema has the expected table count",
+      "pass": true,
+      "detail": "base tables=73"
+    },
+    {
+      "check": "the API answers liveness on the fresh schema",
+      "pass": true,
+      "detail": "{\"status\":\"healthy\",\"timestamp\":1793287960.0713074,\"checks\":{\"application\":{\"status\":\"healthy\",\"message\":\"Application is running\"}}}"
+    },
+    {
+      "check": "/ready reports every dependency leg healthy",
+      "pass": true,
+      "detail": "http=200 {'application': 'healthy', 'postgresql': 'healthy', 'redis': 'healthy', 'storage': 'healthy'}"
+    },
+    {
+      "check": "/healthz answers",
+      "pass": true,
+      "detail": "http=200 {\"status\":\"healthy\",\"timestamp\":1793287960.5558472,\"liveness"
+    },
+    {
+      "check": "/api/v1/ready answers",
+      "pass": true,
+      "detail": "http=200 {\"status\":\"ok\"}"
+    },
+    {
+      "check": "anonymous /auth/me is refused on this configuration",
+      "pass": true,
+      "detail": "http=401"
+    },
+    {
+      "check": "anonymous /projects is refused on this configuration",
+      "pass": true,
+      "detail": "http=401"
+    },
+    {
+      "check": "anonymous /metrics is refused on this configuration",
+      "pass": true,
+      "detail": "http=401 {\"detail\":\"Authentication required\"}"
+    },
+    {
+      "check": "the API shuts down gracefully on SIGTERM",
+      "pass": true,
+      "detail": "exit=0 shutdown_logged=False"
+    },
+    {
+      "check": "the analysis worker starts and stays up",
+      "pass": true,
+      "detail": "running=true traceback=False lines=1"
+    },
+    {
+      "check": "the analysis worker exits cleanly on SIGTERM",
+      "pass": true,
+      "detail": "exit=0"
+    },
+    {
+      "check": "the notification worker starts and stays up",
+      "pass": true,
+      "detail": "running=true traceback=False lines=1"
+    },
+    {
+      "check": "the notification worker exits cleanly on SIGTERM",
+      "pass": true,
+      "detail": "exit=0"
+    },
+    {
+      "check": "the retention worker starts and stays up",
+      "pass": true,
+      "detail": "running=true traceback=False lines=2"
+    },
+    {
+      "check": "the retention worker exits cleanly on SIGTERM",
+      "pass": true,
+      "detail": "exit=0"
+    },
+    {
+      "check": "the webhook worker starts and stays up",
+      "pass": true,
+      "detail": "running=true traceback=False lines=1"
+    },
+    {
+      "check": "the webhook worker exits cleanly on SIGTERM",
+      "pass": true,
+      "detail": "exit=0"
+    },
+    {
+      "check": "the disposable database was dropped, leaving no state behind",
+      "pass": true,
+      "detail": "pg_database rows=0"
+    }
+  ],
+  "notes": [
+    {
+      "note": "docker-compose.yml pins a different image tag; a deployment must retag or override it",
+      "detail": "compose api image=poa-backend:be037a tested image=poa-backend:prism-481fdc39"
+    }
+  ]
+}

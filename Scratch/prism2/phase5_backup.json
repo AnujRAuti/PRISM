@@ -1,0 +1,50 @@
+{
+  "step": "backup",
+  "checks": [
+    {
+      "check": "the VM is reachable and poa_prod reports a revision",
+      "passed": true,
+      "detail": "v2w3x4y5z032"
+    },
+    {
+      "check": "production row counts (rows are counted, never read)",
+      "recorded": true,
+      "detail": "{\"users\": \"0\", \"projects\": \"0\", \"audit_ledger_events\": \"1\", \"roles\": \"6\", \"user_role_assignments\": \"0\", \"permissions\": \"69\"}"
+    },
+    {
+      "check": "database size and table counts",
+      "recorded": true,
+      "detail": "bytes=20837167 base_tables=73 pg_dump-owned=72 (extension-owned tables are recreated by CREATE EXTENSION)"
+    },
+    {
+      "check": "pg_dump wrote a custom-format dump of poa_prod inside the database container",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "pg_restore reads every table pg_dump owns out of the dump before it leaves the host",
+      "passed": true,
+      "detail": "TABLE entries=72 pg_dump-owned=72 (all base tables=73)"
+    },
+    {
+      "check": "the dump is on the host and checksummed",
+      "passed": true,
+      "detail": "sha256=cb6710330f6855cb... bytes=270156"
+    },
+    {
+      "check": "the copy in controlled storage is byte-identical to the host's dump",
+      "passed": true,
+      "detail": "local sha256=cb6710330f6855cb... bytes=270156 (host said 270156)"
+    },
+    {
+      "check": "the transient copy inside the database container was removed",
+      "passed": true,
+      "detail": "container says 'gone'"
+    },
+    {
+      "check": "the transient copy on the host was removed after the verified transfer",
+      "passed": true,
+      "detail": "host says 'no'"
+    }
+  ]
+}

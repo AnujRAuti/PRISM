@@ -1,0 +1,26 @@
+PASS  the named image exists and resolves to a digest  ->  poa-backend@sha256:cfce7e8fa635b0c52d8461efd522d400c6adc3475db1b8aa705b605b730a5
+NOTE  docker-compose.yml pins a different image tag; a deployment must retag or override it  ->  compose api image=poa-backend:be037a tested image=poa-backend:prism-481fdc39
+PASS  an empty database was created for this smoke  ->  poa_boot4
+PASS  the new database has no application tables before migration  ->  base tables=0
+PASS  the image's own Alembic revision builds the schema from nothing  ->  rc=0 INFO  [alembic.env] Alembic target database: poa_boot4
+INFO  [alembic.runtime.mi
+PASS  the built schema sits at the release revision  ->  alembic_version=w3x4y5z6a033
+PASS  the built schema has the expected table count  ->  base tables=73
+PASS  the API answers liveness on the fresh schema  ->  {"status":"healthy","timestamp":1793287960.0713074,"checks":{"application":{"status":"healthy","message":"Application is running"}}}
+PASS  /ready reports every dependency leg healthy  ->  http=200 {'application': 'healthy', 'postgresql': 'healthy', 'redis': 'healthy', 'storage': 'healthy'}
+PASS  /healthz answers  ->  http=200 {"status":"healthy","timestamp":1793287960.5558472,"liveness
+PASS  /api/v1/ready answers  ->  http=200 {"status":"ok"}
+PASS  anonymous /auth/me is refused on this configuration  ->  http=401
+PASS  anonymous /projects is refused on this configuration  ->  http=401
+PASS  anonymous /metrics is refused on this configuration  ->  http=401 {"detail":"Authentication required"}
+PASS  the API shuts down gracefully on SIGTERM  ->  exit=0 shutdown_logged=False
+PASS  the analysis worker starts and stays up  ->  running=true traceback=False lines=1
+PASS  the analysis worker exits cleanly on SIGTERM  ->  exit=0
+PASS  the notification worker starts and stays up  ->  running=true traceback=False lines=1
+PASS  the notification worker exits cleanly on SIGTERM  ->  exit=0
+PASS  the retention worker starts and stays up  ->  running=true traceback=False lines=2
+PASS  the retention worker exits cleanly on SIGTERM  ->  exit=0
+PASS  the webhook worker starts and stays up  ->  running=true traceback=False lines=1
+PASS  the webhook worker exits cleanly on SIGTERM  ->  exit=0
+PASS  the disposable database was dropped, leaving no state behind  ->  pg_database rows=0
+{"passed": 23, "total": 23}

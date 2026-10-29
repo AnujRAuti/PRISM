@@ -61,6 +61,11 @@ env.owner.backup
 # Captured environment files in scratch runs are the same artifact class.
 Scratch/**/*.env
 !Scratch/**/*.env.example
+# A real reviewer's email and provider subject are personal data: they stay in
+# this machine-only file, never in the repository that proves it stays clean.
+Scratch/**/*.local.json
+# Captured provider tokens are credentials with an expiry, not evidence.
+Scratch/**/*.token
 
 # Generated probe output; evidence belongs in the committed .out summaries.
 Scratch/**/*.pyc
