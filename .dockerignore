@@ -51,6 +51,18 @@ stage_*_server.log
 diagnostics/
 *.jsonl
 
+# --- Everything that is not the backend source tree ---
+# The image needs backend/, alembic/, alembic.ini and requirements.txt. Scratch/
+# holds verification scripts, database dumps, saved image tars and a nested git
+# worktree; frontend/ is a separate application with its own node_modules. Sending
+# them into the context costs minutes of transfer for files no layer reads.
+Scratch/
+frontend/
+docs/
+node_modules/
+*.tar
+*.dump
+
 # --- Editors / OS ---
 .vscode/
 .idea/
