@@ -1,0 +1,15 @@
+created poa_prism5_empty on the local postgres container
+PASS  starts empty: 0 base tables before any migration
+PASS  upgrade head runs: INFO  [alembic.runtime.migration] Running upgrade v2w3x4y5z032 -> w3x4y5z6a033, Add PROJECT_CREATED to the enforced audit vocabulary.
+PASS  lands on the single head: alembic_version = w3x4y5z6a033
+PASS  schema built from nothing: 73 base tables after migration
+PASS  required extensions: extensions = plpgsql, postgis, vector
+PASS  authorization catalogue is seeded: roles 6/6, permissions 70/70, grants 131/131
+PASS  no autogenerate drift on the fresh schema: INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact add_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py) | INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact remove_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py) | INFO  [alembic.schema_drift_policy] schema_drift_policy: suppressed known Alembic autogenerate artifact add_constraint on user_role_assignments.uq_user_role_scoped -- Alembic discards nulls_not_distinct when it rebuilds this constraint (BE-030 task 15; reason text and measurement pointer: backend/db/schema_drift_policy.py)
+PASS  downgrade base refuses atomically at the append-only vocabulary: rc=1, refusal message present=True, 73 base tables still present, alembic_version still w3x4y5z6a033
+NOTE  rollback past v2w3x4y5z032, w3x4y5z6a033 is restore-from-backup, not `alembic downgrade`.
+PASS  rebuild from empty is deterministic: columns 765, constraints 320, indexes 265, routines 859, triggers 1, 73 base tables vs 73, digests match (all equal)
+PASS  disposable database dropped: database no longer exists
+
+--- 10 passed, 0 failed ---
+exit=0

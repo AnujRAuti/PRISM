@@ -208,3 +208,50 @@ def test_graph_is_fully_reachable_from_the_head(revisions):
         f"revisions not reachable from head {EXPECTED_HEAD}: {orphans}. "
         "`alembic upgrade head` would never apply these."
     )
+
+
+#: Revisions that refuse to downgrade, by design. Each rebuilds the ledger's
+#: event-type CHECK to *widen* an append-only vocabulary; narrowing it again
+#: would either delete history or leave rows violating the restored constraint.
+#: The consequence is a release obligation, not an implementation detail:
+#: rolling back past these revisions is a restore-from-backup, never
+#: `alembic downgrade`. A refusal that appears or disappears silently changes
+#: that rollback contract, so every one of them has to be declared here.
+NO_DOWNGRADE_REVISIONS = frozenset({
+    "v2w3x4y5z032",  # BE-038: analysis lifecycle vocabulary
+    "w3x4y5z6a033",  # BE-039: PROJECT_CREATED
+})
+
+
+def _downgrade_refuses(path: Path) -> bool:
+    """True only when downgrade() cannot succeed at all.
+
+    The check is a direct ``raise`` in the function body, never a raise found
+    anywhere inside it. Other revisions abort a rollback on a violated
+    precondition (BE-029 refuses to drop an archive it has not restored, or an
+    index it did not create) and otherwise downgrade correctly -- those guards
+    protect data and are not part of the rollback contract. Only an
+    unconditional refusal makes `alembic downgrade` impossible.
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == "downgrade":
+            return any(isinstance(statement, ast.Raise) for statement in node.body)
+    return False
+
+
+def test_downgrade_refusals_are_exactly_the_declared_ones():
+    """Pin the rollback contract: only the append-only vocabulary revisions refuse.
+
+    This compares two sets, so it fails in both directions -- a refusal edited
+    out of a migration, and a new refusal added without declaring it.
+    """
+    refusing = set()
+    for path in sorted(VERSIONS_DIR.glob("*.py")):
+        revision = _module_revision(path)
+        if revision is not None and _downgrade_refuses(path):
+            refusing.add(revision.identifier)
+    assert refusing == set(NO_DOWNGRADE_REVISIONS), (
+        "downgrade-refusal set drifted from the declared rollback contract: "
+        f"declared {sorted(NO_DOWNGRADE_REVISIONS)}, found {sorted(refusing)}"
+    )
