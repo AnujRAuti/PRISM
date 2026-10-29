@@ -1,14 +1,14 @@
 {
   "vm_ip": "172.198.77.149",
-  "checked_at": "2026-10-29T15:34:54Z",
+  "checked_at": "2026-10-29T15:47:57Z",
   "vm_ports": {
     "22": [
       "OPEN",
-      0.05
+      0.27
     ],
     "80": [
       "TimeoutError",
-      6.01
+      6.0
     ],
     "443": [
       "TimeoutError",
@@ -18,7 +18,7 @@
   "egress_control": {
     "github.com:443": [
       "OPEN",
-      0.11
+      0.19
     ]
   },
   "ssh_key_present": true,
@@ -45,14 +45,14 @@
       "poa-backend:be037a"
     ],
     "containers": [
-      "pofa_retention_worker | Up 10 hours | ports=8000/tcp",
-      "pofa_notification_worker | Up 10 hours | ports=8000/tcp",
-      "pofa_webhook_worker | Up 10 hours | ports=8000/tcp",
-      "pofa_api | Up 10 hours (healthy) | ports=127.0.0.1:8000->8000/tcp",
-      "pofa_analysis_worker | Up 10 hours | ports=8000/tcp",
-      "pofa_db | Up 10 hours (healthy) | ports=5432/tcp",
-      "pofa_minio | Up 10 hours (healthy) | ports=9000/tcp",
-      "pofa_redis | Up 10 hours (healthy) | ports=6379/tcp"
+      "pofa_retention_worker | Up 11 hours | ports=8000/tcp",
+      "pofa_notification_worker | Up 11 hours | ports=8000/tcp",
+      "pofa_webhook_worker | Up 11 hours | ports=8000/tcp",
+      "pofa_api | Up 11 hours (healthy) | ports=127.0.0.1:8000->8000/tcp",
+      "pofa_analysis_worker | Up 11 hours | ports=8000/tcp",
+      "pofa_db | Up 11 hours (healthy) | ports=5432/tcp",
+      "pofa_minio | Up 11 hours (healthy) | ports=9000/tcp",
+      "pofa_redis | Up 11 hours (healthy) | ports=6379/tcp"
     ],
     "poa_prod_revision": "v2w3x4y5z032",
     "poa_prod_ledger_rows": "1",
