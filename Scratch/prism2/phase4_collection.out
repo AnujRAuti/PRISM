@@ -1,0 +1,9 @@
+Command : backend/.venv312_repro/Scripts/python.exe -m pytest --collect-only -q
+Made at : 2026-10-29, after the release commit 3e79f833
+Result  : 1103 tests collected in 66.14s
+
+The full-suite log (phase4_full_suite.out) records 1102 passed / 1 skipped / 0 failed.
+This file exists because that log's pytest header was truncated: the collected count
+was asserted in the release commit message without a line of output behind it.
+Collection does not depend on the POA_DISPOSABLE_* arming variables (they gate skips
+at run time), so the number is directly comparable to the committed run.
