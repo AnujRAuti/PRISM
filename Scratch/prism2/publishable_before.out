@@ -1,0 +1,30 @@
+rev-list lines in origin/Backend..refs/backup/prism-pre-sanitize      : 659
+commits that a push publishes : 15
+unique blobs                  : 644
+blobs content-scanned         : 637
+name-rule findings            : 14
+   ARCHIVE_OR_IMAGE_TAR = 1
+   DATABASE_DUMP = 5
+   ENV_FILE_NOT_EXAMPLE = 3
+   PASSWORD_FILE = 1
+   RAW_URL_DUMP = 1
+   SECRET_ENV_STORE = 3
+content-rule findings         : 17
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:8  [DSN_WITH_PASSWORD]
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:158  [DSN_WITH_PASSWORD]
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:280  [DSN_WITH_PASSWORD]
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:410  [DSN_WITH_PASSWORD]
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:567  [DSN_WITH_PASSWORD]
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:662  [DSN_WITH_PASSWORD]
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:748  [DSN_WITH_PASSWORD]
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:834  [DSN_WITH_PASSWORD]
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:946  [DSN_WITH_PASSWORD]
+   Scratch/be037phasea/phaseB_remed_c95222/secrets.env:3  [SECRET_ASSIGNMENT]
+   Scratch/be037phasea/phaseB_remed_c95222/secrets.env:4  [SECRET_ASSIGNMENT]
+   Scratch/be037phasea/phaseB_remed_c95222/secrets.env:6  [SECRET_ASSIGNMENT]
+   Scratch/be037phasea/phaseB_remed_c95222/secrets.env:7  [SECRET_ASSIGNMENT]
+   Scratch/be037phasea/phaseb_be037b65cee2/secrets.env:1  [SECRET_ASSIGNMENT]
+   Scratch/be037phasea/phaseb_be037b65cee2/secrets.env:2  [SECRET_ASSIGNMENT]
+   Scratch/be037phasea/phaseb_be037b65cee2/secrets.env:4  [SECRET_ASSIGNMENT]
+   Scratch/be037phasea/phaseb_be037b65cee2/secrets.env:5  [SECRET_ASSIGNMENT]
+VERDICT: FINDINGS PRESENT

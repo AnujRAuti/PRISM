@@ -1,0 +1,7 @@
+rev-list lines in origin/Backend..HEAD      : 639
+commits that a push publishes : 15
+unique blobs                  : 624
+blobs content-scanned         : 623
+name-rule findings            : 0
+content-rule findings         : 0
+VERDICT: CLEAN - nothing sensitive is publishable

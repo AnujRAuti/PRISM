@@ -20,7 +20,7 @@ NAME_RULES = [
     ("DATABASE_DUMP", r"(?i)\.(dump|sql\.gz|pgdump)$"),
     ("ARCHIVE_OR_IMAGE_TAR", r"(?i)\.(tar|tgz|zip|gz)$"),
     ("PASSWORD_FILE", r"(?i)(password|passwd|credential)[^/]*\.(txt|lst|csv|json)$"),
-    ("SECRET_ENV_STORE", r"(?i)(^|/)secrets?\.env$|(^|/)env\.[a-z]*backup$|\.env\.(bak|backup|old)$"),
+    ("SECRET_ENV_STORE", r"(?i)(^|/)secrets?\.env$|(^|/)env\.[a-z0-9.]*backup$|\.env\.(bak|backup|old)$"),
     ("PRIVATE_KEY_FILE", r"(?i)\.(pem|p12|pfx|ppk)$|(^|/)id_(rsa|ed25519)$"),
     ("RAW_URL_DUMP", r"(?i)(^|/)_?[a-z]*url\.txt$"),
     ("ENV_FILE_NOT_EXAMPLE", r"(?i)(^|/)[a-z0-9_.-]*\.env$"),

@@ -1,0 +1,138 @@
+objects listed in origin/Backend..HEAD : 639  (unique sha 624)
+text blobs content-scanned: 527
+findings: 125
+
+## SQL_DATA_EXPORT  (9)
+   Scratch/be029/event_type_domain.sql  [filename]
+   Scratch/be033/append_probe.sql  [filename]
+   Scratch/be033/append_probe2.sql  [filename]
+   Scratch/be033/append_probe3.sql  [filename]
+   Scratch/be037final/run_1013t1635_7c1f1/img-initdb/init.sql  [filename]
+   Scratch/be037phasea/grants_disp.sql  [filename]
+   Scratch/be037phasea/phaseb_be037b65cee2/pg-init/init.sql  [filename]
+   Scratch/be037phasea/phaseb_be037b65cee2/provision-runtime.sql  [filename]
+   Scratch/be037phasea/phaseb_be037b65cee2/stageH-owner-trigger-proof.sql  [filename]
+
+## DSN_WITH_PASSWORD  (114)
+   .env.example:7  [content] matched_length=40
+   Scratch/be028/b1_duplicate_detail.py:5  [content] matched_length=40
+   Scratch/be028/b1_duplicate_detail.py:6  [content] matched_length=40
+   Scratch/be028/b1_uniqueness_audit.py:10  [content] matched_length=40
+   Scratch/be028/b1_uniqueness_audit.py:11  [content] matched_length=40
+   Scratch/be028/drift_inventory.py:21  [content] matched_length=40
+   Scratch/be028/drift_object_definitions.py:8  [content] matched_length=40
+   Scratch/be028/isolate_nnd_artifact.py:13  [content] matched_length=40
+   Scratch/be029/clone_db.py:15  [content] matched_length=31
+   Scratch/be029/clone_from_dev.py:15  [content] matched_length=31
+   Scratch/be029/compare.py:33  [content] matched_length=31
+   Scratch/be029/constraint_probe.py:14  [content] matched_length=40
+   Scratch/be029/drift_signatures.py:19  [content] matched_length=40
+   Scratch/be029/guard_probe.py:26  [content] matched_length=31
+   Scratch/be029/ledger_append_only_probe.py:38  [content] matched_length=40
+   Scratch/be029/ledger_enforcement_options.py:228  [content] matched_length=40
+   Scratch/be029/ledger_remeasure.py:37  [content] matched_length=40
+   Scratch/be029/ledger_tail_rewrite.py:52  [content] matched_length=40
+   Scratch/be029/p0_children.py:5  [content] matched_length=31
+   Scratch/be029/p0_children.py:6  [content] matched_length=31
+   Scratch/be029/p0_counts.py:6  [content] matched_length=31
+   Scratch/be029/p0_counts.py:7  [content] matched_length=31
+   Scratch/be029/p0_disp.py:3  [content] matched_length=31
+   Scratch/be029/p0_disp.py:4  [content] matched_length=31
+   Scratch/be029/p0_facts.py:6  [content] matched_length=31
+   Scratch/be029/p0_facts.py:7  [content] matched_length=31
+   Scratch/be029/p0_leaf.py:5  [content] matched_length=31
+   Scratch/be029/p0_leaf.py:6  [content] matched_length=31
+   Scratch/be029/p0_quality.py:5  [content] matched_length=31
+   Scratch/be029/p0_quality.py:6  [content] matched_length=31
+   Scratch/be029/p0_refs.py:6  [content] matched_length=31
+   Scratch/be029/p0_refs.py:7  [content] matched_length=31
+   Scratch/be029/p_a2_guard.py:8  [content] matched_length=31
+   Scratch/be029/p_a2_guard.py:9  [content] matched_length=31
+   Scratch/be029/phase_h_drift.py:138  [content] matched_length=40
+   Scratch/be029/snap.py:13  [content] matched_length=31
+   Scratch/be032r/verify_dev_probe.py:2  [content] matched_length=40
+   Scratch/be033/verify_clone.py:2  [content] matched_length=40
+   Scratch/be037/be037_verify.py:35  [content] matched_length=40
+   Scratch/be037/staged.diff:374  [content] matched_length=50
+   Scratch/be037final/run_1013t1635_7c1f1/evidence/wsd_protected_probe.json:42  [content] matched_length=35
+   Scratch/be037final/run_1013t1635_7c1f1/evidence/wsd_second_boot.json:2  [content] matched_length=35
+   Scratch/be037final/run_1013t1635_7c1f1/wsc_container_sigterm.py:46  [content] matched_length=42
+   Scratch/be037final/run_1013t1635_7c1f1/wsc_scenarios.py:45  [content] matched_length=42
+   Scratch/be037final/run_1013t1635_7c1f1/wsd_protected_probe.py:169  [content] matched_length=41
+   Scratch/be037final/run_1013t1635_7c1f1/wsd_protected_probe.py:40  [content] matched_length=43
+   Scratch/be037final/run_1013t1635_7c1f1/wsd_protected_probe.py:44  [content] matched_length=43
+   Scratch/be037final/run_1013t1635_7c1f1/wsd_second_boot.py:48  [content] matched_length=40
+   Scratch/be037final/run_1013t1635_7c1f1/wsd_second_boot.py:51  [content] matched_length=35
+   Scratch/be037final/run_1013t1635_7c1f1/wse2_owner_transcript.py:58  [content] matched_length=43
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:158  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:280  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:410  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:567  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:662  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:748  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:8  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:834  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/evidence/wsf-03-f2.json:946  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_api.py:130  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_api.py:803  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_bootstrap.py:181  [content] matched_length=42
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_f4_suites.py:65  [content] matched_length=41
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_f4_suites.py:67  [content] matched_length=41
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_f5_safeguards.py:117  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_f5_safeguards.py:444  [content] matched_length=41
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_f5_safeguards.py:605  [content] matched_length=50
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_reset_state.py:48  [content] matched_length=42
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_worker_f2.py:126  [content] matched_length=42
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_worker_f2.py:205  [content] matched_length=42
+   Scratch/be037final/run_WSF_be037wf7e3/wsf_worker_f2.py:58  [content] matched_length=50
+   Scratch/be037phasea/make_disp_env.py:54  [content] matched_length=48
+   Scratch/be037phasea/make_disp_env.py:61  [content] matched_length=53
+   Scratch/be037phasea/phaseB_remed_c95222/compose.remed.yml:30  [content] matched_length=52
+   Scratch/be037phasea/phaseB_remed_c95222/i1-outage-driver3.sh:26  [content] matched_length=52
+   Scratch/be037phasea/phaseB_remed_c95222/run-drift-classification.sh:5  [content] matched_length=52
+   Scratch/be037phasea/phaseB_remed_c95222/run-drift-classification.sh:6  [content] matched_length=80
+   Scratch/be037phasea/phaseB_remed_c95222/run-full-suites.sh:9  [content] matched_length=52
+   Scratch/be037phasea/phaseB_remed_c95222/run-unit-nojwt.sh:11  [content] matched_length=52
+   Scratch/be037phasea/phaseb_be037b65cee2/compose.disposable.yml:186  [content] matched_length=50
+   Scratch/be037phasea/phaseb_be037b65cee2/compose.disposable.yml:20  [content] matched_length=44
+   Scratch/be037phasea/phaseb_be037b65cee2/compose.disposable.yml:204  [content] matched_length=41
+   Scratch/be037phasea/phaseb_be037b65cee2/stageG-00-worker-config.txt:18  [content] matched_length=36
+   Scratch/be037phasea/phaseb_be037b65cee2/stageG-00-worker-config.txt:30  [content] matched_length=36
+   Scratch/be037phasea/phaseb_be037b65cee2/stageG-00-worker-config.txt:42  [content] matched_length=36
+   Scratch/be037phasea/phaseb_be037b65cee2/stageG-00-worker-config.txt:54  [content] matched_length=36
+   Scratch/be037phasea/phaseb_be037b65cee2/stageG-00-worker-config.txt:6  [content] matched_length=36
+   Scratch/be037phasea/run_tests.py:44  [content] matched_length=50
+   Scratch/be038clean/run_suite2.py:61  [content] matched_length=40
+   Scratch/be039d2/d2_bootstrap_proof.py:103  [content] matched_length=40
+   Scratch/deploy1/armfull.py:73  [content] matched_length=34
+   Scratch/deploy1/be039/imagetest.py:42  [content] matched_length=41
+   Scratch/deploy1/be039/imagetest.py:43  [content] matched_length=41
+   Scratch/deploy1/mbe01_contract_map.py:31  [content] matched_length=40
+   Scratch/deploy1/mbe01_deploy_rehearsal.py:318  [content] matched_length=40
+   Scratch/deploy1/mbe01_deploy_rehearsal.py:62  [content] matched_length=42
+   Scratch/deploy1/mbe01_health_matrix.py:44  [content] matched_length=40
+   Scratch/deploy1/mbe01_healthcheck_probe.py:61  [content] matched_length=42
+   Scratch/deploy1/mbe01_idem_probe.py:29  [content] matched_length=40
+   Scratch/deploy1/mbe01_keytype_probe.py:26  [content] matched_length=40
+   Scratch/deploy1/mbe01_oidc_boot.py:37  [content] matched_length=38
+   Scratch/deploy1/mbe01_oidc_boot.py:39  [content] matched_length=38
+   Scratch/deploy1/mbe01_rehearse.py:77  [content] matched_length=39
+   Scratch/deploy1/vmenv.py:110  [content] matched_length=57
+   Scratch/deploy1/vmenv.py:113  [content] matched_length=67
+   Scratch/deploy1/vmenv.py:87  [content] matched_length=29
+   Scratch/poa_stageE_be026/launch_servers.sh:14  [content] matched_length=40
+   Scratch/prism/config_boot_matrix.py:118  [content] matched_length=41
+   Scratch/prism/prism5_downgrade_probe.py:30  [content] matched_length=40
+   backend/core/config.py:21  [content] matched_length=40
+   backend/core/config.py:80  [content] matched_length=40
+   docker-compose.yml:28  [content] matched_length=40
+   tests/unit/test_repository_hygiene.py:59  [content] matched_length=40
+   tests/unit/test_repository_hygiene.py:64  [content] matched_length=59
+
+## REDIS_URL_WITH_PASSWORD  (1)
+   Scratch/prism2/scan_history.py:29  [content] matched_length=14
+
+## SECRET_ASSIGNMENT  (1)
+   Scratch/deploy1/vmbootstrap.py:29  [content] matched_length=46
+
+distinct paths flagged: 83
