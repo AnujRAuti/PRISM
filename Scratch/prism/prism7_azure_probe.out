@@ -1,0 +1,86 @@
+{
+  "vm_ip": "172.198.77.149",
+  "checked_at": "2026-10-29T05:37:24Z",
+  "vm_ports": {
+    "22": [
+      "OPEN",
+      0.62
+    ],
+    "80": [
+      "TimeoutError",
+      6.0
+    ],
+    "443": [
+      "TimeoutError",
+      6.0
+    ]
+  },
+  "egress_control": {
+    "github.com:443": [
+      "OPEN",
+      1.43
+    ]
+  },
+  "ssh_key_present": true,
+  "control_paths": {
+    "az_cli": null,
+    "azure_powershell_module": "absent",
+    "get_azcontext_cmdlet": "absent"
+  },
+  "ssh_attempt": {
+    "exit_code": 0,
+    "first_error_line": ""
+  },
+  "live_inventory": {
+    "reachable": true,
+    "hostname": "poa-submission-vm",
+    "booted": "         system boot  2026-10-29 05:12",
+    "kernel": "7.0.0-1017-azure",
+    "git_head_and_dirty_count": [
+      "1e8ecd1",
+      "Backend",
+      "1"
+    ],
+    "poa_images": [
+      "poa-backend:be037a"
+    ],
+    "containers": [
+      "pofa_retention_worker | Up 25 minutes | ports=8000/tcp",
+      "pofa_notification_worker | Up 25 minutes | ports=8000/tcp",
+      "pofa_webhook_worker | Up 25 minutes | ports=8000/tcp",
+      "pofa_api | Up 25 minutes (healthy) | ports=127.0.0.1:8000->8000/tcp",
+      "pofa_analysis_worker | Up 25 minutes | ports=8000/tcp",
+      "pofa_db | Up 25 minutes (healthy) | ports=5432/tcp",
+      "pofa_minio | Up 25 minutes (healthy) | ports=9000/tcp",
+      "pofa_redis | Up 25 minutes (healthy) | ports=6379/tcp"
+    ],
+    "poa_prod_revision": "v2w3x4y5z032",
+    "poa_prod_ledger_rows": "1",
+    "poa_prod_user_rows": "0",
+    "oidc_key_names": [
+      ".env present, keys=15",
+      "AUTH_OIDC keys=0"
+    ],
+    "anonymous_http": [
+      "/health 200",
+      "/ready 200",
+      "/metrics 200"
+    ],
+    "socket_binds": [
+      "0.0.0.0:22",
+      "127.0.0.1:45689",
+      "127.0.0.1:8000",
+      "127.0.0.53%lo:53",
+      "127.0.0.54:53",
+      "[::]:22"
+    ],
+    "buildx": "docker: unknown command: docker buildx",
+    "oidc_provider": [
+      "issuer=https://tuaeujvuuanadqvykugw.supabase.co/auth/v1",
+      "algos=RS256,HS256,ES256",
+      "jwks_uri=https://tuaeujvuuanadqvykugw.supabase.co/auth/v1/.well-known/jwks.json",
+      "keys=1",
+      " EC P-256 ES256 kid=ab0ac6ae-93be-441c-9196-7b2fade15af0 use=sig"
+    ]
+  }
+}
