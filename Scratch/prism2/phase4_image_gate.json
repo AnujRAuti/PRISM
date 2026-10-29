@@ -1,7 +1,7 @@
 {
-  "image": "poa-backend:prism-481fdc39",
+  "image": "poa-backend:prism-3e79f833",
   "other_image": "poa-backend:prism-54e33b20",
-  "head": "481fdc39",
+  "head": "3e79f833",
   "context_files": 888,
   "image_files": 264,
   "excluded_by_dockerignore": [
@@ -645,7 +645,7 @@
     {
       "check": "the build context is a git archive of the commit under release",
       "pass": true,
-      "detail": "HEAD=481fdc39 image=poa-backend:prism-481fdc39"
+      "detail": "HEAD=3e79f833 image=poa-backend:prism-3e79f833"
     },
     {
       "check": "every byte the image carries matches the commit (and no committed file is dropped unexpectedly)",
@@ -665,7 +665,7 @@
     {
       "check": "the earlier candidate was built from a dirty worktree and is superseded by this rebuild",
       "pass": null,
-      "detail": "poa-backend:prism-54e33b20 files=264 vs poa-backend:prism-481fdc39 files=264; only_in_rebuild=['scripts/check_repository_hygiene.py', 'tests/unit/test_repository_hygiene.py'] only_in_earlier=['.freebuff/.gitignore', '.freebuff/project-id'] - the earlier image carries .freebuff/ (never committed) and lacks the hygiene tests, so it does not correspond to HEAD"
+      "detail": "poa-backend:prism-54e33b20 files=264 vs poa-backend:prism-3e79f833 files=264; only_in_rebuild=['scripts/check_repository_hygiene.py', 'tests/unit/test_repository_hygiene.py'] only_in_earlier=['.freebuff/.gitignore', '.freebuff/project-id'] - the earlier image carries .freebuff/ (never committed) and lacks the hygiene tests, so it does not correspond to HEAD"
     },
     {
       "check": "no sensitive-looking file is present in the image",
