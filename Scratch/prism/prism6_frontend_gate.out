@@ -1,0 +1,121 @@
+== npm run test ==
+
+> frontend@0.0.0 test
+> node --test tests/**/*.test.js
+
+▶ Supabase config gate
+  ✔ names every missing key instead of half-configuring a client (5.7753ms)
+  ✔ a url without a publishable key is not ready (0.6707ms)
+  ✔ both keys present makes the config ready (0.5185ms)
+✔ Supabase config gate (9.3703ms)
+▶ JWT claim decoding
+  ✔ reads the payload of a base64url ES256 token (3.2765ms)
+  ✔ refuses to invent claims from a non-token (0.7275ms)
+✔ JWT claim decoding (4.6486ms)
+▶ Token freshness
+  ✔ a token inside the skew window must be refreshed before it is sent (0.762ms)
+  ✔ a token with time to spare is sent as-is (0.6023ms)
+  ✔ an exp-less token is not treated as expired (0.5173ms)
+✔ Token freshness (2.5256ms)
+▶ currentAccessToken
+  ✔ returns the stored token untouched while it is still valid (3.3146ms)
+  ✔ refreshes a token that would expire mid-request (0.9722ms)
+  ✔ a refresh that yields nothing ends the session instead of sending a doomed token (0.7453ms)
+  ✔ nobody signed in means no token, not a stand-in token (0.453ms)
+  ✔ an unconfigured provider gives no token (0.2099ms)
+✔ currentAccessToken (6.226ms)
+▶ Sign-in refusal messages
+  ✔ an unconfigured provider refuses rather than succeeding quietly (0.6573ms)
+  ✔ bad credentials are reported as bad credentials (0.3944ms)
+  ✔ an unconfirmed reviewer account says what to do about it (0.3189ms)
+  ✔ an unreachable provider is not reported as a wrong password (0.3102ms)
+  ✔ a provider sign-in error never returns a session (0.2991ms)
+  ✔ a successful provider sign-in hands back its session (0.5359ms)
+✔ Sign-in refusal messages (2.8741ms)
+▶ Session subscription
+  ✔ pushes the provider session to the handler and can unsubscribe (0.6488ms)
+  ✔ an unconfigured provider still returns a callable unsubscribe (0.2373ms)
+✔ Session subscription (1.1388ms)
+▶ No fabricated identity survives in the frontend source
+  ✔ no file reads or writes a token from localStorage (95.4351ms)
+✔ No fabricated identity survives in the frontend source (95.6355ms)
+▶ EIIL Fusion Engine & Anomaly Rules
+  ✔ calculateFusionIntegrity correctly weights multi-signal inputs (2.6818ms)
+  ✔ detectImpossibleTravel flags implausible velocity between submissions (0.3665ms)
+  ✔ detectImpossibleTravel passes feasible velocity (0.2094ms)
+✔ EIIL Fusion Engine & Anomaly Rules (5.828ms)
+▶ Utility Functions & Formatters
+  ✔ formatDate correctly formats ISO date strings (92.9725ms)
+  ✔ formatFileSize correctly calculates units (0.5283ms)
+  ✔ getRiskLevel returns correct risk classification and colors (0.513ms)
+  ✔ getIntegrityLevel returns correct integrity scores (0.3349ms)
+  ✔ truncateText truncates with ellipsis when length exceeded (0.3761ms)
+  ✔ getUserRoleLabel translates system roles into human-readable titles (0.4131ms)
+  ✔ getStatusColor maps statuses to bootstrap classes (0.7358ms)
+  ✔ validateEmail validates RFC-compliant email formats (0.7162ms)
+  ✔ generateId returns unique string identifiers (0.4555ms)
+  ✔ getIndianStates returns official list of Indian states (0.5056ms)
+  ✔ capitalize capitalizes first character (0.3044ms)
+✔ Utility Functions & Formatters (100.681ms)
+ℹ tests 36
+ℹ suites 9
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 493.5718
+== test-exit=0 ==
+== npm run build ==
+dist/assets/Dashboard-BJ7GVpAg.js          10.28 kB │ gzip:  2.42 kB
+dist/assets/ProjectsList-CkO-xhAV.js       11.12 kB │ gzip:  2.68 kB
+dist/assets/EvidenceList-DY8N5w7r.js       12.64 kB │ gzip:  2.66 kB
+dist/assets/UploadEvidence-DaA5IF4s.js     13.37 kB │ gzip:  3.42 kB
+dist/assets/ReviewQueue-BoMqoPLi.js        13.59 kB │ gzip:  3.09 kB
+dist/assets/ProjectDetail-Dz-NPOO9.js      13.76 kB │ gzip:  2.65 kB
+dist/assets/ReviewInterface-BtRwlB5Z.js    15.70 kB │ gzip:  3.51 kB
+dist/assets/EvidenceGraph-yhoZtlOm.js      20.62 kB │ gzip:  5.14 kB
+dist/assets/EvidenceDetail-BR5zyKfF.js     21.20 kB │ gzip:  5.51 kB
+dist/assets/Search-BBX_0gm7.js             26.53 kB │ gzip:  5.48 kB
+dist/assets/AdminDashboard-YRcvuWPl.js     31.62 kB │ gzip:  6.54 kB
+dist/assets/index-1Z-jfrMS.js              38.23 kB │ gzip: 11.56 kB
+dist/assets/network-C654CTRf.js            49.86 kB │ gzip: 18.73 kB
+dist/assets/vendor-DtuMx0jC.js            214.39 kB │ gzip: 55.16 kB
+dist/assets/react-core-B-PBLSWS.js        258.63 kB │ gzip: 82.06 kB
+
+[32m✓ built in 13.86s[39m
+[33m[33m[PLUGIN_TIMINGS] [0mJavaScript callbacks ran for 4.5s of this 13.5s build (33%).
+The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+  - plugin vite:css-post renderChunk (14%, 1.9s, 20 calls)
+Additional callback time came from the callbacks below and from callbacks under 1s.
+1 callback is listed without a time. Its calls overlapped, so the time inside one call includes work from other calls. To find its cost, profile the build with `node --cpu-prof`:
+  - plugin vite:css transform (3 calls)
+See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+[39m
+== npm run lint ==
+src/pages/Evidence/UploadEvidence.jsx:42:16: warning eslint(no-unused-vars): Catch parameter 'err' is caught but never used. help: Consider handling this error.
+src/pages/Evidence/UploadEvidence.jsx:19:18: warning react(purity): Cannot call impure function during render help: `Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+src/pages/Evidence/UploadEvidence.jsx:62:7: warning react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+src/components/auth/LoginForm.jsx:49:14: warning eslint(no-unused-vars): Catch parameter 'err' is caught but never used. help: Consider handling this error.
+src/pages/Dashboard.jsx:3:61: warning eslint(no-unused-vars): Identifier 'PlusIcon' is imported but never used. help: Consider removing this import.
+src/components/common/Sidebar.jsx:45:5: warning react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+src/context/AuthContext.jsx:121:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/context/AuthContext.jsx:53:7: warning react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+src/pages/Search.jsx:3:10: warning eslint(no-unused-vars): Identifier 'formatDate' is imported but never used. help: Consider removing this import.
+src/pages/Search.jsx:159:17: warning react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'evidenceData' help: Either include it or remove the dependency array.
+src/pages/Admin/AdminDashboard.jsx:3:10: warning eslint(no-unused-vars): Identifier 'AdminIcon' is imported but never used. help: Consider removing this import.
+src/pages/Admin/AdminDashboard.jsx:3:21: warning eslint(no-unused-vars): Identifier 'UserIcon' is imported but never used. help: Consider removing this import.
+src/pages/Admin/AdminDashboard.jsx:3:56: warning eslint(no-unused-vars): Identifier 'AlertIcon' is imported but never used. help: Consider removing this import.
+src/pages/Admin/AdminDashboard.jsx:3:67: warning eslint(no-unused-vars): Identifier 'ClockIcon' is imported but never used. help: Consider removing this import.
+src/pages/Admin/AdminDashboard.jsx:4:29: warning eslint(no-unused-vars): Identifier 'adminApi' is imported but never used. help: Consider removing this import.
+src/pages/Evidence/EvidenceDetail.jsx:98:24: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'mockDatabase' help: Either include it or remove the dependency array.
+src/pages/Evidence/EvidenceList.jsx:122:19: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'mockEvidence' help: Either include it or remove the dependency array.
+src/pages/Projects/ProjectDetail.jsx:70:23: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'mockEvidence', 'mockProject.activities', and 'mockProject' help: Either include it or remove the dependency array.
+src/pages/Graph/EvidenceGraph.jsx:1:20: warning eslint(no-unused-vars): Identifier 'useEffect' is imported but never used. help: Consider removing this import.
+src/pages/Graph/EvidenceGraph.jsx:3:21: warning eslint(no-unused-vars): Identifier 'FilterIcon' is imported but never used. help: Consider removing this import.
+src/pages/Graph/EvidenceGraph.jsx:3:44: warning eslint(no-unused-vars): Identifier 'AlertIcon' is imported but never used. help: Consider removing this import.
+src/pages/Graph/EvidenceGraph.jsx:3:55: warning eslint(no-unused-vars): Identifier 'CheckIcon' is imported but never used. help: Consider removing this import.
+src/pages/Graph/EvidenceGraph.jsx:4:10: warning eslint(no-unused-vars): Identifier 'formatDate' is imported but never used. help: Consider removing this import.
+src/pages/Graph/EvidenceGraph.jsx:68:17: warning react-hooks(exhaustive-deps): React Hook useMemo has missing dependencies: 'initialEdges', and 'initialNodes' help: Either include it or remove the dependency array.
+src/pages/Graph/EvidenceGraph.jsx:105:12: warning react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'initialNodes' help: Either include it or remove the dependency array.
+== ALL DONE ==
