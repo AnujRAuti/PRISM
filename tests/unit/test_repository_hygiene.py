@@ -5,9 +5,12 @@ measured in the unpushed history (otherwise it is decoration), and the tracked
 tree has to be clean now that those artifacts have been removed from it.
 """
 import importlib.util
+import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "check_repository_hygiene.py"
@@ -78,6 +81,11 @@ def test_generated_password_on_a_real_host_is_a_finding():
 
 
 def test_tracked_tree_is_clean():
+    if shutil.which("git") is None:
+        pytest.skip(
+            "repository hygiene scans the Git worktree and belongs to the host/CI "
+            "layer, not the minimal production runtime image"
+        )
     proc = subprocess.run(
         [sys.executable, str(SCRIPT), "--all"], cwd=REPO,
         capture_output=True, text=True, encoding="utf-8", errors="replace",

@@ -182,14 +182,20 @@ def test_server_confirmation_refuses_when_the_live_name_contradicts_the_expectat
 
 
 def test_verification_context_accepts_this_runs_disposable_database():
-    """The verification guard is a protected-name rule, not a "not pofa_test" rule.
+    """The verification guard accepts a separately named disposable database.
 
-    Measured before this test existed: the old assertion only passed when the
-    suite happened to run on a database that is itself protected by name, so on
-    a disposable target it failed for reasons unrelated to the guard.
+    The normal pytest target is deliberately ``pofa_test`` and is protected from
+    ad-hoc verification runs. This live verification assertion therefore runs
+    only when the suite is explicitly pointed at a separately named disposable
+    database; the pytest-context live-connection test above covers the shared
+    test target.
     """
     authorized = _authorized()
-    assert authorized not in safety.PROTECTED_DATABASE_NAMES
+    if authorized in safety.PROTECTED_DATABASE_NAMES:
+        pytest.skip(
+            "verification-context live test needs a separately named disposable "
+            "database; the shared pytest target is protected"
+        )
     assert safety.confirm_server_database(get_engine(), CONTEXT_VERIFICATION) == authorized
 
 
