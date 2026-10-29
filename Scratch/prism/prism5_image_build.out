@@ -1,0 +1,431 @@
+#0 building with "desktop-linux" instan#12 103.9 Downloading kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.5 MB)
+#12 104.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 5.9 MB/s eta 0:00:00
+#12 104.2 Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+#12 104.3 Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#12 104.4 Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#12 104.5 Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+#12 104.6 Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#12 105.8 Installing collected packages: nvidia-ml-py, exifread, websockets, uvloop, urllib3, typing-inspection, tqdm, structlog, six, safetensors, regex, redis, pyyaml, python-multipart, python-dotenv, pyparsing, PyJWT, pydantic-core, pycparser, psycopg2-binary, psutil, prometheus-client, polars-runtime-32, Pillow, pgvector, packaging, numpy, Mako, kiwisolver, jmespath, idna, httptools, hf-xet, h11, greenlet, fonttools, cycler, cloudpickle, click, charset_normalizer, certifi, annotated-types, annotated-doc, uvicorn, sqlalchemy, scipy, requests, PyWavelets, python-dateutil, pydantic, polars, opencv-python, httpcore, contourpy, cffi, anyio, watchfiles, ultralytics-thop, starlette, pydantic-settings, pi-heif, matplotlib, imagehash, huggingface-hub, httpx, geoalchemy2, cryptography, botocore, alembic, ultralytics-platform, tokenizers, s3transfer, fastapi, ultralytics, transformers, boto3
+#12 112.3   Attempting uninstall: Pillow
+#12 112.3     Found existing installation: pillow 13.0.0
+#12 112.3     Uninstalling pillow-13.0.0:
+#12 112.5       Successfully uninstalled pillow-13.0.0
+#12 113.5   Attempting uninstall: numpy
+#12 113.5     Found existing installation: numpy 2.5.4
+#12 113.9     Uninstalling numpy-2.5.4:
+#12 115.2       Successfully uninstalled numpy-2.5.4
+#12 178.5 Successfully installed Mako-1.4.3 Pillow-10.0.0 PyJWT-2.15.1 PyWavelets-1.9.0 alembic-1.11.2 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.15.1 boto3-1.43.93 botocore-1.43.121 certifi-2026.10.23 cffi-2.1.1 charset_normalizer-3.5.2 click-8.5.0 cloudpickle-3.1.2 contourpy-1.3.3 cryptography-50.0.2 cycler-0.12.1 exifread-3.0.0 fastapi-0.141.1 fonttools-4.68.0 geoalchemy2-0.13.0 greenlet-3.5.6 h11-0.16.0 hf-xet-1.7.1 httpcore-1.0.9 httptools-0.9.0 httpx-0.28.1 huggingface-hub-0.36.2 idna-3.20 imagehash-4.3.1 jmespath-1.1.0 kiwisolver-1.5.1 matplotlib-3.11.2 numpy-1.26.2 nvidia-ml-py-13.615.71 opencv-python-4.11.0.86 packaging-26.3 pgvector-0.5.0 pi-heif-0.7.0 polars-2.1.0 polars-runtime-32-2.1.0 prometheus-client-0.21.1 psutil-7.2.2 psycopg2-binary-2.9.9 pycparser-3.12 pydantic-2.11.9 pydantic-core-2.33.2 pydantic-settings-2.3.0 pyparsing-3.3.3 python-dateutil-2.9.0.post0 python-dotenv-1.2.4 python-multipart-0.0.6 pyyaml-6.0.3 redis-4.6.0 regex-2026.9.29 requests-2.34.2 s3transfer-0.19.3 safetensors-0.8.0 scipy-1.16.3 six-1.17.0 sqlalchemy-2.0.52 starlette-1.10.0 structlog-24.4.0 tokenizers-0.22.2 tqdm-4.70.1 transformers-4.56.2 typing-inspection-0.4.4 ultralytics-8.4.155 ultralytics-platform-0.1.101 ultralytics-thop-2.2.3 urllib3-2.8.0 uvicorn-0.23.1 uvloop-0.23.0 watchfiles-1.3.0 websockets-17.3
+#12 DONE 179.8s
+
+#13 [runtime 7/8] COPY . .
+#13 DONE 12.3s
+
+#14 [runtime 8/8] RUN groupadd --system --gid 10001 appgroup     && useradd --system --uid 10001 --gid appgroup --no-create-home appuser     && chown -R root:root /app
+#14 0.805 useradd warning: appuser's uid 10001 is greater than SYS_UID_MAX 999
+#14 DONE 26.6s
+
+#15 exporting to image
+#15 exporting layers
+#15 exporting layers 60.8s done
+#15 exporting manifest sha256:a02fe156884449a4450168f913487a87fcb56fbe669124c37e401920f55861a2 0.0s done
+#15 exporting config sha256:f1db5b59fc720bb1b934b0ed93e7cd0c3a2a12f039228f5779c1207745be5d89 0.1s done
+#15 exporting attestation manifest sha256:c20841c7c212e2033f2651c9dfd140e3ce9966ba85a8e1271110fcd8a9ce6308 0.0s done
+#15 exporting manifest list sha256:9904a081a928e2ed0357954721607736e3e8cf22b77345b52c0ca3d194bec904
+#15 exporting manifest list sha256:9904a081a928e2ed0357954721607736e3e8cf22b77345b52c0ca3d194bec904 0.0s done
+#15 naming to docker.io/library/poa-backend:prism-10680fe 0.0s done
+#15 unpacking to docker.io/library/poa-backend:prism-10680fe
+#15 unpacking to docker.io/library/poa-backend:prism-10680fe 51.4s done
+#15 DONE 112.6s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/ay5b6vnvg4bh1trl0471yxsoj
+
+#7 71.38 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#7 71.40 Setting up libxcb-present0:amd64 (1.15-1) ...
+#7 71.41 Setting up libxcb-sync1:amd64 (1.15-1) ...
+#7 71.43 Setting up libxcb-dri2-0:amd64 (1.15-1) ...
+#7 71.45 Setting up libdrm2:amd64 (2.4.114-1+b1) ...
+#7 71.46 Setting up libxcb-randr0:amd64 (1.15-1) ...
+#7 71.48 Setting up libllvm15:amd64 (1:15.0.6-4+b1) ...
+#7 71.50 Setting up libx11-6:amd64 (2:1.8.4-2+deb12u2) ...
+#7 71.52 Setting up libdrm-amdgpu1:amd64 (2.4.114-1+b1) ...
+#7 71.53 Setting up libxcb-dri3-0:amd64 (1.15-1) ...
+#7 71.55 Setting up libx11-xcb1:amd64 (2:1.8.4-2+deb12u2) ...
+#7 71.57 Setting up libdrm-nouveau2:amd64 (2.4.114-1+b1) ...
+#7 71.58 Setting up libdrm-radeon1:amd64 (2.4.114-1+b1) ...
+#7 71.60 Setting up libdrm-intel1:amd64 (2.4.114-1+b1) ...
+#7 71.62 Setting up libgl1-mesa-dri:amd64 (22.3.6-1+deb12u2) ...
+#7 71.65 Setting up libpq5:amd64 (15.19-0+deb12u1) ...
+#7 71.67 Setting up libxext6:amd64 (2:1.3.4-1+b1) ...
+#7 71.68 Setting up libxxf86vm1:amd64 (1:1.1.4-1+b2) ...
+#7 71.70 Setting up libxfixes3:amd64 (1:6.0.0-2) ...
+#7 71.72 Setting up libglx-mesa0:amd64 (22.3.6-1+deb12u2) ...
+#7 71.73 Setting up libglx0:amd64 (1.6.0-1) ...
+#7 71.75 Setting up libgl1:amd64 (1.6.0-1) ...
+#7 71.77 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+#7 DONE 71.9s
+
+#8 [runtime 3/8] WORKDIR /app
+#8 DONE 0.1s
+
+#9 [internal] load build context
+#9 transferring context: 2.96MB 4.9s
+#9 transferring context: 10.77MB 10.0s
+#9 transferring context: 14.59MB 13.5s done
+#9 DONE 13.6s
+
+#10 [runtime 4/8] COPY requirements.txt ./
+#10 DONE 0.1s
+
+#11 [runtime 5/8] RUN --mount=type=cache,target=/root/.cache/pip     pip install --index-url https://download.pytorch.org/whl/cpu         "torch==2.8.0" "torchvision==0.23.0"
+#11 83.29 
+#11 83.62 Downloading https://download-r2.pytorch.org/whl/cpu/torchvision-0.23.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (1.9 MB)
+#11 83.97    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 5.5 MB/s eta 0:00:00
+#11 84.01 Downloading pillow-13.0.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
+#11 85.63    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 4.7 MB/s eta 0:00:00
+#11 85.66 Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+#11 87.19    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 4.1 MB/s eta 0:00:00
+#11 87.22 Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#11 87.27 Downloading filelock-4.2.4-py3-none-any.whl (162 kB)
+#11 87.34 Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+#11 87.43 Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl (134 kB)
+#11 87.51 Downloading networkx-3.7-py3-none-any.whl (2.1 MB)
+#11 88.22    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 3.0 MB/s eta 0:00:00
+#11 88.24 Downloading numpy-2.5.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+#11 92.68    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 3.8 MB/s eta 0:00:00
+#11 92.71 Downloading https://download.pytorch.org/whl/setuptools-78.1.0-py3-none-any.whl (1.3 MB)
+#11 93.03    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 4.4 MB/s eta 0:00:00
+#11 93.06 Downloading https://download.pytorch.org/whl/markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+#11 93.09 Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+#11 93.18    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 6.3 MB/s eta 0:00:00
+#11 94.24 Installing collected packages: mpmath, typing-extensions, sympy, setuptools, pillow, numpy, networkx, MarkupSafe, fsspec, filelock, jinja2, torch, torchvision
+#11 150.6 Successfully installed MarkupSafe-3.0.3 filelock-4.2.4 fsspec-2026.9.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.7 numpy-2.5.4 pillow-13.0.0 setuptools-78.1.0 sympy-1.14.0 torch-2.8.0+cpu torchvision-0.23.0+cpu typing-extensions-4.16.0
+#11 DONE 151.2s
+
+#12 [runtime 6/8] RUN --mount=type=cache,target=/root/.cache/pip     pip install -r requirements.txt
+#12 4.309 Collecting fastapi==0.141.1 (from -r requirements.txt (line 1))
+#12 4.639   Downloading fastapi-0.141.1-py3-none-any.whl.metadata (27 kB)
+#12 4.963 Collecting uvicorn==0.23.1 (from uvicorn[standard]==0.23.1->-r requirements.txt (line 2))
+#12 5.120   Downloading uvicorn-0.23.1-py3-none-any.whl.metadata (6.2 kB)
+#12 5.600 Collecting pydantic==2.11.9 (from -r requirements.txt (line 3))
+#12 5.720   Downloading pydantic-2.11.9-py3-none-any.whl.metadata (68 kB)
+#12 6.139 Collecting pydantic-settings==2.3.0 (from -r requirements.txt (line 4))
+#12 6.274   Downloading pydantic_settings-2.3.0-py3-none-any.whl.metadata (3.3 kB)
+#12 7.290 Collecting sqlalchemy==2.0.52 (from -r requirements.txt (line 5))
+#12 7.566   Downloading sqlalchemy-2.0.52-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (9.6 kB)
+#12 7.732 Collecting alembic==1.11.2 (from -r requirements.txt (line 6))
+#12 7.775   Downloading alembic-1.11.2-py3-none-any.whl.metadata (7.2 kB)
+#12 8.082 Collecting psycopg2-binary==2.9.9 (from -r requirements.txt (line 7))
+#12 8.142   Downloading psycopg2_binary-2.9.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.4 kB)
+#12 8.249 Collecting redis==4.6.0 (from -r requirements.txt (line 8))
+#12 8.302   Downloading redis-4.6.0-py3-none-any.whl.metadata (8.3 kB)
+#12 8.436 Collecting geoalchemy2==0.13.0 (from -r requirements.txt (line 10))
+#12 8.491   Downloading GeoAlchemy2-0.13.0-py3-none-any.whl.metadata (1.8 kB)
+#12 8.580 Collecting pgvector==0.5.0 (from -r requirements.txt (line 11))
+#12 8.624   Downloading pgvector-0.5.0-py3-none-any.whl.metadata (19 kB)
+#12 8.728 Collecting structlog==24.4.0 (from -r requirements.txt (line 14))
+#12 8.776   Downloading structlog-24.4.0-py3-none-any.whl.metadata (7.3 kB)
+#12 8.905 Collecting prometheus-client==0.21.1 (from -r requirements.txt (line 15))
+#12 8.965   Downloading prometheus_client-0.21.1-py3-none-any.whl.metadata (1.8 kB)
+#12 10.74 Collecting boto3==1.43.93 (from -r requirements.txt (line 18))
+#12 10.90   Downloading boto3-1.43.93-py3-none-any.whl.metadata (6.6 kB)
+#12 11.13 Collecting python-multipart==0.0.6 (from -r requirements.txt (line 19))
+#12 11.26   Downloading python_multipart-0.0.6-py3-none-any.whl.metadata (2.5 kB)
+#12 12.24 Collecting Pillow==10.0.0 (from -r requirements.txt (line 20))
+#12 12.43   Downloading Pillow-10.0.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (9.5 kB)
+#12 12.72 Collecting imagehash==4.3.1 (from -r requirements.txt (line 21))
+#12 13.42   Downloading ImageHash-4.3.1-py2.py3-none-any.whl.metadata (8.0 kB)
+#12 14.33 Collecting numpy==1.26.2 (from -r requirements.txt (line 22))
+#12 14.37   Downloading numpy-1.26.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
+#12 14.81 Collecting exifread==3.0.0 (from -r requirements.txt (line 23))
+#12 14.85   Downloading ExifRead-3.0.0-py3-none-any.whl.metadata (6.4 kB)
+#12 14.98 Collecting PyJWT==2.15.1 (from PyJWT[crypto]==2.15.1->-r requirements.txt (line 26))
+#12 15.03   Downloading pyjwt-2.15.1-py3-none-any.whl.metadata (3.5 kB)
+#12 15.71 Collecting cryptography==50.0.2 (from -r requirements.txt (line 27))
+#12 15.77   Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.4 kB)
+#12 15.88 Collecting httpx==0.28.1 (from -r requirements.txt (line 28))
+#12 15.94   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#12 15.98 Requirement already satisfied: torch==2.8.0 in /usr/local/lib/python3.12/site-packages (from -r requirements.txt (line 30)) (2.8.0+cpu)
+#12 16.14 Collecting transformers==4.56.2 (from -r requirements.txt (line 31))
+#12 16.18   Downloading transformers-4.56.2-py3-none-any.whl.metadata (40 kB)
+#12 16.82 Collecting ultralytics==8.4.155 (from -r requirements.txt (line 32))
+#12 16.89   Downloading ultralytics-8.4.155-py3-none-any.whl.metadata (46 kB)
+#12 17.20 Collecting pi-heif==0.7.0 (from -r requirements.txt (line 33))
+#12 17.26   Downloading pi_heif-0.7.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#12 17.42 Collecting starlette>=0.46.0 (from fastapi==0.141.1->-r requirements.txt (line 1))
+#12 17.47   Downloading starlette-1.10.0-py3-none-any.whl.metadata (6.6 kB)
+#12 17.54 Requirement already satisfied: typing-extensions>=4.8.0 in /usr/local/lib/python3.12/site-packages (from fastapi==0.141.1->-r requirements.txt (line 1)) (4.16.0)
+#12 17.68 Collecting typing-inspection>=0.4.2 (from fastapi==0.141.1->-r requirements.txt (line 1))
+#12 17.80   Downloading typing_inspection-0.4.4-py3-none-any.whl.metadata (2.6 kB)
+#12 17.87 Collecting annotated-doc>=0.0.2 (from fastapi==0.141.1->-r requirements.txt (line 1))
+#12 18.07   Downloading annotated_doc-0.0.5-py3-none-any.whl.metadata (6.5 kB)
+#12 18.46 Collecting click>=7.0 (from uvicorn==0.23.1->uvicorn[standard]==0.23.1->-r requirements.txt (line 2))
+#12 18.70   Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+#12 18.78 Collecting h11>=0.8 (from uvicorn==0.23.1->uvicorn[standard]==0.23.1->-r requirements.txt (line 2))
+#12 18.82   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#12 18.89 Collecting annotated-types>=0.6.0 (from pydantic==2.11.9->-r requirements.txt (line 3))
+#12 19.03   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+#12 23.18 Collecting pydantic-core==2.33.2 (from pydantic==2.11.9->-r requirements.txt (line 3))
+#12 23.24   Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#12 23.43 Collecting python-dotenv>=0.21.0 (from pydantic-settings==2.3.0->-r requirements.txt (line 4))
+#12 23.48   Downloading python_dotenv-1.2.4-py3-none-any.whl.metadata (29 kB)
+#12 24.25 Collecting greenlet>=1 (from sqlalchemy==2.0.52->-r requirements.txt (line 5))
+#12 24.51   Downloading greenlet-3.5.6-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+#12 24.65 Collecting Mako (from alembic==1.11.2->-r requirements.txt (line 6))
+#12 24.71   Downloading mako-1.4.3-py3-none-any.whl.metadata (2.9 kB)
+#12 24.92 Collecting packaging (from geoalchemy2==0.13.0->-r requirements.txt (line 10))
+#12 25.15   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+#12 26.66 Collecting botocore<1.44.0,>=1.43.93 (from boto3==1.43.93->-r requirements.txt (line 18))
+#12 26.70   Downloading botocore-1.43.121-py3-none-any.whl.metadata (5.6 kB)
+#12 26.84 Collecting jmespath<2.0.0,>=0.7.1 (from boto3==1.43.93->-r requirements.txt (line 18))
+#12 27.02   Downloading jmespath-1.1.0-py3-none-any.whl.metadata (7.6 kB)
+#12 27.21 Collecting s3transfer<0.20.0,>=0.19.0 (from boto3==1.43.93->-r requirements.txt (line 18))
+#12 27.27   Downloading s3transfer-0.19.3-py3-none-any.whl.metadata (1.7 kB)
+#12 27.48 Collecting PyWavelets (from imagehash==4.3.1->-r requirements.txt (line 21))
+#12 27.52   Downloading pywavelets-1.10.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (7.6 kB)
+#12 27.93 Collecting scipy (from imagehash==4.3.1->-r requirements.txt (line 21))
+#12 27.99   Downloading scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+#12 28.40 Collecting cffi>=2.0.0 (from cryptography==50.0.2->-r requirements.txt (line 27))
+#12 28.43   Downloading cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.5 kB)
+#12 28.51 Collecting anyio (from httpx==0.28.1->-r requirements.txt (line 28))
+#12 28.54   Downloading anyio-4.15.1-py3-none-any.whl.metadata (4.7 kB)
+#12 28.71 Collecting certifi (from httpx==0.28.1->-r requirements.txt (line 28))
+#12 28.74   Downloading certifi-2026.10.23-py3-none-any.whl.metadata (2.5 kB)
+#12 28.99 Collecting httpcore==1.* (from httpx==0.28.1->-r requirements.txt (line 28))
+#12 29.07   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#12 29.52 Collecting idna (from httpx==0.28.1->-r requirements.txt (line 28))
+#12 29.59   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+#12 29.61 Requirement already satisfied: filelock in /usr/local/lib/python3.12/site-packages (from torch==2.8.0->-r requirements.txt (line 30)) (4.2.4)
+#12 29.62 Requirement already satisfied: setuptools in /usr/local/lib/python3.12/site-packages (from torch==2.8.0->-r requirements.txt (line 30)) (78.1.0)
+#12 29.62 Requirement already satisfied: sympy>=1.13.3 in /usr/local/lib/python3.12/site-packages (from torch==2.8.0->-r requirements.txt (line 30)) (1.14.0)
+#12 29.62 Requirement already satisfied: networkx in /usr/local/lib/python3.12/site-packages (from torch==2.8.0->-r requirements.txt (line 30)) (3.7)
+#12 29.62 Requirement already satisfied: jinja2 in /usr/local/lib/python3.12/site-packages (from torch==2.8.0->-r requirements.txt (line 30)) (3.1.6)
+#12 29.62 Requirement already satisfied: fsspec in /usr/local/lib/python3.12/site-packages (from torch==2.8.0->-r requirements.txt (line 30)) (2026.9.0)
+#12 29.82 Collecting huggingface-hub<1.0,>=0.34.0 (from transformers==4.56.2->-r requirements.txt (line 31))
+#12 29.85   Downloading huggingface_hub-0.36.2-py3-none-any.whl.metadata (15 kB)
+#12 30.06 Collecting pyyaml>=5.1 (from transformers==4.56.2->-r requirements.txt (line 31))
+#12 30.10   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+#12 31.00 Collecting regex!=2019.12.17 (from transformers==4.56.2->-r requirements.txt (line 31))
+#12 31.08   Downloading regex-2026.9.29-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+#12 31.35 Collecting requests (from transformers==4.56.2->-r requirements.txt (line 31))
+#12 31.47   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+#12 32.04 Collecting tokenizers<=0.23.0,>=0.22.0 (from transformers==4.56.2->-r requirements.txt (line 31))
+#12 32.10   Downloading tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+#12 32.49 Collecting safetensors>=0.4.3 (from transformers==4.56.2->-r requirements.txt (line 31))
+#12 32.70   Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.2 kB)
+#12 32.86 Collecting tqdm>=4.27 (from transformers==4.56.2->-r requirements.txt (line 31))
+#12 32.89   Downloading tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+#12 33.11 Collecting cloudpickle>=3.1.1 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 33.16   Downloading cloudpickle-3.1.2-py3-none-any.whl.metadata (7.1 kB)
+#12 33.56 Collecting matplotlib>=3.3.0 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 33.62   Downloading matplotlib-3.11.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (80 kB)
+#12 33.87 Collecting opencv-python!=4.13.0.90,>=4.7.0 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 33.96   Downloading opencv_python-5.0.0.93-cp37-abi3-manylinux_2_28_x86_64.whl.metadata (19 kB)
+#12 34.01 Requirement already satisfied: torchvision>=0.9.0 in /usr/local/lib/python3.12/site-packages (from ultralytics==8.4.155->-r requirements.txt (line 32)) (0.23.0+cpu)
+#12 34.25 Collecting psutil>=5.8.0 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 34.31   Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+#12 34.75 Collecting polars>=0.20.0 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 34.90   Downloading polars-2.1.0-py3-none-any.whl.metadata (11 kB)
+#12 34.99 Collecting nvidia-ml-py>=12.0.0 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 35.03   Downloading nvidia_ml_py-13.615.71-py3-none-any.whl.metadata (9.7 kB)
+#12 35.22 Collecting ultralytics-thop>=2.1.6 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 35.25   Downloading ultralytics_thop-2.2.3-py3-none-any.whl.metadata (14 kB)
+#12 35.46 Collecting ultralytics-platform>=0.1.45 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 35.51   Downloading ultralytics_platform-0.1.101-py3-none-any.whl.metadata (17 kB)
+#12 35.81 Collecting httptools>=0.5.0 (from uvicorn[standard]==0.23.1->-r requirements.txt (line 2))
+#12 35.96   Downloading httptools-0.9.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+#12 36.12 Collecting uvloop!=0.15.0,!=0.15.1,>=0.14.0 (from uvicorn[standard]==0.23.1->-r requirements.txt (line 2))
+#12 36.15   Downloading uvloop-0.23.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.1 kB)
+#12 36.47 Collecting watchfiles>=0.13 (from uvicorn[standard]==0.23.1->-r requirements.txt (line 2))
+#12 36.54   Downloading watchfiles-1.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#12 37.04 Collecting websockets>=10.4 (from uvicorn[standard]==0.23.1->-r requirements.txt (line 2))
+#12 37.09   Downloading websockets-17.3-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.3 kB)
+#12 37.33 Collecting python-dateutil<3.0.0,>=2.1 (from botocore<1.44.0,>=1.43.93->boto3==1.43.93->-r requirements.txt (line 18))
+#12 37.48   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+#12 37.68 Collecting urllib3!=2.2.0,<3,>=1.25.4 (from botocore<1.44.0,>=1.43.93->boto3==1.43.93->-r requirements.txt (line 18))
+#12 37.72   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+#12 37.84 Collecting pycparser (from cffi>=2.0.0->cryptography==50.0.2->-r requirements.txt (line 27))
+#12 37.91   Downloading pycparser-3.12-py3-none-any.whl.metadata (9.7 kB)
+#12 38.10 Collecting hf-xet<2.0.0,>=1.1.3 (from huggingface-hub<1.0,>=0.34.0->transformers==4.56.2->-r requirements.txt (line 31))
+#12 38.14   Downloading hf_xet-1.7.1-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+#12 38.44 Collecting contourpy>=1.0.1 (from matplotlib>=3.3.0->ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 38.52   Downloading contourpy-1.4.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+#12 38.58 Collecting cycler>=0.10 (from matplotlib>=3.3.0->ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 38.62   Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+#12 39.23 Collecting fonttools>=4.28.2 (from matplotlib>=3.3.0->ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 39.32   Downloading fonttools-4.68.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (139 kB)
+#12 39.75 Collecting kiwisolver>=1.3.1 (from matplotlib>=3.3.0->ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 39.95   Downloading kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.2 kB)
+#12 40.15 Collecting pyparsing>=3 (from matplotlib>=3.3.0->ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 40.18   Downloading pyparsing-3.3.3-py3-none-any.whl.metadata (5.9 kB)
+#12 40.22 INFO: pip is looking at multiple versions of opencv-python to determine which version is compatible with other requirements. This could take a while.
+#12 40.22 Collecting opencv-python!=4.13.0.90,>=4.7.0 (from ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 40.25   Downloading opencv_python-4.14.0.94-cp37-abi3-manylinux_2_28_x86_64.whl.metadata (19 kB)
+#12 40.29   Downloading opencv_python-4.13.0.92-cp37-abi3-manylinux_2_28_x86_64.whl.metadata (19 kB)
+#12 40.33   Downloading opencv_python-4.12.0.88-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (19 kB)
+#12 40.38   Downloading opencv_python-4.11.0.86-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (20 kB)
+#12 40.57 Collecting polars-runtime-32==2.1.0 (from polars>=0.20.0->ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 40.59   Downloading polars_runtime_32-2.1.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.5 kB)
+#12 40.94 Collecting charset_normalizer<4,>=2 (from requests->transformers==4.56.2->-r requirements.txt (line 31))
+#12 40.97   Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+#12 41.59 Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.12/site-packages (from sympy>=1.13.3->torch==2.8.0->-r requirements.txt (line 30)) (1.3.0)
+#12 41.71 Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.12/site-packages (from jinja2->torch==2.8.0->-r requirements.txt (line 30)) (3.0.3)
+#12 41.74 INFO: pip is looking at multiple versions of pywavelets to determine which version is compatible with other requirements. This could take a while.
+#12 41.74 Collecting PyWavelets (from imagehash==4.3.1->-r requirements.txt (line 21))
+#12 41.90   Downloading pywavelets-1.9.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (7.6 kB)
+#12 41.97 INFO: pip is looking at multiple versions of scipy to determine which version is compatible with other requirements. This could take a while.
+#12 41.97 Collecting scipy (from imagehash==4.3.1->-r requirements.txt (line 21))
+#12 42.00   Downloading scipy-1.18.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+#12 42.17   Downloading scipy-1.17.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+#12 42.34   Downloading scipy-1.17.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+#12 42.58   Downloading scipy-1.16.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (62 kB)
+#12 42.74 INFO: pip is looking at multiple versions of contourpy to determine which version is compatible with other requirements. This could take a while.
+#12 42.75 Collecting contourpy>=1.0.1 (from matplotlib>=3.3.0->ultralytics==8.4.155->-r requirements.txt (line 32))
+#12 42.79   Downloading contourpy-1.3.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.5 kB)
+#12 42.88 Collecting six>=1.5 (from python-dateutil<3.0.0,>=2.1->botocore<1.44.0,>=1.43.93->boto3==1.43.93->-r requirements.txt (line 18))
+#12 42.92   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+#12 42.99 Downloading fastapi-0.141.1-py3-none-any.whl (131 kB)
+#12 43.08 Downloading uvicorn-0.23.1-py3-none-any.whl (59 kB)
+#12 43.14 Downloading pydantic-2.11.9-py3-none-any.whl (444 kB)
+#12 43.50 Downloading pydantic_settings-2.3.0-py3-none-any.whl (21 kB)
+#12 43.54 Downloading sqlalchemy-2.0.52-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.4 MB)
+#12 44.14    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 5.8 MB/s eta 0:00:00
+#12 44.16 Downloading alembic-1.11.2-py3-none-any.whl (225 kB)
+#12 44.24 Downloading psycopg2_binary-2.9.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.0 MB)
+#12 44.85    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.0/3.0 MB 4.8 MB/s eta 0:00:00
+#12 44.88 Downloading redis-4.6.0-py3-none-any.whl (241 kB)
+#12 45.21 Downloading GeoAlchemy2-0.13.0-py3-none-any.whl (43 kB)
+#12 45.25 Downloading pgvector-0.5.0-py3-none-any.whl (30 kB)
+#12 45.29 Downloading structlog-24.4.0-py3-none-any.whl (67 kB)
+#12 45.34 Downloading prometheus_client-0.21.1-py3-none-any.whl (54 kB)
+#12 45.37 Downloading boto3-1.43.93-py3-none-any.whl (140 kB)
+#12 45.41 Downloading python_multipart-0.0.6-py3-none-any.whl (45 kB)
+#12 45.45 Downloading Pillow-10.0.0-cp312-cp312-manylinux_2_28_x86_64.whl (3.4 MB)
+#12 46.09    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 5.3 MB/s eta 0:00:00
+#12 46.13 Downloading ImageHash-4.3.1-py2.py3-none-any.whl (296 kB)
+#12 46.23 Downloading numpy-1.26.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (17.9 MB)
+#12 49.09    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 17.9/17.9 MB 6.3 MB/s eta 0:00:00
+#12 49.11 Downloading ExifRead-3.0.0-py3-none-any.whl (40 kB)
+#12 49.15 Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+#12 49.19 Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+#12 50.33    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 4.1 MB/s eta 0:00:00
+#12 50.35 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#12 50.41 Downloading transformers-4.56.2-py3-none-any.whl (11.6 MB)
+#12 54.59    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.6/11.6 MB 2.7 MB/s eta 0:00:00
+#12 54.63 Downloading ultralytics-8.4.155-py3-none-any.whl (1.4 MB)
+#12 54.92    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 5.4 MB/s eta 0:00:00
+#12 54.95 Downloading pi_heif-0.7.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (941 kB)
+#12 55.19    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 941.3/941.3 kB 4.4 MB/s eta 0:00:00
+#12 55.21 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#12 55.26 Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#12 55.57    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 6.7 MB/s eta 0:00:00
+#12 55.60 Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+#12 55.64 Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#12 55.68 Downloading botocore-1.43.121-py3-none-any.whl (16.2 MB)
+#12 59.02    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.2/16.2 MB 4.9 MB/s eta 0:00:00
+#12 59.05 Downloading cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (221 kB)
+#12 59.11 Downloading click-8.5.0-py3-none-any.whl (125 kB)
+#12 59.17 Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+#12 59.20 Downloading greenlet-3.5.6-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (621 kB)
+#12 59.33    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 621.4/621.4 kB 3.9 MB/s eta 0:00:00
+#12 59.37 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#12 59.40 Downloading httptools-0.9.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (552 kB)
+#12 59.49    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 552.8/552.8 kB 5.4 MB/s eta 0:00:00
+#12 59.51 Downloading huggingface_hub-0.36.2-py3-none-any.whl (566 kB)
+#12 59.62    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 566.4/566.4 kB 4.7 MB/s eta 0:00:00
+#12 59.64 Downloading jmespath-1.1.0-py3-none-any.whl (20 kB)
+#12 59.69 Downloading matplotlib-3.11.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.9 MB)
+#12 61.74    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 4.8 MB/s eta 0:00:00
+#12 61.77 Downloading nvidia_ml_py-13.615.71-py3-none-any.whl (58 kB)
+#12 61.82 Downloading opencv_python-4.11.0.86-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (63.0 MB)
+#12 73.12    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.0/63.0 MB 5.6 MB/s eta 0:00:00
+#12 73.14 Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#12 73.22 Downloading polars-2.1.0-py3-none-any.whl (911 kB)
+#12 73.41    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 911.5/911.5 kB 4.7 MB/s eta 0:00:00
+#12 73.45 Downloading polars_runtime_32-2.1.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (53.9 MB)
+#12 85.24    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 53.9/53.9 MB 4.6 MB/s eta 0:00:00
+#12 85.28 Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+#12 85.38 Downloading python_dotenv-1.2.4-py3-none-any.whl (23 kB)
+#12 85.41 Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+#12 85.70    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 2.9 MB/s eta 0:00:00
+#12 85.73 Downloading regex-2026.9.29-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+#12 86.06    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.8/807.8 kB 2.4 MB/s eta 0:00:00
+#12 86.10 Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#12 86.17 Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+#12 86.27 Downloading idna-3.20-py3-none-any.whl (69 kB)
+#12 86.39 Downloading s3transfer-0.19.3-py3-none-any.whl (90 kB)
+#12 86.51 Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (516 kB)
+#12 86.85 Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+#12 86.93 Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+#12 86.99 Downloading tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+#12 87.91    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 3.6 MB/s eta 0:00:00
+#12 87.95 Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+#12 87.99 Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+#12 88.04 Downloading ultralytics_platform-0.1.101-py3-none-any.whl (99 kB)
+#12 88.20 Downloading ultralytics_thop-2.2.3-py3-none-any.whl (32 kB)
+#12 88.34 Downloading uvloop-0.23.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.5 MB)
+#12 90.16    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 2.6 MB/s eta 0:00:00
+#12 90.20 Downloading watchfiles-1.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (458 kB)
+#12 90.36 Downloading websockets-17.3-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (225 kB)
+#12 90.46 Downloading mako-1.4.3-py3-none-any.whl (80 kB)
+#12 90.54 Downloading pywavelets-1.9.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (4.5 MB)
+#12 91.55    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 4.4 MB/s eta 0:00:00
+#12 91.57 Downloading scipy-1.16.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (35.7 MB)
+#12 100.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.7/35.7 MB 3.9 MB/s eta 0:00:00
+#12 100.6 Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (257 kB)
+#12 100.7 Downloading contourpy-1.3.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (362 kB)
+#12 100.8 Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+#12 100.9 Downloading fonttools-4.68.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.4 MB)
+#12 102.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 3.3 MB/s eta 0:00:00
+#12 102.6 Downloading hf_xet-1.7.1-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.2 MB)
+#12 103.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.2/4.2 MB 3.1 MB/s eta 0:00:00
+#12 103.9 Downloading kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.5 MB)
+#12 104.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 5.9 MB/s eta 0:00:00
+#12 104.2 Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+#12 104.3 Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#12 104.4 Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#12 104.5 Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+#12 104.6 Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#12 105.8 Installing collected packages: nvidia-ml-py, exifread, websockets, uvloop, urllib3, typing-inspection, tqdm, structlog, six, safetensors, regex, redis, pyyaml, python-multipart, python-dotenv, pyparsing, PyJWT, pydantic-core, pycparser, psycopg2-binary, psutil, prometheus-client, polars-runtime-32, Pillow, pgvector, packaging, numpy, Mako, kiwisolver, jmespath, idna, httptools, hf-xet, h11, greenlet, fonttools, cycler, cloudpickle, click, charset_normalizer, certifi, annotated-types, annotated-doc, uvicorn, sqlalchemy, scipy, requests, PyWavelets, python-dateutil, pydantic, polars, opencv-python, httpcore, contourpy, cffi, anyio, watchfiles, ultralytics-thop, starlette, pydantic-settings, pi-heif, matplotlib, imagehash, huggingface-hub, httpx, geoalchemy2, cryptography, botocore, alembic, ultralytics-platform, tokenizers, s3transfer, fastapi, ultralytics, transformers, boto3
+#12 112.3   Attempting uninstall: Pillow
+#12 112.3     Found existing installation: pillow 13.0.0
+#12 112.3     Uninstalling pillow-13.0.0:
+#12 112.5       Successfully uninstalled pillow-13.0.0
+#12 113.5   Attempting uninstall: numpy
+#12 113.5     Found existing installation: numpy 2.5.4
+#12 113.9     Uninstalling numpy-2.5.4:
+#12 115.2       Successfully uninstalled numpy-2.5.4
+#12 178.5 Successfully installed Mako-1.4.3 Pillow-10.0.0 PyJWT-2.15.1 PyWavelets-1.9.0 alembic-1.11.2 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.15.1 boto3-1.43.93 botocore-1.43.121 certifi-2026.10.23 cffi-2.1.1 charset_normalizer-3.5.2 click-8.5.0 cloudpickle-3.1.2 contourpy-1.3.3 cryptography-50.0.2 cycler-0.12.1 exifread-3.0.0 fastapi-0.141.1 fonttools-4.68.0 geoalchemy2-0.13.0 greenlet-3.5.6 h11-0.16.0 hf-xet-1.7.1 httpcore-1.0.9 httptools-0.9.0 httpx-0.28.1 huggingface-hub-0.36.2 idna-3.20 imagehash-4.3.1 jmespath-1.1.0 kiwisolver-1.5.1 matplotlib-3.11.2 numpy-1.26.2 nvidia-ml-py-13.615.71 opencv-python-4.11.0.86 packaging-26.3 pgvector-0.5.0 pi-heif-0.7.0 polars-2.1.0 polars-runtime-32-2.1.0 prometheus-client-0.21.1 psutil-7.2.2 psycopg2-binary-2.9.9 pycparser-3.12 pydantic-2.11.9 pydantic-core-2.33.2 pydantic-settings-2.3.0 pyparsing-3.3.3 python-dateutil-2.9.0.post0 python-dotenv-1.2.4 python-multipart-0.0.6 pyyaml-6.0.3 redis-4.6.0 regex-2026.9.29 requests-2.34.2 s3transfer-0.19.3 safetensors-0.8.0 scipy-1.16.3 six-1.17.0 sqlalchemy-2.0.52 starlette-1.10.0 structlog-24.4.0 tokenizers-0.22.2 tqdm-4.70.1 transformers-4.56.2 typing-inspection-0.4.4 ultralytics-8.4.155 ultralytics-platform-0.1.101 ultralytics-thop-2.2.3 urllib3-2.8.0 uvicorn-0.23.1 uvloop-0.23.0 watchfiles-1.3.0 websockets-17.3
+#12 DONE 179.8s
+
+#13 [runtime 5/8] RUN --mount=type=cache,target=/root/.cache/pip     pip install --index-url https://download.pytorch.org/whl/cpu         "torch==2.8.0" "torchvision==0.23.0"
+#13 CACHED
+
+#14 [runtime 6/8] RUN --mount=type=cache,target=/root/.cache/pip     pip install -r requirements.txt
+#14 CACHED
+
+#15 [runtime 4/8] COPY requirements.txt ./
+#15 CACHED
+
+#16 [runtime 7/8] COPY . .
+#16 DONE 0.5s
+
+#17 [runtime 8/8] RUN groupadd --system --gid 10001 appgroup     && useradd --system --uid 10001 --gid appgroup --no-create-home appuser     && chown -R root:root /app
+#17 0.600 useradd warning: appuser's uid 10001 is greater than SYS_UID_MAX 999
+#17 DONE 3.6s
+
+#18 exporting to image
+#18 exporting layers
+#18 exporting layers 95.6s done
+#18 exporting manifest sha256:51c84e919b6dd2fc7887135877a56ec69418ec354b34cf879cbf6785226b1f24 0.0s done
+#18 exporting config sha256:4faad276aa8cbc527d001e864480bfa0b059d3a4776ba91f2545bfffff703f7f 0.1s done
+#18 exporting attestation manifest sha256:f8e7ba9844d83eb3c1d10ffde9d379d69339960c4c75f2fcbd51482a52015bda 0.0s done
+#18 exporting manifest list sha256:c7309cbdbd87d75201b7ac6d1a5c32f6099fdf529aaffec99f3a185da7c23aad
+#18 exporting manifest list sha256:c7309cbdbd87d75201b7ac6d1a5c32f6099fdf529aaffec99f3a185da7c23aad 0.0s done
+#18 naming to docker.io/library/poa-backend:prism-54e33b20 0.0s done
+#18 unpacking to docker.io/library/poa-backend:prism-54e33b20
+#18 unpacking to docker.io/library/poa-backend:prism-54e33b20 42.4s done
+#18 DONE 138.4s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/dtztjt7w5bwfih5yopadh6vcz
+== build-exit=0 ==
+2026-10-29T06:45:26Z

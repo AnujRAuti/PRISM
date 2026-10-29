@@ -1,0 +1,8 @@
+image           : poa-backend:prism-54e33b20
+modules compared: local=135 in_image=135
+identical       : 135
+differing       : 0 []
+only in worktree: 0 []
+only in image   : 0 []
+
+VERDICT: image carries exactly the worktree's backend code = True

@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(r"D:/CODING/Projects/Proof-Of-Action-Final")
-IMAGE = "poa-backend:mbe01-wt1"
+IMAGE = sys.argv[1] if len(sys.argv) > 1 else "poa-backend:mbe01-wt1"
 
 
 def is_app_module(rel_parts: tuple[str, ...]) -> bool:

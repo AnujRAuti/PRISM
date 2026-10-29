@@ -1,0 +1,16 @@
+PASS  disposable schema reached the release head  ->  w3x4y5z6a033
+PASS  the candidate boots with the six AUTH_OIDC_* values and serves /health  ->  (200, '{"status":"ok"}')
+PASS  /ready is healthy on every dependency leg  ->  http=200 legs={"application": "healthy", "postgresql": "healthy", "redis": "healthy", "storage": "healthy"}
+PASS  the running process loaded all six values, enforcing, dev tokens off  ->  {"enabled": true, "issuer": "https://tuaeujvuuanadqvykugw.supabase.co/auth/v1", "jwks_uri": "https://tuaeujvuuanadqvykugw.supabase.co/auth/v1/.well-known/jwks.json", "audience": "authenticated", "algorithms": "ES256", "provider": "supabase", "auth_mode": "enforcing", "dev_tokens": false}
+PASS  the live JWKS is reachable from inside the container and indexes the published kid  ->  kids=['ab0ac6ae-93be-441c-9196-7b2fade15af0']
+PASS  anonymous /auth/me is refused  ->  401 {"detail":"Authentication required"}
+PASS  a development bearer token is refused while the provider is enabled  ->  401 {"detail":"Invalid credentials"}
+PASS  an HS256 token is refused over HTTP  ->  401 {"detail":"Invalid credentials"}
+PASS  a forged ES256 token carrying the live kid is refused over HTTP  ->  401 {"detail":"Invalid credentials"}
+PASS  a token with an unknown kid is refused over HTTP  ->  401 {"detail":"Invalid credentials"}
+PASS  a forged token for the wrong issuer is refused over HTTP  ->  401 {"detail":"Invalid credentials"}
+PASS  a forged token cannot create a project  ->  401 {"detail":"Invalid credentials"}
+PASS  no user row was created by any refusal (nothing auto-provisioned)  ->  before=0 after=0
+PASS  the refusals name distinct reasons rather than one blanket error  ->  {"ALGORITHM_REFUSED": 2, "UNKNOWN_KEY_ID": 2, "TOKEN_REJECTED": 6}
+{"passed": 14, "total": 14, "users": ["0", "0"], "reasons": {"ALGORITHM_REFUSED": 2, "UNKNOWN_KEY_ID": 2, "TOKEN_REJECTED": 6}}
+exit=0

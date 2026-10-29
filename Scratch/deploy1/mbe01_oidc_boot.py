@@ -20,6 +20,7 @@ usage: python mbe01_oidc_boot.py run | clean
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -27,11 +28,12 @@ import urllib.error
 import urllib.request
 from uuid import uuid4
 
-IMAGE = "poa-backend:mbe01-wt1"
+IMAGE = os.environ.get("POA_IMAGE", "poa-backend:mbe01-wt1")
 DB = "poa_disp_oidc"
 CONT = "poa_disp_oidc_api"
 HOST_PORT = 8011
-OUT = "D:/CODING/Scratch/deploy1/mbe01_oidc_boot.json"
+HERE = os.path.dirname(os.path.abspath(__file__))
+OUT = os.environ.get("POA_OIDC_BOOT_OUT") or os.path.join(HERE, "mbe01_oidc_boot.json")
 PROTECTED = {"pofa_dev", "pofa_test", "poa_prod", "poa_restore_probe"}
 ADMIN = "postgres"
 IN_URL = f"postgresql+psycopg2://{ADMIN}:{ADMIN}@host.docker.internal:5432/{DB}"
@@ -99,6 +101,30 @@ def disposable_minio_credentials():
 
 def exec_in_container(source):
     return sh(["docker", "exec", "-i", CONT, "python", "-"], stdin=source, quiet=True)
+
+
+def container_json(source, *, attempts: int = 4, pause: float = 5.0):
+    """Return (parsed_json_or_None, detail) for a `python -` run in the container.
+
+    Each exec is a fresh process with a cold JWKS cache, so its first provider
+    fetch can transiently fail while the container is still settling; retry
+    before judging the check and never let unparseable output crash the gate.
+    """
+    detail = "no output"
+    for attempt in range(1, attempts + 1):
+        proc = exec_in_container(source)
+        out = (proc.stdout or "").strip()
+        err = (proc.stderr or "").strip().splitlines()
+        if proc.returncode == 0 and out:
+            try:
+                return json.loads(out.splitlines()[-1]), f"attempts={attempt}"
+            except json.JSONDecodeError:
+                detail = f"unparseable={out[-120:]}"
+        else:
+            detail = f"rc={proc.returncode} err={(err[-1] if err else '')[:160]}"
+        if attempt < attempts:
+            time.sleep(pause)
+    return None, detail
 
 
 def es256_token(kid: str | None, claims: dict | None = None) -> str:
@@ -185,25 +211,25 @@ def run() -> int:
         status == "healthy" for status in legs.values()),
         f"http={code} legs={json.dumps(legs)}")
 
-    echo = exec_in_container(
+    cfg, cfg_detail = container_json(
         "from backend.core.config import settings as s; import json; print(json.dumps({"
         "'enabled': s.auth_oidc_enabled, 'issuer': s.auth_oidc_issuer,"
         "'jwks_uri': s.auth_oidc_jwks_uri, 'audience': s.auth_oidc_audience,"
         "'algorithms': s.auth_oidc_algorithms, 'provider': s.auth_oidc_identity_provider,"
         "'auth_mode': s.auth_mode, 'dev_tokens': s.auth_dev_tokens_enabled}))")
-    cfg = json.loads(echo.stdout.strip().splitlines()[-1])
     record("the running process loaded all six values, enforcing, dev tokens off",
            cfg == {"enabled": True, "issuer": ISSUER, "jwks_uri": JWKS,
                    "audience": "authenticated", "algorithms": "ES256",
                    "provider": "supabase", "auth_mode": "enforcing",
-                   "dev_tokens": False}, json.dumps(cfg))
+                   "dev_tokens": False},
+           json.dumps(cfg) if cfg is not None else cfg_detail)
 
-    keys = exec_in_container(
+    published, keys_detail = container_json(
         "from backend.security import oidc; import json;"
         "print(json.dumps(sorted(oidc.signing_keys())))")
-    published = json.loads(keys.stdout.strip().splitlines()[-1])
     record("the live JWKS is reachable from inside the container and indexes the published kid",
-           len(published) == 1, f"kids={published}")
+           isinstance(published, list) and len(published) == 1,
+           f"kids={published}" if published is not None else keys_detail)
 
     users_before = psql("SELECT count(*) FROM users", db=DB)
 
@@ -247,6 +273,7 @@ def run() -> int:
     summary = {"passed": sum(e["passed"] for e in EVIDENCE), "total": len(EVIDENCE),
                "users": [users_before, users_after], "reasons": counted}
     print(json.dumps(summary))
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump({"summary": summary, "checks": EVIDENCE}, fh, indent=2)
     return 0 if all(e["passed"] for e in EVIDENCE) else 1
