@@ -6,3 +6,4 @@ only in worktree: 0 []
 only in image   : 0 []
 
 VERDICT: image carries exactly the worktree's backend code = True
+exit=0
