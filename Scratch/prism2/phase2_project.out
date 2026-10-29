@@ -1,0 +1,49 @@
+.env:
+   DATABASE_URL = <hidden len=86 sha256:b5a4ff6da8>
+   REDIS_URL = redis://localhost:6379/0
+   S3_ACCESS_KEY = <hidden len=10 sha256:ad9858116e>
+   S3_SECRET_KEY = <hidden len=10 sha256:ad9858116e>
+
+frontend\.env: ABSENT
+
+Scratch\mbe01-frontend\.env.example:
+   DATABASE_URL = <hidden len=63 sha256:c564f33714>
+   REDIS_URL = redis://localhost:6379/0
+   S3_ACCESS_KEY = <hidden len=10 sha256:ad9858116e>
+   S3_SECRET_KEY = <hidden len=10 sha256:ad9858116e>
+
+Scratch\mbe01-frontend\frontend\.env:
+   VITE_API_BASE_URL = /api/v1
+   VITE_SUPABASE_URL = https://tuaeujvuuanadqvykugw.supabase.co
+
+   -> project ref from Scratch/mbe01-frontend/frontend/.env (VITE_SUPABASE_URL): tuaeujvuuanadqvykugw
+Scratch\mbe01-frontend\frontend\.env.local:
+   VITE_SUPABASE_PUBLISHABLE_KEY = <hidden len=46 sha256:ab49248054>
+
+docker-compose.yml:
+   DATABASE_URL = <hidden len=77 sha256:c25b2ec7e6>
+   REDIS_URL = ${REDIS_URL:-redis://redis:6379/0}
+   S3_ACCESS_KEY = ${MINIO_ROOT_USER:-minioadmin}
+   S3_SECRET_KEY = ${MINIO_ROOT_PASSWORD:-minioadmin}
+   AUTH_OIDC_ENABLED = ${AUTH_OIDC_ENABLED:-false}
+   AUTH_OIDC_ISSUER = ${AUTH_OIDC_ISSUER:-}
+   AUTH_OIDC_JWKS_URI = ${AUTH_OIDC_JWKS_URI:-}
+   AUTH_OIDC_AUDIENCE = ${AUTH_OIDC_AUDIENCE:-authenticated}
+   AUTH_OIDC_IDENTITY_PROVIDER = ${AUTH_OIDC_IDENTITY_PROVIDER:-supabase}
+   AUTH_OIDC_ALGORITHMS = ${AUTH_OIDC_ALGORITHMS:-RS256}
+   AUTH_OIDC_JWKS_TTL_SECONDS = ${AUTH_OIDC_JWKS_TTL_SECONDS:-300}
+   MIGRATION_DATABASE_URL = ${POA_MIGRATION_DATABASE_URL:-}
+
+== distinct project refs the code actually points at ==
+['tuaeujvuuanadqvykugw']
+
+== live endpoints for tuaeujvuuanadqvykugw ==
+GET https://tuaeujvuuanadqvykugw.supabase.co/auth/v1/.well-known/openid-configuration -> 200
+   issuer                = https://tuaeujvuuanadqvykugw.supabase.co/auth/v1
+   jwks_uri              = https://tuaeujvuuanadqvykugw.supabase.co/auth/v1/.well-known/jwks.json
+   id_token_signing_alg  = ['RS256', 'HS256', 'ES256']
+   subject_types         = ['public']
+   authorization_endpoint= https://tuaeujvuuanadqvykugw.supabase.co/auth/v1/oauth/authorize
+
+GET https://tuaeujvuuanadqvykugw.supabase.co/auth/v1/.well-known/jwks.json -> 200
+   kid=ab0ac6ae-93be-441c-9196-7b2fade15af0 kty=EC alg=ES256 use=sig crv=P-256 x5t=False

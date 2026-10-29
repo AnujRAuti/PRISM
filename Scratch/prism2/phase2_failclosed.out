@@ -1,0 +1,24 @@
+[OK ] measured project, ES256, correct ref
+        wanted=GATE-BLOCKED-NO-TOKEN saw=GATE-BLOCKED-NO-TOKEN :: verdict=BLOCKED failing=- blocked=['probe_token']
+[OK ] compose default RS256 against an ES256 provider
+        wanted=GATE-FAIL saw=GATE-FAIL :: verdict=FAIL failing=['usable_keys'] blocked=-
+[OK ] HMAC algorithm offered (algorithm-confusion vector)
+        wanted=REFUSE-BOOT saw=REFUSE-BOOT :: auth_oidc_algorithms may only contain asymmetric algorithms (RS*/ES*/PS*); 1 refused entry(ies) are not accepted.
+[OK ] no algorithms configured at all
+        wanted=REFUSE-BOOT saw=REFUSE-BOOT :: auth_oidc_algorithms must list at least one algorithm
+[OK ] placeholder issuer supabase.auth.local
+        wanted=REFUSE-BOOT saw=REFUSE-BOOT :: auth_oidc_issuer must be an https:// address when auth_oidc_enabled is true
+[OK ] blank issuer while enabled
+        wanted=REFUSE-BOOT saw=REFUSE-BOOT :: auth_oidc_issuer must be set when auth_oidc_enabled is true
+[OK ] blank audience while enabled
+        wanted=REFUSE-BOOT saw=REFUSE-BOOT :: auth_oidc_audience must not be blank when OIDC is enabled
+[OK ] issuer and JWKS on different authorities
+        wanted=REFUSE-BOOT saw=REFUSE-BOOT :: auth_oidc_issuer and auth_oidc_jwks_uri must be served by the same host (got 'tuaeujvuuanadqvykugw.supabase.co' and 'someone-else.supabase.co'); keys from another authority cannot vouch for this issue
+[OK ] JWKS path unreachable (must fail closed, not open)
+        wanted=GATE-FAIL saw=GATE-FAIL :: verdict=FAIL failing=['key_set_reachable'] blocked=-
+[OK ] correct config, wrong expected project ref
+        wanted=GATE-FAIL saw=GATE-FAIL :: verdict=FAIL failing=['project_identity'] blocked=['probe_token']
+[OK ] production with the verifier off
+        wanted=REFUSE-BOOT saw=REFUSE-BOOT :: auth_oidc_enabled must be true in production: reviewers sign in through the identity provider, and with it off the only accepted credential is a service client secret.
+
+cases: 11  as-designed: 11  unexpected: 0
