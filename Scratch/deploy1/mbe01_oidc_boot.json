@@ -1,6 +1,6 @@
 {
   "summary": {
-    "passed": 13,
+    "passed": 14,
     "total": 14,
     "users": [
       "0",
@@ -16,7 +16,7 @@
     {
       "check": "disposable schema reached the release head",
       "passed": true,
-      "detail": "w3x4y5z6a033"
+      "detail": "y5z6a7b8c035"
     },
     {
       "check": "the candidate boots with the six AUTH_OIDC_* values and serves /health",
@@ -25,8 +25,8 @@
     },
     {
       "check": "/ready is healthy on every dependency leg",
-      "passed": false,
-      "detail": "http=503 legs={\"application\": \"healthy\", \"postgresql\": \"healthy\", \"redis\": \"unhealthy\", \"storage\": \"unhealthy\"}"
+      "passed": true,
+      "detail": "http=200 legs={\"application\": \"healthy\", \"postgresql\": \"healthy\", \"redis\": \"healthy\", \"storage\": \"healthy\"}"
     },
     {
       "check": "the running process loaded all six values, enforcing, dev tokens off",
