@@ -28,7 +28,7 @@ import urllib.error
 import urllib.request
 from uuid import uuid4
 
-IMAGE = os.environ.get("POA_IMAGE", "poa-backend:mbe01-wt1")
+IMAGE = os.environ.get("POA_IMAGE", "prism-backend:prism-release-20261030")
 DB = "poa_disp_oidc"
 CONT = "poa_disp_oidc_api"
 HOST_PORT = 8011
