@@ -11,9 +11,9 @@ locally verified candidate supersedes it:
 
 | Item | Current value |
 | --- | --- |
-| Source commit | `122f0a4e` |
-| Image | `prism-backend:prism-122f0a4e` |
-| Image digest | `sha256:0eca115f1667f3cfffdeb640683154d7b7ba5d5de466e1b75ba5380301b30291` |
+| Source commit | `0b4cba09` (the final source commit before this handoff pin) |
+| Image | `prism-backend:prism-release-20261030` |
+| Image digest | recorded below after the final build |
 | Schema head | `y5z6a7b8c035` |
 | Catalogue | 70 permissions, 6 roles, 131 role grants |
 | Local verification | 1,088 passed, 15 skipped, 0 failed in the supported Python 3.12 runtime |

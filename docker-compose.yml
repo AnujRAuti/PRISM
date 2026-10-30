@@ -55,7 +55,7 @@ x-app-environment: &app-environment
   AUTH_OIDC_ALGORITHMS: ${AUTH_OIDC_ALGORITHMS:-RS256}
   AUTH_OIDC_JWKS_TTL_SECONDS: ${AUTH_OIDC_JWKS_TTL_SECONDS:-300}
 
-x-prism-image: &prism-image ${PRISM_IMAGE:-prism-backend:prism-0c8b1c78}
+x-prism-image: &prism-image ${PRISM_IMAGE:-prism-backend:prism-release-20261030}
 
 services:
   db:
