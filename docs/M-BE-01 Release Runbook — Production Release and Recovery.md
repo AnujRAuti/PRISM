@@ -4,6 +4,24 @@ Status: **not started**. No production write of any kind has occurred. This docu
 the executable sequence for the release window; every gate has an explicit abort
 condition, and an aborted gate stops the release rather than being worked around.
 
+## Current candidate override — 2026-10-30
+
+The historical candidate table below is retained as release evidence. The current
+locally verified candidate supersedes it:
+
+| Item | Current value |
+| --- | --- |
+| Source commit | `122f0a4e` |
+| Image | `prism-backend:prism-122f0a4e` |
+| Image digest | `sha256:0eca115f1667f3cfffdeb640683154d7b7ba5d5de466e1b75ba5380301b30291` |
+| Schema head | `y5z6a7b8c035` |
+| Catalogue | 70 permissions, 6 roles, 131 role grants |
+| Local verification | 1,088 passed, 15 skipped, 0 failed in the supported Python 3.12 runtime |
+
+Production deployment remains owner-gated: fresh backup, Azure access, current
+domain/TLS values, and a fresh provider-issued Supabase access token are still
+required before changing production.
+
 Deadline context: backend milestone 29 October 2026 18:00 IST; 30 October reserved for
 frontend integration, end-to-end validation and submission.
 

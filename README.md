@@ -2,7 +2,7 @@
 
 Backend for the PRISM Evidence Integrity & Intelligence Layer (EIIL).
 
-See `docs/PRISM Report — Autonomous Backend Completion — 2026-10-29.md` for the
-latest release status and remaining gates.
+See `docs/M-BE-01 Release Runbook — Production Release and Recovery.md` for the
+release procedure, recovery steps, and operator-gated deployment checks.
 
 Object storage setup and the S3/MinIO storage abstraction are documented in `docs/storage.md`.
