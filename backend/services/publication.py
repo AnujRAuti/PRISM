@@ -248,7 +248,7 @@ def get_publication_policy(db: Session, policy_id: str) -> dict:
 
 
 def list_publication_policies(db: Session) -> tuple[list[dict], int]:
-    rows, total = pub_repo.list_policies(db, limit=1000, offset=0)
+    rows, total = pub_repo.list_policies(db, limit=None, offset=0)
     return [policy_view(p, pub_repo.get_active_policy_version(db, p.id)) for p in rows], total
 
 

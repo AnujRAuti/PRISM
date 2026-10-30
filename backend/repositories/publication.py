@@ -39,10 +39,12 @@ def get_policy_by_name(db: Session, name: str):
     )
 
 
-def list_policies(db: Session, *, limit: int, offset: int):
+def list_policies(db: Session, *, limit: int | None, offset: int):
     query = db.query(PublicationPolicy).order_by(PublicationPolicy.name.asc())
     total = query.count()
-    return query.limit(limit).offset(offset).all(), total
+    if limit is not None:
+        query = query.limit(limit)
+    return query.offset(offset).all(), total
 
 
 def get_policy_version(db: Session, version_id: str):
