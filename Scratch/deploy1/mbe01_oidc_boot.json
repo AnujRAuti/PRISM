@@ -1,6 +1,6 @@
 {
   "summary": {
-    "passed": 14,
+    "passed": 13,
     "total": 14,
     "users": [
       "0",
@@ -25,8 +25,8 @@
     },
     {
       "check": "/ready is healthy on every dependency leg",
-      "passed": true,
-      "detail": "http=200 legs={\"application\": \"healthy\", \"postgresql\": \"healthy\", \"redis\": \"healthy\", \"storage\": \"healthy\"}"
+      "passed": false,
+      "detail": "http=503 legs={\"application\": \"healthy\", \"postgresql\": \"healthy\", \"redis\": \"unhealthy\", \"storage\": \"unhealthy\"}"
     },
     {
       "check": "the running process loaded all six values, enforcing, dev tokens off",
