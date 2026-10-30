@@ -30,6 +30,11 @@
 
 FROM python:3.12-slim-bookworm AS runtime
 
+ARG SOURCE_REVISION=unknown
+LABEL org.opencontainers.image.title="PRISM Backend" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      org.opencontainers.image.source="https://github.com/AnujRAuti/Proof-Of-Action-Final"
+
 # Unbuffered logs so workers stream to the container log driver; no pip
 # warnings. The wheel cache lives only in the BuildKit cache mount below, never
 # in an image layer, so PIP_NO_CACHE_DIR is deliberately left off.

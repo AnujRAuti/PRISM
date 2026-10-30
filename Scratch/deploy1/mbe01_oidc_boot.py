@@ -37,7 +37,7 @@ OUT = os.environ.get("POA_OIDC_BOOT_OUT") or os.path.join(HERE, "mbe01_oidc_boot
 PROTECTED = {"pofa_dev", "pofa_test", "poa_prod", "poa_restore_probe"}
 ADMIN = "postgres"
 IN_URL = f"postgresql+psycopg2://{ADMIN}:{ADMIN}@host.docker.internal:5432/{DB}"
-HEAD = "w3x4y5z6a033"
+HEAD = "y5z6a7b8c035"
 
 ISSUER = "https://tuaeujvuuanadqvykugw.supabase.co/auth/v1"
 JWKS = "https://tuaeujvuuanadqvykugw.supabase.co/auth/v1/.well-known/jwks.json"
