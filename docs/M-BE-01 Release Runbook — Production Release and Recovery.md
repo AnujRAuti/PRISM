@@ -11,12 +11,12 @@ locally verified candidate supersedes it:
 
 | Item | Current value |
 | --- | --- |
-| Source commit | `0b4cba09` (the final source commit before this handoff pin) |
+| Source commit | `596b05ca21e24edca0206dd734caae6c60268b89` |
 | Image | `prism-backend:prism-release-20261030` |
-| Image digest | recorded below after the final build |
+| Image digest | `sha256:24e80f1b37ee47e94e1a8677d25fa29d52db110f42f98e8fff4efc8eb2412d7b` |
 | Schema head | `y5z6a7b8c035` |
 | Catalogue | 70 permissions, 6 roles, 131 role grants |
-| Local verification | 1,088 passed, 15 skipped, 0 failed in the supported Python 3.12 runtime |
+| Local verification | 1,088 passed, 15 skipped, 0 failed, 10 warnings in the supported Python 3.12 runtime |
 
 Production deployment remains owner-gated: fresh backup, Azure access, current
 domain/TLS values, and a fresh provider-issued Supabase access token are still
