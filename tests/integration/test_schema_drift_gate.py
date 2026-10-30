@@ -121,19 +121,17 @@ def test_a_baseline_entry_that_stops_being_true_also_fails():
     verdict must be unclean. Without this, the baseline could grow into a
     suppression list that quietly tolerates whatever it once described.
 
-    The entry to stale-out is taken from the current baseline rather than
-    hardcoded. BE-029 resolved the previously hardcoded
-    ``add_index|users|ix_users_email`` (duplicate identity retired, then the
-    unique index created), which is exactly how a named example rots: the test
-    stopped proving anything about staleness.
+    When the reviewed baseline is empty, use a synthetic entry so this test
+    still proves the comparison's stale-entry behavior rather than requiring
+    production drift to exist solely to exercise the guard.
     """
-    assert ACCEPTED_SIGNATURES, (
-        "The baseline is empty, so there is nothing to stale out; the "
-        "one-directional check this test exists to prove cannot be exercised."
+    stale = (
+        sorted(ACCEPTED_SIGNATURES)[0]
+        if ACCEPTED_SIGNATURES
+        else "add_index|schema_drift_gate_probe|ix_stale_baseline_probe"
     )
-    stale = sorted(ACCEPTED_SIGNATURES)[0]
     observed = sorted(ACCEPTED_SIGNATURES - {stale})
-    verdict = compare(observed)
+    verdict = compare(observed, baseline={stale})
     assert verdict.resolved == (stale,), (
         f"Dropping {stale!r} from the observed drift did not register as a "
         "stale baseline entry. The check would then be one-directional."

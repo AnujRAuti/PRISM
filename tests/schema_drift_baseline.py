@@ -56,30 +56,18 @@ ACCEPTED: tuple[AcceptedDrift, ...] = (
         "remove_constraint|user_role_assignments|uq_user_role_scoped",
         classification="B",
         reason=(
-            "Alembic 1.11.2 rebuilds each reflected UNIQUE constraint in "
-            "autogenerate/compare.py::_make_unique_constraint() from column "
-            "names and name alone, discarding the dialect options SQLAlchemy "
-            "2.0.52 did hand it -- measured: get_unique_constraints() returns "
-            "postgresql_nulls_not_distinct=True, and pg_get_constraintdef "
-            "shows 'UNIQUE NULLS NOT DISTINCT (...)'. So the live side of the "
-            "comparison lacks the flag, the model side has it, and the pair is "
-            "permanent. Removing the flag from the model would make the pair "
-            "vanish -- which would silently weaken the constraint. Tooling "
-            "artifact, not drift. (Mechanism corrected 2026-10-10; BE-029 "
-            "results §14.6. The original wording blamed reflection.)"
+            "Alembic rebuilds this reflected UNIQUE constraint without "
+            "preserving PostgreSQL's NULLS NOT DISTINCT dialect option. The "
+            "live database and model are equivalent; the comparison artifact "
+            "is retained in the baseline so the gate still detects changes "
+            "to the constraint."
         ),
     ),
     AcceptedDrift(
         "add_constraint|user_role_assignments|uq_user_role_scoped",
         classification="B",
-        reason="Second half of the nulls-not-distinct comparison artifact above.",
+        reason="Second half of the nulls-not-distinct comparison artifact.",
     ),
-    # BE-028's four Category E entries (remove_index/add_index on
-    # users.ix_users_username and users.ix_users_email) are gone, deliberately
-    # and in the change that removed them: BE-029 archived and retired the
-    # synthetic identity residue (r8s9t0u1v028), then recreated both indexes as
-    # UNIQUE (s9t0u1v2w029) so the model's unique=True is now enforced by the
-    # schema. `alembic check` reports no drift for them any more.
 )
 
 ACCEPTED_SIGNATURES = frozenset(d.signature for d in ACCEPTED)

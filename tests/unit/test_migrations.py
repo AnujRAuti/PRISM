@@ -59,7 +59,7 @@ VERSIONS_DIR = REPO_ROOT / "alembic" / "versions"
 #: down_revision u1v2w3x4y031), then by BE-039 (one revision: rebuild the same CHECK to
 #: admit PROJECT_CREATED, down_revision v2w3x4y5z032), each time after confirming
 #: `alembic heads` reports exactly one head.
-EXPECTED_HEAD = "w3x4y5z6a033"
+EXPECTED_HEAD = "y5z6a7b8c035"
 
 #: BE-023 revision count at the time this test was written (19), advanced by
 #: each milestone that genuinely adds a migration. BE-025 added one: 20.
@@ -69,7 +69,8 @@ EXPECTED_HEAD = "w3x4y5z6a033"
 #: D2 adds one (authorization catalogue seed — data only, no schema change): 26.
 #: BE-038 adds one (event-type CHECK rebuilt for ANALYSIS_QUEUED/ANALYSIS_STARTED): 27.
 #: BE-039 adds one (the same CHECK rebuilt for PROJECT_CREATED): 28.
-EXPECTED_REVISION_COUNT = 28
+#: JSON/JSONB alignment adds two forward-only schema corrections: 30.
+EXPECTED_REVISION_COUNT = 30
 
 
 @dataclass(frozen=True)
