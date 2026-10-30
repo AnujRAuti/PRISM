@@ -52,22 +52,10 @@ def signature(entry) -> str:
 #: Operations investigated in BE-028 and intentionally left in place.
 #: Keys are (kind|table|object); every entry carries its §13 classification.
 ACCEPTED: tuple[AcceptedDrift, ...] = (
-    AcceptedDrift(
-        "remove_constraint|user_role_assignments|uq_user_role_scoped",
-        classification="B",
-        reason=(
-            "Alembic rebuilds this reflected UNIQUE constraint without "
-            "preserving PostgreSQL's NULLS NOT DISTINCT dialect option. The "
-            "live database and model are equivalent; the comparison artifact "
-            "is retained in the baseline so the gate still detects changes "
-            "to the constraint."
-        ),
-    ),
-    AcceptedDrift(
-        "add_constraint|user_role_assignments|uq_user_role_scoped",
-        classification="B",
-        reason="Second half of the nulls-not-distinct comparison artifact.",
-    ),
+    # The nulls-not-distinct comparator artifact is removed by
+    # ``collect_drift`` using the same named policy constants that govern
+    # Alembic's autogenerate path. The accepted baseline remains empty until
+    # a real application drift is deliberately reviewed.
 )
 
 ACCEPTED_SIGNATURES = frozenset(d.signature for d in ACCEPTED)

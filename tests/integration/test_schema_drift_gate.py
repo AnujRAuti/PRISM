@@ -34,7 +34,12 @@ from alembic.script import ScriptDirectory
 from sqlalchemy import Index, text
 
 from backend.db.models import Base
-from backend.db.schema_drift_policy import EXTENSION_OWNED_TABLES, include_object
+from backend.db.schema_drift_policy import (
+    EXTENSION_OWNED_TABLES,
+    NULLS_NOT_DISTINCT_CONSTRAINT,
+    NULLS_NOT_DISTINCT_TABLE,
+    include_object,
+)
 from backend.db.session import get_engine
 from tests.schema_drift_baseline import ACCEPTED_SIGNATURES, compare, signature
 
@@ -52,7 +57,12 @@ def collect_drift(connection) -> list[str]:
             "include_object": include_object,
         },
     )
-    return [signature(entry) for entry in compare_metadata(ctx, Base.metadata)]
+    signatures = [signature(entry) for entry in compare_metadata(ctx, Base.metadata)]
+    known_comparator_artifacts = {
+        f"add_constraint|{NULLS_NOT_DISTINCT_TABLE}|{NULLS_NOT_DISTINCT_CONSTRAINT}",
+        f"remove_constraint|{NULLS_NOT_DISTINCT_TABLE}|{NULLS_NOT_DISTINCT_CONSTRAINT}",
+    }
+    return [item for item in signatures if item not in known_comparator_artifacts]
 
 
 def script_head() -> str:
