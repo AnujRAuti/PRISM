@@ -30,6 +30,7 @@ from uuid import uuid4
 
 IMAGE = os.environ.get("POA_IMAGE", "prism-backend:prism-release-20261030")
 DB = "poa_disp_oidc"
+DB_CONTAINER = os.environ.get("POA_DB_CONTAINER", "pofa_db")
 CONT = "poa_disp_oidc_api"
 HOST_PORT = 8011
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -53,7 +54,7 @@ def sh(args, *, stdin=None, quiet=False):
 
 
 def psql(stmt, db="postgres"):
-    return sh(["docker", "exec", "pofa_db", "psql", "-U", ADMIN, "-d", db,
+    return sh(["docker", "exec", DB_CONTAINER, "psql", "-U", ADMIN, "-d", db,
                "-tAc", stmt]).stdout.strip()
 
 
@@ -158,6 +159,8 @@ def run() -> int:
          f"WHERE datname='{DB}' AND pid <> pg_backend_pid()")
     psql(f"DROP DATABASE IF EXISTS {DB}")
     psql(f"CREATE DATABASE {DB} OWNER {ADMIN}")
+    if psql("SELECT current_database()", db=DB) != DB:
+        raise SystemExit(f"refusing unexpected database target: {DB}")
     sh(["docker", "run", "--rm", "-e", f"DATABASE_URL={IN_URL}",
         IMAGE, "alembic", "upgrade", "head"])
     head = psql("SELECT version_num FROM alembic_version", db=DB)

@@ -52,7 +52,8 @@ OUT = REPO / "Scratch/prism2/phase3_matrix.json"
 DB = "poa_disp_oidc"
 OUTAGE_CONT = "poa_disp_oidc_dead"
 OUTAGE_PORT = 8012
-IMAGE = os.environ.get("POA_IMAGE", "poa-backend:prism-54e33b20")
+IMAGE = os.environ.get("POA_IMAGE", "prism-backend:prism-release-20261030")
+DB_CONTAINER = os.environ.get("POA_DB_CONTAINER", "pofa_db")
 ADMIN = "postgres"
 ISSUER = "https://tuaeujvuuanadqvykugw.supabase.co/auth/v1"
 JWKS = f"{ISSUER}/.well-known/jwks.json"
@@ -69,8 +70,18 @@ def sh(args, *, stdin=None, quiet=False):
 
 
 def psql(stmt, database=DB):
-    return sh(["docker", "exec", "pofa_db", "psql", "-U", ADMIN, "-d", database,
+    return sh(["docker", "exec", DB_CONTAINER, "psql", "-U", ADMIN, "-d", database,
                "-tAc", stmt]).stdout.strip()
+
+
+def verify_disposable_database() -> None:
+    if DB in {"poa_prod", "pofa_dev", "postgres", "pofa_test"}:
+        raise SystemExit(f"refusing protected OIDC database target: {DB}")
+    actual = psql("SELECT current_database()", database=DB)
+    if actual != DB:
+        raise SystemExit(
+            f"refusing unexpected database target: requested={DB!r} actual={actual!r}"
+        )
 
 
 def record(section, name, status, detail=""):
@@ -292,10 +303,10 @@ def section_accept(port: int, sub: str) -> bool:
            f"({project_id[:8]})", "PASS" if code == 200 else "FAIL", f"http={code}")
 
     # A project the reviewer holds no grant on must not be readable.
-    foreign = psql("INSERT INTO projects (id, name, owner_id, created_at, updated_at) "
+    foreign = psql("INSERT INTO projects (id, name, owner_id, created_at) "
                    "SELECT gen_random_uuid(), 'PRISM foreign scope', "
                    "(SELECT id FROM users WHERE external_subject <> "
-                   f"'{sub.replace(chr(39), chr(39) * 2)}' LIMIT 1), now(), now() "
+                   f"'{sub.replace(chr(39), chr(39) * 2)}' LIMIT 1), now() "
                    "RETURNING id") or psql("SELECT id FROM projects WHERE name='PRISM foreign scope'")
     code, _body = api(port, "GET", f"/projects/{foreign}", access)
     record("3-acceptance", "a project outside the reviewer's scope is denied",
@@ -412,6 +423,7 @@ def main() -> int:
     parser.add_argument("--no-outage", action="store_true")
     args = parser.parse_args()
 
+    verify_disposable_database()
     sub = json.loads(ID_FILE.read_text(encoding="utf-8"))["external_subject"]
     if not wait_ready(args.port, timeout=30):
         record("0-preflight", "the candidate container answers on the chosen port", "FAIL",
