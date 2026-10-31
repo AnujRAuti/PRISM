@@ -1,224 +1,640 @@
-# 🌐 PRISM — Proof-of-Action System
+# PRISM: Proof-of-Action System
 
-> **Evidence Integrity & Intelligence Layer (EIIL)**  
-> Next-generation forensic verification, duplicate detection, and review platform for field evidence in public infrastructure projects and government schemes.
+**Evidence Integrity and Intelligence Layer (EIIL)**
+
+PRISM is an evidence verification and review platform designed to improve the reliability, traceability, and accountability of field evidence submitted for public infrastructure projects and government schemes.
+
+The platform combines a React frontend with a FastAPI backend and supporting data services to validate evidence, identify potential anomalies, support human review, and maintain an auditable record of decisions.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Frontend: React 19](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite-61dafb.svg)](frontend/)
 [![Backend: FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%2B%20Python-009688.svg)](openapi.json)
-[![Compliance: WCAG 2.1 AA](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-success.svg)](frontend/)
-[![PWA: Offline Ready](https://img.shields.io/badge/PWA-Offline%20Ready-orange.svg)](frontend/public/manifest.webmanifest)
 
 ---
 
-## 📌 Overview
+## Table of Contents
 
-**PRISM** is an open-standard, cryptographically verified Evidence Integrity & Intelligence Layer engineered to monitor photographic and sensor evidence across major civil infrastructure programs (*Pradhan Mantri Gram Sadak Yojana*, *Jal Jeevan Mission*, *National Solar Mission*, and urban renewal initiatives).
-
-Rather than relying on opaque AI predictions, PRISM implements a **multi-signal forensic verification pipeline**:
-
-1. **Cryptographic Identity:** SHA-256 hashing computed at ingestion to guarantee tamper-evident authenticity.
-2. **Perceptual Fingerprinting:** Difference & perceptual hashing (pHash) to detect duplicate images across distinct projects and dates.
-3. **Geospatial & Spatiotemporal Fusion:** Point-in-polygon geofencing against approved project boundaries, combined with impossible travel velocity checks (speed-of-light & transit velocity limits).
-4. **EXIF & Sensor Telemetry Validation:** Device fingerprinting, camera make/model correlation, GPS dilution of precision (DOP), and software modification detection.
-5. **Separation of Integrity & Fraud Risk:** Clear explainability distinguishing missing data (Integrity Score) from malicious manipulation (Fraud Risk Score).
-6. **Immutable Audit Ledger:** Append-only chain-hashed audit records with verifiable integrity for anti-corruption compliance.
+- [Overview](#overview)
+- [Core Features](#core-features)
+- [System Architecture](#system-architecture)
+- [Backend Architecture](#backend-architecture)
+- [Evidence Verification Pipeline](#evidence-verification-pipeline)
+- [Authentication and Access Control](#authentication-and-access-control)
+- [Database and Storage](#database-and-storage)
+- [Background Processing](#background-processing)
+- [Frontend Portals](#frontend-portals)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [API Documentation](#api-documentation)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Repository Structure](#repository-structure)
+- [Security Considerations](#security-considerations)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🏛️ System Architecture
+## Overview
+
+PRISM provides a structured workflow for collecting, verifying, reviewing, and auditing photographic and related field evidence.
+
+Its verification process combines cryptographic hashing, image similarity checks, metadata validation, geospatial checks, and temporal consistency analysis. These signals help reviewers identify suspicious submissions and understand why evidence may require further investigation.
+
+### Design Principles
+
+- **Evidence integrity:** Detect changes to evidence using cryptographic hashes.
+- **Explainable verification:** Keep evidence-quality issues distinct from potential fraud indicators.
+- **Traceability:** Maintain records of important system actions and review decisions.
+- **Controlled access:** Restrict protected operations according to user roles and permissions.
+- **Scalable processing:** Separate API requests from background analysis and service tasks.
+- **Review accountability:** Support human assessment of automated verification results.
+
+---
+
+## Core Features
+
+### 1. Evidence Ingestion and Verification
+
+- Accept evidence through the application workflow.
+- Calculate SHA-256 hashes to establish file identity.
+- Extract available image metadata, including EXIF information.
+- Apply image fingerprinting techniques to identify potential duplicates.
+- Associate submissions with relevant projects and evidence records.
+- Preserve verification results for subsequent review.
+
+### 2. Duplicate and Similarity Detection
+
+- Use perceptual hashing techniques, including pHash and difference hashing where implemented.
+- Identify potentially similar images across submissions.
+- Support investigation of repeated evidence across projects or reporting periods.
+- Provide similarity indicators to assist reviewers.
+
+Similarity matches are indicators for investigation, not automatic proof of fraud.
+
+### 3. Geospatial and Temporal Validation
+
+- Validate available location data against configured project boundaries.
+- Support point-in-polygon geofence checks where the required geospatial configuration is available.
+- Evaluate timestamps and location consistency.
+- Identify potentially implausible travel between evidence submissions.
+- Flag missing, inconsistent, or suspicious metadata for further review.
+
+### 4. Integrity and Fraud-Risk Assessment
+
+PRISM distinguishes between evidence completeness and potential manipulation.
+
+- **Integrity assessment:** Evaluates the availability and consistency of evidence attributes.
+- **Fraud-risk assessment:** Combines configured verification signals to identify submissions that may require investigation.
+- **Review support:** Makes verification findings available to authorized reviewers.
+- **Decision traceability:** Supports recording review outcomes and related actions.
+
+Risk indicators should support human review rather than serve as standalone proof of wrongdoing.
+
+### 5. Tamper-Evident Audit Records
+
+- Record important application and review activities.
+- Support append-only audit records with hash-link verification where configured.
+- Help identify changes to previously recorded audit entries.
+- Preserve a traceable history of relevant actions and decisions.
+
+### 6. Project and Evidence Management
+
+- Maintain project and milestone information.
+- Associate evidence with relevant project records.
+- Filter evidence by available status, integrity, and risk attributes.
+- Support detailed evidence inspection and review workflows.
+
+### 7. Search and Evidence Relationships
+
+- Search across supported evidence and project attributes.
+- Explore relationships between projects, milestones, contractors, and submissions.
+- Support CSV and JSON export through the relevant application functionality.
+
+### 8. Reviewer and Auditor Workflows
+
+- Provide a review queue for evidence requiring attention.
+- Support side-by-side image inspection and metadata comparison.
+- Allow authorized reviewers to record decisions.
+- Provide audit-oriented views for compliance and investigation workflows.
+
+---
+
+## System Architecture
 
 ```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                        PRISM Presentation Layer                        │
-│  React 19 • Vite • GovTech Design System • WCAG 2.1 AA • PWA (Offline) │
-└────────────────────────────────────┬───────────────────────────────────┘
-                                     │ JSON / REST API (OpenAPI 3.1)
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                      FastAPI Ingestion & API Gateway                   │
-│         OIDC Identity Provider • Role-Based Access Control (RBAC)      │
-└──────────┬─────────────────────────┬─────────────────────────┬─────────┘
-           │                         │                         │
-           ▼                         ▼                         ▼
-┌──────────────────────┐  ┌──────────────────────┐  ┌────────────────────┐
-│   Forensic Pipeline  │  │   PostgreSQL + GIS   │  │   MinIO / S3 Store │
-│ • SHA-256 Hashing    │  │ • Evidence Registry  │  │ • Encrypted Photos │
-│ • pHash Duplication  │  │ • PostGIS Geofencing │  │ • Raw Sensor Logs  │
-│ • Impossible Travel  │  │ • Immutable Audit Log│  │ • Evidence Dossiers│
-│ • EXIF Sanitization  │  │ • Vector Similarity  │  │ • Derived Crops    │
-└──────────────────────┘  └──────────────────────┘  └────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                       Frontend Layer                           │
+│                 React 19 + Vite + PWA                          │
+│      Citizen Portal | Reviewer | Auditor | Administration      │
+└──────────────────────────────┬────────────────────────────────┘
+                               │
+                         JSON / REST API
+                               │
+┌──────────────────────────────▼────────────────────────────────┐
+│                     FastAPI Backend                            │
+│                                                               │
+│  API Routes | Authentication | Authorization | Validation     │
+│  Evidence Services | Project Services | Audit Services         │
+└───────────────┬─────────────────┬────────────────┬─────────────┘
+                │                 │                │
+                ▼                 ▼                ▼
+       ┌────────────────┐ ┌──────────────┐ ┌──────────────────┐
+       │ PostgreSQL     │ │ Redis        │ │ MinIO / S3       │
+       │                │ │              │ │                  │
+       │ Application    │ │ Caching and  │ │ Evidence files   │
+       │ records        │ │ task support │ │ and objects      │
+       └────────────────┘ └──────┬───────┘ └──────────────────┘
+                                 │
+                                 ▼
+                     ┌────────────────────────┐
+                     │ Background Workers     │
+                     │                        │
+                     │ Evidence analysis      │
+                     │ Webhooks               │
+                     │ Notifications          │
+                     │ Retention tasks        │
+                     └────────────────────────┘
 ```
 
----
-
-## ✨ Key Features
-
-### 1. Multi-Role RBAC & Specialized Portals
-- **Auditor Portal (`/auditor`):** High-level compliance oversight, cross-project anomaly analytics, and ledger verification.
-- **Reviewer PWA Workspace (`/reviews`, `/review/case`):** Mobile-first offline inspection canvas, side-by-side photo comparison, split-screen EXIF analysis, and decision logging.
-- **Citizen Portal (`/citizen`):** Public transparency tracking, project progress visualization, and community evidence submission.
-- **Admin Control Plane (`/admin`):** User provisioning, forensic rule weighting, system health metrics, and tamper detection audits.
-
-### 2. Dual-Channel Secure Authentication
-- **Officials & Reviewers:** Departmental login with mandatory Two-Factor Authentication (2FA), Time-Based One-Time Password (TOTP) enforcement, and TLS verification.
-- **Citizens:** Lightweight OTP / Email authentication with instant verification and anonymous submission options.
-
-### 3. Progressive Web App (PWA) & Offline Capability
-- Offline evidence review queue and caching via Service Workers (`sw.js`).
-- Mobile responsive off-canvas navigation drawer and quick-action toolbars.
-- Device synchronization with automatic conflict resolution upon reconnection.
-
-### 4. Interactive Evidence Graph & Search Workbench
-- Interactive SVG network graph (`/graph`) mapping relationships between contractors, projects, milestones, and evidence.
-- Full-text and geospatial multi-parameter search workbench (`/search`) with one-click export to CSV and JSON formats.
+The architecture separates request handling, persistent records, object storage, and asynchronous processing. The exact services enabled depend on the deployment configuration.
 
 ---
 
-## 🚀 Quick Start Guide
+## Backend Architecture
+
+The backend is built with FastAPI and Python. It exposes application functionality through HTTP APIs and coordinates evidence verification, data persistence, authorization, and supporting background services.
+
+### API Layer
+
+- REST API endpoints for application operations.
+- Request validation and structured responses.
+- OpenAPI schema generation.
+- Interactive API documentation through Swagger UI and ReDoc when enabled.
+- Health and readiness endpoints for service monitoring.
+
+### Authentication and Authorization
+
+- OpenID Connect (OIDC) integration where configured.
+- Role-based access control (RBAC).
+- Permission-based authorization for protected operations.
+- Support for administrative, review, and audit workflows according to assigned permissions.
+- Authentication configuration designed to be environment-specific.
+
+### Evidence Processing Services
+
+- SHA-256 file hashing.
+- Image fingerprinting and duplicate analysis.
+- Metadata validation.
+- Geospatial and temporal consistency checks where configured.
+- Integrity and fraud-risk signal processing.
+- Persistence of verification results for review.
+
+### Audit and Governance Services
+
+- Audit records for relevant application actions.
+- Tamper-evident hash verification where implemented.
+- Review-decision traceability.
+- Permission-controlled access to protected audit operations.
+
+### Database Migration Management
+
+Database schema changes are managed using Alembic migrations.
+
+Typical migration command:
+
+```bash
+alembic upgrade head
+```
+
+Run migrations only after verifying the target environment, reviewing the migration changes, and creating an appropriate database backup.
+
+### Service Health
+
+The backend can expose health and readiness endpoints, depending on the deployed application configuration.
+
+Typical checks:
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/ready
+```
+
+These commands assume the application exposes those routes in the current deployment.
+
+---
+
+## Evidence Verification Pipeline
+
+A typical evidence-processing workflow follows these stages:
+
+```text
+Evidence Submission
+        |
+        ▼
+Input Validation
+        |
+        ▼
+File Identity and SHA-256 Hashing
+        |
+        ▼
+Metadata and EXIF Inspection
+        |
+        ▼
+Image Similarity and Duplicate Checks
+        |
+        ▼
+Geospatial and Temporal Validation
+        |
+        ▼
+Integrity and Risk Assessment
+        |
+        ▼
+Evidence Record and Audit Updates
+        |
+        ▼
+Reviewer Inspection and Decision
+```
+
+The checks performed depend on the evidence type, available metadata, project configuration, and enabled backend services.
+
+A missing GPS coordinate or timestamp does not automatically establish fraud. Likewise, a duplicate match or risk score should be interpreted in context.
+
+---
+
+## Authentication and Access Control
+
+PRISM supports role-based workflows for different classes of users.
+
+| Role | Responsibilities |
+|---|---|
+| Administrator | User and permission administration, system configuration, and operational oversight |
+| Reviewer | Evidence inspection, case review, and decision recording |
+| Auditor | Compliance review, audit inspection, and cross-project oversight |
+| Citizen or Submitter | Evidence submission and access to permitted project information |
+
+The actions available to each role depend on the permissions assigned by the backend.
+
+### Authentication Considerations
+
+- Configure trusted identity providers through environment-specific settings.
+- Validate identity tokens and issuer, audience, and signature requirements when using OIDC.
+- Enforce authorization checks on protected backend endpoints.
+- Apply appropriate session and token-handling practices.
+- Use HTTPS for deployed environments.
+- Never commit credentials, private keys, or production environment files to version control.
+
+Two-factor authentication, citizen OTP login, and specific identity-provider flows should be enabled only where the corresponding implementation and configuration are available.
+
+---
+
+## Database and Storage
+
+### PostgreSQL
+
+PostgreSQL stores structured application data, such as project information, evidence records, review information, and other supported backend entities.
+
+### PostGIS
+
+PostGIS can support spatial queries and project-boundary validation when installed and configured in the target environment.
+
+### Redis
+
+Redis provides supporting infrastructure for caching and background task coordination where enabled.
+
+### MinIO and S3-Compatible Storage
+
+Object storage can be used to hold uploaded evidence and other file artifacts separately from structured database records.
+
+### Data Management Principles
+
+- Keep structured records separate from binary evidence objects.
+- Validate evidence before processing.
+- Restrict access to stored files and sensitive metadata.
+- Define retention and deletion policies explicitly.
+- Back up database records and object storage according to operational requirements.
+- Test recovery procedures before relying on backups.
+
+The exact storage configuration is deployment-dependent.
+
+---
+
+## Background Processing
+
+Background workers allow longer-running tasks to execute independently of normal API requests.
+
+The deployment may include separate workers for:
+
+| Worker | Purpose |
+|---|---|
+| Evidence analysis | Runs configured verification and analysis tasks |
+| Webhook processing | Handles configured outbound or event-driven integrations |
+| Notifications | Processes supported notification tasks |
+| Retention processing | Executes configured data-retention operations |
+
+Worker availability depends on the active deployment configuration. Tasks that require external services may need additional credentials and connectivity.
+
+---
+
+## Frontend Portals
+
+The React frontend provides role-oriented workflows for evidence submission, inspection, and administration.
+
+| Route | Intended Role | Purpose |
+|---|---|---|
+| `/login` | Public | Authentication entry point |
+| `/dashboard` | Authorized users | Overview of available project and evidence information |
+| `/projects` | Authorized users | Project directory and milestone tracking |
+| `/projects/create` | Authorized users with appropriate permissions | Project creation and configuration |
+| `/evidence` | Authorized users | Evidence repository and filtering |
+| `/evidence/upload` | Authorized submitters | Evidence submission |
+| `/evidence/:id` | Authorized users | Evidence details and verification results |
+| `/reviews` | Reviewers | Review queue |
+| `/review/case` | Reviewers | Evidence inspection and decision workflow |
+| `/auditor` | Auditors | Compliance and audit views |
+| `/graph` | Authorized users | Evidence relationship visualization |
+| `/search` | Authorized users | Search and supported export workflows |
+| `/admin` | Administrators | Administrative controls |
+
+Routes listed here describe the intended frontend navigation. Actual route availability and permissions depend on the current implementation and backend authorization rules.
+
+---
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Frontend | React 19 |
+| Frontend tooling | Vite |
+| Backend framework | FastAPI |
+| Backend language | Python |
+| API specification | OpenAPI |
+| Relational database | PostgreSQL |
+| Geospatial queries | PostGIS, where configured |
+| Cache and task infrastructure | Redis |
+| Object storage | MinIO / S3-compatible storage |
+| Database migrations | Alembic |
+| API server | Uvicorn |
+| Containerization | Docker and Docker Compose, where configured |
+| Identity | OIDC, where configured |
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- **Node.js:** v18.0.0 or higher (v20+ recommended)
-- **npm:** v9.0.0 or higher
-- **Python:** v3.11+ (if running backend services)
-- **Docker & Docker Compose:** Optional, for full-stack containerized deployment
 
----
+- Node.js 18 or later; Node.js 20 or later is recommended.
+- npm 9 or later.
+- Python 3.11 or later for backend development.
+- PostgreSQL and any additional required services.
+- Docker and Docker Compose if using a containerized setup.
+
+Verify the versions installed on your system before starting.
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/AnujRAuti/PRISM.git
+cd PRISM
+```
 
 ### Frontend Setup
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/AnujRAuti/PRISM.git
-   cd PRISM
-   ```
+```bash
+cd frontend
+npm install
+```
 
-2. **Navigate to the frontend directory:**
-   ```bash
-   cd frontend
-   ```
+Create the local environment file from the provided example, if available:
 
-3. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+```bash
+cp .env.example .env
+```
 
-4. **Configure environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
-   *Edit `.env` to configure your API endpoint and Supabase/OIDC keys:*
-   ```env
-   VITE_API_BASE_URL=http://localhost:8000/api/v1
-   VITE_APP_NAME=PRISM
-   VITE_ENVIRONMENT=development
-   ```
+Configure the frontend API endpoint and any required application settings in `.env`.
 
-5. **Start the local development server:**
-   ```bash
-   npm run dev
-   ```
-   Open your browser at **[http://localhost:5173](http://localhost:5173)**.
+Example:
 
-6. **Run tests & quality checks:**
-   ```bash
-   npm test
-   npm run build
-   ```
+```env
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+VITE_APP_NAME=PRISM
+VITE_ENVIRONMENT=development
+```
 
----
+Use the API prefix configured by the backend. The example above must be adjusted if the current application uses a different route prefix.
 
-### Backend Setup (FastAPI & Services)
+Start the development server:
 
-1. **Create and activate a virtual environment:**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+```bash
+npm run dev
+```
 
-2. **Install requirements:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+Run the available frontend tests and production build:
 
-3. **Run database migrations:**
-   ```bash
-   alembic upgrade head
-   ```
+```bash
+npm test
+npm run build
+```
 
-4. **Start the API service:**
-   ```bash
-   uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
-   ```
-   API Swagger documentation will be accessible at **[http://localhost:8000/docs](http://localhost:8000/docs)**.
+### Backend Setup
 
----
+Return to the repository root before running backend commands.
 
-## 🗺️ Route Directory
+Create and activate a virtual environment:
 
-| Route | Role | Description |
-| :--- | :--- | :--- |
-| `/login` | Public | Dual-option authentication (Official 2FA / Citizen login) |
-| `/dashboard` | All Users | Executive metrics, scheme telemetry, and recent alerts |
-| `/projects` | All Users | Geo-tagged infrastructure projects directory & milestone tracking |
-| `/projects/create`| Admin/Auditor | Project wizard with geofence polygon boundary definition |
-| `/evidence` | All Users | Evidence repository filtered by status, integrity, and risk |
-| `/evidence/upload`| Citizen/Official | Multi-step evidence ingestion wizard with live EXIF extraction |
-| `/evidence/:id` | All Users | Detailed forensic dossier, pHash matches, and travel velocity checks |
-| `/reviews` | Reviewer | Priority case triage queue sorted by calculated fraud risk |
-| `/review/case` | Reviewer (PWA)| Offline-capable review workspace with side-by-side inspection |
-| `/auditor` | Auditor | High-level compliance audits and forensic reports |
-| `/graph` | All Users | Dynamic node-link graph visualizing evidence relationships |
-| `/search` | All Users | Multi-parameter search workbench with CSV/JSON export |
-| `/admin` | Admin | Role management, tamper-evident audit ledger, and rule config |
+```bash
+python -m venv .venv
+```
+
+On Linux or macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+On Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install the backend dependencies using the dependency file supplied by the repository. If `requirements.txt` is present:
+
+```bash
+pip install -r requirements.txt
+```
+
+Configure the required database, storage, authentication, and service environment variables before starting the backend.
+
+Apply database migrations:
+
+```bash
+alembic upgrade head
+```
+
+Start the API server using the application's configured import path. For example, if the entry point is `backend.app.main:app`:
+
+```bash
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+The import path and migration configuration should be confirmed against the current repository before running these commands.
 
 ---
 
-## 🛡️ Security, Governance & Compliance
+## API Documentation
 
-- **GovTech Design Standards:** Adheres to the Indian National Informatics Centre (NIC) guidelines, featuring a high-trust national palette (Deep Navy, Pure White, Gold highlights) and readable typography.
-- **WCAG 2.1 AA Accessibility:** Full keyboard navigation, `aria-*` accessibility landmarks, screen reader accommodations, and `:focus-visible` styling.
-- **Anti-Tampering:** Append-only cryptographic audit logging with parent-hash verification prevents retroactive record manipulation.
-- **Data Privacy:** Automated stripping of sensitive PII from metadata; geofence redaction for sensitive installations.
+FastAPI can generate an OpenAPI schema and interactive documentation for registered routes.
+
+When enabled, the usual local endpoints are:
+
+| Resource | Path |
+|---|---|
+| Swagger UI | `/docs` |
+| ReDoc | `/redoc` |
+| OpenAPI schema | `/openapi.json` |
+
+For a local server on port 8000, the Swagger UI is typically available at:
+
+```text
+http://localhost:8000/docs
+```
+
+The repository also includes an `openapi.json` file. Check whether it is regenerated from the current backend before treating it as the definitive API contract.
 
 ---
 
-## 📂 Repository Structure
+## Testing
+
+PRISM should be tested at the unit, integration, and application levels.
+
+Recommended coverage areas include:
+
+- Authentication and authorization.
+- Role and permission enforcement.
+- Evidence ingestion and input validation.
+- SHA-256 hashing and file identity.
+- Image similarity and duplicate detection.
+- Metadata and geospatial validation.
+- Integrity and risk assessment.
+- Audit record creation and verification.
+- Database migrations and persistence.
+- Background task execution.
+- Health and readiness endpoints.
+- Frontend build and route behavior.
+
+Run the test commands configured in the repository. For a Python project using pytest, the command is typically:
+
+```bash
+pytest
+```
+
+For the frontend:
+
+```bash
+cd frontend
+npm test
+npm run build
+```
+
+Test results depend on the current source revision, environment, and external services. Run the suite against the version being released and report the actual results rather than relying on historical results.
+
+---
+
+## Deployment
+
+PRISM can be deployed using containerized services or a separately managed application environment, depending on the deployment configuration.
+
+### Deployment Components
+
+A full deployment may include:
+
+- FastAPI application.
+- PostgreSQL database.
+- Redis.
+- MinIO or another S3-compatible object store.
+- Background workers.
+- React frontend.
+- Reverse proxy and HTTPS termination.
+- Monitoring, logging, and backup services.
+
+### Production Checklist
+
+Before releasing a version:
+
+- [ ] Configure production environment variables.
+- [ ] Use HTTPS for externally accessible services.
+- [ ] Configure trusted identity-provider settings.
+- [ ] Verify backend authorization rules.
+- [ ] Configure the frontend's production API URL.
+- [ ] Set the permitted CORS origins.
+- [ ] Verify database connectivity and migration state.
+- [ ] Verify object storage access and permissions.
+- [ ] Verify background workers and task queues.
+- [ ] Run automated tests against the release candidate.
+- [ ] Back up the database and evidence objects.
+- [ ] Test backup restoration.
+- [ ] Confirm health and readiness checks.
+- [ ] Review logs for errors and sensitive information.
+- [ ] Confirm monitoring and incident-response procedures.
+
+Do not run destructive database, volume, or storage commands against production without an approved backup and recovery plan.
+
+---
+
+## Repository Structure
+
+The following structure reflects the main areas described by the project. Some backend paths may differ in the current checkout.
 
 ```text
 PRISM/
-├── docs/                   # Architectural Decision Records (ADRs) & specs
+├── docs/
 │   ├── Production Task Files/
 │   └── Proof-of-Action Backend — TODO.md
-├── frontend/               # React 19 Frontend application
-│   ├── public/             # PWA manifest, icons, and service worker
+├── frontend/
+│   ├── public/
+│   │   ├── manifest.webmanifest
+│   │   └── sw.js
 │   ├── src/
-│   │   ├── components/     # Reusable UI & GovTech components
-│   │   ├── context/        # Auth and global application state
-│   │   ├── lib/            # Supabase, API client, and Zod schemas
-│   │   ├── pages/          # Application routes (Reviewer, Auditor, Admin, etc.)
-│   │   └── services/       # API integration services
-│   ├── tests/              # Automated test suites
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── lib/
+│   │   ├── pages/
+│   │   └── services/
+│   ├── tests/
 │   ├── package.json
 │   └── vite.config.js
-├── openapi.json            # Complete OpenAPI 3.1 REST API specification
-└── README.md               # Project documentation
+├── backend/
+│   └── app/
+│       └── main.py
+├── openapi.json
+└── README.md
 ```
 
----
-
-## 🤝 Contributing
-
-Contributions to PRISM are welcome! Please follow these steps:
-
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/NewFeature`).
-3. Commit your changes (`git commit -m "feat: implement NewFeature"`).
-4. Push to the branch (`git push origin feature/NewFeature`).
-5. Open a Pull Request detailing the changes made.
+Verify this tree against the current repository before adding paths that do not exist.
 
 ---
 
-## 📄 License
+## Security Considerations
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+PRISM handles evidence that may contain sensitive location, device, project, or personal information. Security must be enforced in both the frontend and backend.
+
+- Enforce authorization on the server, not only through hidden frontend routes.
+- Validate incoming data and uploaded files.
+- Protect credentials and tokens from logs and source control.
+- Restrict database and object-storage access.
+- Apply appropriate metadata minimization and privacy controls.
+- Use HTTPS in production.
+- Keep dependencies and base images updated.
+- Monitor application and worker failures.
+- Review audit integrity and access logs.
+- Establish explicit retention and backup policies.
+
+A badge or documented control should not be treated as proof of compliance without verification against the implemented system and its deployment.
+
+---
+
+## License
+
+This project is distributed under the MIT License if the repository's `LICENSE` file specifies those terms. See [LICENSE](LICENSE) for the applicable license text.
