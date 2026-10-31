@@ -1,0 +1,213 @@
+/* PRISM GovTech Design System - Modern Palette */
+:root {
+  /* Executive Primary Colors - Deep Slate & Royal Cobalt */
+  --govt-blue-dark: #0f172a;        /* Deep Slate 900 */
+  --govt-blue-secondary: #1e3a8a;   /* Royal Deep Blue */
+  --govt-blue-primary: #1d4ed8;     /* Vibrant Trust Blue 700 */
+  --govt-blue-accent: #2563eb;      /* Interactive Blue 600 */
+  --govt-blue-light: #eff6ff;       /* Soft Ice Blue 50 */
+
+  /* GovTech Teal & Cyan Highlights */
+  --govt-teal: #0d9488;
+  --govt-teal-light: #f0fdfa;
+  --govt-cyan: #0284c7;
+  --govt-cyan-light: #f0f9ff;
+
+  /* Surfaces, Cards & Canvas */
+  --govt-white: #ffffff;
+  --govt-gray-off-white: #f8fafc;   /* Canvas background Slate 50 */
+  --govt-gray-light: #f1f5f9;       /* Section hover Slate 100 */
+  --govt-gray-medium: #e2e8f0;      /* Crisp card borders Slate 200 */
+  --govt-gray-dark: #64748b;        /* Secondary captions Slate 500 */
+  --govt-gray-text: #1e293b;        /* High-readability body Slate 800 */
+  --govt-gray-title: #0f172a;       /* Primary headlines Slate 900 */
+
+  /* Legacy Compatibility Mappings */
+  --govt-cream: #f8fafc;            /* Clean Slate 50 canvas */
+  --govt-cream-light: #ffffff;      /* Pure white card surface */
+  --govt-gray-muted: #64748b;       /* Slate 500 muted text */
+  --govt-blue-medium: #1e3a8a;      /* Royal blue */
+  --govt-gold: #f59e0b;             /* Amber accent */
+  --govt-gold-light: #fef3c7;       /* Amber light */
+  --govt-border: #e2e8f0;           /* Clean border */
+  --govt-border-light: #f1f5f9;     /* Subtle divider */
+
+  /* Refined Semantic Status Indicators */
+  --govt-success: #059669;          /* Emerald Green 600 */
+  --govt-success-light: #ecfdf5;    /* Emerald 50 */
+  --govt-success-border: #a7f3d0;   /* Emerald 200 */
+  --govt-success-text: #065f46;     /* Emerald 800 */
+
+  --govt-warning: #d97706;          /* Amber 600 */
+  --govt-warning-light: #fffbeb;    /* Amber 50 */
+  --govt-warning-border: #fde68a;   /* Amber 200 */
+  --govt-warning-text: #92400e;     /* Amber 800 */
+
+  --govt-danger: #dc2626;           /* Crimson Rose 600 */
+  --govt-danger-light: #fef2f2;     /* Rose 50 */
+  --govt-danger-border: #fecaca;    /* Rose 200 */
+  --govt-danger-text: #991b1b;      /* Rose 800 */
+
+  --govt-info: #0284c7;             /* Sky 600 */
+  --govt-info-light: #f0f9ff;       /* Sky 50 */
+  --govt-info-border: #bae6fd;      /* Sky 200 */
+  --govt-info-text: #075985;        /* Sky 800 */
+
+  /* Prism Refractive Spectral Accents */
+  --prism-violet: #7c3aed;
+  --prism-blue: #2563eb;
+  --prism-cyan: #06b6d4;
+  --prism-emerald: #10b981;
+  --prism-amber: #f59e0b;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Modern Curved Radii */
+  --radius-none: 0;
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Elevated GovTech Drop Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --shadow-prism-glow: 0 0 24px rgba(37, 99, 235, 0.35);
+
+  /* Typography */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', 'Noto Sans', sans-serif;
+  --font-family-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', 'Noto Sans', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
+
+  /* Z-Index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal: 1040;
+  --z-tooltip: 1060;
+}
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes prism-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4));
+  }
+  50% {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.7));
+  }
+}
+
+@keyframes prism-refraction {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 60; }
+}
+
+@keyframes lang-crossfade {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  20%, 80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes prism-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes prism-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes letter-pop {
+  0% {
+    transform: scale(1.35) translateY(-4px);
+    filter: drop-shadow(0 0 14px rgba(37, 99, 235, 0.8));
+  }
+  60% {
+    transform: scale(0.95) translateY(1px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 0 0px transparent);
+  }
+}
+
+@keyframes prism-sweep {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+@keyframes live-ping {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Spinner styles */
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--govt-gray-medium);
+  border-top-color: var(--govt-blue-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.spinner-lg {
+  width: 32px;
+  height: 32px;
+  border-width: 4px;
+}

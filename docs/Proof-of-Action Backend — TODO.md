@@ -6,6 +6,17 @@
 
 ---
 
+## Progress (2026-09-13)
+
+- Completed: scaffolded backend package structure (`backend/`), placeholder modules, and tests.
+- Completed: created project files `requirements.txt`, `.env.example`, `README.md`, and `.gitignore`.
+- Completed: created and activated virtual environment at `backend/.venv`, upgraded `pip`.
+- Completed: installed initial runtime dependencies from `requirements.txt` (core packages only; ML/vector deps left commented).
+- Completed: committed scaffold changes (commit: "scaffold: backend package structure, requirements, README, .env.example, .gitignore") on branch `Backend`.
+
+Remaining: API implementation, Docker dev environment, database models, and other checklist items below.
+
+
 # 0. CORE ENGINEERING RULES
 
 These rules apply to the entire backend.
@@ -96,17 +107,17 @@ frontend
 
 - [DONE] `main` = stable integration branch.
 - [DONE] `backend` = backend development.
-- [DONE] `frontend` = future frontend development.
-- [ ] Do all backend work on `backend`.
-- [ ] Do not build frontend until backend API contracts are stable.
 
-## 2.3 Initial structure
-
-Create:
-
-```text
-proof-of-action/
-│
+Implement:
+- [DONE] FastAPI application.
+- [DONE] API versioning.
+- [DONE] `/health`.
+- [DONE] `/ready`.
+- [DONE] Global exception handling.
+- [ ] Request ID generation.
+- [DONE] Structured logging.
+- [DONE] CORS configuration.
+- [DONE] Environment-based configuration.
 ├── backend/
 │
 ├── frontend/
@@ -179,8 +190,8 @@ backend/
 └── .env.example
 ```
 
-- [ ] Create all directories.
-- [ ] Add `__init__.py` where required.
+- [DONE] Create all directories.
+- [DONE] Add `__init__.py` where required.
 - [ ] Keep API logic separate from analysis engines.
 - [ ] Keep database access separate from business logic.
 
@@ -191,9 +202,9 @@ backend/
 ## 4.1 Python
 
 - [ ] Install supported Python version.
-- [ ] Create virtual environment.
-- [ ] Activate environment.
-- [ ] Upgrade pip.
+- [DONE] Create virtual environment.
+- [DONE] Activate environment.
+- [DONE] Upgrade pip.
 
 ## 4.2 Initial dependencies
 
@@ -223,6 +234,8 @@ numpy
 
 exifread
 ```
+
+- [DONE] Install initial dependencies (core packages installed in `backend/.venv`)
 
 Later:
 
@@ -307,6 +320,9 @@ Implement:
 - [ ] CORS configuration.
 - [ ] Environment-based configuration.
 
+- [DONE] CORS configuration.
+- [DONE] Environment-based configuration.
+
 Example:
 
 ```text
@@ -324,11 +340,11 @@ Expected:
 
 ## Definition of done
 
-- [ ] API starts locally.
+- [DONE] API starts locally (verified via tests using TestClient).
 - [ ] API starts through Docker.
-- [ ] Swagger/OpenAPI works.
-- [ ] Health endpoint works.
-- [ ] Database readiness can be checked.
+- [DONE] Swagger/OpenAPI works (`/openapi.json` and `/docs` verified).
+- [DONE] Health endpoint works.
+- [DONE] Database readiness can be checked (`/api/v1/ready` verified against SQLite dev DB).
 
 ---
 
@@ -368,6 +384,14 @@ EXTERNAL_DETECTOR_URL=
 - [ ] No secrets in source code.
 - [ ] Configuration loaded through Pydantic Settings.
 
+## Progress updates (backend)
+
+- [DONE] Implemented FastAPI foundation: `/api/v1/health` and `/api/v1/ready` endpoints with unit tests passing.
+- [DONE] Implemented configuration using `backend/core/config.py` and `.env` support; `.env.example` present.
+- [DONE] Added SQLAlchemy SQLite dev engine and basic models in `backend/db/models.py`.
+
+- [DONE] Request ID generation implemented and integrated with logging and middleware.
+
 ---
 
 # 8. DATABASE FOUNDATION
@@ -381,6 +405,11 @@ Alembic
 PostGIS
 pgvector
 ```
+
+Progress:
+
+- [DONE] SQLAlchemy models (`User`, `Project`, `Evidence`) implemented in `backend/db/models.py`.
+- [DONE] Local dev DB initialized (SQLite) via `backend/db/init_db.py`.
 
 ## 8.1 Create database models
 
