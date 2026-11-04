@@ -2,9 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserIcon, CheckIcon, AlertIcon } from '../components/common/Icon';
 import { authApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useApp } from '../context/AppContext';
 
 function Profile() {
   const navigate = useNavigate();
+  const { logout, user: authUser } = useAuth();
+  const { logoutUser } = useApp();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,9 +45,18 @@ function Profile() {
     setLoading(false);
   }, []);
 
-  const handleLogout = () => {
-    authApi.logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      if (logout) await logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+    if (logoutUser) logoutUser();
+    authApi.logout().catch(() => {});
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('eiil_current_user');
+    navigate('/login', { replace: true });
   };
 
   if (loading) {

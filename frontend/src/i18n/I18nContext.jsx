@@ -75,6 +75,7 @@ export function I18nProvider({ children }) {
       value={{
         language,
         currentLanguage,
+        supportedLanguages: SUPPORTED_LANGUAGES,
         setLanguage,
         t,
         formatNumber,

@@ -7,6 +7,7 @@ import { TRANSLATIONS } from './translations';
 interface I18nContextType {
   language: string;
   currentLanguage: LanguageOption;
+  supportedLanguages: LanguageOption[];
   setLanguage: (lang: string) => void;
   t: (key: string, defaultText?: string) => string;
   formatNumber: (num: number, options?: Intl.NumberFormatOptions) => string;
@@ -91,6 +92,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       value={{
         language,
         currentLanguage,
+        supportedLanguages: SUPPORTED_LANGUAGES,
         setLanguage,
         t,
         formatNumber,
@@ -110,4 +112,3 @@ export function useI18n() {
   }
   return context;
 }
-

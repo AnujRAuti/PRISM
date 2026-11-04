@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useI18n } from '../i18n/I18nContext';
 import { IntegrityArc } from '../components/ui/IntegrityArc';
 import {
   ShieldAlert,
@@ -21,6 +22,7 @@ import {
 
 export default function Dashboard() {
   const { evidenceList, projects, currentUser } = useApp();
+  const { t, formatNumber } = useI18n();
 
   const totalAudited = 1428;
   const flaggedItems = (evidenceList || []).filter(
@@ -172,13 +174,13 @@ export default function Dashboard() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)' }}>
-              Total Audited Submissions
+              {t('stat_total_audited', 'Total Audited Submissions')}
             </span>
             <FileText size={16} color="var(--govt-blue-primary)" />
           </div>
           <div style={{ margin: '0.5rem 0 0.25rem' }}>
             <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--govt-blue-dark)', fontFamily: 'monospace' }}>
-              {totalAudited}
+              {formatNumber(totalAudited)}
             </span>
           </div>
           <span style={{ fontSize: '0.75rem', color: 'var(--govt-success)', fontWeight: 600 }}>
@@ -197,7 +199,7 @@ export default function Dashboard() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)' }}>
-              Flagged Anomaly Rate
+              {t('stat_flagged_rate', 'Flagged Anomaly Rate')}
             </span>
             <ShieldAlert size={16} color="var(--govt-danger)" />
           </div>
@@ -222,7 +224,7 @@ export default function Dashboard() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)' }}>
-              Pending Review Queue
+              {t('stat_pending_review', 'Pending Review Queue')}
             </span>
             <Clock size={16} color="var(--govt-warning)" />
           </div>
@@ -250,7 +252,7 @@ export default function Dashboard() {
         >
           <div>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)', display: 'block' }}>
-              Mean Evidence Health Index
+              {t('stat_avg_integrity', 'Mean Evidence Health Index')}
             </span>
             <div style={{ margin: '0.35rem 0 0.15rem' }}>
               <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--govt-blue-dark)', fontFamily: 'monospace' }}>

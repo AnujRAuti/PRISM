@@ -1,41 +1,41 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { EvidenceIcon, CheckIcon, AlertIcon } from '../../components/common/Icon';
-import { evidenceApi } from '../../services/api';
+import { evidenceApi, projectApi } from '../../services/api';
 
 function UploadEvidence() {
   const navigate = useNavigate();
   const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const initialCaseId = queryParams.get('case_id') || '';
+  const initialProjectId = new URLSearchParams(location.search).get('project_id') || '';
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
+  const [projects, setProjects] = useState([]);
 
   const [formData, setFormData] = useState({
-    case_id: initialCaseId || 'case-001-pmgsy',
-    project_id: 'PRJ-001',
-    activity: 'Road Sub-base Gravel Compaction',
-    claim_id: 'CLM-001',
+    project_id: initialProjectId,
+    claim_id: '',
     file: null,
     filename: '',
     fileSize: 0,
     previewUrl: null,
     description: '',
-    gps_lat: '18.5204',
-    gps_lng: '73.8567',
-    captured_at: new Date().toISOString().slice(0, 16),
+    gps_lat: '',
+    gps_lng: '',
   });
 
-  const availableCases = [
-    { id: 'case-001-pmgsy', title: 'PMGSY Phase 1 Road Works (Rural Road Sub-base & Bitumen)', project_id: 'PRJ-001' },
-    { id: 'case-002-solar', title: 'Solar Energy Programme (Surat Ward 4 Solar Luminaires)', project_id: 'PRJ-002' },
-    { id: 'case-003-water', title: 'Jal Jeevan Mission (RCC Drinking Water Storage Tank)', project_id: 'PRJ-003' },
-    { id: 'case-005-health', title: 'National Health Mission (Primary Health Sub-center)', project_id: 'PRJ-005' },
-  ];
+  useEffect(() => {
+    let active = true;
+    projectApi.getAll({ limit: 100 }).then(({ data }) => {
+      if (active) setProjects(data.items || []);
+    }).catch((cause) => {
+      if (active) setError(cause.response?.data?.detail || cause.message || 'Could not load project options.');
+    });
+    return () => { active = false; };
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -72,33 +72,19 @@ function UploadEvidence() {
     setError(null);
 
     try {
-      // Attempt upload to FastAPI /api/v1/evidence
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 25;
-        setUploadProgress(progress);
-        if (progress >= 100) clearInterval(interval);
-      }, 150);
-
-      await evidenceApi.upload(formData.file, formData.case_id);
-      clearInterval(interval);
-      setUploadProgress(100);
-
-      setUploadSuccess({
-        id: `EVD-NEW-${Math.floor(Math.random() * 900) + 100}`,
-        status: 'uploaded_quarantine',
-        digest: '8a9f0b12e34d567c89a0123456789abcdef0123456789abcdef0123456789abc',
-        case_id: formData.case_id
+      if (Boolean(formData.gps_lat) !== Boolean(formData.gps_lng)) throw new Error('Enter both coordinates or leave both blank.');
+      const { data: uploaded } = await evidenceApi.upload(formData.file, null, (event) => {
+        if (event.total) setUploadProgress(Math.round((event.loaded / event.total) * 100));
       });
-    } catch {
-      // Graceful local demonstration completion
-      setUploadProgress(100);
-      setUploadSuccess({
-        id: `EVD-NEW-${Math.floor(Math.random() * 900) + 100}`,
-        status: 'uploaded_quarantine',
-        digest: '7b2a9e40183fdc329810a9f848201ac495a8e10034b1235cb99ef01a8843c089',
-        case_id: formData.case_id
-      });
+      setUploadSuccess({ id: uploaded.evidence_id, status: uploaded.status, content_type: uploaded.content_type, size: uploaded.size });
+      if (formData.project_id) {
+        await evidenceApi.updateContext(uploaded.evidence_id, { project_id: formData.project_id, claim_id: formData.claim_id || null });
+      }
+      if (formData.gps_lat && formData.gps_lng) {
+        await evidenceApi.updateLocation(uploaded.evidence_id, { latitude: Number(formData.gps_lat), longitude: Number(formData.gps_lng) });
+      }
+    } catch (cause) {
+      setError(cause.response?.data?.detail || cause.message || 'Evidence upload failed.');
     } finally {
       setLoading(false);
     }
@@ -128,14 +114,14 @@ function UploadEvidence() {
           fontWeight: 700,
           letterSpacing: '-0.02em'
         }}>
-          Ingest Evidence into Case Context
+          Upload evidence to PRISM
         </h1>
         <p style={{
           margin: '0.35rem 0 0 0',
           color: 'var(--govt-gray-dark)',
           fontSize: '0.875rem'
         }}>
-          Upload photographic evidence associated with an authorized inspection case. Files enter quarantine isolation for hash generation and policy validation.
+          Upload an image to the backend quarantine pipeline. Project context and coordinates are sent through their dedicated API operations when supplied.
         </p>
       </div>
 
@@ -182,26 +168,15 @@ function UploadEvidence() {
             flexDirection: 'column',
             gap: '0.5rem'
           }}>
-            <div>
-              <span style={{ color: 'var(--govt-gray-dark)' }}>Quarantine Status:</span>{' '}
-              <strong style={{ color: 'var(--govt-warning-text)' }}>uploaded_quarantine (Processing)</strong>
-            </div>
-            <div>
-              <span style={{ color: 'var(--govt-gray-dark)' }}>Cryptographic SHA-256 Digest:</span>
-              <p style={{ margin: '0.2rem 0 0', fontFamily: 'monospace', fontSize: '0.75rem', wordBreak: 'break-all' }}>
-                {uploadSuccess.digest}
-              </p>
-            </div>
-            <div>
-              <span style={{ color: 'var(--govt-gray-dark)' }}>Associated Case:</span>{' '}
-              <strong>{uploadSuccess.case_id}</strong>
-            </div>
+            <div><span style={{ color: 'var(--govt-gray-dark)' }}>Backend status:</span> <strong>{uploadSuccess.status}</strong></div>
+            <div><span style={{ color: 'var(--govt-gray-dark)' }}>Media type and size:</span> <strong>{uploadSuccess.content_type} · {formatBytes(uploadSuccess.size)}</strong></div>
+            <div><span style={{ color: 'var(--govt-gray-dark)' }}>Project context:</span> <strong>{formData.project_id || 'Not linked'}</strong></div>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button
               type="button"
-              onClick={() => navigate(`/review/case?id=${uploadSuccess.case_id}`)}
+              onClick={() => navigate(`/evidence/${uploadSuccess.id}`)}
               style={{
                 padding: '0.625rem 1.25rem',
                 backgroundColor: 'var(--govt-blue-primary)',
@@ -213,7 +188,7 @@ function UploadEvidence() {
                 cursor: 'pointer'
               }}
             >
-              Return to Case Workspace →
+              Open Evidence Record →
             </button>
             <button
               type="button"
@@ -258,15 +233,15 @@ function UploadEvidence() {
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {/* Case Association Selector (ADR §9.2) */}
+            {/* Project association */}
             <div>
-              <label htmlFor="case_id" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--govt-blue-dark)', marginBottom: '0.4rem' }}>
-                Inspection Case Context <span style={{ color: 'var(--govt-danger)' }}>*</span>
+              <label htmlFor="project_id" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--govt-blue-dark)', marginBottom: '0.4rem' }}>
+                Project Context (optional)
               </label>
               <select
-                id="case_id"
-                value={formData.case_id}
-                onChange={(e) => setFormData(p => ({ ...p, case_id: e.target.value }))}
+                id="project_id"
+                value={formData.project_id}
+                onChange={(e) => setFormData(p => ({ ...p, project_id: e.target.value }))}
                 style={{
                   width: '100%',
                   padding: '0.625rem 0.85rem',
@@ -276,12 +251,12 @@ function UploadEvidence() {
                   backgroundColor: 'var(--govt-white)'
                 }}
               >
-                {availableCases.map(c => (
-                  <option key={c.id} value={c.id}>{c.id} — {c.title}</option>
+                <option value="">No project association</option>{projects.map((project) => (
+                  <option key={project.id} value={project.id}>{project.name}</option>
                 ))}
               </select>
               <span style={{ fontSize: '0.72rem', color: 'var(--govt-gray-dark)', marginTop: '0.3rem', display: 'block' }}>
-                Per Section 9.2, project and claim associations are derived authoritatively by the backend from the case context.
+                The selected project and optional claim are sent to the backend after upload. Access is checked by backend permissions.
               </span>
             </div>
 
@@ -332,28 +307,6 @@ function UploadEvidence() {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Description & Field Observations */}
-            <div>
-              <label htmlFor="description" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--govt-blue-dark)', marginBottom: '0.4rem' }}>
-                Field Observation Notes
-              </label>
-              <textarea
-                id="description"
-                rows="3"
-                value={formData.description}
-                onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
-                placeholder="e.g. Sub-base gravel layer compaction audit along chainage 4+200..."
-                style={{
-                  width: '100%',
-                  padding: '0.625rem 0.85rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--govt-gray-medium)',
-                  fontSize: '0.875rem',
-                  boxSizing: 'border-box'
-                }}
-              />
             </div>
 
             {/* Geographic Coordinates */}
@@ -409,7 +362,7 @@ function UploadEvidence() {
             }}>
               <span>ℹ</span>
               <div>
-                <strong>Quarantine Isolation Policy:</strong> All uploaded files immediately enter quarantine storage. SHA-256 and perceptual pHash digests are calculated prior to making evidence accessible to reviewers.
+                <strong>Quarantine Isolation Policy:</strong> The backend stores the original in quarantine and starts server-side integrity processing. Upload acknowledgement does not imply that analysis has completed.
               </div>
             </div>
 

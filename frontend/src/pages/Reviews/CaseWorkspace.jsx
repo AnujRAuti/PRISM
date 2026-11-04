@@ -5,7 +5,6 @@ import {
   getCaseEvidence,
   getCaseIntelligence,
   getCaseHistory,
-  uploadCaseEvidence,
   submitCaseDecision,
 } from '../../lib/api/cases';
 import {
@@ -14,7 +13,6 @@ import {
   AlertIcon,
   ClockIcon,
   DownloadIcon,
-  UploadIcon,
   EvidenceIcon,
 } from '../../components/common/Icon';
 import { formatDate, formatFileSize } from '../../utils/helpers';
@@ -45,10 +43,6 @@ export default function CaseWorkspace() {
   const [decisionSuccess, setDecisionSuccess] = useState(null);
 
   // Evidence Upload Modal States (Section 3.4)
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
 
   useEffect(() => {
     if (!caseId) {
@@ -118,38 +112,6 @@ export default function CaseWorkspace() {
     }
   };
 
-  // Evidence Upload Handler (10 MiB limit enforced)
-  const handleUploadSubmit = async (e) => {
-    e.preventDefault();
-    if (!uploadFile) {
-      setUploadError('Please select an image file to upload.');
-      return;
-    }
-
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (uploadFile.size > MAX_SIZE) {
-      setUploadError('File exceeds the 10 MiB limit enforced for verification security.');
-      return;
-    }
-
-    setUploading(true);
-    setUploadError(null);
-
-    try {
-      await uploadCaseEvidence(caseId, uploadFile);
-      setUploadFile(null);
-      setShowUploadModal(false);
-      // Refresh authoritative case evidence list
-      const updatedEvidence = await getCaseEvidence(caseId);
-      setEvidenceList(updatedEvidence);
-      const updatedHistory = await getCaseHistory(caseId);
-      setHistory(updatedHistory);
-    } catch (err) {
-      setUploadError(err.message || 'Failed to ingest evidence. Reconciling with server...');
-    } finally {
-      setUploading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -370,7 +332,7 @@ export default function CaseWorkspace() {
                 <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--govt-gray-dark)', textTransform: 'uppercase', fontWeight: '700' }}>
                   Intake Timestamp
                 </span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--govt-gray-text)' }}>{formatDate(caseData.created_at)}</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--govt-gray-text)' }}>{caseData.created_at ? formatDate(caseData.created_at) : 'Not recorded by the backend contract'}</span>
               </div>
               <div>
                 <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--govt-gray-dark)', textTransform: 'uppercase', fontWeight: '700' }}>
@@ -419,26 +381,12 @@ export default function CaseWorkspace() {
             <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--govt-blue-dark)', fontWeight: '700' }}>
               Case Associated Evidence
             </h2>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                backgroundColor: 'var(--govt-blue-primary)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.55rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-xs)',
-              }}
+            <Link
+              to={caseData.project_id ? `/evidence/upload?project_id=${encodeURIComponent(caseData.project_id)}` : '/evidence/upload'}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'var(--govt-blue-primary)', color: '#ffffff', padding: '0.55rem 1rem', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none' }}
             >
-              <UploadIcon />
-              Upload Case Evidence
-            </button>
+              Upload to project
+            </Link>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
@@ -728,7 +676,7 @@ export default function CaseWorkspace() {
               fontWeight: '600',
               marginBottom: '1.5rem',
             }}>
-              ✓ Decision successfully recorded to server! Persisted event ID: <code>{decisionSuccess.decision_id}</code>. Case status updated to <strong>DECIDED</strong>.
+              ✓ Human decision recorded by the backend. Current workflow status: <strong>{decisionSuccess.status || 'pending refresh'}</strong>. Use the case workflow controls to resolve the case separately when authorized.
             </div>
           )}
 
@@ -930,105 +878,9 @@ export default function CaseWorkspace() {
         </div>
       )}
 
-      {/* EVIDENCE UPLOAD MODAL (Section 3.4) */}
-      {showUploadModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.65)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem',
-        }}>
-          <div style={{
-            backgroundColor: 'var(--govt-white)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '2rem',
-            maxWidth: '480px',
-            width: '100%',
-            boxShadow: 'var(--shadow-lg)',
-          }}>
-            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--govt-blue-dark)' }}>
-              Upload Case Evidence
-            </h3>
-            <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: 'var(--govt-gray-dark)' }}>
-              Ingest field photograph directly into authorized case <strong>{caseId}</strong>. Maximum size: <strong>10 MiB</strong>.
-            </p>
-
-            {uploadError && (
-              <div style={{
-                backgroundColor: 'var(--govt-danger-light)',
-                border: '1px solid var(--govt-danger-border)',
-                color: 'var(--govt-danger-text)',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.8rem',
-                marginBottom: '1rem',
-              }}>
-                {uploadError}
-              </div>
-            )}
-
-            <form onSubmit={handleUploadSubmit}>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    setUploadFile(file);
-                    setUploadError(null);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem',
-                    border: '1px solid var(--govt-gray-medium)',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '0.85rem',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  disabled={uploading}
-                  onClick={() => setShowUploadModal(false)}
-                  style={{
-                    padding: '0.6rem 1rem',
-                    backgroundColor: 'var(--govt-white)',
-                    color: 'var(--govt-gray-text)',
-                    border: '1px solid var(--govt-gray-medium)',
-                    borderRadius: 'var(--radius-md)',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploading || !uploadFile}
-                  style={{
-                    padding: '0.6rem 1.25rem',
-                    backgroundColor: 'var(--govt-blue-primary)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: 'var(--radius-md)',
-                    fontWeight: '600',
-                    cursor: uploading ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {uploading ? 'Ingesting Evidence...' : 'Upload Evidence'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <p style={{ marginTop: 12, color: 'var(--govt-gray-dark)', fontSize: '0.8rem' }}>
+        The backend supports project context for uploads. This case record does not expose an add-evidence operation, so a project upload will not be represented as case-linked evidence here.
+      </p>
     </div>
   );
 }

@@ -1,0 +1,78 @@
+# BE-037 Phase A — build-context exclusions for the backend image.
+#
+# The goal is that nothing secret, stateful, or dev-only is ever sent into the
+# build context or baked into the image. Everything the running API and workers
+# need (backend/, alembic/, alembic.ini, requirements.txt) is intentionally NOT
+# listed here.
+
+# --- Secrets and local configuration ---
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+
+# --- Git metadata ---
+.git
+.gitignore
+
+# --- Virtual environments and interpreter caches ---
+.venv/
+venv/
+env/
+backend/.venv*/
+temp_test_env/
+tmp_test_env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Local databases and evidence / model artifacts (runtime state, never image) ---
+*.db
+*.sqlite
+*.sqlite3
+pofa_dev.db
+*.pt
+*.onnx
+*.engine
+# Docker's ignore syntax needs an explicit `**/` prefix to match at any depth;
+# a bare `test-image.jpg` matched only the context root and let the nested
+# tests/ fixture JPEG be baked into the image (BE-037A-D2).
+**/test-image.jpg
+
+# --- Logs and scratch verification artifacts ---
+*.log
+stage_d_*.py
+stage_e_*.py
+stage_*_server.log
+diagnostics/
+*.jsonl
+
+# --- Everything that is not the backend source tree ---
+# The image needs backend/, alembic/, alembic.ini and requirements.txt. Scratch/
+# holds verification scripts, database dumps, saved image tars and a nested git
+# worktree; frontend/ is a separate application with its own node_modules. Sending
+# them into the context costs minutes of transfer for files no layer reads.
+Scratch/
+frontend/
+docs/
+node_modules/
+*.tar
+*.dump
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.claude/
+# A worktree build of the earlier candidate baked .freebuff/project-id (local tool
+# state that exists in no commit) into the image; docker does not read .gitignore.
+.freebuff/
+.DS_Store
+
+# --- Local CI/tooling that must not leak into the image ---
+docker-compose.yml
+Dockerfile
+.dockerignore

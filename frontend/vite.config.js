@@ -4,6 +4,18 @@ import { defineConfig } from 'vite';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api/v1': {
+        target: process.env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/health': process.env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8000',
+      '/ready': process.env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8000',
+      '/healthz': process.env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8000',
+      '/metrics': process.env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8000',
+    },
+  },
   build: {
     rollupOptions: {
       output: {

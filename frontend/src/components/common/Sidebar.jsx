@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { useI18n } from '../../i18n/I18nContext';
 import {
   DashboardIcon,
   ProjectIcon,
@@ -101,27 +102,27 @@ function getNavSectionsForRole(role, pendingCount, complaintsCount) {
     {
       category: 'OPERATIONS',
       items: [
-        { path: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
-        { path: '/reviews', label: 'Review Queue', icon: ReviewIcon, badgeKey: 'pending' },
-        { path: '/projects', label: 'Projects', icon: ProjectIcon },
-        { path: '/ingest', label: 'Live Sandbox', icon: EvidenceIcon },
-        { path: '/field', label: 'Field Companion', icon: UserIcon },
+        { path: '/dashboard', label: 'Dashboard', labelKey: 'nav_dashboard', icon: DashboardIcon },
+        { path: '/reviews', label: 'Review Queue', labelKey: 'nav_queue', icon: ReviewIcon, badgeKey: 'pending' },
+        { path: '/projects', label: 'Projects', labelKey: 'nav_projects', icon: ProjectIcon },
+        { path: '/ingest', label: 'Live Sandbox', labelKey: 'nav_ingest', icon: EvidenceIcon },
+        { path: '/field', label: 'Field Companion', labelKey: 'nav_field', icon: UserIcon },
       ]
     },
     {
       category: 'INTELLIGENCE & AUDIT',
       items: [
-        { path: '/compare', label: 'Visual Comparator', icon: GraphIcon },
-        { path: '/map', label: 'Geospatial Map', icon: ProjectIcon },
-        { path: '/audit', label: 'Audit Ledger', icon: SearchIcon },
-        { path: '/analytics', label: 'Analytics & Certs', icon: AdminIcon },
+        { path: '/compare', label: 'Visual Comparator', labelKey: 'nav_compare', icon: GraphIcon },
+        { path: '/map', label: 'Geospatial Map', labelKey: 'nav_map', icon: ProjectIcon },
+        { path: '/audit', label: 'Audit Ledger', labelKey: 'nav_audit', icon: SearchIcon },
+        { path: '/analytics', label: 'Analytics & Certs', labelKey: 'nav_analytics', icon: AdminIcon },
       ]
     },
     {
       category: 'GOVERNANCE',
       items: [
-        { path: '/settings', label: 'System Settings', icon: AdminIcon },
-        { path: '/about', label: 'About Platform', icon: EvidenceIcon },
+        { path: '/settings', label: 'System Settings', labelKey: 'nav_settings', icon: AdminIcon },
+        { path: '/about', label: 'About Platform', labelKey: 'nav_about', icon: EvidenceIcon },
         { path: '/profile', label: 'Operator Profile', icon: UserIcon },
       ]
     }
@@ -132,6 +133,7 @@ function Sidebar({ isOpen = false, onClose }) {
   const [activeItem, setActiveItem] = useState('');
   const location = useLocation();
   const { role, evidenceList, complaints } = useApp();
+  const { t } = useI18n();
 
   const pendingCount = (evidenceList || []).filter(
     (e) => e.auditStatus === 'PENDING' || e.auditStatus === 'FLAGGED'
@@ -241,7 +243,7 @@ function Sidebar({ isOpen = false, onClose }) {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <Icon active={isActive} />
-                        <span>{item.label}</span>
+                        <span>{item.labelKey ? t(item.labelKey, item.label) : item.label}</span>
                       </div>
 
                       {badgeValue && (

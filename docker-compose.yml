@@ -1,0 +1,248 @@
+# PRISM backend — full stack (BE-037 Phase A).
+#
+# Datastores (db/redis/minio/minio-init) keep their original behavior; database
+# passwords are now passed through variables with the same development defaults,
+# so `docker compose up` locally is unchanged while a production deployment can
+# inject real values without a literal secret living in this file.
+#
+# The API and the four background workers are built from the shared Dockerfile.
+# Workers are separate services because they have different lifecycles: the
+# analysis worker is a long-running queue daemon, while notification, retention
+# and webhook each run one bounded pass and are wrapped in a bounded sleep loop
+# so the container stays up between sweeps.
+#
+# Migrations are NOT run automatically by any service. `migrate` is behind a
+# Compose profile and must be invoked explicitly, and it uses the separate
+# MIGRATION_DATABASE_URL identity (poa_migrator) — never the runtime role.
+#
+#   Start the stack:              docker compose up -d
+#   Apply schema explicitly:      docker compose run --rm migrate
+#   (production) point DATABASE_URL at poa_runtime, ENVIRONMENT=production, and
+#   supply a real JWT_SECRET / CORS allowlist via the environment.
+
+x-app-environment: &app-environment
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  # Runtime identity used by the API and workers. In production this must be the
+  # least-privileged poa_runtime role, not the owner. Hostname is the `db`
+  # service on the compose network.
+  DATABASE_URL: ${POA_DATABASE_URL:-postgresql+psycopg2://postgres:postgres@db:5432/pofa_dev}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+  S3_USE_SSL: ${S3_USE_SSL:-false}
+  S3_QUARANTINE_BUCKET: ${S3_QUARANTINE_BUCKET:-pofa-quarantine}
+  S3_EVIDENCE_BUCKET: ${S3_EVIDENCE_BUCKET:-pofa-evidence}
+  # Development defaults only, matching backend/core/config.py so a stack that
+  # sets nothing behaves exactly as before. A production deploy sets a real
+  # secret, an explicit CORS allowlist, AUTH_MODE=enforcing with
+  # AUTH_DEV_TOKENS_ENABLED=false, and AUTH_OIDC_ENABLED=true with the
+  # provider's real issuer/JWKS: the config validator refuses every one of
+  # these permissive defaults under ENVIRONMENT=production (fail-closed).
+  JWT_SECRET: ${JWT_SECRET:-changeme}
+  CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
+  AUTH_MODE: ${AUTH_MODE:-development}
+  AUTH_DEV_TOKENS_ENABLED: ${AUTH_DEV_TOKENS_ENABLED:-true}
+  # Stage 02 human identity (backend/security/oidc.py). Disabled by default; the
+  # defaults below are the same as backend/core/config.py, so a stack that sets
+  # nothing behaves exactly as before. These are public provider metadata, not
+  # secrets - see .env.example for what each one must point at.
+  AUTH_OIDC_ENABLED: ${AUTH_OIDC_ENABLED:-false}
+  AUTH_OIDC_ISSUER: ${AUTH_OIDC_ISSUER:-}
+  AUTH_OIDC_JWKS_URI: ${AUTH_OIDC_JWKS_URI:-}
+  AUTH_OIDC_AUDIENCE: ${AUTH_OIDC_AUDIENCE:-authenticated}
+  AUTH_OIDC_IDENTITY_PROVIDER: ${AUTH_OIDC_IDENTITY_PROVIDER:-supabase}
+  AUTH_OIDC_ALGORITHMS: ${AUTH_OIDC_ALGORITHMS:-RS256}
+  AUTH_OIDC_JWKS_TTL_SECONDS: ${AUTH_OIDC_JWKS_TTL_SECONDS:-300}
+
+x-prism-image: &prism-image ${PRISM_IMAGE:-prism-backend:prism-release-20261030}
+
+services:
+  db:
+    image: garapadev/postgres-postgis-pgvector:15-stable
+    container_name: pofa_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pofa_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./docker/pg-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pofa_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [pofa]
+
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: pofa_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks: [pofa]
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    container_name: pofa_minio_init
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_QUARANTINE_BUCKET: ${S3_QUARANTINE_BUCKET:-pofa-quarantine}
+      S3_EVIDENCE_BUCKET: ${S3_EVIDENCE_BUCKET:-pofa-evidence}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do sleep 1; done; mc mb --ignore-existing "local/$${S3_QUARANTINE_BUCKET}"; mc mb --ignore-existing "local/$${S3_EVIDENCE_BUCKET}"; mc anonymous set none "local/$${S3_QUARANTINE_BUCKET}"; mc anonymous set none "local/$${S3_EVIDENCE_BUCKET}"'
+    networks: [pofa]
+
+  redis:
+    image: redis:7-alpine
+    container_name: pofa_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [pofa]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: *prism-image
+    container_name: pofa_api
+    restart: unless-stopped
+    command: ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "${POA_API_PORT:-8000}:8000"
+    healthcheck:
+      # Probes readiness, not liveness: /health is dependency-agnostic and keeps
+      # answering 200 with the database gone, so pointing the healthcheck at it
+      # makes an outage invisible to the orchestrator. /healthz answers 503 when
+      # postgres, redis or storage is unhealthy (urlopen raises on 503, so the
+      # probe exits non-zero), and the budget below covers the slowest readiness
+      # answer measured on a healthy stack plus the image's ~20s import boot.
+      test:
+        - CMD-SHELL
+        - "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=8).status==200 else 1)\""
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks: [pofa]
+
+  analysis_worker:
+    image: *prism-image
+    container_name: pofa_analysis_worker
+    restart: unless-stopped
+    command: ["python", "-m", "backend.workers.analysis_worker"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks: [pofa]
+
+  notification_worker:
+    image: *prism-image
+    container_name: pofa_notification_worker
+    restart: unless-stopped
+    # One-shot CLI pass wrapped in a bounded loop so the container persists. The
+    # sleep runs in the background and the shell waits on it: a foreground sleep
+    # makes dash defer SIGTERM until it returns, which turns every `docker stop`
+    # into a timeout followed by SIGKILL mid-batch.
+    command: ["sh", "-c", "trap 'exit 0' TERM INT; while true; do python -m backend.workers.notification_worker --limit 50; sleep 15 & wait $!; done"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [pofa]
+
+  retention_worker:
+    image: *prism-image
+    container_name: pofa_retention_worker
+    restart: unless-stopped
+    # Deliberately omits --auto-delete: a scheduled sweep must archive/evaluate
+    # only; deletion stays an explicit operator action per the worker contract.
+    command: ["sh", "-c", "trap 'exit 0' TERM INT; while true; do python -m backend.workers.retention_worker --limit 200; sleep 3600 & wait $!; done"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks: [pofa]
+
+  webhook_worker:
+    image: *prism-image
+    container_name: pofa_webhook_worker
+    restart: unless-stopped
+    command: ["sh", "-c", "trap 'exit 0' TERM INT; while true; do python -m backend.workers.webhook_worker --once --limit 50; sleep 15 & wait $!; done"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [pofa]
+
+  migrate:
+    # Explicit, operator-invoked schema migration. Not started by `up`: it sits
+    # behind the `tools` profile. Uses the separate migration identity so the
+    # runtime role never performs DDL.
+    #   docker compose run --rm migrate
+    image: *prism-image
+    container_name: pofa_migrate
+    profiles: ["tools"]
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *app-environment
+      # Migration identity (poa_migrator). Falls back to the runtime URL when
+      # unset, but a production deployment MUST supply the owning role here.
+      MIGRATION_DATABASE_URL: ${POA_MIGRATION_DATABASE_URL:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [pofa]
+
+volumes:
+  db_data:
+  minio_data:
+
+networks:
+  pofa:
+    driver: bridge

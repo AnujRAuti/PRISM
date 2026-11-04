@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../i18n/I18nContext';
 
 const INDIAN_LANGUAGES = [
   { name: 'PRISM', lang: 'English', code: 'EN', subtitle: 'Evidence Integrity & Intelligence' },
@@ -12,14 +13,31 @@ const INDIAN_LANGUAGES = [
   { name: 'ಪ್ರಿಸಂ', lang: 'ಕನ್ನಡ', code: 'KN', subtitle: 'ಸಾಕ್ಷ್ಯ ಸಮಗ್ರತೆ ಮತ್ತು ದೃಢೀಕರಣ ವ್ಯವಸ್ಥೆ' },
   { name: 'പ്രിസം', lang: 'മലയാളം', code: 'ML', subtitle: 'തെളിവ് സമഗ്രതയും ബുദ്ധിപരമായ പരിശോധനയും' },
   { name: 'ਪ੍ਰਿਜ਼ਮ', lang: 'ਪੰਜਾਬੀ', code: 'PA', subtitle: 'ਸਬੂਤ ਅਖੰਡਤਾ ਅਤੇ ਪੜਤਾਲ ਪ੍ਰਣਾਲੀ' },
-  { name: 'ପ୍ରିଜିମ୍', lang: 'ଓଡ଼ିଆ', code: 'OD', subtitle: 'ପ୍ରମାଣ ଅଖଣ୍ଡତା ଏବଂ ଯାଞ୍ଚ ପ୍ରଣାଳୀ' },
+  { name: 'ପ୍ରିଜିମ୍', lang: 'ଓଡ଼ିଆ', code: 'OR', subtitle: 'ପ୍ରମାଣ ଅଖଣ୍ଡତା ଏବଂ ଯାଞ୍ଚ ପ୍ରଣାଳୀ' },
+  { name: 'پرزم', lang: 'اردو', code: 'UR', subtitle: 'ثبوت کی سالمیت اور انٹیلی جنس' },
 ];
 
 function PrismLogo({ size = 'md', showSubtitle = true, linkTo = '/dashboard' }) {
+  const i18n = useI18n?.();
+  const activeLanguage = i18n?.language || 'en';
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
 
+  // If user has explicitly selected a language other than English, anchor to it
+  const isLanguageFixed = activeLanguage !== 'en';
+
   useEffect(() => {
+    if (isLanguageFixed) {
+      const matchIndex = INDIAN_LANGUAGES.findIndex(
+        (l) => l.code.toLowerCase() === activeLanguage.toLowerCase()
+      );
+      if (matchIndex !== -1) {
+        setCurrentIndex(matchIndex);
+      }
+      return;
+    }
+
     const interval = setInterval(() => {
       setAnimating(true);
       setTimeout(() => {
@@ -29,9 +47,9 @@ function PrismLogo({ size = 'md', showSubtitle = true, linkTo = '/dashboard' }) 
     }, 2800);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeLanguage, isLanguageFixed]);
 
-  const current = INDIAN_LANGUAGES[currentIndex];
+  const current = INDIAN_LANGUAGES[currentIndex] || INDIAN_LANGUAGES[0];
   const emblemDim = size === 'lg' ? 52 : size === 'sm' ? 34 : 44;
   const iconDim = size === 'lg' ? 38 : size === 'sm' ? 24 : 32;
 

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import Header from './Header';
-import Footer from './Footer';
 import Sidebar from './Sidebar';
 import { Outlet } from 'react-router-dom';
 import CommandPalette from '../ui/CommandPalette';
@@ -67,7 +66,6 @@ function Layout() {
           <div style={{ flex: 1 }}>
             <Outlet />
           </div>
-          <Footer />
         </main>
       </div>
     </div>

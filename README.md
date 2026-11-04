@@ -387,8 +387,8 @@ Routes listed here describe the intended frontend navigation. Actual route avail
 - Node.js 18 or later; Node.js 20 or later is recommended.
 - npm 9 or later.
 - Python 3.11 or later for backend development.
-- PostgreSQL and any additional required services.
-- Docker and Docker Compose if using a containerized setup.
+- Python 3.12 is recommended for the pinned CPU machine-learning wheels.
+- Docker Compose for the bundled PostgreSQL/PostGIS/pgvector, Redis, and MinIO services.
 
 Verify the versions installed on your system before starting.
 
@@ -406,20 +406,19 @@ cd frontend
 npm install
 ```
 
-Create the local environment file from the provided example, if available:
+Create the frontend environment file:
 
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-Configure the frontend API endpoint and any required application settings in `.env`.
+The Vite development server proxies `/api/v1`, `/health`, `/ready`, `/healthz`, and `/metrics` to `http://localhost:8000` by default. Set `VITE_BACKEND_PROXY_TARGET` to change that target. Configure the frontend by copying `frontend/.env.example` to `frontend/.env.local`; configure the API with `VITE_API_BASE_URL` only when the proxy is not suitable. Supabase Auth values are optional public client configuration; never put a service-role key in the frontend.
 
 Example:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000/api/v1
-VITE_APP_NAME=PRISM
-VITE_ENVIRONMENT=development
+VITE_API_BASE_URL=/api/v1
+VITE_BACKEND_PROXY_TARGET=http://localhost:8000
 ```
 
 Use the API prefix configured by the backend. The example above must be adjusted if the current application uses a different route prefix.
@@ -459,13 +458,29 @@ On Windows PowerShell:
 .venv\Scripts\Activate.ps1
 ```
 
-Install the backend dependencies using the dependency file supplied by the repository. If `requirements.txt` is present:
+Install the pinned backend dependencies and test runner:
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-Configure the required database, storage, authentication, and service environment variables before starting the backend.
+Configure the backend environment from the root example:
+
+```bash
+cp .env.example .env
+```
+
+The example is for local development only. Its Docker Compose defaults are development credentials and must not be reused in a shared or production environment. Set `AUTH_MODE=enforcing`, a real OIDC issuer/JWKS, a least-privileged runtime database URL, a separate migration database URL, and an explicit CORS allowlist for production.
+
+Start the local dependencies and backend API/workers:
+
+```bash
+docker compose up -d --build
+docker compose run --rm migrate
+```
+
+Migrations are an explicit step and are not run automatically by API or worker startup. Without Docker, provision PostgreSQL 15 with PostGIS and pgvector, Redis 7, and an S3-compatible store, then install requirements and run migrations yourself.
 
 Apply database migrations:
 
@@ -479,7 +494,7 @@ Start the API server using the application's configured import path. For example
 uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-The import path and migration configuration should be confirmed against the current repository before running these commands.
+The backend entry point is `backend.app.main:app`; long-running analysis and bounded notification, retention, and webhook workers are defined in `backend/workers/` and wired in Compose.
 
 ---
 
@@ -501,7 +516,7 @@ For a local server on port 8000, the Swagger UI is typically available at:
 http://localhost:8000/docs
 ```
 
-The repository also includes an `openapi.json` file. Check whether it is regenerated from the current backend before treating it as the definitive API contract.
+The repository includes `openapi.json` (generated from the backend contract) and an authenticated API capability workbench under **Administration → Backend API capabilities**. Backend authorization remains authoritative; the workbench reports permission and validation errors returned by the API.
 
 ---
 

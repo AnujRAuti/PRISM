@@ -30,8 +30,8 @@ export const supabase = isSupabaseConfigured
  */
 export async function getAccessToken() {
   if (!supabase) {
-    // Fallback token for local mock execution when Supabase keys are not yet provisioned
-    return localStorage.getItem('auth_token') || null;
+    // Never send a fabricated or stale browser-stored token to the API.
+    return null;
   }
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error || !session) return null;
@@ -43,8 +43,7 @@ export async function getAccessToken() {
  */
 export async function getCurrentUser() {
   if (!supabase) {
-    const local = localStorage.getItem('user');
-    return local ? JSON.parse(local) : null;
+    return null;
   }
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return null;

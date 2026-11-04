@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
+import { I18nProvider } from './i18n/I18nContext';
 import { useState, useEffect, lazy, Suspense } from 'react';
 
 // Import Styles
@@ -17,7 +18,10 @@ const Login = lazy(() => import('./components/auth/LoginForm'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const ProjectsList = lazy(() => import('./pages/Projects/ProjectsList'));
 const ProjectDetail = lazy(() => import('./pages/Projects/ProjectDetail'));
+const CreateProject = lazy(() => import('./pages/Projects/CreateProject'));
 const ReviewQueue = lazy(() => import('./pages/Reviews/ReviewQueue'));
+const CaseWorkspace = lazy(() => import('./pages/Reviews/CaseWorkspace'));
+const UploadEvidence = lazy(() => import('./pages/Evidence/UploadEvidence'));
 const EvidenceDetail = lazy(() => import('./pages/Evidence/EvidenceDetail'));
 const EvidenceCompare = lazy(() => import('./pages/Compare/EvidenceCompare'));
 const GeospatialMap = lazy(() => import('./pages/Map/GeospatialMap'));
@@ -31,6 +35,7 @@ const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 const About = lazy(() => import('./pages/About/About'));
 const Settings = lazy(() => import('./pages/Settings/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
+const PublicTransparency = lazy(() => import('./pages/PublicTransparency'));
 
 // Accessible Loading Fallback for Suspense transitions with PRISM branding
 function LoadingFallback() {
@@ -103,59 +108,66 @@ function App() {
 
   return (
     <AuthProvider>
-      {showSplash && <LoadingSplash onComplete={() => setShowSplash(false)} />}
-      <Router>
-        <AppProvider>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
+      <I18nProvider>
+        {showSplash && <LoadingSplash onComplete={() => setShowSplash(false)} />}
+        <Router>
+          <AppProvider>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/public" element={<PublicTransparency />} />
+                <Route path="/public/projects/:publicId" element={<PublicTransparency />} />
 
-              {/* Protected routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route element={<Layout />}>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
+                {/* Protected routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
 
-                  {/* Review Queue (PoA Primary Workflow) */}
-                  <Route path="/reviews" element={<ReviewQueue />} />
-                  <Route path="/queue" element={<ReviewQueue />} />
-                  <Route path="/review" element={<Navigate to="/reviews" replace />} />
+                    {/* Review Queue (PoA Primary Workflow) */}
+                    <Route path="/reviews" element={<ReviewQueue />} />
+                    <Route path="/queue" element={<ReviewQueue />} />
+                    <Route path="/review" element={<Navigate to="/reviews" replace />} />
+                    <Route path="/review/case" element={<CaseWorkspace />} />
 
-                  {/* Evidence Dossier Routes */}
-                  <Route path="/evidence" element={<Navigate to="/reviews" replace />} />
-                  <Route path="/evidence/:id" element={<EvidenceDetail />} />
+                    {/* Evidence Dossier Routes */}
+                    <Route path="/evidence" element={<Navigate to="/reviews" replace />} />
+                    <Route path="/evidence/:id" element={<EvidenceDetail />} />
+                    <Route path="/evidence/upload" element={<UploadEvidence />} />
 
-                  {/* Project Dossier Routes */}
-                  <Route path="/projects" element={<ProjectsList />} />
-                  <Route path="/projects/:id" element={<ProjectDetail />} />
+                    {/* Project Dossier Routes */}
+                    <Route path="/projects" element={<ProjectsList />} />
+                    <Route path="/projects/create" element={<CreateProject />} />
+                    <Route path="/projects/:id" element={<ProjectDetail />} />
 
-                  {/* PoA Feature Routes */}
-                  <Route path="/compare" element={<EvidenceCompare />} />
-                  <Route path="/map" element={<GeospatialMap />} />
-                  <Route path="/ingest" element={<IngestionSandbox />} />
-                  <Route path="/analytics" element={<AuditAnalytics />} />
-                  <Route path="/audit" element={<AuditLog />} />
-                  <Route path="/field" element={<FieldOperations />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/profile" element={<Profile />} />
+                    {/* PoA Feature Routes */}
+                    <Route path="/compare" element={<EvidenceCompare />} />
+                    <Route path="/map" element={<GeospatialMap />} />
+                    <Route path="/ingest" element={<IngestionSandbox />} />
+                    <Route path="/analytics" element={<AuditAnalytics />} />
+                    <Route path="/audit" element={<AuditLog />} />
+                    <Route path="/field" element={<FieldOperations />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/profile" element={<Profile />} />
 
-                  {/* Role Specific Landing Routes */}
-                  <Route path="/citizen" element={<CitizenPortal />} />
-                  <Route path="/discover" element={<Navigate to="/citizen?tab=discover" replace />} />
-                  <Route path="/auditor" element={<AuditorPortal />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
+                    {/* Role Specific Landing Routes */}
+                    <Route path="/citizen" element={<CitizenPortal />} />
+                    <Route path="/discover" element={<Navigate to="/citizen?tab=discover" replace />} />
+                    <Route path="/auditor" element={<AuditorPortal />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
 
-                  {/* Legacy Redirections */}
-                  <Route path="/graph" element={<Navigate to="/compare" replace />} />
-                  <Route path="/search" element={<Navigate to="/reviews" replace />} />
+                    {/* Legacy Redirections */}
+                    <Route path="/graph" element={<Navigate to="/compare" replace />} />
+                    <Route path="/search" element={<Navigate to="/reviews" replace />} />
+                  </Route>
                 </Route>
-              </Route>
-            </Routes>
-          </Suspense>
-        </AppProvider>
-      </Router>
+              </Routes>
+            </Suspense>
+          </AppProvider>
+        </Router>
+      </I18nProvider>
     </AuthProvider>
   );
 }

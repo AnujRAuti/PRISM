@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { formatDate } from '../../utils/helpers';
 import { AdminIcon, UserIcon, DownloadIcon, CheckIcon, AlertIcon, ClockIcon } from '../../components/common/Icon';
 import { auditApi, governanceApi, adminApi } from '../../services/api';
+import BackendApiWorkbench from './BackendApiWorkbench';
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('audit'); // 'audit', 'retention', 'users', 'telemetry'
@@ -9,133 +10,56 @@ function AdminDashboard() {
   const [ledgerVerificationResult, setLedgerVerificationResult] = useState(null);
   const [notification, setNotification] = useState(null);
 
-  // Authoritative Audit Ledger Events (BE-015, BE-030)
-  const defaultAuditEvents = [
-    {
-      id: 'evt-097-proj-create',
-      timestamp: '2024-02-15T09:00:12Z',
-      event_type: 'PROJECT_CREATED',
-      actor_id: 'usr-ramesh-sharma-01',
-      actor_name: 'Dr. Ramesh Sharma (Supervisor)',
-      resource_type: 'project',
-      resource_id: 'PRJ-001',
-      hash: '9f83ab21c4e76092b1a8d01ef43a78912c4b5091a2e3456789abcdef01234567',
-      prev_hash: '8a729e10b3d65081a097c90de32967801b3a4f8091d2345678abcdef0123456',
-      verified: true
-    },
-    {
-      id: 'evt-098-evid-ingest',
-      timestamp: '2024-02-15T11:05:00Z',
-      event_type: 'EVIDENCE_INGESTED',
-      actor_id: 'usr-john-doe-01',
-      actor_name: 'John Doe (Field Inspector)',
-      resource_type: 'evidence',
-      resource_id: 'EVD-001',
-      hash: '4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e',
-      prev_hash: '9f83ab21c4e76092b1a8d01ef43a78912c4b5091a2e3456789abcdef01234567',
-      verified: true
-    },
-    {
-      id: 'evt-099-anom-detect',
-      timestamp: '2024-02-20T10:14:30Z',
-      event_type: 'CROSS_PROJECT_DUPLICATE_FLAGGED',
-      actor_id: 'system-pipeline-worker',
-      actor_name: 'EIIL Fusion Pipeline Worker',
-      resource_type: 'evidence',
-      resource_id: 'EVD-003',
-      hash: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b',
-      prev_hash: '4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e',
-      verified: true
-    },
-    {
-      id: 'evt-100-hold-apply',
-      timestamp: '2024-02-20T11:30:00Z',
-      event_type: 'RETENTION_HOLD_APPLIED',
-      actor_id: 'usr-sunita-patel-01',
-      actor_name: 'Sunita Patel (Supervisor)',
-      resource_type: 'retention_hold',
-      resource_id: 'HOLD-042',
-      hash: '3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a',
-      prev_hash: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b',
-      verified: true
-    },
-    {
-      id: 'evt-101-decis-record',
-      timestamp: '2024-02-28T14:45:22Z',
-      event_type: 'REVIEW_DECISION_RECORDED',
-      actor_id: 'usr-ramesh-sharma-01',
-      actor_name: 'Dr. Ramesh Sharma (Reviewer)',
-      resource_type: 'review_case',
-      resource_id: 'case-004-school',
-      hash: '7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d',
-      prev_hash: '3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a',
-      verified: true
-    }
-  ];
+  const [auditEvents, setAuditEvents] = useState([]);
+  const [retentionPolicies, setRetentionPolicies] = useState([]);
+  const [activeHolds, setActiveHolds] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [systemConfig, setSystemConfig] = useState({});
 
-  // Retention Policies & Legal Holds (BE-017, Authorization Scope 2026-10-17)
-  const [retentionPolicies, setRetentionPolicies] = useState([
-    { id: 'POL-01', name: 'Public Works Permanent Evidence Retention', scope_type: 'GLOBAL', retention_days: 3650, auto_archive: true, description: 'Statutory 10-year preservation for PMGSY & infrastructure tranches.' },
-    { id: 'POL-02', name: 'Field Inspection Raw Media Preservation', scope_type: 'ORGANIZATION', organization: 'Ministry of Rural Development', retention_days: 1825, auto_archive: true, description: '5-year retention for uncompressed camera raw files.' },
-    { id: 'POL-03', name: 'Disputed Claim Investigation Quarantine', scope_type: 'PROJECT', project: 'PRJ-002 (Solar Street Lights)', retention_days: 7300, auto_archive: false, description: 'Indefinite hold during ongoing cross-jurisdiction duplicate review.' }
-  ]);
-
-  const [activeHolds, setActiveHolds] = useState([
-    { id: 'HOLD-042', project_id: 'PRJ-002', reason: 'Cross-Project pHash duplicate investigation with PRJ-001', applied_by: 'Sunita Patel', created_at: '2024-02-20T11:30:00Z', status: 'ACTIVE_PRESERVING' },
-    { id: 'HOLD-043', project_id: 'PRJ-005', reason: 'Missing camera device serial number inquiry', applied_by: 'Rajesh Kulkarni', created_at: '2024-02-26T14:00:00Z', status: 'ACTIVE_PRESERVING' }
-  ]);
-
-  // Pre-Provisioned Accounts (ADR Section 7)
-  const [users, setUsers] = useState([
-    { id: 'usr-ramesh-sharma-01', name: 'Dr. Ramesh Sharma', email: 'ramesh.sharma@prism.gov.in', role: 'REVIEWER', department: 'Ministry of Rural Development', status: 'ACTIVE', assigned_projects: 'PRJ-001, PRJ-004' },
-    { id: 'usr-sunita-patel-01', name: 'Sunita Patel', email: 'sunita.patel@prism.gov.in', role: 'SUPERVISOR', department: 'National Infrastructure Monitoring', status: 'ACTIVE', assigned_projects: 'GLOBAL (All)' },
-    { id: 'usr-rajesh-kulkarni-01', name: 'Rajesh Kulkarni', email: 'rajesh.k@prism.gov.in', role: 'REVIEWER', department: 'Maharashtra Public Works Dept', status: 'ACTIVE', assigned_projects: 'PRJ-001, PRJ-005' },
-    { id: 'usr-admin-sec-01', name: 'Prism Security Administrator', email: 'secadmin@prism.gov.in', role: 'ADMINISTRATOR', department: 'NIC / MeitY Security Operations', status: 'ACTIVE', assigned_projects: 'SYSTEM_WIDE' }
-  ]);
-
-  // System Configuration (ADR Section 9 & 19)
-  const systemConfig = {
-    max_upload_size: '10 MiB (Section 9.4 Enforcement)',
-    quarantine_policy: 'uploaded_quarantine isolation before verified review availability',
-    rationale_min_length: '20 characters (Section 14.3 Decision Governance)',
-    allowed_decision_outcomes: 'SUPPORTED, CONTRADICTED, INCONCLUSIVE, INSUFFICIENT_EVIDENCE',
-    hash_algorithm: 'SHA-256 binary digest + pHash perceptual fingerprinting',
-    audit_storage: 'Append-Only, Hash-Chained Tamper-Evident Ledger (BE-030)',
-  };
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([
+      auditApi.getEvents({ limit: 100 }),
+      governanceApi.getPolicies({ limit: 100 }),
+      governanceApi.getHolds({ limit: 100 }),
+      adminApi.getUsers({ limit: 100 }),
+      adminApi.getHealthSnapshot(),
+    ]).then(([events, policies, holds, principals, health]) => {
+      if (!active) return;
+      if (events.status === 'fulfilled') setAuditEvents((events.value.data.items || []).map((event) => ({
+        id: event.id, timestamp: event.created_at, event_type: event.event_type, actor_id: event.actor_id,
+        actor_name: event.actor_id || 'System', resource_type: event.resource_type, resource_id: event.resource_id,
+        hash: event.event_hash, prev_hash: event.previous_hash,
+      })));
+      if (policies.status === 'fulfilled') setRetentionPolicies(policies.value.data.items || []);
+      if (holds.status === 'fulfilled') setActiveHolds((holds.value.data.items || []).filter((hold) => hold.status === 'ACTIVE').map((hold) => ({
+        id: hold.id, project_id: hold.project_id || hold.case_id || hold.resource_id || hold.organization_id || hold.scope,
+        reason: hold.reason, applied_by: hold.created_by || 'Not provided', created_at: hold.created_at, status: hold.status,
+      })));
+      if (principals.status === 'fulfilled') setUsers((principals.value.data.items || []).map((principal) => ({
+        id: principal.id, name: principal.display_name || principal.username, email: principal.email,
+        role: (principal.roles || []).join(', ') || 'No role assigned', department: principal.identity_provider,
+        assigned_projects: 'View scoped assignments', status: principal.status,
+      })));
+      if (health.status === 'fulfilled') setSystemConfig(health.value.data || {});
+      const failed = [events, policies, holds, principals, health].find((result) => result.status === 'rejected');
+      if (failed) setNotification(failed.reason?.response?.data?.detail || failed.reason?.message || 'One or more backend governance views could not be loaded.');
+    });
+    return () => { active = false; };
+  }, []);
 
   const handleVerifyLedger = async () => {
     setVerifyingLedger(true);
     setLedgerVerificationResult(null);
-
+    setNotification(null);
     try {
-      // Calls FastAPI /api/v1/audit/verify
-      await auditApi.verifyLedger();
-      setLedgerVerificationResult({
-        success: true,
-        total_events: 101,
-        verified_blocks: 101,
-        broken_links: 0,
-        tampered_records: 0,
-        tip_hash: defaultAuditEvents[defaultAuditEvents.length - 1].hash,
-        timestamp: new Date().toISOString()
-      });
-    } catch {
-      // Offline fallback verification
-      setTimeout(() => {
-        setLedgerVerificationResult({
-          success: true,
-          total_events: 101,
-          verified_blocks: 101,
-          broken_links: 0,
-          tampered_records: 0,
-          tip_hash: defaultAuditEvents[defaultAuditEvents.length - 1].hash,
-          timestamp: new Date().toISOString()
-        });
-        setVerifyingLedger(false);
-      }, 750);
-      return;
+      const { data } = await auditApi.verifyAnchored();
+      setLedgerVerificationResult(data);
+    } catch (cause) {
+      setNotification(cause.response?.data?.detail || cause.message || 'Audit ledger verification failed.');
+    } finally {
+      setVerifyingLedger(false);
     }
-    setVerifyingLedger(false);
   };
 
   return (
@@ -168,6 +92,8 @@ function AdminDashboard() {
         </p>
       </div>
 
+      {notification && <div role="alert" style={{ padding: '0.75rem 1rem', marginBottom: '1rem', borderRadius: 8, background: '#fef2f2', color: '#991b1b' }}>{notification}</div>}
+
       {/* Tabs */}
       <div style={{
         display: 'flex',
@@ -180,6 +106,7 @@ function AdminDashboard() {
           { id: 'retention', label: '2. Retention Policies & Legal Holds' },
           { id: 'users', label: '3. Identity & Role Assignments' },
           { id: 'telemetry', label: '4. System Policy & Architecture Config' },
+          { id: 'api', label: 'Backend API capabilities' },
         ].map(tab => (
           <button
             key={tab.id}
@@ -251,8 +178,8 @@ function AdminDashboard() {
           {/* Verification Success Box */}
           {ledgerVerificationResult && (
             <div style={{
-              backgroundColor: 'var(--govt-success-light)',
-              border: '1px solid var(--govt-success-border)',
+              backgroundColor: ledgerVerificationResult.valid ? 'var(--govt-success-light)' : 'var(--govt-danger-light)',
+              border: `1px solid ${ledgerVerificationResult.valid ? 'var(--govt-success-border)' : 'var(--govt-danger-border)'}`,
               borderRadius: 'var(--radius-lg)',
               padding: '1.25rem 1.5rem',
               marginBottom: '1.5rem',
@@ -260,14 +187,14 @@ function AdminDashboard() {
               alignItems: 'flex-start',
               gap: '1rem'
             }}>
-              <span style={{ color: 'var(--govt-success-text)', fontSize: '1.4rem' }}>✓</span>
+              <span style={{ color: ledgerVerificationResult.valid ? 'var(--govt-success-text)' : 'var(--govt-danger-text)', fontSize: '1.4rem' }}>{ledgerVerificationResult.valid ? '✓' : '!'}</span>
               <div>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--govt-success-text)' }}>
-                  Audit Ledger Cryptographic Integrity Verified: 100% Intact
+                  {ledgerVerificationResult.valid ? 'Audit ledger integrity verified' : 'Audit ledger verification found integrity issues'}
                 </h4>
-                <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: 'var(--govt-success-text)', lineHeight: 1.45 }}>
-                  Verified <strong>{ledgerVerificationResult.verified_blocks} consecutive event blocks</strong> across the ledger chain.
-                  0 broken links, 0 tampered payloads. Tip hash: <code style={{ wordBreak: 'break-all' }}>{ledgerVerificationResult.tip_hash.slice(0, 32)}...</code>
+                <p style={{ margin: '0.35rem 0 0', fontSize: '0.82rem', color: ledgerVerificationResult.valid ? 'var(--govt-success-text)' : 'var(--govt-danger-text)', lineHeight: 1.45 }}>
+                  Verified <strong>{ledgerVerificationResult.checked_events} consecutive event blocks</strong> across the ledger chain.
+                  {(ledgerVerificationResult.failures || []).length} verification issue(s). Tip hash: <code style={{ wordBreak: 'break-all' }}>{(ledgerVerificationResult.checkpoint?.tail_event_hash || 'not provided').slice(0, 32)}...</code>
                 </p>
               </div>
             </div>
@@ -299,14 +226,14 @@ function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {defaultAuditEvents.map(evt => (
+                  {auditEvents.map(evt => (
                     <tr key={evt.id} style={{ borderBottom: '1px solid var(--govt-gray-medium)' }}>
                       <td style={{ padding: '0.9rem 1.25rem' }}>
                         <div style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--govt-blue-primary)', fontSize: '0.78rem' }}>
                           {evt.id}
                         </div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--govt-gray-dark)', marginTop: '0.2rem' }}>
-                          {formatDate(evt.timestamp)}
+                          {evt.timestamp ? formatDate(evt.timestamp) : 'Time not supplied'}
                         </div>
                       </td>
                       <td style={{ padding: '0.9rem 1rem' }}>
@@ -348,7 +275,7 @@ function AdminDashboard() {
                           {evt.hash}
                         </div>
                         <div style={{ fontSize: '0.68rem', color: 'var(--govt-gray-dark)', marginTop: '0.2rem' }}>
-                          prev: {evt.prev_hash.slice(0, 24)}...
+                          prev: {(evt.prev_hash || 'not provided').slice(0, 24)}...
                         </div>
                       </td>
                     </tr>
@@ -474,10 +401,10 @@ function AdminDashboard() {
                         </span>
                       </td>
                       <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--govt-blue-dark)' }}>
-                        {pol.retention_days} days ({Math.round(pol.retention_days / 365)} yrs)
+                        {pol.resource_type}
                       </td>
                       <td style={{ padding: '0.85rem 1.25rem', fontSize: '0.8rem', color: 'var(--govt-gray-text)' }}>
-                        {pol.description}
+                        {pol.description || 'No description provided'}
                       </td>
                     </tr>
                   ))}
@@ -505,7 +432,7 @@ function AdminDashboard() {
             color: 'var(--govt-blue-dark)',
             fontSize: '0.95rem'
           }}>
-            Pre-Provisioned Operator Accounts & Project Scope Constraints (ADR Section 7 & Scope Rule P1)
+            Backend managed users and identity-provider links
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
@@ -599,13 +526,15 @@ function AdminDashboard() {
                   {key.replace(/_/g, ' ')}
                 </span>
                 <span style={{ fontFamily: 'monospace', color: 'var(--govt-blue-primary)', fontWeight: 600 }}>
-                  {val}
+                  {typeof val === 'object' ? JSON.stringify(val) : String(val)}
                 </span>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {activeTab === 'api' && <BackendApiWorkbench />}
     </div>
   );
 }

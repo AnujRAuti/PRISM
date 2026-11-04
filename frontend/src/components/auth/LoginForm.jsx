@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
+import { isSupabaseConfigured } from '../../lib/supabase/client';
 import PrismLogo from '../common/PrismLogo';
 import {
   ShieldCheck,
   Lock,
   User,
   Smartphone,
-  KeyRound,
   Eye,
   EyeOff,
   CheckCircle2,
@@ -23,14 +23,12 @@ export default function LoginForm() {
   const [authMode, setAuthMode] = useState('official'); // 'official' | 'citizen'
 
   // Official Form State
-  const [officialEmail, setOfficialEmail] = useState('reviewer@prism.gov.in');
-  const [officialPassword, setOfficialPassword] = useState('GovTech@2026!Prism');
-  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [officialEmail, setOfficialEmail] = useState('');
+  const [officialPassword, setOfficialPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // Citizen Form State
-  const [citizenMobile, setCitizenMobile] = useState('9823011223');
-  const [citizenName, setCitizenName] = useState('Ramesh Sharma');
+  const [citizenMobile, setCitizenMobile] = useState('');
   const [citizenOtp, setCitizenOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
@@ -40,7 +38,7 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
 
-  const { loginAsOfficial, loginAsCitizen, isAuthenticated, user } = useAuth();
+  const { loginAsOfficial, loginAsCitizen, requestCitizenOtp, isAuthenticated, user } = useAuth();
   const { loginUser } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,17 +66,22 @@ export default function LoginForm() {
     return () => clearTimeout(timer);
   }, [otpCountdown]);
 
-  const handleSendOtp = () => {
-    const cleanMobile = citizenMobile.replace(/\D/g, '');
-    if (cleanMobile.length < 10) {
-      setError('Please enter a valid 10-digit Indian mobile number.');
-      return;
-    }
+  const handleSendOtp = async () => {
     setError('');
-    setOtpSent(true);
-    setOtpCountdown(45);
-    setCitizenOtp('123456'); // Pre-fill sample OTP for convenience
-    setInfoMessage('SMS OTP dispatched to +91 ' + cleanMobile + '. (Use demo code: 123456)');
+    setInfoMessage('');
+    try {
+      await requestCitizenOtp(citizenMobile || '9823011223');
+      setOtpSent(true);
+      setOtpCountdown(45);
+      if (!isSupabaseConfigured) {
+        setCitizenOtp('123456');
+        setInfoMessage('Development mode: Verification OTP pre-filled (123456).');
+      } else {
+        setInfoMessage('A verification code was requested from the configured identity provider.');
+      }
+    } catch (cause) {
+      setError(cause.message || 'Could not send a verification code.');
+    }
   };
 
   const handleOfficialSubmit = async (e) => {
@@ -88,7 +91,7 @@ export default function LoginForm() {
     setInfoMessage('');
 
     try {
-      const res = await loginAsOfficial(officialEmail, officialPassword, twoFactorCode);
+      const res = await loginAsOfficial(officialEmail, officialPassword);
       if (res.success) {
         // Synchronize AppContext state
         loginUser(res.role, res.user);
@@ -117,11 +120,7 @@ export default function LoginForm() {
     setInfoMessage('');
 
     try {
-      const res = await loginAsCitizen({
-        mobileNumber: citizenMobile,
-        otp: citizenOtp,
-        citizenName,
-      });
+      const res = await loginAsCitizen({ mobileNumber: citizenMobile, otp: citizenOtp });
 
       if (res.success) {
         loginUser('CITIZEN', res.user);
@@ -137,17 +136,8 @@ export default function LoginForm() {
   };
 
   const handleAnonymousCitizenAccess = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await loginAsCitizen({ isAnonymous: true });
-      if (res.success) {
-        loginUser('CITIZEN', res.user);
-        navigate('/citizen', { replace: true });
-      }
-    } finally {
-      setLoading(false);
-    }
+    setInfoMessage('Public published project information does not require sign-in.');
+    navigate('/public');
   };
 
   return (
@@ -420,114 +410,72 @@ export default function LoginForm() {
                 </div>
               </div>
 
-              {/* Multi-Factor Authentication Code (Optional for Dev, enforced for Gov) */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                  <label
-                    htmlFor="twoFactorCode"
-                    style={{
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      color: 'var(--govt-blue-dark)',
-                    }}
-                  >
-                    2FA Security Token / NIC Parichay PIN (Optional)
-                  </label>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--govt-gray-dark)' }}>
-                    CERT-In Standard
-                  </span>
+              {!isSupabaseConfigured && (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--govt-gray-dark)', marginBottom: '0.4rem' }}>
+                    Quick Demo Accounts (Local Dev):
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfficialEmail('reviewer@prism.gov.in');
+                        setOfficialPassword('GovTech@2026!Prism');
+                      }}
+                      style={{
+                        fontSize: '0.725rem',
+                        padding: '0.25rem 0.55rem',
+                        borderRadius: '4px',
+                        border: '1px solid var(--govt-gray-medium)',
+                        backgroundColor: officialEmail.includes('reviewer') ? '#e0f2fe' : '#ffffff',
+                        color: officialEmail.includes('reviewer') ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
+                        fontWeight: officialEmail.includes('reviewer') ? 700 : 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      🛡️ Reviewer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfficialEmail('anand.swaroop@cag.gov.in');
+                        setOfficialPassword('GovTech@2026!Prism');
+                      }}
+                      style={{
+                        fontSize: '0.725rem',
+                        padding: '0.25rem 0.55rem',
+                        borderRadius: '4px',
+                        border: '1px solid var(--govt-gray-medium)',
+                        backgroundColor: officialEmail.includes('cag') ? '#e0f2fe' : '#ffffff',
+                        color: officialEmail.includes('cag') ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
+                        fontWeight: officialEmail.includes('cag') ? 700 : 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ⚖️ Auditor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfficialEmail('secadmin@prism.gov.in');
+                        setOfficialPassword('GovTech@2026!Prism');
+                      }}
+                      style={{
+                        fontSize: '0.725rem',
+                        padding: '0.25rem 0.55rem',
+                        borderRadius: '4px',
+                        border: '1px solid var(--govt-gray-medium)',
+                        backgroundColor: officialEmail.includes('admin') ? '#e0f2fe' : '#ffffff',
+                        color: officialEmail.includes('admin') ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
+                        fontWeight: officialEmail.includes('admin') ? 700 : 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ⚙️ Admin
+                    </button>
+                  </div>
                 </div>
-                <div style={{ position: 'relative' }}>
-                  <KeyRound
-                    size={16}
-                    style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}
-                  />
-                  <input
-                    type="text"
-                    id="twoFactorCode"
-                    value={twoFactorCode}
-                    onChange={(e) => setTwoFactorCode(e.target.value)}
-                    placeholder="e.g. 6-digit TOTP code"
-                    maxLength={6}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem 0.65rem 2.4rem',
-                      fontSize: '0.875rem',
-                      border: '1px solid var(--govt-gray-medium)',
-                      borderRadius: 'var(--radius-md)',
-                      boxSizing: 'border-box',
-                      fontFamily: 'var(--font-family-mono)',
-                      letterSpacing: '0.1em',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Quick Official Role Selector Badges */}
-              <div style={{ marginBottom: '1.5rem', backgroundColor: 'var(--govt-gray-off-white)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--govt-gray-dark)', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
-                  Quick Provisioned Accounts (Click to test):
-                </span>
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOfficialEmail('reviewer@prism.gov.in');
-                      setOfficialPassword('GovTech@2026!Prism');
-                    }}
-                    style={{
-                      fontSize: '0.725rem',
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: '4px',
-                      border: '1px solid var(--govt-gray-medium)',
-                      backgroundColor: officialEmail.includes('reviewer') ? 'var(--govt-blue-light)' : '#ffffff',
-                      color: officialEmail.includes('reviewer') ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
-                      fontWeight: officialEmail.includes('reviewer') ? 700 : 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    🛡️ Reviewer Lead
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOfficialEmail('anand.swaroop@cag.gov.in');
-                      setOfficialPassword('GovTech@2026!Prism');
-                    }}
-                    style={{
-                      fontSize: '0.725rem',
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: '4px',
-                      border: '1px solid var(--govt-gray-medium)',
-                      backgroundColor: officialEmail.includes('cag') ? 'var(--govt-blue-light)' : '#ffffff',
-                      color: officialEmail.includes('cag') ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
-                      fontWeight: officialEmail.includes('cag') ? 700 : 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ⚖️ Statutory Auditor
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOfficialEmail('secadmin@prism.gov.in');
-                      setOfficialPassword('GovTech@2026!Prism');
-                    }}
-                    style={{
-                      fontSize: '0.725rem',
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: '4px',
-                      border: '1px solid var(--govt-gray-medium)',
-                      backgroundColor: officialEmail.includes('admin') ? 'var(--govt-blue-light)' : '#ffffff',
-                      color: officialEmail.includes('admin') ? 'var(--govt-blue-primary)' : 'var(--govt-gray-dark)',
-                      fontWeight: officialEmail.includes('admin') ? 700 : 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ⚙️ Platform Admin
-                  </button>
-                </div>
-              </div>
+              )}
 
               <button
                 type="submit"
@@ -620,38 +568,6 @@ export default function LoginForm() {
                 </div>
               </div>
 
-              {/* Citizen Name */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label
-                  htmlFor="citizenName"
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    color: 'var(--govt-blue-dark)',
-                    marginBottom: '0.4rem',
-                  }}
-                >
-                  Full Name (Optional for verified resident profile)
-                </label>
-                <input
-                  type="text"
-                  id="citizenName"
-                  value={citizenName}
-                  onChange={(e) => setCitizenName(e.target.value)}
-                  placeholder="e.g. Ramesh Sharma"
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    fontSize: '0.875rem',
-                    border: '1px solid var(--govt-gray-medium)',
-                    borderRadius: 'var(--radius-md)',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
               {/* 6-Digit OTP Input */}
               <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
@@ -666,7 +582,9 @@ export default function LoginForm() {
                     6-Digit Verification OTP *
                   </label>
                   <span style={{ fontSize: '0.7rem', color: 'var(--govt-success)', fontWeight: 700 }}>
-                    Demo OTP: 123456
+                    {!isSupabaseConfigured
+                      ? (otpSent ? 'Demo code: 123456' : 'Click Send OTP (Demo: 123456)')
+                      : (otpSent ? 'Code sent' : 'Request a code first')}
                   </span>
                 </div>
                 <input
